@@ -7,22 +7,21 @@ export function PermissionsPage() {
   return (
     <>
       <PageHeader
-        title="Permissões"
-        description="Área reservada à administração de RBAC por cliente, preparada no frontend e explicitamente bloqueada até o backend expor os endpoints de manutenção."
+        title="Permissoes"
+        description="A gestao operacional de perfis por cliente ja foi integrada ao modulo Usuarios. Esta area dedicada segue fora do menu principal ate existir um fluxo separado no backend."
       />
 
       <Stack spacing={2}>
         <ContractNotice
-          title="RBAC de manutenção ainda não publicado"
-          description="O backend já lê vínculos de usuário por cliente em /auth/me e nas dependências de autorização, mas ainda não há rotas para administrar esses vínculos via interface."
+          title="Fluxo dedicado ainda nao separado"
+          description="Os contratos `GET/PUT /usuarios/{id}/perfis-cliente` ja estao operacionais, mas a manutencao de RBAC foi centralizada em Usuarios. Um modulo dedicado de Permissoes continua sem contrato proprio suficiente para voltar ao menu."
           missingContracts={[
-            'GET /usuarios/{id}/perfis-cliente',
-            'POST /usuarios/{id}/perfis-cliente',
-            'DELETE /usuarios/{id}/perfis-cliente/{clienteId}/{perfil}',
+            'Contrato dedicado para administracao separada de permissoes',
+            'Listagens e filtros proprios para governanca de RBAC',
           ]}
           availableNow={[
-            'Leitura do RBAC efetivo via GET /auth/me',
-            'Bloqueio de operações conforme RBAC no backend',
+            'GET /usuarios/{id}/perfis-cliente via Usuarios',
+            'PUT /usuarios/{id}/perfis-cliente via Usuarios',
           ]}
         />
       </Stack>

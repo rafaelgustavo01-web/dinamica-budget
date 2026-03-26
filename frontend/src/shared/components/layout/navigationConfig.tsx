@@ -66,8 +66,7 @@ export const navigationItems: NavigationItem[] = [
     path: '/associacoes',
     group: 'Operação',
     icon: <DatasetLinkedOutlinedIcon fontSize="small" />,
-    status: 'missing',
-    showInMenu: false,
+    status: 'active',
     visible: () => true,
   },
   {
@@ -99,7 +98,7 @@ export const navigationItems: NavigationItem[] = [
     path: '/usuarios',
     group: 'Governança',
     icon: <GroupOutlinedIcon fontSize="small" />,
-    status: 'partial',
+    status: 'active',
     visible: (user) => Boolean(user?.is_admin),
   },
   {
@@ -107,8 +106,7 @@ export const navigationItems: NavigationItem[] = [
     path: '/clientes',
     group: 'Governança',
     icon: <StorefrontOutlinedIcon fontSize="small" />,
-    status: 'missing',
-    showInMenu: false,
+    status: 'partial',
     visible: (user) => Boolean(user?.is_admin),
   },
   {
