@@ -1,0 +1,46 @@
+import type { MeResponse, PerfilUsuario } from '../types/contracts/auth';
+
+export function getAvailableClientIds(user: MeResponse | null) {
+  if (!user) {
+    return [];
+  }
+
+  const ids = new Set(
+    user.perfis
+      .map((perfil) => perfil.cliente_id)
+      .filter((clienteId) => clienteId !== '*'),
+  );
+
+  return [...ids];
+}
+
+export function getClientProfiles(user: MeResponse | null, clienteId: string) {
+  if (!user || !clienteId) {
+    return [] as PerfilUsuario[];
+  }
+
+  if (user.is_admin) {
+    return ['ADMIN'];
+  }
+
+  return user.perfis
+    .filter((perfil) => perfil.cliente_id === clienteId)
+    .map((perfil) => perfil.perfil);
+}
+
+export function hasClienteAccess(user: MeResponse | null, clienteId: string) {
+  return Boolean(clienteId) && getClientProfiles(user, clienteId).length > 0;
+}
+
+export function hasClientePerfil(
+  user: MeResponse | null,
+  clienteId: string,
+  allowedProfiles: PerfilUsuario[],
+) {
+  const profiles = getClientProfiles(user, clienteId);
+  return profiles.some((profile) => allowedProfiles.includes(profile));
+}
+
+export function hasAnyOperationalAccess(user: MeResponse | null) {
+  return Boolean(user?.is_admin || getAvailableClientIds(user).length);
+}

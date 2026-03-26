@@ -1,0 +1,152 @@
+import axios, {
+  AxiosError,
+  type InternalAxiosRequestConfig,
+} from 'axios';
+
+import type { ApiErrorPayload } from '../../types/contracts/common';
+import {
+  clearSessionTokens,
+  persistSessionTokens,
+  readSessionTokens,
+} from '../../utils/storage';
+
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1';
+export const SESSION_EXPIRED_EVENT = 'dinamica-budget:session-expired';
+
+export const publicApiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+type RetryRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
+let refreshPromise: Promise<string | null> | null = null;
+
+async function refreshAccessToken() {
+  const currentSession = readSessionTokens();
+
+  if (!currentSession?.refreshToken) {
+    clearSessionTokens();
+    window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+    return null;
+  }
+
+  if (!refreshPromise) {
+    refreshPromise = publicApiClient
+      .post('/auth/refresh', {
+        refresh_token: currentSession.refreshToken,
+      })
+      .then((response) => {
+        const payload = response.data as {
+          access_token: string;
+          refresh_token: string;
+          token_type: string;
+          expires_in: number;
+        };
+
+        persistSessionTokens({
+          accessToken: payload.access_token,
+          refreshToken: payload.refresh_token,
+          tokenType: payload.token_type,
+          expiresIn: payload.expires_in,
+        });
+
+        return payload.access_token;
+      })
+      .catch((error) => {
+        clearSessionTokens();
+        window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+        throw error;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+}
+
+apiClient.interceptors.request.use((config) => {
+  const currentSession = readSessionTokens();
+
+  if (currentSession?.accessToken) {
+    config.headers.Authorization = `Bearer ${currentSession.accessToken}`;
+  }
+
+  return config;
+});
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const requestConfig = error.config as RetryRequestConfig | undefined;
+    const requestUrl =
+      typeof requestConfig?.url === 'string' ? requestConfig.url : '';
+
+    if (
+      error.response?.status === 401 &&
+      requestConfig &&
+      !requestConfig._retry &&
+      !requestUrl.includes('/auth/login') &&
+      !requestUrl.includes('/auth/refresh')
+    ) {
+      requestConfig._retry = true;
+
+      try {
+        const nextAccessToken = await refreshAccessToken();
+
+        if (nextAccessToken) {
+          requestConfig.headers.Authorization = `Bearer ${nextAccessToken}`;
+          return apiClient(requestConfig);
+        }
+      } catch {
+        return Promise.reject(error);
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
+
+function isApiErrorPayload(data: unknown): data is ApiErrorPayload {
+  return Boolean(
+    data &&
+      typeof data === 'object' &&
+      'error' in data &&
+      data.error &&
+      typeof data.error === 'object' &&
+      'message' in data.error,
+  );
+}
+
+export function extractApiErrorMessage(
+  error: unknown,
+  fallback = 'Falha ao processar a operação.',
+) {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data;
+    if (isApiErrorPayload(data)) {
+      return data.error.message;
+    }
+    if (typeof error.message === 'string' && error.message) {
+      return error.message;
+    }
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
+export { apiClient };

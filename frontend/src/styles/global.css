@@ -1,0 +1,42 @@
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background:
+    radial-gradient(circle at top right, rgba(197, 123, 87, 0.12), transparent 22%),
+    linear-gradient(180deg, #f8fafb 0%, #f1f5f9 100%);
+}
+
+a {
+  color: inherit;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(15, 23, 32, 0.18);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
