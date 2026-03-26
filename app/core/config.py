@@ -1,4 +1,33 @@
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Keys that must never reach production
+_INSECURE_SECRET_KEYS: set[str] = {
+    "CHANGE_ME_use_secrets_token_hex_32",
+    "secret",
+    "changeme",
+    "change_me",
+    "insecure",
+    "",
+}
+_MIN_SECRET_KEY_LEN = 32
+
+
+def validate_startup_config(secret_key: str) -> None:
+    """
+    Raises ValueError if the SECRET_KEY is insecure (default, empty, or too short).
+    Called once in the FastAPI lifespan startup.
+    """
+    if (
+        not secret_key
+        or secret_key.strip() in _INSECURE_SECRET_KEYS
+        or len(secret_key.strip()) < _MIN_SECRET_KEY_LEN
+    ):
+        raise ValueError(
+            "SECRET_KEY insegura detectada no startup. "
+            "Defina SECRET_KEY no .env com pelo menos 32 caracteres aleatórios. "
+            "Gere com: python -c \"import secrets; print(secrets.token_hex(32))\""
+        )
 
 
 class Settings(BaseSettings):
@@ -25,6 +54,13 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
+
+    # CORS — configurable list of allowed origins for intranet/on-premise deploy
+    # In .env: ALLOWED_ORIGINS=["http://app.intranet.local","http://localhost:3000"]
+    ALLOWED_ORIGINS: list[str] = Field(
+        default=["http://localhost:3000", "http://localhost:8080"],
+        description="Allowed CORS origins. Set via ALLOWED_ORIGINS env var (JSON array).",
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",
