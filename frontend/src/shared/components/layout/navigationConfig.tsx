@@ -23,6 +23,8 @@ export interface NavigationItem {
   icon: ReactNode;
   status: NavigationStatus;
   visible: (user: MeResponse | null) => boolean;
+  showInMenu?: boolean;
+  statusLabel?: string;
 }
 
 export const navigationItems: NavigationItem[] = [
@@ -56,6 +58,7 @@ export const navigationItems: NavigationItem[] = [
     group: 'Operação',
     icon: <HubOutlinedIcon fontSize="small" />,
     status: 'partial',
+    statusLabel: 'Somente visualização',
     visible: () => true,
   },
   {
@@ -64,6 +67,7 @@ export const navigationItems: NavigationItem[] = [
     group: 'Operação',
     icon: <DatasetLinkedOutlinedIcon fontSize="small" />,
     status: 'missing',
+    showInMenu: false,
     visible: () => true,
   },
   {
@@ -104,6 +108,7 @@ export const navigationItems: NavigationItem[] = [
     group: 'Governança',
     icon: <StorefrontOutlinedIcon fontSize="small" />,
     status: 'missing',
+    showInMenu: false,
     visible: (user) => Boolean(user?.is_admin),
   },
   {
@@ -112,6 +117,7 @@ export const navigationItems: NavigationItem[] = [
     group: 'Governança',
     icon: <ManageAccountsOutlinedIcon fontSize="small" />,
     status: 'missing',
+    showInMenu: false,
     visible: (user) => Boolean(user?.is_admin),
   },
   {
@@ -148,4 +154,8 @@ export function getStatusLabel(status: NavigationStatus) {
   };
 
   return labels[status];
+}
+
+export function getNavigationStatusLabel(item: NavigationItem) {
+  return item.statusLabel ?? getStatusLabel(item.status);
 }

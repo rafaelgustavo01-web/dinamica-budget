@@ -1,9 +1,9 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.usuario import Usuario
+from app.models.usuario import Usuario, UsuarioPerfil
 from app.repositories.base_repository import BaseRepository
 
 
@@ -28,3 +28,64 @@ class UsuarioRepository(BaseRepository[Usuario]):
         if user:
             user.refresh_token_hash = token_hash
             await self.db.flush()
+
+    async def list_paginated(
+        self,
+        offset: int,
+        limit: int,
+        is_active: bool | None = None,
+    ) -> tuple[list[Usuario], int]:
+        filters = []
+        if is_active is not None:
+            filters.append(Usuario.is_active == is_active)
+
+        count_result = await self.db.execute(
+            select(func.count()).select_from(Usuario).where(*filters)
+        )
+        total = count_result.scalar_one()
+
+        items_result = await self.db.execute(
+            select(Usuario).where(*filters).order_by(Usuario.nome).offset(offset).limit(limit)
+        )
+        return list(items_result.scalars().all()), total
+
+    async def get_perfis(self, usuario_id: UUID) -> list[UsuarioPerfil]:
+        result = await self.db.execute(
+            select(UsuarioPerfil).where(UsuarioPerfil.usuario_id == usuario_id)
+        )
+        return list(result.scalars().all())
+
+    async def set_perfis_cliente(
+        self,
+        usuario_id: UUID,
+        cliente_id: UUID,
+        perfis: list[str],
+    ) -> list[UsuarioPerfil]:
+        """
+        Replace all perfis for a user on a specific client.
+        Deletes existing entries for (usuario_id, cliente_id) and inserts the new ones.
+        """
+        # Remove existing
+        existing = await self.db.execute(
+            select(UsuarioPerfil).where(
+                UsuarioPerfil.usuario_id == usuario_id,
+                UsuarioPerfil.cliente_id == cliente_id,
+            )
+        )
+        for row in existing.scalars().all():
+            await self.db.delete(row)
+        await self.db.flush()
+
+        # Insert new
+        new_perfis = []
+        for perfil in perfis:
+            up = UsuarioPerfil(
+                usuario_id=usuario_id,
+                cliente_id=cliente_id,
+                perfil=perfil.upper(),
+            )
+            self.db.add(up)
+            new_perfis.append(up)
+
+        await self.db.flush()
+        return new_perfis

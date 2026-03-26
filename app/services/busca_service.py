@@ -32,6 +32,7 @@ from app.repositories.historico_repository import HistoricoRepository
 from app.repositories.servico_tcpo_repository import ServicoTcpoRepository
 from app.schemas.busca import (
     AssociacaoResponse,
+    BuscaMetadados,
     BuscaServicoRequest,
     BuscaServicoResponse,
     CriarAssociacaoRequest,
@@ -335,10 +336,10 @@ class BuscaService:
         return BuscaServicoResponse(
             texto_buscado=texto_busca,
             resultados=resultados,
-            metadados={
-                "tempo_processamento_ms": elapsed,
-                "id_historico_busca": str(historico.id),
-            },
+            metadados=BuscaMetadados(
+                tempo_processamento_ms=elapsed,
+                id_historico_busca=historico.id,
+            ),
         )
 
     # ─── Criar Associação ─────────────────────────────────────────────────────

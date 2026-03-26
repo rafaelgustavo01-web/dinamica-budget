@@ -6,7 +6,10 @@
       "Bash(python -m pytest app/tests/unit/ -v --tb=short)",
       "Bash(pip install:*)",
       "Bash(python -m pytest app/tests/unit/ -v --tb=short --no-header)",
-      "Bash(python -m pytest app/tests/unit/ -v --no-header)"
+      "Bash(python -m pytest app/tests/unit/ -v --no-header)",
+      "Bash(python -m pytest app/tests/unit/ -v --no-header --tb=short)",
+      "Bash(python -m pytest app/tests/unit/ --no-header -q)",
+      "Bash(python -m pytest app/tests/unit/ --no-header -v --tb=short)"
     ]
   }
 }

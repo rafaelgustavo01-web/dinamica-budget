@@ -14,7 +14,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../../features/auth/AuthProvider';
 import {
-  getStatusLabel,
+  getNavigationStatusLabel,
   navigationItems,
 } from './navigationConfig';
 
@@ -49,7 +49,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       <Box sx={{ flex: 1, overflowY: 'auto', px: 2, py: 2 }}>
         {groups.map((group) => {
           const items = navigationItems.filter(
-            (item) => item.group === group && item.visible(user),
+            (item) => item.group === group && item.visible(user) && item.showInMenu !== false,
           );
 
           if (!items.length) {
@@ -106,7 +106,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                       {item.status !== 'active' ? (
                         <Chip
                           size="small"
-                          label={getStatusLabel(item.status)}
+                          label={getNavigationStatusLabel(item)}
                           sx={{
                             ml: 1,
                             color: '#ffffff',
@@ -137,7 +137,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       >
         <Typography variant="body2">Ambiente interno</Typography>
         <Typography variant="caption">
-          Módulos sem endpoint oficial permanecem explicitamente sinalizados.
+          O menu principal exibe apenas módulos operacionais ou parciais com backend utilizável.
         </Typography>
       </Stack>
     </Box>

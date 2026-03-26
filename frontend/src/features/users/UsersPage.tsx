@@ -24,8 +24,8 @@ import type { UsuarioResponse } from '../../shared/types/contracts/auth';
 
 const createUserSchema = z.object({
   nome: z.string().min(3, 'Informe o nome completo.'),
-  email: z.email('Informe um email válido.'),
-  password: z.string().min(6, 'Use ao menos 6 caracteres.'),
+  email: z.email('Informe um email valido.'),
+  password: z.string().min(8, 'Use ao menos 8 caracteres.'),
   is_admin: z.boolean(),
 });
 
@@ -54,7 +54,7 @@ export function UsersPage() {
     mutationFn: userApi.create,
     onSuccess: (data) => {
       setCreatedUser(data);
-      showMessage('Usuário criado com sucesso.');
+      showMessage('Usuario criado com sucesso.');
       reset();
     },
   });
@@ -62,14 +62,17 @@ export function UsersPage() {
   return (
     <>
       <PageHeader
-        title="Usuários"
-        description="Cadastro administrativo conectado ao endpoint oficial já publicado, com transparência sobre o que ainda falta para o CRUD completo."
+        title="Usuarios"
+        description="Fluxo administrativo protegido para cadastro de usuarios, dependente de autenticacao e privilegio administrativo no backend."
       />
 
       <Stack direction={{ xs: 'column', xl: 'row' }} spacing={2}>
         <Paper sx={{ flex: 1, p: 3 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
-            Novo usuário
+            Novo usuario
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Esta operacao usa o endpoint administrativo POST /auth/usuarios e nao faz parte do fluxo operacional comum.
           </Typography>
           <Stack
             component="form"
@@ -93,12 +96,12 @@ export function UsersPage() {
               label="Senha inicial"
               type="password"
               error={Boolean(errors.password)}
-              helperText={errors.password?.message}
+              helperText={errors.password?.message ?? 'Use ao menos 8 caracteres.'}
               {...register('password')}
             />
             <FormControlLabel
               control={<Checkbox {...register('is_admin')} />}
-              label="Usuário administrativo"
+              label="Usuario administrativo"
             />
             <Button
               type="submit"
@@ -108,14 +111,14 @@ export function UsersPage() {
               {createUserMutation.isPending ? (
                 <CircularProgress size={20} color="inherit" />
               ) : (
-                'Criar usuário'
+                'Criar usuario'
               )}
             </Button>
             {createUserMutation.isError ? (
               <Alert severity="error">
                 {extractApiErrorMessage(
                   createUserMutation.error,
-                  'Falha ao criar o usuário.',
+                  'Falha ao criar o usuario.',
                 )}
               </Alert>
             ) : null}
@@ -124,7 +127,7 @@ export function UsersPage() {
 
         <Paper sx={{ flex: 1, p: 3 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
-            Último cadastro confirmado
+            Ultimo cadastro administrativo confirmado
           </Typography>
           {createdUser ? (
             <Stack spacing={1}>
@@ -135,15 +138,15 @@ export function UsersPage() {
                 Email: {createdUser.email}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Admin: {createdUser.is_admin ? 'Sim' : 'Não'}
+                Admin: {createdUser.is_admin ? 'Sim' : 'Nao'}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Ativo: {createdUser.is_active ? 'Sim' : 'Não'}
+                Ativo: {createdUser.is_active ? 'Sim' : 'Nao'}
               </Typography>
             </Stack>
           ) : (
             <Typography variant="body2" color="text.secondary">
-              Nenhum cadastro realizado nesta sessão.
+              Nenhum cadastro realizado nesta sessao.
             </Typography>
           )}
         </Paper>
@@ -151,15 +154,18 @@ export function UsersPage() {
 
       <Stack spacing={2} sx={{ mt: 2 }}>
         <ContractNotice
-          title="CRUD completo de usuários ainda não está exposto"
-          description="Hoje o backend publica somente o cadastro de usuário. Listagem, edição, ativação/inativação e vínculos por cliente continuam ausentes como endpoint oficial."
+          title="Fluxo administrativo parcial e protegido"
+          description="A tela cobre somente o cadastro administrativo autenticado via POST /auth/usuarios. Listagem, edicao, ativacao/inativacao e vinculos por cliente continuam dependentes de contratos REST ainda nao publicados."
           missingContracts={[
             'GET /usuarios',
             'PATCH /usuarios/{id}',
             'PATCH /usuarios/{id}/status',
             'GET/PUT /usuarios/{id}/perfis-cliente',
           ]}
-          availableNow={['POST /auth/usuarios']}
+          availableNow={[
+            'POST /auth/usuarios',
+            'Acesso exposto apenas na area administrativa autenticada',
+          ]}
         />
       </Stack>
     </>

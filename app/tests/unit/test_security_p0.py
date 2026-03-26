@@ -324,25 +324,34 @@ async def test_get_servico_admin_bypasses_tenant_check():
 
 def test_create_usuario_endpoint_has_admin_dependency():
     """
-    Verify that create_usuario endpoint has get_current_admin_user dependency
-    declared in its signature — ensures the route is protected.
+    Verify that POST /auth/usuarios is protected by get_current_admin_user.
+    The dependency may be in the route-level `dependencies=[...]` parameter
+    (FastAPI-recommended) rather than in the function signature — both are valid.
     """
     import inspect
-    from app.api.v1.endpoints.auth import create_usuario
+    from app.api.v1.endpoints.auth import create_usuario, router
     from app.core.dependencies import get_current_admin_user
 
+    # Check function signature (old style: _admin=Depends(get_current_admin_user))
     sig = inspect.signature(create_usuario)
-    # Check that one of the parameters uses get_current_admin_user as default
-    admin_dep_found = any(
-        (
-            hasattr(param.default, "dependency")
-            and param.default.dependency is get_current_admin_user
-        )
+    func_dep_found = any(
+        hasattr(param.default, "dependency")
+        and param.default.dependency is get_current_admin_user
         for param in sig.parameters.values()
     )
-    assert admin_dep_found, (
-        "create_usuario must have Depends(get_current_admin_user) to protect against "
-        "unauthenticated user creation."
+
+    # Check route-level dependencies (new style: dependencies=[Depends(...)])
+    route_dep_found = False
+    for route in router.routes:
+        if hasattr(route, "endpoint") and route.endpoint is create_usuario:
+            for dep in getattr(route, "dependencies", []):
+                if hasattr(dep, "dependency") and dep.dependency is get_current_admin_user:
+                    route_dep_found = True
+                    break
+
+    assert func_dep_found or route_dep_found, (
+        "create_usuario must be protected by Depends(get_current_admin_user). "
+        "Use either function signature or route-level dependencies=[Depends(...)]."
     )
 
 

@@ -84,7 +84,7 @@ export function SearchPage() {
         cliente_id: selectedClientId,
         texto_busca_original: searchResponse?.texto_buscado ?? '',
         id_tcpo_selecionado: selectedResult?.id_tcpo ?? '',
-        id_historico_busca: searchResponse?.metadados.id_historico_busca ?? '',
+        id_historico_busca: searchResponse!.metadados.id_historico_busca,
       }),
     onSuccess: (data) => {
       showMessage(data.mensagem);
@@ -171,8 +171,8 @@ export function SearchPage() {
               >
                 <Typography variant="h6">Resultados</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Histórico: {searchResponse.metadados.id_historico_busca ?? '-'} | Tempo:{' '}
-                  {searchResponse.metadados.tempo_processamento_ms ?? 0} ms
+                  Histórico: {searchResponse.metadados.id_historico_busca} | Tempo:{' '}
+                  {searchResponse.metadados.tempo_processamento_ms} ms
                 </Typography>
               </Stack>
 

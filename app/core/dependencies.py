@@ -10,7 +10,9 @@ from app.core.database import get_db_session
 from app.core.exceptions import AuthenticationError, AuthorizationError
 from app.core.security import decode_token
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+# tokenUrl points to the OAuth2-compatible form endpoint used by Swagger "Authorize"
+# The JSON-based /auth/login stays intact for the frontend.
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

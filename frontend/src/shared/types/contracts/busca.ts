@@ -27,8 +27,8 @@ export interface BuscaServicoResponse {
   texto_buscado: string;
   resultados: ResultadoBusca[];
   metadados: {
-    tempo_processamento_ms?: number;
-    id_historico_busca?: string;
+    tempo_processamento_ms: number;
+    id_historico_busca: string;
   };
 }
 

@@ -132,7 +132,7 @@ export function LoginPage() {
               onSubmit={handleSubmit((values) => loginMutation.mutate(values))}
             >
               <TextField
-                label="Usuário ou email"
+                label="Email"
                 type="email"
                 autoComplete="username"
                 error={Boolean(errors.email)}

@@ -232,6 +232,11 @@ Arquivos principais:
 - `/clientes`
 - `/permissoes`
 
+Observacao:
+
+- as rotas continuam preparadas tecnicamente, mas `Clientes`, `Permissoes` e `Associacoes` foram removidas do menu principal ate que o backend publique operacao suficiente para uso real
+- `Composicoes` permanece visivel no menu com sinalizacao de escopo parcial, pois ja possui leitura e visualizacao funcional
+
 ## 8. Modulos implementados
 
 ### 8.1 Login
@@ -240,7 +245,7 @@ Status: ativo e integrado
 
 Entrega:
 
-- formulario de login
+- formulario de login com email
 - loading
 - erro de autenticacao
 - redirecionamento pos-login
@@ -340,6 +345,7 @@ Backend consumido:
 
 Observacao:
 
+- o modulo permanece visivel no menu principal com indicacao de somente visualizacao
 - cadastro por copia
 - inclusao de componentes
 - remocao de componentes
@@ -393,12 +399,17 @@ Status: parcial
 
 Entrega:
 
-- cadastro de usuario
+- cadastro administrativo protegido de usuario
 - aviso de contratos ausentes para CRUD completo
 
 Backend consumido:
 
 - `POST /api/v1/auth/usuarios`
+
+Observacao:
+
+- este fluxo depende de autenticacao e privilegio administrativo no frontend
+- nao se trata de cadastro aberto para usuario operacional comum
 
 ### 8.11 Clientes
 
@@ -407,6 +418,7 @@ Status: preparado, sem integracao real
 Motivo:
 
 - backend ainda nao publica endpoints de CRUD de clientes
+- modulo removido do menu principal ate existir operacao real
 
 ### 8.12 Permissoes
 
@@ -415,6 +427,7 @@ Status: preparado, sem integracao real
 Motivo:
 
 - backend ainda nao publica endpoints para manutencao dos vinculos de RBAC por cliente
+- modulo removido do menu principal ate existir operacao real
 
 ### 8.13 Associacoes
 
@@ -423,6 +436,7 @@ Status: preparado, sem integracao de leitura/exclusao
 Motivo:
 
 - backend atual possui criacao via busca, mas nao expoe listagem ou exclusao por endpoint
+- modulo removido do fluxo principal para nao induzir uso sem backend suficiente
 
 ## 9. Contratos tipados consumidos
 
@@ -657,6 +671,12 @@ Isso foi intencional para evitar:
 - simular regra inexistente
 - introduzir divergencia entre UI e backend
 
+No menu principal:
+
+- `Clientes`, `Permissoes` e `Associacoes` sairam do fluxo principal
+- `Composicoes` segue visivel como modulo parcial de leitura
+- CRUDs administrativos completos continuam dependentes de contratos REST ainda nao publicados
+
 ## 16. Gaps reais identificados no backend durante a implementacao
 
 ### 16.1 Usuarios
@@ -778,7 +798,7 @@ O frontend oficial entregue cobre a base estrutural do sistema e os fluxos reais
 
 Ao mesmo tempo, o frontend foi construido para nao ultrapassar o contrato do backend:
 
-- modulos sem endpoint real foram mantidos preparados, mas bloqueados
+- modulos sem endpoint real foram mantidos preparados, mas retirados do menu principal ou rebaixados visualmente
 - avisos de contrato ausente foram adicionados nas telas correspondentes
 - a camada de API foi centralizada e tipada
 - a UI reflete o RBAC, mas nao tenta substituir a seguranca do servidor

@@ -25,10 +25,16 @@ class ResultadoBusca(BaseModel):
     status_homologacao: str  # StatusHomologacao enum value
 
 
+class BuscaMetadados(BaseModel):
+    """Typed metadata returned alongside search results."""
+    tempo_processamento_ms: int
+    id_historico_busca: UUID
+
+
 class BuscaServicoResponse(BaseModel):
     texto_buscado: str
     resultados: list[ResultadoBusca]
-    metadados: dict  # {"tempo_processamento_ms": int, "id_historico_busca": str}
+    metadados: BuscaMetadados  # typed — replaces previous `dict`
 
 
 class CriarAssociacaoRequest(BaseModel):

@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Security
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_active_user, get_current_admin_user, get_db
 from app.core.rate_limit import limiter
@@ -26,7 +25,7 @@ def _get_auth_service(db: AsyncSession = Depends(get_db)) -> AuthService:
     return AuthService(UsuarioRepository(db))
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=TokenResponse, summary="Login JSON (frontend)")
 @limiter.limit("10/minute")
 async def login(
     request: Request,  # required by slowapi for rate limiting
@@ -34,10 +33,36 @@ async def login(
     db: AsyncSession = Depends(get_db),
     svc: AuthService = Depends(_get_auth_service),
 ) -> TokenResponse:
+    """
+    Login via JSON body — used by the frontend application.
+    Returns access_token + refresh_token.
+    """
     return await svc.login(credentials, db)
 
 
-@router.post("/refresh", response_model=TokenResponse)
+@router.post(
+    "/token",
+    response_model=TokenResponse,
+    summary="Login OAuth2 (Swagger Authorize)",
+    include_in_schema=True,
+)
+@limiter.limit("10/minute")
+async def login_form(
+    request: Request,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db),
+    svc: AuthService = Depends(_get_auth_service),
+) -> TokenResponse:
+    """
+    OAuth2 Password Flow — accepts application/x-www-form-urlencoded.
+    Used by Swagger UI 'Authorize' button (username = email).
+    Does NOT replace /auth/login — both coexist.
+    """
+    credentials = LoginRequest(email=form_data.username, password=form_data.password)
+    return await svc.login(credentials, db)
+
+
+@router.post("/refresh", response_model=TokenResponse, summary="Renovar token")
 @limiter.limit("20/minute")
 async def refresh_token(
     request: Request,  # required by slowapi for rate limiting
@@ -48,7 +73,7 @@ async def refresh_token(
     return await svc.refresh_token(body.refresh_token, db)
 
 
-@router.post("/logout", status_code=204)
+@router.post("/logout", status_code=204, summary="Revogar token")
 async def logout(
     current_user=Depends(get_current_active_user),
     svc: AuthService = Depends(_get_auth_service),
@@ -56,7 +81,7 @@ async def logout(
     await svc.logout(current_user.id)
 
 
-@router.get("/me", response_model=MeResponse)
+@router.get("/me", response_model=MeResponse, summary="Usuário atual + perfis")
 async def me(
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
@@ -82,10 +107,15 @@ async def me(
     )
 
 
-@router.post("/usuarios", response_model=UsuarioResponse, status_code=201)
+@router.post(
+    "/usuarios",
+    response_model=UsuarioResponse,
+    status_code=201,
+    summary="Criar usuário (admin)",
+    dependencies=[Depends(get_current_admin_user)],  # visible in OpenAPI as secured
+)
 async def create_usuario(
     data: UsuarioCreate,
-    _admin=Depends(get_current_admin_user),  # P0: admin-only endpoint
     svc: AuthService = Depends(_get_auth_service),
 ) -> UsuarioResponse:
     """

@@ -101,11 +101,13 @@ dinamica-budget/
 │   ├── api/v1/
 │   │   ├── router.py
 │   │   └── endpoints/
-│   │       ├── auth.py          # login, refresh, me, create_usuario
-│   │       ├── busca.py         # /servicos (4 fases) + /associar
+│   │       ├── auth.py          # login (JSON), token (OAuth2), refresh, me, create_usuario
+│   │       ├── busca.py         # /servicos (4 fases), /associar, /associacoes (list/delete)
 │   │       ├── servicos.py      # catálogo + composição (POST admin-only)
 │   │       ├── homologacao.py   # pendentes, aprovar, itens-proprios
-│   │       └── admin.py         # compute-embeddings, cache-refresh
+│   │       ├── usuarios.py      # CRUD usuários + perfis-cliente (admin)
+│   │       ├── clientes.py      # list + create clientes (admin)
+│   │       └── admin.py         # compute-embeddings
 │   ├── core/
 │   │   ├── config.py
 │   │   ├── database.py
@@ -129,9 +131,12 @@ dinamica-budget/
 │   ├── schemas/
 │   │   ├── common.py
 │   │   ├── auth.py              # + MeResponse com perfis
-│   │   ├── busca.py
+│   │   ├── busca.py             # BuscaMetadados tipado (não dict)
 │   │   ├── servico.py
-│   │   └── homologacao.py       # + cliente_id em AprovarHomologacaoRequest
+│   │   ├── homologacao.py
+│   │   ├── usuario.py           # UsuarioAdminResponse, UsuarioPatch, perfis
+│   │   ├── cliente.py           # ClienteCreate, ClienteResponse
+│   │   └── associacao.py        # AssociacaoListItem
 │   ├── services/
 │   │   ├── busca_service.py     # histórico síncrono + validação de rastreabilidade
 │   │   ├── auth_service.py
@@ -360,24 +365,58 @@ class CriarAssociacaoRequest(BaseModel):
 
 ## Endpoints da API
 
+### Auth
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
-| POST | `/api/v1/auth/login` | — | email+senha → JWT access + refresh |
+| POST | `/api/v1/auth/login` | — | JSON login — frontend (email+senha → JWT) |
+| POST | `/api/v1/auth/token` | — | **OAuth2 form login** — Swagger "Authorize" button |
 | POST | `/api/v1/auth/refresh` | — | Renova access token |
 | POST | `/api/v1/auth/logout` | JWT | Revoga refresh token |
-| GET | `/api/v1/auth/me` | JWT | Usuário atual + todos os vínculos cliente/perfil |
-| POST | `/api/v1/auth/usuarios` | — | Criar usuário |
+| GET | `/api/v1/auth/me` | JWT | Usuário atual + vínculos cliente/perfil |
+| POST | `/api/v1/auth/usuarios` | JWT (Admin) | Criar usuário — **admin only** |
+
+### Busca
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
 | POST | `/api/v1/busca/servicos` | JWT + cliente | Motor cascata 4 fases |
 | POST | `/api/v1/busca/associar` | JWT + cliente | Criar/fortalecer associação inteligente |
-| GET | `/api/v1/servicos/` | JWT | Catálogo visível (TCPO global + PROPRIA do cliente se `?cliente_id=`) |
-| GET | `/api/v1/servicos/{id}` | JWT | Detalhe do serviço |
+| GET | `/api/v1/busca/associacoes` | JWT + cliente | Listar associações do cliente (paginado) |
+| DELETE | `/api/v1/busca/associacoes/{id}` | JWT (APROVADOR+) | Excluir associação |
+
+### Catálogo de Serviços
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| GET | `/api/v1/servicos/` | JWT | Catálogo visível (TCPO global + PROPRIA aprovados) |
+| GET | `/api/v1/servicos/{id}` | JWT | Detalhe — cross-tenant guard em PROPRIA |
 | GET | `/api/v1/servicos/{id}/composicao` | JWT | Explosão TCPO (insumos + custos) |
-| POST | `/api/v1/servicos/` | JWT (Admin) | Criar item TCPO global — **somente admin** |
-| GET | `/api/v1/homologacao/pendentes` | JWT (APROVADOR+) | Lista itens PENDENTE do cliente |
+| POST | `/api/v1/servicos/` | JWT (Admin) | Criar item TCPO global — **admin only** |
+
+### Homologação
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| GET | `/api/v1/homologacao/pendentes` | JWT (APROVADOR+) | Lista PENDENTE do cliente |
 | POST | `/api/v1/homologacao/aprovar` | JWT (APROVADOR+) | Aprovar ou reprovar item |
 | POST | `/api/v1/homologacao/itens-proprios` | JWT + cliente | Criar item próprio (nasce PENDENTE) |
-| POST | `/api/v1/admin/compute-embeddings` | JWT (Admin) | Batch encode em massa |
-| GET | `/health` | — | Status do servidor (inclui flag do modelo ML) |
+
+### Gestão de Usuários (Admin)
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| GET | `/api/v1/usuarios/` | JWT (Admin) | Listar usuários paginado |
+| PATCH | `/api/v1/usuarios/{id}` | JWT (Admin) | Atualizar nome/email/is_active/is_admin |
+| GET | `/api/v1/usuarios/{id}/perfis-cliente` | JWT (admin ou self) | Listar perfis RBAC do usuário |
+| PUT | `/api/v1/usuarios/{id}/perfis-cliente` | JWT (Admin) | Substituir perfis do usuário em um cliente |
+
+### Gestão de Clientes (Admin)
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| GET | `/api/v1/clientes/` | JWT (Admin) | Listar clientes paginado |
+| POST | `/api/v1/clientes/` | JWT (Admin) | Criar cliente (CNPJ único) |
+
+### Admin / Infra
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| POST | `/api/v1/admin/compute-embeddings` | JWT (Admin) | Batch encode embeddings |
+| GET | `/health` | — | Status (embedder_ready flag) |
 
 ---
 
