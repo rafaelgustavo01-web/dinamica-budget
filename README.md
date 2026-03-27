@@ -346,10 +346,15 @@ class ResultadoBusca(BaseModel):
     origem_match: Literal["PROPRIA_CLIENTE", "ASSOCIACAO_DIRETA", "FUZZY", "IA_SEMANTICA"]
     status_homologacao: str
 
+class BuscaMetadados(BaseModel):
+    tempo_processamento_ms: int   # latência total da requisição de busca
+    id_historico_busca: UUID      # UUID do registro em historico_busca_cliente
+                                  # usado em POST /busca/associar como chave de rastreio
+
 class BuscaServicoResponse(BaseModel):
     texto_buscado: str
     resultados: list[ResultadoBusca]
-    metadados: dict  # {tempo_processamento_ms, id_historico_busca (UUID real)}
+    metadados: BuscaMetadados
 ```
 
 **Request `POST /busca/associar`:**
@@ -411,6 +416,14 @@ class CriarAssociacaoRequest(BaseModel):
 |---|---|---|---|
 | GET | `/api/v1/clientes/` | JWT (Admin) | Listar clientes paginado |
 | POST | `/api/v1/clientes/` | JWT (Admin) | Criar cliente (CNPJ único) |
+| PATCH | `/api/v1/clientes/{id}` | JWT (Admin) | Editar `nome_fantasia` e/ou `is_active` — campos opcionais, validação igual ao POST |
+
+### Composição por Cópia
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| POST | `/api/v1/composicoes/clonar` | JWT (APROVADOR+) | Clona item TCPO/PROPRIA → novo item `PROPRIA/PENDENTE` vinculado ao cliente |
+| POST | `/api/v1/composicoes/{pai_id}/componentes` | JWT (APROVADOR+) | Adiciona insumo filho a uma composição própria — anti-loop DFS |
+| DELETE | `/api/v1/composicoes/{pai_id}/componentes/{componente_id}` | JWT (APROVADOR+) | Remove insumo filho; recalcula custo do pai automaticamente |
 
 ### Admin / Infra
 | Método | Rota | Auth | Descrição |
