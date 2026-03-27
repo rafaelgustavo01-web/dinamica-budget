@@ -79,7 +79,7 @@ export function AdminPage() {
               administrativo com os contratos hoje publicados.
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Continuam pendentes no backend: edição de clientes, autoedição de perfil,
+              Continuam pendentes no backend: autoedição de perfil,
               relatórios dedicados e um fluxo próprio de permissões fora de Usuários.
             </Typography>
           </Stack>

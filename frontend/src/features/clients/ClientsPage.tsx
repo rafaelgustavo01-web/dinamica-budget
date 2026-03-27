@@ -1,4 +1,7 @@
 import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import ToggleOffOutlinedIcon from '@mui/icons-material/ToggleOffOutlined';
+import ToggleOnOutlinedIcon from '@mui/icons-material/ToggleOnOutlined';
 import {
   Alert,
   Button,
@@ -19,6 +22,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { ConfirmationDialog } from '../../shared/components/ConfirmationDialog';
 import { DataTable } from '../../shared/components/DataTable';
 import { EmptyState } from '../../shared/components/EmptyState';
 import { PageHeader } from '../../shared/components/PageHeader';
@@ -35,8 +39,13 @@ const createClientSchema = z.object({
     .refine((value) => /^\d{14}$/.test(value), 'Informe 14 digitos numericos.'),
 });
 
+const editClientSchema = z.object({
+  nome_fantasia: z.string().min(2, 'Informe ao menos 2 caracteres.'),
+});
+
 type CreateClientFormInput = z.input<typeof createClientSchema>;
 type CreateClientFormOutput = z.output<typeof createClientSchema>;
+type EditClientFormValues = z.infer<typeof editClientSchema>;
 type StatusFilter = 'all' | 'active' | 'inactive';
 
 function getClientStatusLabel(isActive: boolean) {
@@ -51,6 +60,8 @@ export function ClientsPage() {
   const [pageSize, setPageSize] = useState(20);
   const [selectedClientId, setSelectedClientId] = useState('');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [confirmStatusOpen, setConfirmStatusOpen] = useState(false);
 
   const {
     register,
@@ -62,6 +73,18 @@ export function ClientsPage() {
     defaultValues: {
       nome_fantasia: '',
       cnpj: '',
+    },
+  });
+
+  const {
+    register: registerEdit,
+    handleSubmit: handleEditSubmit,
+    formState: { errors: editErrors },
+    reset: resetEditForm,
+  } = useForm<EditClientFormValues>({
+    resolver: zodResolver(editClientSchema),
+    defaultValues: {
+      nome_fantasia: '',
     },
   });
 
@@ -90,11 +113,37 @@ export function ClientsPage() {
     },
   });
 
+  const updateClientMutation = useMutation({
+    mutationFn: (values: EditClientFormValues) =>
+      clientsApi.patch(selectedClient!.id, values),
+    onSuccess: (data) => {
+      showMessage('Cliente atualizado com sucesso.');
+      setSelectedClientId(data.id);
+      setEditDialogOpen(false);
+      void queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
+  });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: () =>
+      clientsApi.patch(selectedClient!.id, {
+        is_active: !selectedClient!.is_active,
+      }),
+    onSuccess: (data) => {
+      showMessage(
+        data.is_active ? 'Cliente reativado com sucesso.' : 'Cliente inativado com sucesso.',
+      );
+      setSelectedClientId(data.id);
+      setConfirmStatusOpen(false);
+      void queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
+  });
+
   return (
     <>
       <PageHeader
         title="Clientes"
-        description="Listagem administrativa e cadastro real de clientes, consumindo os contratos oficiais publicados pelo backend."
+        description="Listagem administrativa com cadastro, edicao de nome fantasia e ativacao/inativacao consumindo os contratos oficiais publicados pelo backend."
         actions={
           <Button
             variant="contained"
@@ -186,8 +235,35 @@ export function ClientsPage() {
               <Typography variant="body2" color="text.secondary">
                 ID: {shortenUuid(selectedClient.id)}
               </Typography>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                <Button
+                  variant="outlined"
+                  startIcon={<EditOutlinedIcon />}
+                  onClick={() => {
+                    resetEditForm({ nome_fantasia: selectedClient.nome_fantasia });
+                    setEditDialogOpen(true);
+                  }}
+                >
+                  Editar nome
+                </Button>
+                <Button
+                  variant="outlined"
+                  color={selectedClient.is_active ? 'warning' : 'success'}
+                  startIcon={
+                    selectedClient.is_active ? (
+                      <ToggleOffOutlinedIcon />
+                    ) : (
+                      <ToggleOnOutlinedIcon />
+                    )
+                  }
+                  onClick={() => setConfirmStatusOpen(true)}
+                >
+                  {selectedClient.is_active ? 'Inativar' : 'Reativar'}
+                </Button>
+              </Stack>
               <Alert severity="info" variant="outlined">
-                O backend atual ja publica listagem e cadastro. Edicao e ativacao/inativacao continuam dependentes de contratos REST adicionais.
+                O contrato administrativo atual permite editar o nome fantasia e alterar o
+                status do cliente. O CNPJ permanece somente leitura neste fluxo.
               </Alert>
             </Stack>
           ) : (
@@ -251,6 +327,81 @@ export function ClientsPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Editar cliente</DialogTitle>
+        <DialogContent dividers>
+          <Stack
+            component="form"
+            spacing={2}
+            sx={{ mt: 0.5 }}
+            onSubmit={handleEditSubmit((values) => updateClientMutation.mutate(values))}
+          >
+            <TextField
+              label="Nome fantasia"
+              error={Boolean(editErrors.nome_fantasia)}
+              helperText={editErrors.nome_fantasia?.message}
+              {...registerEdit('nome_fantasia')}
+            />
+            {updateClientMutation.isError ? (
+              <Alert severity="error">
+                {extractApiErrorMessage(
+                  updateClientMutation.error,
+                  'Falha ao atualizar o cliente.',
+                )}
+              </Alert>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)}>Cancelar</Button>
+          <Button
+            variant="contained"
+            onClick={handleEditSubmit((values) => updateClientMutation.mutate(values))}
+            disabled={updateClientMutation.isPending}
+          >
+            {updateClientMutation.isPending ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              'Salvar'
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <ConfirmationDialog
+        open={confirmStatusOpen}
+        title={selectedClient?.is_active ? 'Inativar cliente?' : 'Reativar cliente?'}
+        confirmLabel={selectedClient?.is_active ? 'Inativar' : 'Reativar'}
+        confirmColor={selectedClient?.is_active ? 'error' : 'primary'}
+        isLoading={toggleStatusMutation.isPending}
+        onCancel={() => setConfirmStatusOpen(false)}
+        onConfirm={() => toggleStatusMutation.mutate()}
+      >
+        <Stack spacing={1}>
+          <Typography variant="body2">
+            Cliente: {selectedClient?.nome_fantasia}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {selectedClient?.is_active
+              ? 'O cliente sera marcado como inativo no backend.'
+              : 'O cliente voltara a ficar ativo no backend.'}
+          </Typography>
+          {toggleStatusMutation.isError ? (
+            <Alert severity="error">
+              {extractApiErrorMessage(
+                toggleStatusMutation.error,
+                'Falha ao alterar o status do cliente.',
+              )}
+            </Alert>
+          ) : null}
+        </Stack>
+      </ConfirmationDialog>
     </>
   );
 }

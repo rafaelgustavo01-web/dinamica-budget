@@ -418,22 +418,26 @@ Observacao:
 
 ### 8.11 Clientes
 
-Status: parcial com operacao real
+Status: ativo com escopo administrativo atual
 
 Entrega:
 
 - listagem paginada
 - filtro por status
 - cadastro de cliente
+- edicao de nome fantasia
+- ativacao e inativacao
 
 Backend consumido:
 
 - `GET /api/v1/clientes/`
 - `POST /api/v1/clientes/`
+- `PATCH /api/v1/clientes/{id}`
 
 Observacao:
 
-- o modulo permanece parcial porque a interface atual ainda nao expoe a edicao e a ativacao/inativacao, embora o backend ja publique `PATCH /clientes/{id}`
+- o contrato atual de edicao administrativa permite atualizar `nome_fantasia` e `is_active`
+- o CNPJ permanece somente leitura neste fluxo
 
 ### 8.12 Permissoes
 
@@ -665,7 +669,7 @@ sequenceDiagram
 - `ClientsPage`
   - chama `clientsApi.list`
   - chama `clientsApi.create`
-  - a tela ainda nao consome `clientsApi.patch`, embora o metodo ja exista na camada de API
+  - chama `clientsApi.patch`
 
 ### Associacoes
 
@@ -730,19 +734,15 @@ No menu principal:
 
 - `Clientes` e `Associacoes` retornaram ao fluxo principal por ja terem integracao real
 - `Permissoes` continua fora do menu porque o fluxo esta centralizado em `Usuarios`
-- `Clientes` permanece sinalizado como parcial ate existir edicao no backend
+- `Clientes` segue sinalizado como ativo, com listagem, cadastro, edicao e controle de status
 
 ## 16. Gaps reais identificados no backend durante a implementacao
 
 ### 16.1 Clientes
 
-O frontend ja possui listagem e cadastro de clientes. O backend ja publica tambem:
+O frontend ja possui listagem, cadastro, edicao e controle de status de clientes. O backend ja publica:
 
 - `PATCH /api/v1/clientes/{id}` para edicao e ativacao/inativacao
-
-Pendencia atual:
-
-- conectar a tela `ClientsPage` a esse endpoint no frontend
 
 ### 16.2 Perfil
 

@@ -142,12 +142,12 @@ export function DashboardPage() {
           </Typography>
           <Stack spacing={1}>
             <Typography variant="body2" color="text.secondary">
-              Clientes já possuem listagem e cadastro. Usuários já possuem criação,
-              listagem, edição, status e perfis por cliente.
+              Clientes já possuem listagem, cadastro, edição e status. Usuários já
+              possuem criação, listagem, edição, status e perfis por cliente.
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Ainda dependem de contratos adicionais: edição de clientes, autoedição
-              de perfil, relatórios dedicados e um módulo separado de permissões.
+              Ainda dependem de contratos adicionais: autoedição de perfil,
+              relatórios dedicados e um módulo separado de permissões.
             </Typography>
           </Stack>
         </Paper>

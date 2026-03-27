@@ -105,7 +105,7 @@ export const navigationItems: NavigationItem[] = [
     path: '/clientes',
     group: 'Governança',
     icon: <StorefrontOutlinedIcon fontSize="small" />,
-    status: 'partial',
+    status: 'active',
     visible: (user) => Boolean(user?.is_admin),
   },
   {
