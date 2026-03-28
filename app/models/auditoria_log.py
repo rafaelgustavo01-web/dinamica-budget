@@ -33,7 +33,7 @@ class AuditoriaLog(Base):
         String(36), nullable=False, index=True  # UUID as string for flexibility
     )
     operacao: Mapped[TipoOperacaoAuditoria] = mapped_column(
-        SAEnum(TipoOperacaoAuditoria, name="tipo_operacao_auditoria_enum"),
+        SAEnum(TipoOperacaoAuditoria, name="tipo_operacao_auditoria_enum", create_type=False),
         nullable=False,
     )
     campo_alterado: Mapped[str | None] = mapped_column(String(100), nullable=True)

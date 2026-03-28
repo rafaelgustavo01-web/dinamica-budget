@@ -1,9 +1,4 @@
-import {
-  Chip,
-  Paper,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Chip, Paper, Stack, Typography } from '@mui/material';
 
 import { useAuth } from '../auth/AuthProvider';
 import { ContractNotice } from '../../shared/components/ContractNotice';
@@ -17,11 +12,11 @@ export function ProfilePage() {
     <>
       <PageHeader
         title="Meu Perfil"
-        description="Dados carregados pelo backend autenticado, vínculos por cliente e estado atual da sessão."
+        description="Visualize seus dados de acesso, perfis por cliente e o estado atual da sessão autenticada."
       />
 
       <Stack direction={{ xs: 'column', xl: 'row' }} spacing={2}>
-        <Paper sx={{ flex: 1, p: 3 }}>
+        <Paper sx={{ flex: 1, p: 3, border: '1px solid', borderColor: 'divider' }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             Identidade
           </Typography>
@@ -30,7 +25,7 @@ export function ProfilePage() {
               Nome: {user?.nome}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Email: {user?.email}
+              E-mail: {user?.email}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Status: {user?.is_active ? 'Ativo' : 'Inativo'}
@@ -39,12 +34,12 @@ export function ProfilePage() {
               Escopo administrativo: {user?.is_admin ? 'Sim' : 'Não'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Cliente ativo no frontend: {selectedClientId || 'Nenhum'}
+              Cliente em contexto: {selectedClientId || 'Nenhum'}
             </Typography>
           </Stack>
         </Paper>
 
-        <Paper sx={{ flex: 1, p: 3 }}>
+        <Paper sx={{ flex: 1, p: 3, border: '1px solid', borderColor: 'divider' }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             Perfis por cliente
           </Typography>

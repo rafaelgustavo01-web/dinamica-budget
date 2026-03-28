@@ -1,4 +1,6 @@
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -31,7 +33,24 @@ export function ConfirmationDialog({
 }: ConfirmationDialogProps) {
   return (
     <Dialog open={open} onClose={isLoading ? undefined : onCancel} fullWidth maxWidth="sm">
-      <DialogTitle>{title}</DialogTitle>
+      <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            display: 'grid',
+            placeItems: 'center',
+            mx: 'auto',
+            mb: 1.5,
+            borderRadius: '50%',
+            backgroundColor: 'error.light',
+            color: 'error.main',
+          }}
+        >
+          <WarningAmberOutlinedIcon />
+        </Box>
+        {title}
+      </DialogTitle>
       <DialogContent dividers>{children}</DialogContent>
       <DialogActions>
         <Button onClick={onCancel} disabled={isLoading}>

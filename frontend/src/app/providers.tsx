@@ -1,11 +1,24 @@
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { type PropsWithChildren, useState } from 'react';
+import { type PropsWithChildren, useMemo, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import { AuthProvider } from '../features/auth/AuthProvider';
 import { FeedbackProvider } from '../shared/components/feedback/FeedbackProvider';
-import { appTheme } from './theme';
+import { ColorModeProvider, useColorMode } from './theme/ColorModeContext';
+import { createDinamicaTheme } from './theme/theme';
+
+function ThemedProviders({ children }: PropsWithChildren) {
+  const { mode } = useColorMode();
+  const theme = useMemo(() => createDinamicaTheme(mode), [mode]);
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {children}
+    </ThemeProvider>
+  );
+}
 
 export function AppProviders({ children }: PropsWithChildren) {
   const [queryClient] = useState(
@@ -25,15 +38,16 @@ export function AppProviders({ children }: PropsWithChildren) {
   );
 
   return (
-    <ThemeProvider theme={appTheme}>
-      <CssBaseline />
-      <QueryClientProvider client={queryClient}>
-        <FeedbackProvider>
-          <BrowserRouter>
-            <AuthProvider>{children}</AuthProvider>
-          </BrowserRouter>
-        </FeedbackProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <ColorModeProvider>
+      <ThemedProviders>
+        <QueryClientProvider client={queryClient}>
+          <FeedbackProvider>
+            <BrowserRouter>
+              <AuthProvider>{children}</AuthProvider>
+            </BrowserRouter>
+          </FeedbackProvider>
+        </QueryClientProvider>
+      </ThemedProviders>
+    </ColorModeProvider>
   );
 }

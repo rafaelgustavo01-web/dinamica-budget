@@ -50,9 +50,18 @@ export function DataTable<T>({
   onRowClick,
 }: DataTableProps<T>) {
   const hasRows = rows.length > 0;
+  const rowsPerPageOptions = Array.from(new Set([10, 20, 50, 100, pageSize])).sort(
+    (left, right) => left - right,
+  );
 
   return (
-    <Paper sx={{ overflow: 'hidden' }}>
+    <Paper
+      sx={{
+        overflow: 'hidden',
+        border: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
       {loading ? <LinearProgress /> : null}
 
       <TableContainer>
@@ -93,10 +102,10 @@ export function DataTable<T>({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length}>
-                  <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
+                  <Typography variant="subtitle1" sx={{ mb: 0.5, textAlign: 'center' }}>
                     {emptyTitle}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
                     {emptyDescription}
                   </Typography>
                 </TableCell>
@@ -112,10 +121,8 @@ export function DataTable<T>({
         page={Math.max(page - 1, 0)}
         onPageChange={(_, nextPage) => onPageChange?.(nextPage + 1)}
         rowsPerPage={pageSize}
-        onRowsPerPageChange={(event) =>
-          onPageSizeChange?.(Number(event.target.value))
-        }
-        rowsPerPageOptions={[10, 20, 50, 100]}
+        onRowsPerPageChange={(event) => onPageSizeChange?.(Number(event.target.value))}
+        rowsPerPageOptions={rowsPerPageOptions}
         labelRowsPerPage="Itens por página"
       />
     </Paper>

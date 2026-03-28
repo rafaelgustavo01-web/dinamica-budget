@@ -15,13 +15,14 @@ import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
-import { useAuth } from './AuthProvider';
+import { errorMessages, successMessages } from '../../shared/components/FeedbackMessages';
 import { useFeedback } from '../../shared/components/feedback/FeedbackProvider';
 import { extractApiErrorMessage } from '../../shared/services/api/apiClient';
+import { useAuth } from './AuthProvider';
 
 const loginSchema = z.object({
-  email: z.email('Informe um email válido.'),
-  password: z.string().min(1, 'Informe a senha.'),
+  email: z.email('Informe um e-mail válido.'),
+  password: z.string().min(1, 'Informe sua senha.'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -48,7 +49,7 @@ export function LoginPage() {
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: () => {
-      showMessage('Sessão iniciada com sucesso.');
+      showMessage(successMessages.login);
       navigate(redirectTo, { replace: true });
     },
   });
@@ -58,26 +59,26 @@ export function LoginPage() {
       sx={{
         minHeight: '100vh',
         display: 'grid',
-        gridTemplateColumns: { xs: '1fr', lg: '1.15fr 0.85fr' },
-        background:
-          'linear-gradient(135deg, #1B2A4A 0%, #1B3A6B 46%, #F8F9FA 46%, #F8F9FA 100%)',
+        gridTemplateColumns: { xs: '1fr', lg: '1.05fr 0.95fr' },
       }}
     >
       <Box
         sx={{
           position: 'relative',
           overflow: 'hidden',
-          display: 'flex',
+          display: { xs: 'none', lg: 'flex' },
           alignItems: 'flex-end',
-          px: { xs: 3, md: 6 },
-          py: { xs: 4, md: 6 },
+          px: 6,
+          py: 6,
+          background:
+            'linear-gradient(145deg, rgba(14,21,37,1) 0%, rgba(27,42,74,1) 42%, rgba(27,58,107,1) 100%)',
           '&::before': {
             content: '""',
             position: 'absolute',
-            right: { xs: -88, md: -56 },
-            top: { xs: 36, md: 64 },
-            width: { xs: 180, md: 260 },
-            height: { xs: 180, md: 260 },
+            right: -48,
+            top: 72,
+            width: 260,
+            height: 260,
             borderRadius: 10,
             border: '18px solid rgba(255,255,255,0.08)',
             transform: 'rotate(45deg)',
@@ -85,37 +86,37 @@ export function LoginPage() {
           '&::after': {
             content: '""',
             position: 'absolute',
-            left: { xs: -56, md: -16 },
-            top: { xs: -40, md: -20 },
-            width: 180,
-            height: 180,
+            left: -40,
+            top: -32,
+            width: 220,
+            height: 220,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(232,166,35,0.32), transparent 70%)',
+            background: 'radial-gradient(circle, rgba(232,166,35,0.26), transparent 70%)',
           },
         }}
       >
-        <Stack spacing={2.5} sx={{ maxWidth: 560, color: 'common.white', position: 'relative' }}>
+        <Stack spacing={2.5} sx={{ maxWidth: 580, color: 'common.white', position: 'relative' }}>
           <Box
             sx={{
               width: 64,
               height: 6,
               borderRadius: 999,
-              background: 'linear-gradient(90deg, #E8A623 0%, #F0C05C 100%)',
+              backgroundColor: 'secondary.main',
             }}
           />
           <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.7)' }}>
             Construtora Dinâmica
           </Typography>
-          <Typography variant="h1" sx={{ fontSize: { xs: '2.2rem', md: '3.6rem' } }}>
-            Dinâmica Budget para operação orçamentária com rastreabilidade e controle.
+          <Typography variant="h1" sx={{ fontSize: '3.4rem' }}>
+            Orçamentação inteligente com rastreabilidade e controle.
           </Typography>
-          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.78)' }}>
-            Catálogo, busca inteligente, homologação, composições e governança por cliente em
-            uma interface interna preparada para intranet corporativa.
+          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)', maxWidth: 520 }}>
+            Catálogo híbrido, busca inteligente, homologação e composições em uma camada
+            operacional pensada para equipes técnicas.
           </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.62)', maxWidth: 480 }}>
-            Acesso seguro, integração direta com o backend oficial e experiência operacional
-            objetiva para o time interno.
+          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.62)', maxWidth: 520 }}>
+            Acesse com seu e-mail corporativo e continue o trabalho no contexto do cliente
+            selecionado.
           </Typography>
         </Stack>
       </Box>
@@ -124,8 +125,8 @@ export function LoginPage() {
         sx={{
           display: 'grid',
           placeItems: 'center',
-          px: 3,
-          py: 4,
+          px: { xs: 3, md: 4 },
+          py: { xs: 4, md: 5 },
         }}
       >
         <Paper
@@ -133,8 +134,9 @@ export function LoginPage() {
             width: '100%',
             maxWidth: 460,
             p: { xs: 3, md: 4 },
-            border: '1px solid rgba(27,58,107,0.08)',
-            boxShadow: '0 24px 48px rgba(27,42,74,0.12)',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: 12,
           }}
         >
           <Stack spacing={3}>
@@ -155,19 +157,16 @@ export function LoginPage() {
                 <LockOutlinedIcon />
               </Box>
               <div>
-                <Typography variant="h5">Acessar sistema</Typography>
+                <Typography variant="h5">Entrar</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Autenticação integrada ao backend oficial.
+                  Informe seu e-mail e sua senha para acessar o sistema.
                 </Typography>
               </div>
             </Stack>
 
             {loginMutation.isError ? (
               <Alert severity="error">
-                {extractApiErrorMessage(
-                  loginMutation.error,
-                  'Não foi possível autenticar no momento.',
-                )}
+                {extractApiErrorMessage(loginMutation.error, errorMessages.login)}
               </Alert>
             ) : null}
 
@@ -177,9 +176,10 @@ export function LoginPage() {
               onSubmit={handleSubmit((values) => loginMutation.mutate(values))}
             >
               <TextField
-                label="Email"
+                label="E-mail"
                 type="email"
                 autoComplete="username"
+                placeholder="nome@empresa.com.br"
                 error={Boolean(errors.email)}
                 helperText={errors.email?.message}
                 {...register('email')}
@@ -188,6 +188,7 @@ export function LoginPage() {
                 label="Senha"
                 type="password"
                 autoComplete="current-password"
+                placeholder="Digite sua senha"
                 error={Boolean(errors.password)}
                 helperText={errors.password?.message}
                 {...register('password')}

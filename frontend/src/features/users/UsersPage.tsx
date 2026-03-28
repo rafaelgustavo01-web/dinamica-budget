@@ -28,6 +28,10 @@ import { z } from 'zod';
 import { ConfirmationDialog } from '../../shared/components/ConfirmationDialog';
 import { DataTable } from '../../shared/components/DataTable';
 import { EmptyState } from '../../shared/components/EmptyState';
+import {
+  errorMessages,
+  successMessages,
+} from '../../shared/components/FeedbackMessages';
 import { PageHeader } from '../../shared/components/PageHeader';
 import { useFeedback } from '../../shared/components/feedback/FeedbackProvider';
 import { extractApiErrorMessage } from '../../shared/services/api/apiClient';
@@ -153,7 +157,7 @@ export function UsersPage() {
   const createUserMutation = useMutation({
     mutationFn: (values: UsuarioCreate) => userApi.create(values),
     onSuccess: () => {
-      showMessage('Usuario criado com sucesso.');
+      showMessage(successMessages.userCreated);
       setCreateDialogOpen(false);
       resetCreateForm();
       void queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -163,7 +167,7 @@ export function UsersPage() {
   const updateUserMutation = useMutation({
     mutationFn: (payload: UsuarioPatchRequest) => userApi.update(selectedUser!.id, payload),
     onSuccess: (data) => {
-      showMessage('Usuario atualizado com sucesso.');
+      showMessage(successMessages.userUpdated);
       setSelectedUserId(data.id);
       setEditDialogOpen(false);
       void queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -176,9 +180,7 @@ export function UsersPage() {
         is_active: !selectedUser!.is_active,
       }),
     onSuccess: (data) => {
-      showMessage(
-        data.is_active ? 'Usuario reativado com sucesso.' : 'Usuario inativado com sucesso.',
-      );
+      showMessage(data.is_active ? successMessages.userActivated : successMessages.userDeactivated);
       setSelectedUserId(data.id);
       setConfirmStatusOpen(false);
       void queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -192,7 +194,7 @@ export function UsersPage() {
         perfis,
       }),
     onSuccess: () => {
-      showMessage('Perfis por cliente atualizados com sucesso.');
+      showMessage(successMessages.userPerfisUpdated);
       setSelectedPerfis([]);
       setHasPerfisDraft(false);
       void queryClient.invalidateQueries({ queryKey: ['users', 'perfis', selectedUser?.id] });
@@ -211,15 +213,15 @@ export function UsersPage() {
   return (
     <>
       <PageHeader
-        title="Usuarios"
-        description="Modulo administrativo protegido para criacao, listagem, edicao, status e vinculos de autorizacao por cliente."
+        title="Usuários"
+        description="Gerencie os usuários do sistema e seus perfis de acesso. Cada usuário é vinculado a um cliente e possui um nível de permissão."
         actions={
           <Button
             variant="contained"
             startIcon={<AddOutlinedIcon />}
             onClick={() => setCreateDialogOpen(true)}
           >
-            Novo usuario
+            Novo usuário
           </Button>
         }
       />
@@ -278,8 +280,8 @@ export function UsersPage() {
             page={page}
             pageSize={pageSize}
             total={usersQuery.data?.total ?? 0}
-            emptyTitle="Nenhum usuario encontrado"
-            emptyDescription="A listagem reflete o contrato administrativo publicado pelo backend, com filtro de status e paginacao."
+            emptyTitle="Nenhum usuário cadastrado"
+            emptyDescription="Cadastre usuários e defina perfis de acesso para começar a usar o sistema."
             onPageChange={setPage}
             onPageSizeChange={(value) => {
               setPageSize(value);
@@ -296,7 +298,7 @@ export function UsersPage() {
 
         <Paper sx={{ flex: 0.85, p: 3 }}>
           <Typography variant="h6" sx={{ mb: 1.5 }}>
-            Gestao administrativa
+            Gestão administrativa
           </Typography>
 
           {selectedUser ? (
@@ -480,7 +482,7 @@ export function UsersPage() {
           ) : (
             <EmptyState
               title="Nenhum usuario selecionado"
-              description="Selecione um usuario na tabela para editar dados basicos, alterar status e administrar os perfis por cliente."
+              description="Selecione um usuário na tabela para editar dados básicos, alterar status e administrar perfis por cliente."
             />
           )}
         </Paper>
@@ -492,7 +494,7 @@ export function UsersPage() {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Novo usuario</DialogTitle>
+        <DialogTitle>Novo usuário</DialogTitle>
         <DialogContent dividers>
           <Stack
             component="form"
@@ -514,7 +516,7 @@ export function UsersPage() {
               {...registerCreate('email')}
             />
             <TextField
-              label="Senha inicial"
+              label="Senha"
               type="password"
               error={Boolean(createErrors.password)}
               helperText={createErrors.password?.message ?? 'Use ao menos 8 caracteres.'}
@@ -522,13 +524,13 @@ export function UsersPage() {
             />
             <FormControlLabel
               control={<Checkbox {...registerCreate('is_admin')} />}
-              label="Usuario administrativo"
+              label="Usuário administrativo"
             />
             {createUserMutation.isError ? (
               <Alert severity="error">
                 {extractApiErrorMessage(
                   createUserMutation.error,
-                  'Falha ao criar o usuario.',
+                  errorMessages.userCreate,
                 )}
               </Alert>
             ) : null}
@@ -544,7 +546,7 @@ export function UsersPage() {
             {createUserMutation.isPending ? (
               <CircularProgress size={20} color="inherit" />
             ) : (
-              'Criar usuario'
+              'Salvar'
             )}
           </Button>
         </DialogActions>
@@ -556,7 +558,7 @@ export function UsersPage() {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Editar usuario</DialogTitle>
+        <DialogTitle>Editar usuário</DialogTitle>
         <DialogContent dividers>
           <Stack
             component="form"
@@ -579,13 +581,13 @@ export function UsersPage() {
             />
             <FormControlLabel
               control={<Checkbox {...registerEdit('is_admin')} />}
-              label="Usuario administrativo"
+              label="Usuário administrativo"
             />
             {updateUserMutation.isError ? (
               <Alert severity="error">
                 {extractApiErrorMessage(
                   updateUserMutation.error,
-                  'Falha ao atualizar o usuario.',
+                  errorMessages.userUpdate,
                 )}
               </Alert>
             ) : null}
@@ -601,7 +603,7 @@ export function UsersPage() {
             {updateUserMutation.isPending ? (
               <CircularProgress size={20} color="inherit" />
             ) : (
-              'Salvar alteracoes'
+              'Salvar'
             )}
           </Button>
         </DialogActions>
@@ -609,7 +611,7 @@ export function UsersPage() {
 
       <ConfirmationDialog
         open={confirmStatusOpen}
-        title={selectedUser?.is_active ? 'Inativar usuario' : 'Reativar usuario'}
+        title={selectedUser?.is_active ? 'Desativar usuário' : 'Reativar usuário'}
         confirmLabel={selectedUser?.is_active ? 'Inativar' : 'Reativar'}
         confirmColor={selectedUser?.is_active ? 'error' : 'primary'}
         isLoading={toggleStatusMutation.isPending}
@@ -618,7 +620,7 @@ export function UsersPage() {
       >
         <Stack spacing={1}>
           <Typography variant="body2">
-            Usuario: {selectedUser?.nome}
+            Usuário: {selectedUser?.nome}
           </Typography>
           <Typography variant="body2">
             Email: {selectedUser?.email}
@@ -627,7 +629,7 @@ export function UsersPage() {
             <Alert severity="error">
               {extractApiErrorMessage(
                 toggleStatusMutation.error,
-                'Falha ao alterar o status do usuario.',
+                errorMessages.userUpdate,
               )}
             </Alert>
           ) : null}

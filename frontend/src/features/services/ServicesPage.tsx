@@ -18,19 +18,25 @@ import { useForm } from 'react-hook-form';
 import { useState } from 'react';
 import { z } from 'zod';
 
-import { useAuth } from '../auth/AuthProvider';
 import { DataTable } from '../../shared/components/DataTable';
 import { EmptyState } from '../../shared/components/EmptyState';
+import {
+  errorMessages,
+  successMessages,
+  warningMessages,
+} from '../../shared/components/FeedbackMessages';
 import { PageHeader } from '../../shared/components/PageHeader';
+import { StatusBadge } from '../../shared/components/StatusBadge';
 import { useFeedback } from '../../shared/components/feedback/FeedbackProvider';
 import { extractApiErrorMessage } from '../../shared/services/api/apiClient';
 import { servicesApi } from '../../shared/services/api/servicesApi';
 import type { ServicoTcpoResponse } from '../../shared/types/contracts/servicos';
 import { formatCurrency } from '../../shared/utils/format';
+import { useAuth } from '../auth/AuthProvider';
 
 const createServiceSchema = z.object({
-  codigo_origem: z.string().min(1, 'Informe o código de origem.'),
-  descricao: z.string().min(3, 'Descrição obrigatória.'),
+  codigo_origem: z.string().min(1, 'Informe o código do serviço.'),
+  descricao: z.string().min(3, 'Informe a descrição do serviço.'),
   unidade_medida: z.string().min(1, 'Informe a unidade.'),
   custo_unitario: z.coerce.number().positive('Informe um custo maior que zero.'),
   categoria_id: z.string().optional(),
@@ -95,7 +101,7 @@ export function ServicesPage() {
         categoria_id: values.categoria_id ? Number(values.categoria_id) : null,
       }),
     onSuccess: () => {
-      showMessage('Serviço TCPO criado com sucesso.');
+      showMessage(successMessages.serviceCreated);
       setCreateDialogOpen(false);
       reset();
       void queryClient.invalidateQueries({ queryKey: ['services'] });
@@ -106,12 +112,12 @@ export function ServicesPage() {
     return (
       <>
         <PageHeader
-          title="Serviços / Catálogo"
-          description="Catálogo visível ao cliente corrente ou ao administrador global."
+          title="Catálogo de Serviços"
+          description="Consulte os serviços disponíveis para orçamentação no contexto do cliente atual."
         />
         <EmptyState
           title="Selecione um cliente para listar o catálogo"
-          description="Para usuários não administrativos, o frontend só consulta o catálogo visível quando existe escopo de cliente definido."
+          description="Defina o cliente no topo para carregar os serviços visíveis e abrir o detalhamento das composições."
         />
       </>
     );
@@ -120,29 +126,28 @@ export function ServicesPage() {
   return (
     <>
       <PageHeader
-        title="Serviços / Catálogo"
-        description="Listagem paginada do catálogo aprovado com filtros suportados pelo contrato atual e acesso ao detalhamento de composição."
+        title="Catálogo de Serviços"
+        description="Gerencie os serviços do catálogo com filtros, detalhamento de composição e criação administrativa quando disponível."
         actions={
-          <Stack direction="row" spacing={1}>
-            {user?.is_admin ? (
-              <Button
-                variant="contained"
-                startIcon={<AddOutlinedIcon />}
-                onClick={() => setCreateDialogOpen(true)}
-              >
-                Novo TCPO
-              </Button>
-            ) : null}
-          </Stack>
+          user?.is_admin ? (
+            <Button
+              variant="contained"
+              startIcon={<AddOutlinedIcon />}
+              onClick={() => setCreateDialogOpen(true)}
+            >
+              Novo serviço
+            </Button>
+          ) : undefined
         }
       />
 
       <Stack direction={{ xs: 'column', xl: 'row' }} spacing={2}>
-        <Paper sx={{ flex: 1.2, p: 3 }}>
+        <Paper sx={{ flex: 1.2, p: 3, border: '1px solid', borderColor: 'divider' }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
             <TextField
               fullWidth
-              label="Busca textual"
+              label="Buscar"
+              placeholder="Buscar..."
               value={query}
               onChange={(event) => {
                 setQuery(event.target.value);
@@ -150,7 +155,7 @@ export function ServicesPage() {
               }}
             />
             <TextField
-              label="Categoria ID"
+              label="Categoria"
               value={categoriaId}
               onChange={(event) => {
                 setCategoriaId(event.target.value);
@@ -161,10 +166,7 @@ export function ServicesPage() {
 
           {servicesQuery.isError ? (
             <Alert severity="error" sx={{ mb: 2 }}>
-              {extractApiErrorMessage(
-                servicesQuery.error,
-                'Falha ao carregar o catálogo.',
-              )}
+              {extractApiErrorMessage(servicesQuery.error, errorMessages.loadData)}
             </Alert>
           ) : null}
 
@@ -174,13 +176,13 @@ export function ServicesPage() {
               { key: 'descricao', header: 'Descrição', render: (row) => row.descricao },
               { key: 'unidade', header: 'Unidade', render: (row) => row.unidade_medida },
               {
-                key: 'categoria',
-                header: 'Categoria',
-                render: (row) => row.categoria_id ?? '-',
+                key: 'origem',
+                header: 'Origem',
+                render: (row) => <StatusBadge value={row.origem} />,
               },
               {
                 key: 'custo',
-                header: 'Custo unitário',
+                header: 'Custo unitário (R$)',
                 align: 'right',
                 render: (row) => formatCurrency(row.custo_unitario),
               },
@@ -191,8 +193,8 @@ export function ServicesPage() {
             page={page}
             pageSize={pageSize}
             total={servicesQuery.data?.total ?? 0}
-            emptyTitle="Nenhum serviço encontrado"
-            emptyDescription="A listagem atual reflete somente os filtros suportados pelo contrato oficial de serviços."
+            emptyTitle="Seu catálogo está vazio"
+            emptyDescription="Nenhum serviço disponível para o recorte atual. Ajuste os filtros ou cadastre novos itens."
             onPageChange={setPage}
             onPageSizeChange={(value) => {
               setPageSize(value);
@@ -202,9 +204,9 @@ export function ServicesPage() {
           />
         </Paper>
 
-        <Paper sx={{ flex: 0.8, p: 3 }}>
+        <Paper sx={{ flex: 0.8, p: 3, border: '1px solid', borderColor: 'divider' }}>
           <Typography variant="h6" sx={{ mb: 1.5 }}>
-            Detalhes e composição
+            Detalhes do serviço
           </Typography>
           {selectedService ? (
             <Stack spacing={1.5}>
@@ -216,16 +218,19 @@ export function ServicesPage() {
                 Unidade: {selectedService.unidade_medida}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Custo: {formatCurrency(selectedService.custo_unitario)}
+                Custo unitário: {formatCurrency(selectedService.custo_unitario)}
               </Typography>
+              <Stack direction="row" spacing={1}>
+                <StatusBadge value={selectedService.origem} />
+              </Stack>
 
               {compositionQuery.isFetching ? (
                 <Typography variant="body2" color="text.secondary">
-                  Carregando composição...
+                  Carregando composições...
                 </Typography>
               ) : compositionQuery.data ? (
                 <>
-                  <Typography variant="subtitle2">Itens da composição</Typography>
+                  <Typography variant="subtitle2">Composição</Typography>
                   {compositionQuery.data.itens.length ? (
                     compositionQuery.data.itens.map((item) => (
                       <Paper key={item.id} variant="outlined" sx={{ p: 1.5 }}>
@@ -237,27 +242,26 @@ export function ServicesPage() {
                       </Paper>
                     ))
                   ) : (
-                    <Typography variant="body2" color="text.secondary">
-                      Este serviço não possui composição cadastrada.
-                    </Typography>
+                    <Alert severity="warning">{warningMessages.serviceNoComposition}</Alert>
                   )}
                 </>
               ) : (
                 <Typography variant="body2" color="text.secondary">
-                  Selecione um serviço na tabela para abrir o detalhamento.
+                  Selecione um serviço para abrir o detalhamento.
                 </Typography>
               )}
             </Stack>
           ) : (
-            <Typography variant="body2" color="text.secondary">
-              Selecione um serviço para exibir seus dados.
-            </Typography>
+            <EmptyState
+              title="Nenhum serviço selecionado"
+              description="Selecione um serviço na tabela para revisar dados, origem e composição."
+            />
           )}
         </Paper>
       </Stack>
 
       <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Novo serviço TCPO</DialogTitle>
+        <DialogTitle>Novo serviço</DialogTitle>
         <DialogContent dividers>
           <Stack
             component="form"
@@ -266,7 +270,7 @@ export function ServicesPage() {
             onSubmit={handleSubmit((values) => createServiceMutation.mutate(values))}
           >
             <TextField
-              label="Código de origem"
+              label="Código"
               error={Boolean(errors.codigo_origem)}
               helperText={errors.codigo_origem?.message}
               {...register('codigo_origem')}
@@ -295,17 +299,14 @@ export function ServicesPage() {
               />
             </Stack>
             <TextField
-              label="Categoria ID"
+              label="Categoria"
               error={Boolean(errors.categoria_id)}
               helperText={errors.categoria_id?.message}
               {...register('categoria_id')}
             />
             {createServiceMutation.isError ? (
               <Alert severity="error">
-                {extractApiErrorMessage(
-                  createServiceMutation.error,
-                  'Falha ao criar o serviço.',
-                )}
+                {extractApiErrorMessage(createServiceMutation.error, errorMessages.serviceSave)}
               </Alert>
             ) : null}
           </Stack>

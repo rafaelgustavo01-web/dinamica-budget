@@ -15,8 +15,8 @@
     },
     {
       "name": "Docker PostgreSQL",
-      "runtimeExecutable": "docker",
-      "runtimeArgs": ["compose", "up", "db"],
+      "runtimeExecutable": "cmd.exe",
+      "runtimeArgs": ["/C", "ping -n 99999 127.0.0.1 > nul"],
       "port": 5432
     }
   ]

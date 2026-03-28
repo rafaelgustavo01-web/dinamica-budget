@@ -39,7 +39,30 @@
       "Bash(winget install:*)",
       "Bash(tasklist)",
       "Bash(taskkill /PID 33740 /F)",
-      "Bash(sc query:*)"
+      "Bash(sc query:*)",
+      "Bash('C:/Program Files/PostgreSQL/16/bin/psql.exe' -U postgres -c l)",
+      "Bash(PGPASSWORD=password \"C:/Program Files/PostgreSQL/16/bin/psql.exe\" -U postgres -c \"\\\\l\")",
+      "Bash(PGPASSWORD=postgres \"C:/Program Files/PostgreSQL/16/bin/psql.exe\" -U postgres -c \"\\\\l\")",
+      "Bash(PGPASSWORD=postgres \"C:/Program Files/PostgreSQL/16/bin/psql.exe\" -U postgres -c \"CREATE DATABASE dinamica_budget ENCODING ''UTF8'';\")",
+      "Bash(where powershell.exe)",
+      "Bash(powershell.exe -Command \"Write-Host ''hello''\")",
+      "WebSearch",
+      "WebFetch(domain:dev.to)",
+      "Bash(powershell.exe -NoProfile -Command \":*)",
+      "Bash(net session:*)",
+      "Bash(powershell.exe -NoProfile -Command \"[Security.Principal.WindowsIdentity]::GetCurrent\\(\\).Groups | Where-Object { $_.Value -eq ''S-1-5-32-544'' } | Select-Object Value; Write-Host ''Admin check done''\")",
+      "Bash(\"C:/Program Files/PostgreSQL/16/share/extension/test_perm.txt\")",
+      "Bash(rm \"C:/Program Files/PostgreSQL/16/share/extension/test_perm.txt\")",
+      "Bash(\".venv/Scripts/alembic.exe\" upgrade:*)",
+      "Bash(PGPASSWORD=postgres \"C:/Program Files/PostgreSQL/16/bin/psql.exe\" -U postgres -d dinamica_budget -c \"SELECT typname FROM pg_type WHERE typtype=''e'' ORDER BY typname;\")",
+      "Bash(PGPASSWORD=postgres \"C:/Program Files/PostgreSQL/16/bin/psql.exe\" -U postgres -d dinamica_budget -c \"SELECT * FROM alembic_version;\")",
+      "Bash(PGPASSWORD=postgres \"C:/Program Files/PostgreSQL/16/bin/psql.exe\" -U postgres -d dinamica_budget -c \"\\\\dt public.*\")",
+      "Bash(grep -n \"status_validacao_associacao\" \"C:/Users/rafae/Documents/workspace/Dinamica Budget/alembic/versions/\"*.py)",
+      "Bash(grep -n \"SAEnum\\\\|Enum\\\\|enum\\\\|status_validacao\" \"C:/Users/rafae/Documents/workspace/Dinamica Budget/app/models/\"*.py)",
+      "Bash(PGPASSWORD=postgres \"C:/Program Files/PostgreSQL/16/bin/psql.exe\" -U postgres -d dinamica_budget -c \"\\\\dt\")",
+      "Bash(PGPASSWORD=postgres \"C:/Program Files/PostgreSQL/16/bin/psql.exe\" -U postgres -d dinamica_budget -c \"SELECT typname FROM pg_type WHERE typtype=''''e'''';\")",
+      "Bash(find \"C:/Users/rafae/Documents/workspace/Dinamica Budget/alembic\" -name \"*.pyc\" -delete)",
+      "Bash(find \"C:/Users/rafae/Documents/workspace/Dinamica Budget/app/models\" -name \"*.pyc\" -delete)"
     ]
   }
 }

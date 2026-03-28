@@ -13,12 +13,9 @@ import {
 import { NavLink, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../../features/auth/AuthProvider';
-import {
-  getNavigationStatusLabel,
-  navigationItems,
-} from './navigationConfig';
+import { getNavigationStatusLabel, navigationItems } from './navigationConfig';
 
-export const drawerWidth = 288;
+export const drawerWidth = 260;
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -41,59 +38,46 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         '&::before': {
           content: '""',
           position: 'absolute',
-          right: -64,
-          top: 76,
-          width: 220,
-          height: 220,
+          right: -56,
+          top: 92,
+          width: 188,
+          height: 188,
           borderRadius: 8,
           border: '18px solid rgba(255,255,255,0.05)',
           transform: 'rotate(45deg)',
           pointerEvents: 'none',
         },
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          right: 12,
-          top: 126,
-          width: 120,
-          height: 120,
-          borderRadius: 8,
-          border: '12px solid rgba(232,166,35,0.12)',
-          transform: 'rotate(45deg)',
-          pointerEvents: 'none',
-        },
       }}
     >
-      <Box sx={{ px: 3, py: 3.5, position: 'relative', zIndex: 1 }}>
-        <Stack direction="row" spacing={1.5} alignItems="stretch">
-          <Box
-            sx={{
-              width: 6,
-              borderRadius: 999,
-              background: 'linear-gradient(180deg, #E8A623 0%, #F0C05C 100%)',
-              boxShadow: '0 0 0 1px rgba(255,255,255,0.06)',
-            }}
-          />
-          <Box>
-            <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.64)' }}>
-              Construtora Dinâmica
-            </Typography>
-            <Typography variant="h4" sx={{ color: 'common.white', mt: 0.25 }}>
-              Budget
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ mt: 1.25, maxWidth: 212, color: 'rgba(255,255,255,0.78)' }}
-            >
-              Sistema interno para catálogo, busca, homologação e governança por cliente.
-            </Typography>
-          </Box>
+      <Box sx={{ px: 3, py: 3, position: 'relative', zIndex: 1 }}>
+        <Stack spacing={1.5}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box
+              sx={{
+                width: 14,
+                height: 42,
+                borderRadius: 999,
+                backgroundColor: 'secondary.main',
+              }}
+            />
+            <Box>
+              <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.56)' }}>
+                Construtora Dinâmica
+              </Typography>
+              <Typography variant="h5" sx={{ color: 'common.white', lineHeight: 1.1 }}>
+                Dinâmica Budget
+              </Typography>
+            </Box>
+          </Stack>
+          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
+            Plataforma operacional para busca, catálogo, homologação e composições.
+          </Typography>
         </Stack>
       </Box>
 
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
-      <Box sx={{ flex: 1, overflowY: 'auto', px: 2, py: 2 }}>
+      <Box sx={{ flex: 1, overflowY: 'auto', px: 1.5, py: 2 }}>
         {groups.map((group) => {
           const items = navigationItems.filter(
             (item) => item.group === group && item.visible(user) && item.showInMenu !== false,
@@ -108,10 +92,10 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               <Typography
                 variant="caption"
                 sx={{
-                  px: 1.5,
+                  px: 2,
                   textTransform: 'uppercase',
                   color: 'rgba(255,255,255,0.42)',
-                  letterSpacing: '0.08em',
+                  letterSpacing: '0.12em',
                 }}
               >
                 {group}
@@ -129,23 +113,21 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                       component={NavLink}
                       to={item.path}
                       onClick={onMobileClose}
+                      selected={active}
                       sx={{
-                        borderRadius: 2.5,
                         mb: 0.5,
-                        pl: 1.25,
-                        borderLeft: active ? '3px solid #E8A623' : '3px solid transparent',
-                        color: active ? '#ffffff' : 'rgba(255,255,255,0.82)',
-                        backgroundColor: active
-                          ? 'rgba(232,166,35,0.14)'
-                          : 'transparent',
-                        '&:hover': {
-                          backgroundColor: active
-                            ? 'rgba(232,166,35,0.18)'
-                            : 'rgba(255,255,255,0.06)',
-                        },
+                        borderRadius: 2,
+                        borderLeft: active ? '3px solid' : '3px solid transparent',
+                        borderLeftColor: active ? 'secondary.main' : 'transparent',
+                        color: active ? 'common.white' : 'rgba(255,255,255,0.78)',
                       }}
                     >
-                      <ListItemIcon sx={{ color: 'inherit', minWidth: 36 }}>
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 38,
+                          color: active ? 'secondary.main' : 'rgba(255,255,255,0.54)',
+                        }}
+                      >
                         {item.icon}
                       </ListItemIcon>
                       <ListItemText
@@ -159,10 +141,10 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                           sx={{
                             ml: 1,
                             color:
-                              item.status === 'partial' ? '#8B6209' : 'rgba(255,255,255,0.72)',
+                              item.status === 'partial' ? 'secondary.dark' : 'rgba(255,255,255,0.72)',
                             backgroundColor:
                               item.status === 'partial'
-                                ? '#FDF3DD'
+                                ? 'secondary.50'
                                 : 'rgba(255,255,255,0.12)',
                           }}
                         />
@@ -177,7 +159,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       </Box>
 
       <Stack
-        spacing={0.5}
+        spacing={0.4}
         sx={{
           px: 3,
           py: 2.5,
@@ -187,7 +169,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       >
         <Typography variant="body2">Ambiente interno</Typography>
         <Typography variant="caption">
-          Navegação adaptada às permissões do usuário e ao backend operacional disponível.
+          Navegação adaptada às permissões do usuário autenticado.
         </Typography>
       </Stack>
     </Box>

@@ -26,10 +26,10 @@ export function ClientSelector({
       <Stack direction="row" spacing={1} alignItems="center">
         <TextField
           size="small"
-          label="Cliente (UUID)"
+          label="Cliente"
           value={selectedClientId}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="Cole o UUID quando a rota exigir cliente"
+          placeholder="Cole o UUID quando o fluxo exigir cliente"
           sx={{ minWidth: 280 }}
         />
         <Tooltip title="Limpar contexto de cliente">
@@ -56,15 +56,18 @@ export function ClientSelector({
     );
   }
 
+  const safeValue = availableClientIds.includes(selectedClientId) ? selectedClientId : '';
+
   return (
     <TextField
       select
       size="small"
       label="Cliente"
-      value={selectedClientId}
+      value={safeValue}
       onChange={(event) => onChange(event.target.value)}
       sx={{ minWidth: 240 }}
     >
+      <MenuItem value="">Selecione</MenuItem>
       {availableClientIds.map((clienteId) => (
         <MenuItem key={clienteId} value={clienteId}>
           {clienteId}

@@ -45,7 +45,7 @@ export const navigationItems: NavigationItem[] = [
     visible: () => true,
   },
   {
-    label: 'Serviços',
+    label: 'Catálogo de Serviços',
     path: '/servicos',
     group: 'Operação',
     icon: <SourceOutlinedIcon fontSize="small" />,
@@ -132,7 +132,7 @@ export function getRouteTitle(pathname: string) {
     navigationItems.find((item) => pathname === item.path) ??
     navigationItems.find((item) => pathname.startsWith(`${item.path}/`));
 
-  return currentItem?.label ?? 'Dinamica Budget';
+  return currentItem?.label ?? 'Dinâmica Budget';
 }
 
 export function getRouteStatus(pathname: string) {

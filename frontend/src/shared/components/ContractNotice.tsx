@@ -23,9 +23,15 @@ export function ContractNotice({
   availableNow,
 }: ContractNoticeProps) {
   return (
-    <Paper sx={{ p: 3 }}>
+    <Paper
+      sx={{
+        p: 3,
+        border: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
       <Stack spacing={2}>
-        <Alert severity="warning" variant="outlined">
+        <Alert severity="warning" variant="standard">
           <AlertTitle>{title}</AlertTitle>
           {description}
         </Alert>
@@ -47,7 +53,7 @@ export function ContractNotice({
 
         <div>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Endpoint ou contrato ainda ausente
+            Contratos ainda pendentes
           </Typography>
           <List dense sx={{ py: 0 }}>
             {missingContracts.map((contract) => (

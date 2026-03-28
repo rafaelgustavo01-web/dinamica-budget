@@ -1,4 +1,5 @@
-import { Button, Paper, Stack, Typography } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { Box, Button, Paper, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 
 interface EmptyStateProps {
@@ -20,30 +21,26 @@ export function EmptyState({
     <Paper
       variant="outlined"
       sx={{
-        p: 4,
+        p: { xs: 4, md: 5 },
         borderColor: 'divider',
-        background:
-          'linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(237,241,248,0.8) 100%)',
+        backgroundColor: 'background.paper',
       }}
     >
-      <Stack spacing={1.5} alignItems="flex-start">
-        {icon ? (
-          <Paper
-            elevation={0}
-            sx={{
-              width: 52,
-              height: 52,
-              display: 'grid',
-              placeItems: 'center',
-              borderRadius: 2.5,
-              backgroundColor: 'rgba(27,58,107,0.08)',
-              color: 'primary.main',
-            }}
-          >
-            {icon}
-          </Paper>
-        ) : null}
-        <Typography variant="h6">{title}</Typography>
+      <Stack spacing={2} alignItems="center" textAlign="center">
+        <Box
+          sx={{
+            width: 72,
+            height: 72,
+            borderRadius: '50%',
+            display: 'grid',
+            placeItems: 'center',
+            backgroundColor: 'action.hover',
+            color: 'primary.main',
+          }}
+        >
+          {icon ?? <InfoOutlinedIcon sx={{ fontSize: 34 }} />}
+        </Box>
+        <Typography variant="h5">{title}</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 560 }}>
           {description}
         </Typography>

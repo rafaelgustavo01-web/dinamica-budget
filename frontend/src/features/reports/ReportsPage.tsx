@@ -1,12 +1,5 @@
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
-import {
-  Alert,
-  Button,
-  Paper,
-  Stack,
-  Tab,
-  Tabs,
-} from '@mui/material';
+import { Alert, Button, Paper, Stack, Tab, Tabs } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -39,9 +32,7 @@ export function ReportsPage() {
   const homologationReportQuery = useQuery({
     queryKey: ['reports', 'homologation', selectedClientId],
     queryFn: () => homologationApi.listPendentes(selectedClientId, 1, 50),
-    enabled:
-      Boolean(selectedClientId) &&
-      hasClientePerfil(user, selectedClientId, ['APROVADOR', 'ADMIN']),
+    enabled: Boolean(selectedClientId) && hasClientePerfil(user, selectedClientId, ['APROVADOR', 'ADMIN']),
   });
 
   if (!selectedClientId && !user?.is_admin) {
@@ -49,11 +40,11 @@ export function ReportsPage() {
       <>
         <PageHeader
           title="Relatórios"
-          description="Visão tabular de consultas operacionais suportadas pelo backend atual."
+          description="Gere e exporte relatórios operacionais para análise e documentação do seu catálogo."
         />
         <EmptyState
-          title="Selecione um cliente para gerar relatórios operacionais"
-          description="Os relatórios implementados hoje partem das listagens oficiais já publicadas pelo backend."
+          title="Selecione um cliente para gerar relatórios"
+          description="Defina o cliente no topo para carregar os dados disponíveis para exportação."
         />
       </>
     );
@@ -63,19 +54,19 @@ export function ReportsPage() {
     <>
       <PageHeader
         title="Relatórios"
-        description="Camada tabular prática para as consultas já disponíveis hoje, com exportação CSV do recorte carregado."
+        description="Gere e exporte relatórios detalhados para análise e documentação dos seus orçamentos."
       />
 
-      <Paper sx={{ mb: 2 }}>
+      <Paper sx={{ mb: 2, border: '1px solid', borderColor: 'divider' }}>
         <Tabs value={tab} onChange={(_, value) => setTab(value)}>
-          <Tab label="Serviços visíveis" />
+          <Tab label="Catálogo de serviços" />
           <Tab label="Pendências de homologação" />
         </Tabs>
       </Paper>
 
       {tab === 0 ? (
         <Stack spacing={2}>
-          <Paper sx={{ p: 2 }}>
+          <Paper sx={{ p: 2, border: '1px solid', borderColor: 'divider' }}>
             <Stack direction="row" justifyContent="flex-end">
               <Button
                 startIcon={<FileDownloadOutlinedIcon />}
@@ -99,7 +90,7 @@ export function ReportsPage() {
           </Paper>
 
           {servicesReportQuery.isError ? (
-            <Alert severity="error">Falha ao carregar o relatório de serviços.</Alert>
+            <Alert severity="error">Não foi possível carregar o relatório de serviços.</Alert>
           ) : null}
 
           <DataTable
@@ -121,13 +112,13 @@ export function ReportsPage() {
             page={1}
             pageSize={Math.max(servicesReportQuery.data?.items.length ?? 1, 1)}
             total={servicesReportQuery.data?.items.length ?? 0}
-            emptyTitle="Relatório sem itens"
-            emptyDescription="Nenhum serviço visível foi retornado para o recorte atual."
+            emptyTitle="Nenhum relatório disponível"
+            emptyDescription="Ainda não há dados suficientes para gerar relatórios neste recorte."
           />
         </Stack>
       ) : (
         <Stack spacing={2}>
-          <Paper sx={{ p: 2 }}>
+          <Paper sx={{ p: 2, border: '1px solid', borderColor: 'divider' }}>
             <Stack direction="row" justifyContent="flex-end">
               <Button
                 startIcon={<FileDownloadOutlinedIcon />}
@@ -168,8 +159,8 @@ export function ReportsPage() {
             page={1}
             pageSize={Math.max(homologationReportQuery.data?.items.length ?? 1, 1)}
             total={homologationReportQuery.data?.items.length ?? 0}
-            emptyTitle="Sem pendências disponíveis"
-            emptyDescription="Este relatório depende de perfil aprovador no cliente atual."
+            emptyTitle="Nenhum relatório disponível"
+            emptyDescription="Ainda não há dados suficientes para gerar este relatório no recorte atual."
           />
         </Stack>
       )}
@@ -177,7 +168,7 @@ export function ReportsPage() {
       <Stack spacing={2} sx={{ mt: 2 }}>
         <ContractNotice
           title="Cobertura de relatórios ainda parcial"
-          description="Os relatórios operacionais implementados hoje reutilizam os endpoints já existentes de serviços e homologação. As demais tabelas aguardam APIs dedicadas ou listagens publicadas."
+          description="Os relatórios atuais reutilizam os endpoints já publicados de serviços e homologação. As demais visões dependem de APIs dedicadas."
           missingContracts={[
             'GET /relatorios/usuarios',
             'GET /relatorios/clientes',

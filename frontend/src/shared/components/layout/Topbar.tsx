@@ -1,31 +1,47 @@
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
 import {
   AppBar,
+  Avatar,
   Box,
-  Button,
   Chip,
   IconButton,
   Stack,
   Toolbar,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../../features/auth/AuthProvider';
+import { useColorMode } from '../../../app/theme/ColorModeContext';
 import { shortenUuid } from '../../utils/format';
 import { ClientSelector } from './ClientSelector';
-import {
-  getRouteStatus,
-  getRouteTitle,
-  getStatusLabel,
-} from './navigationConfig';
+import { getRouteStatus, getRouteTitle, getStatusLabel } from './navigationConfig';
 
 interface TopbarProps {
   onMenuClick: () => void;
 }
 
+function getInitials(name: string | undefined, fallback: string) {
+  if (!name) {
+    return fallback.slice(0, 2).toUpperCase();
+  }
+
+  const initials = name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('');
+
+  return initials.toUpperCase();
+}
+
 export function Topbar({ onMenuClick }: TopbarProps) {
+  const { mode, toggleColorMode } = useColorMode();
   const {
     user,
     logout,
@@ -44,18 +60,13 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       position="fixed"
       color="inherit"
       sx={{
-        width: { lg: `calc(100% - 288px)` },
-        ml: { lg: '288px' },
-        backgroundColor: 'rgba(255,255,255,0.92)',
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        boxShadow: '0 8px 24px rgba(27,42,74,0.06)',
+        width: { lg: 'calc(100% - 260px)' },
+        ml: { lg: '260px' },
       }}
     >
       <Toolbar
         sx={{
-          minHeight: 78,
+          minHeight: 72,
           px: { xs: 2, md: 3 },
           gap: 2,
           alignItems: 'center',
@@ -70,32 +81,55 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <MenuOutlinedIcon />
         </IconButton>
 
-        <Box sx={{ minWidth: 0 }}>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.3 }}>
-            <Typography variant="h5" sx={{ lineHeight: 1.2 }}>
-              {currentTitle}
+        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+          <Box
+            sx={{
+              width: 12,
+              height: 36,
+              borderRadius: 999,
+              backgroundColor: 'secondary.main',
+              flexShrink: 0,
+            }}
+          />
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              variant="overline"
+              sx={{ display: 'block', lineHeight: 1.1, color: 'text.secondary' }}
+            >
+              Construtora Dinâmica
             </Typography>
-            {currentStatus !== 'active' ? (
-              <Chip
-                size="small"
-                label={getStatusLabel(currentStatus)}
-                sx={
-                  currentStatus === 'partial'
-                    ? {
-                        color: '#8B6209',
-                        backgroundColor: '#FDF3DD',
-                      }
-                    : undefined
-                }
-              />
-            ) : null}
-          </Stack>
-          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 640 }}>
-            {selectedClientId
-              ? `Contexto de cliente ativo: ${shortenUuid(selectedClientId)}`
-              : 'Selecione ou informe um cliente quando o fluxo exigir escopo.'}
-          </Typography>
-        </Box>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              useFlexGap
+              flexWrap="wrap"
+            >
+              <Typography variant="h5" sx={{ lineHeight: 1.15 }}>
+                {currentTitle}
+              </Typography>
+              {currentStatus !== 'active' ? (
+                <Chip
+                  size="small"
+                  label={getStatusLabel(currentStatus)}
+                  sx={
+                    currentStatus === 'partial'
+                      ? {
+                          color: 'secondary.dark',
+                          backgroundColor: 'secondary.50',
+                        }
+                      : undefined
+                  }
+                />
+              ) : null}
+            </Stack>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 680 }}>
+              {selectedClientId
+                ? `Cliente em contexto: ${shortenUuid(selectedClientId)}`
+                : 'Selecione um cliente quando o fluxo exigir escopo operacional.'}
+            </Typography>
+          </Box>
+        </Stack>
 
         <Box sx={{ flex: 1 }} />
 
@@ -107,27 +141,36 @@ export function Topbar({ onMenuClick }: TopbarProps) {
             onChange={setSelectedClientId}
           />
 
+          <Tooltip title={mode === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'}>
+            <IconButton color="inherit" onClick={toggleColorMode}>
+              {mode === 'light' ? <DarkModeOutlinedIcon /> : <LightModeOutlinedIcon />}
+            </IconButton>
+          </Tooltip>
+
           {user ? (
-            <Chip
-              label={user.is_admin ? 'Administrador' : user.email}
-              variant="outlined"
-              onClick={() => navigate('/perfil')}
-              sx={{
-                borderColor: 'rgba(27,58,107,0.18)',
-                color: 'primary.main',
-                backgroundColor: 'rgba(255,255,255,0.72)',
-              }}
-            />
+            <Tooltip title="Meu perfil">
+              <IconButton color="inherit" onClick={() => navigate('/perfil')}>
+                <Avatar
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    fontSize: 13,
+                    fontWeight: 700,
+                  }}
+                >
+                  {getInitials(user.nome, user.email)}
+                </Avatar>
+              </IconButton>
+            </Tooltip>
           ) : null}
 
-          <Button
-            variant="text"
-            color="primary"
-            startIcon={<LogoutOutlinedIcon />}
-            onClick={() => void logout()}
-          >
-            Sair
-          </Button>
+          <Tooltip title="Sair">
+            <IconButton color="inherit" onClick={() => void logout()}>
+              <LogoutOutlinedIcon />
+            </IconButton>
+          </Tooltip>
         </Stack>
       </Toolbar>
     </AppBar>

@@ -1,14 +1,12 @@
 import BuildCircleOutlinedIcon from '@mui/icons-material/BuildCircleOutlined';
-import {
-  Alert,
-  Button,
-  CircularProgress,
-  Paper,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Alert, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import { useMutation } from '@tanstack/react-query';
 
+import {
+  errorMessages,
+  infoMessages,
+  successMessages,
+} from '../../shared/components/FeedbackMessages';
 import { PageHeader } from '../../shared/components/PageHeader';
 import { useFeedback } from '../../shared/components/feedback/FeedbackProvider';
 import { adminApi } from '../../shared/services/api/adminApi';
@@ -19,8 +17,8 @@ export function AdminPage() {
 
   const embeddingsMutation = useMutation({
     mutationFn: () => adminApi.computeEmbeddings(),
-    onSuccess: (data) => {
-      showMessage(`${data.embeddings_computados} embeddings recalculados.`);
+    onSuccess: () => {
+      showMessage(successMessages.embeddingsProcessed);
     },
   });
 
@@ -28,20 +26,21 @@ export function AdminPage() {
     <>
       <PageHeader
         title="Administração"
-        description="Área administrativa conectada somente às operações já publicadas pelo backend oficial."
+        description="Configurações avançadas do sistema. Área restrita a administradores."
       />
 
       <Stack direction={{ xs: 'column', xl: 'row' }} spacing={2}>
-        <Paper sx={{ flex: 1, p: 3 }}>
+        <Paper sx={{ flex: 1, p: 3, border: '1px solid', borderColor: 'divider' }}>
           <Stack spacing={2}>
             <Stack direction="row" spacing={1.5} alignItems="center">
               <BuildCircleOutlinedIcon color="primary" />
-              <Typography variant="h6">Sincronização de embeddings</Typography>
+              <Typography variant="h6">Processamento de embeddings</Typography>
             </Stack>
             <Typography variant="body2" color="text.secondary">
-              Dispara a operação administrativa existente em
-              {' '}<strong>POST /admin/compute-embeddings</strong>.
+              Recalcula os vetores de similaridade semântica do catálogo de serviços.
+              Execute após atualizações relevantes no banco TCPO.
             </Typography>
+            <Alert severity="info">{infoMessages.processing}</Alert>
             <Button
               variant="contained"
               onClick={() => embeddingsMutation.mutate()}
@@ -50,7 +49,7 @@ export function AdminPage() {
               {embeddingsMutation.isPending ? (
                 <CircularProgress size={20} color="inherit" />
               ) : (
-                'Executar agora'
+                'Processar embeddings'
               )}
             </Button>
             {embeddingsMutation.data ? (
@@ -60,27 +59,23 @@ export function AdminPage() {
             ) : null}
             {embeddingsMutation.isError ? (
               <Alert severity="error">
-                {extractApiErrorMessage(
-                  embeddingsMutation.error,
-                  'Falha ao executar a sincronização de embeddings.',
-                )}
+                {extractApiErrorMessage(embeddingsMutation.error, errorMessages.embeddings)}
               </Alert>
             ) : null}
           </Stack>
         </Paper>
 
-        <Paper sx={{ flex: 1, p: 3 }}>
+        <Paper sx={{ flex: 1, p: 3, border: '1px solid', borderColor: 'divider' }}>
           <Typography variant="h6" sx={{ mb: 1.5 }}>
             Escopo administrativo atual
           </Typography>
           <Stack spacing={1}>
             <Typography variant="body2" color="text.secondary">
-              Gestão de usuários e clientes já possui operação real no frontend
-              administrativo com os contratos hoje publicados.
+              Gestão de usuários e clientes já opera com contratos administrativos publicados.
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Continuam pendentes no backend: autoedição de perfil,
-              relatórios dedicados e um fluxo próprio de permissões fora de Usuários.
+              O módulo próprio de permissões, a autoedição de perfil e relatórios dedicados
+              continuam dependentes de novos endpoints do backend.
             </Typography>
           </Stack>
         </Paper>

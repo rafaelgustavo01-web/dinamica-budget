@@ -43,7 +43,7 @@ class AssociacaoInteligente(Base):
         index=True,
     )
     origem_associacao: Mapped[OrigemAssociacao] = mapped_column(
-        SAEnum(OrigemAssociacao, name="origem_associacao_enum"),
+        SAEnum(OrigemAssociacao, name="origem_associacao_enum", create_type=False),
         nullable=False,
     )
     confiabilidade_score: Mapped[Decimal | None] = mapped_column(
@@ -55,7 +55,7 @@ class AssociacaoInteligente(Base):
         Integer, nullable=False, default=1
     )
     status_validacao: Mapped[StatusValidacaoAssociacao] = mapped_column(
-        SAEnum(StatusValidacaoAssociacao, name="status_validacao_associacao_enum"),
+        SAEnum(StatusValidacaoAssociacao, name="status_validacao_associacao_enum", create_type=False),
         nullable=False,
         default=StatusValidacaoAssociacao.SUGERIDA,
     )

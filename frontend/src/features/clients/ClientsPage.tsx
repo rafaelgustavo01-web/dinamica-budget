@@ -25,6 +25,10 @@ import { z } from 'zod';
 import { ConfirmationDialog } from '../../shared/components/ConfirmationDialog';
 import { DataTable } from '../../shared/components/DataTable';
 import { EmptyState } from '../../shared/components/EmptyState';
+import {
+  errorMessages,
+  successMessages,
+} from '../../shared/components/FeedbackMessages';
 import { PageHeader } from '../../shared/components/PageHeader';
 import { useFeedback } from '../../shared/components/feedback/FeedbackProvider';
 import { extractApiErrorMessage } from '../../shared/services/api/apiClient';
@@ -105,7 +109,7 @@ export function ClientsPage() {
   const createClientMutation = useMutation({
     mutationFn: (values: CreateClientFormOutput) => clientsApi.create(values),
     onSuccess: (data) => {
-      showMessage('Cliente criado com sucesso.');
+      showMessage(successMessages.clientCreated);
       setCreateDialogOpen(false);
       reset();
       setSelectedClientId(data.id);
@@ -117,7 +121,7 @@ export function ClientsPage() {
     mutationFn: (values: EditClientFormValues) =>
       clientsApi.patch(selectedClient!.id, values),
     onSuccess: (data) => {
-      showMessage('Cliente atualizado com sucesso.');
+      showMessage(successMessages.clientUpdated);
       setSelectedClientId(data.id);
       setEditDialogOpen(false);
       void queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -130,9 +134,7 @@ export function ClientsPage() {
         is_active: !selectedClient!.is_active,
       }),
     onSuccess: (data) => {
-      showMessage(
-        data.is_active ? 'Cliente reativado com sucesso.' : 'Cliente inativado com sucesso.',
-      );
+      showMessage(data.is_active ? successMessages.clientActivated : successMessages.clientDeactivated);
       setSelectedClientId(data.id);
       setConfirmStatusOpen(false);
       void queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -143,7 +145,7 @@ export function ClientsPage() {
     <>
       <PageHeader
         title="Clientes"
-        description="Listagem administrativa com cadastro, edicao de nome fantasia e ativacao/inativacao consumindo os contratos oficiais publicados pelo backend."
+        description="Gerencie os clientes do sistema. Cada cliente possui seu ambiente isolado de dados e usuários vinculados."
         actions={
           <Button
             variant="contained"
@@ -207,8 +209,8 @@ export function ClientsPage() {
             page={page}
             pageSize={pageSize}
             total={clientsQuery.data?.total ?? 0}
-            emptyTitle="Nenhum cliente encontrado"
-            emptyDescription="A listagem reflete apenas os filtros oficialmente suportados pelo endpoint administrativo de clientes."
+            emptyTitle="Nenhum cliente cadastrado"
+            emptyDescription="Comece cadastrando o primeiro cliente para habilitar o ambiente multi-tenant."
             onPageChange={setPage}
             onPageSizeChange={(value) => {
               setPageSize(value);
@@ -241,10 +243,10 @@ export function ClientsPage() {
                   startIcon={<EditOutlinedIcon />}
                   onClick={() => {
                     resetEditForm({ nome_fantasia: selectedClient.nome_fantasia });
-                    setEditDialogOpen(true);
-                  }}
-                >
-                  Editar nome
+                setEditDialogOpen(true);
+              }}
+            >
+                  Editar cliente
                 </Button>
                 <Button
                   variant="outlined"
@@ -262,14 +264,13 @@ export function ClientsPage() {
                 </Button>
               </Stack>
               <Alert severity="info" variant="outlined">
-                O contrato administrativo atual permite editar o nome fantasia e alterar o
-                status do cliente. O CNPJ permanece somente leitura neste fluxo.
+                O CNPJ permanece somente leitura neste fluxo administrativo.
               </Alert>
             </Stack>
           ) : (
             <EmptyState
               title="Nenhum cliente selecionado"
-              description="Selecione um cliente na tabela para revisar os dados retornados pelo backend."
+              description="Selecione um cliente na tabela para revisar dados cadastrais e status."
             />
           )}
         </Paper>
@@ -306,7 +307,7 @@ export function ClientsPage() {
               <Alert severity="error">
                 {extractApiErrorMessage(
                   createClientMutation.error,
-                  'Falha ao criar o cliente.',
+                  errorMessages.clientCreate,
                 )}
               </Alert>
             ) : null}
@@ -352,7 +353,7 @@ export function ClientsPage() {
               <Alert severity="error">
                 {extractApiErrorMessage(
                   updateClientMutation.error,
-                  'Falha ao atualizar o cliente.',
+                  errorMessages.clientUpdate,
                 )}
               </Alert>
             ) : null}
@@ -389,14 +390,14 @@ export function ClientsPage() {
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {selectedClient?.is_active
-              ? 'O cliente sera marcado como inativo no backend.'
-              : 'O cliente voltara a ficar ativo no backend.'}
+              ? `Tem certeza de que deseja desativar o cliente ${selectedClient?.nome_fantasia}? Todos os usuários vinculados perderão o acesso.`
+              : `Tem certeza de que deseja reativar o cliente ${selectedClient?.nome_fantasia}?`}
           </Typography>
           {toggleStatusMutation.isError ? (
             <Alert severity="error">
               {extractApiErrorMessage(
                 toggleStatusMutation.error,
-                'Falha ao alterar o status do cliente.',
+                errorMessages.clientUpdate,
               )}
             </Alert>
           ) : null}

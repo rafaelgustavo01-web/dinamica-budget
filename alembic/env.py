@@ -36,9 +36,13 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
+    # NOTE: target_metadata is intentionally omitted here — it is only needed
+    # for `alembic revision --autogenerate`. Passing it during `upgrade`
+    # causes SQLAlchemy's metadata DDL events to fire CREATE TYPE statements
+    # for all ORM-registered enums, racing with the explicit CREATE TYPE calls
+    # already present in the migration scripts.
     context.configure(
         connection=connection,
-        target_metadata=target_metadata,
         compare_type=True,
     )
     with context.begin_transaction():

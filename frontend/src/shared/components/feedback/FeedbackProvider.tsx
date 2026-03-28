@@ -1,8 +1,4 @@
-import {
-  Alert,
-  type AlertColor,
-  Snackbar,
-} from '@mui/material';
+import { Alert, type AlertColor, Snackbar } from '@mui/material';
 import {
   createContext,
   type PropsWithChildren,
@@ -56,7 +52,7 @@ export function FeedbackProvider({ children }: PropsWithChildren) {
           onClose={() => setState((current) => ({ ...current, open: false }))}
           severity={state.severity}
           variant="standard"
-          sx={{ minWidth: 320, boxShadow: 3 }}
+          sx={{ minWidth: 320, boxShadow: 6 }}
         >
           {state.message}
         </Alert>

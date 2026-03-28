@@ -1,37 +1,29 @@
-import {
-  Alert,
-  Box,
-  Button,
-  Divider,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Alert, Box, Button, Divider, Paper, Stack, TextField, Typography } from '@mui/material';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { useState } from 'react';
 import { z } from 'zod';
 
-import { useAuth } from '../auth/AuthProvider';
-import { ConfirmationDialog } from '../../shared/components/ConfirmationDialog';
-import { DataTable } from '../../shared/components/DataTable';
 import { EmptyState } from '../../shared/components/EmptyState';
+import {
+  errorMessages,
+  infoMessageTemplates,
+  successMessages,
+} from '../../shared/components/FeedbackMessages';
 import { PageHeader } from '../../shared/components/PageHeader';
 import { StatusBadge } from '../../shared/components/StatusBadge';
 import { useFeedback } from '../../shared/components/feedback/FeedbackProvider';
 import { extractApiErrorMessage } from '../../shared/services/api/apiClient';
 import { searchApi } from '../../shared/services/api/searchApi';
 import { servicesApi } from '../../shared/services/api/servicesApi';
-import type {
-  BuscaServicoResponse,
-  ResultadoBusca,
-} from '../../shared/types/contracts/busca';
+import type { BuscaServicoResponse, ResultadoBusca } from '../../shared/types/contracts/busca';
 import { formatCurrency, formatNumber } from '../../shared/utils/format';
+import { useAuth } from '../auth/AuthProvider';
+import { ConfirmationDialog } from '../../shared/components/ConfirmationDialog';
 
 const searchSchema = z.object({
-  texto_busca: z.string().min(2, 'Use pelo menos 2 caracteres.').max(500),
+  texto_busca: z.string().min(2, 'Informe ao menos 2 caracteres.').max(500),
   limite_resultados: z.coerce.number().min(1).max(50),
   threshold_score: z.coerce.number().min(0).max(1),
 });
@@ -68,7 +60,7 @@ export function SearchPage() {
     onSuccess: (data) => {
       setSearchResponse(data);
       setSelectedResult(data.resultados[0] ?? null);
-      showMessage(`${data.resultados.length} resultado(s) carregado(s).`);
+      showMessage(infoMessageTemplates.searchResultsLoaded(data.resultados.length), 'info');
     },
   });
 
@@ -86,8 +78,8 @@ export function SearchPage() {
         id_tcpo_selecionado: selectedResult?.id_tcpo ?? '',
         id_historico_busca: searchResponse!.metadados.id_historico_busca,
       }),
-    onSuccess: (data) => {
-      showMessage(data.mensagem);
+    onSuccess: () => {
+      showMessage(successMessages.associationCreated);
       setConfirmOpen(false);
     },
   });
@@ -97,11 +89,11 @@ export function SearchPage() {
       <>
         <PageHeader
           title="Busca Inteligente"
-          description="Fluxo principal de correspondência, associação e rastreabilidade."
+          description="Localize serviços do catálogo, compare resultados e confirme vínculos com rastreabilidade."
         />
         <EmptyState
           title="Selecione um cliente antes da busca"
-          description="O contrato oficial de busca exige `cliente_id`. Defina o contexto no topo para consultar o backend."
+          description="O motor de busca exige um cliente em contexto para consultar o histórico e registrar a associação correta."
         />
       </>
     );
@@ -111,19 +103,19 @@ export function SearchPage() {
     <>
       <PageHeader
         title="Busca Inteligente"
-        description="Consulta em cascata com item próprio, associação direta, fuzzy e IA semântica, seguida de associação manual confirmada pelo usuário."
+        description="Busque por descrição, revise o score de confiança, confira a origem do match e confirme o vínculo do serviço selecionado."
       />
 
       <Stack direction={{ xs: 'column', xl: 'row' }} spacing={2} alignItems="stretch">
-        <Paper sx={{ flex: 1.05, p: 3 }}>
+        <Paper sx={{ flex: 1.05, p: 3, border: '1px solid', borderColor: 'divider' }}>
           <Stack
             component="form"
             spacing={2}
             onSubmit={handleSubmit((values) => searchMutation.mutate(values))}
           >
             <TextField
-              label="Descrição do serviço"
-              placeholder="Ex.: escavação manual de valas"
+              label="Busca de serviços"
+              placeholder='Ex: "Alvenaria de vedação e=14cm"'
               error={Boolean(errors.texto_busca)}
               helperText={errors.texto_busca?.message}
               {...register('texto_busca')}
@@ -154,10 +146,7 @@ export function SearchPage() {
 
           {searchMutation.isError ? (
             <Alert severity="error" sx={{ mt: 2 }}>
-              {extractApiErrorMessage(
-                searchMutation.error,
-                'Falha ao executar a busca.',
-              )}
+              {extractApiErrorMessage(searchMutation.error, errorMessages.loadData)}
             </Alert>
           ) : null}
 
@@ -176,46 +165,61 @@ export function SearchPage() {
                 </Typography>
               </Stack>
 
-              <DataTable
-                columns={[
-                  { key: 'codigo', header: 'Código', render: (row) => row.codigo_origem },
-                  { key: 'descricao', header: 'Descrição', render: (row) => row.descricao },
-                  {
-                    key: 'origem',
-                    header: 'Origem do match',
-                    render: (row) => (
-                      <StatusBadge kind="origemMatch" value={row.origem_match} />
-                    ),
-                  },
-                  {
-                    key: 'score',
-                    header: 'Confiança',
-                    align: 'right',
-                    render: (row) => formatNumber(row.score_confianca),
-                  },
-                  {
-                    key: 'custo',
-                    header: 'Custo',
-                    align: 'right',
-                    render: (row) => formatCurrency(row.custo_unitario),
-                  },
-                ]}
-                rows={searchResponse.resultados}
-                rowKey={(row) => row.id_tcpo}
-                page={1}
-                pageSize={Math.max(searchResponse.resultados.length, 1)}
-                total={searchResponse.resultados.length}
-                emptyTitle="Nenhum resultado encontrado"
-                emptyDescription="O backend não retornou correspondências para o texto e cliente informados."
-                onRowClick={(row) => setSelectedResult(row)}
-              />
+              <Paper sx={{ border: '1px solid', borderColor: 'divider' }}>
+                <Stack divider={<Divider flexItem />}>
+                  {searchResponse.resultados.length ? (
+                    searchResponse.resultados.map((row) => {
+                      const active = selectedResult?.id_tcpo === row.id_tcpo;
+
+                      return (
+                        <Box
+                          key={row.id_tcpo}
+                          onClick={() => setSelectedResult(row)}
+                          sx={{
+                            p: 2,
+                            cursor: 'pointer',
+                            backgroundColor: active ? 'action.selected' : 'transparent',
+                            '&:hover': { backgroundColor: 'action.hover' },
+                          }}
+                        >
+                          <Stack spacing={1}>
+                            <Stack
+                              direction={{ xs: 'column', md: 'row' }}
+                              spacing={1}
+                              justifyContent="space-between"
+                            >
+                              <Typography variant="subtitle2">{row.descricao}</Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Código: {row.codigo_origem}
+                              </Typography>
+                            </Stack>
+                            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                              <StatusBadge kind="origemMatch" value={row.origem_match} />
+                              <StatusBadge value={row.status_homologacao} />
+                            </Stack>
+                            <Typography variant="body2" color="text.secondary">
+                              Score: {formatNumber(row.score_confianca)} | Custo:{' '}
+                              {formatCurrency(row.custo_unitario)}
+                            </Typography>
+                          </Stack>
+                        </Box>
+                      );
+                    })
+                  ) : (
+                    <EmptyState
+                      title="Nenhum resultado encontrado"
+                      description="Não encontramos serviços para o termo informado. Tente palavras-chave diferentes ou ajuste o threshold."
+                    />
+                  )}
+                </Stack>
+              </Paper>
             </Box>
           ) : null}
         </Paper>
 
-        <Paper sx={{ flex: 0.95, p: 3 }}>
+        <Paper sx={{ flex: 0.95, p: 3, border: '1px solid', borderColor: 'divider' }}>
           <Typography variant="h6" sx={{ mb: 1.5 }}>
-            Item selecionado
+            Serviço selecionado
           </Typography>
           {selectedResult ? (
             <Stack spacing={1.5}>
@@ -237,12 +241,12 @@ export function SearchPage() {
               <Typography variant="subtitle2">Composição expandida</Typography>
               {compositionQuery.isFetching ? (
                 <Typography variant="body2" color="text.secondary">
-                  Carregando composição...
+                  Carregando composições...
                 </Typography>
               ) : compositionQuery.data ? (
                 <>
                   <Typography variant="body2" color="text.secondary">
-                    Total: {formatCurrency(compositionQuery.data.custo_total_composicao)}
+                    Custo total: {formatCurrency(compositionQuery.data.custo_total_composicao)}
                   </Typography>
                   <Stack spacing={1}>
                     {compositionQuery.data.itens.length ? (
@@ -257,25 +261,26 @@ export function SearchPage() {
                       ))
                     ) : (
                       <Typography variant="body2" color="text.secondary">
-                        O item não possui composição cadastrada.
+                        Este serviço não possui composição cadastrada.
                       </Typography>
                     )}
                   </Stack>
                 </>
               ) : (
                 <Typography variant="body2" color="text.secondary">
-                  Selecione um resultado para abrir os dados expandidos.
+                  Selecione um resultado para carregar os detalhes da composição.
                 </Typography>
               )}
 
               <Button variant="contained" onClick={() => setConfirmOpen(true)}>
-                Confirmar vínculo
+                Associar
               </Button>
             </Stack>
           ) : (
-            <Typography variant="body2" color="text.secondary">
-              Execute uma busca e escolha um item da lista para revisar a composição e confirmar o vínculo.
-            </Typography>
+            <EmptyState
+              title="Nenhum serviço selecionado"
+              description="Execute uma busca e escolha um resultado para revisar a composição e confirmar o vínculo."
+            />
           )}
         </Paper>
       </Stack>
@@ -283,24 +288,17 @@ export function SearchPage() {
       <ConfirmationDialog
         open={confirmOpen}
         title="Confirmar associação"
-        confirmLabel="Confirmar vínculo"
+        confirmLabel="Associar"
         isLoading={associateMutation.isPending}
         onCancel={() => setConfirmOpen(false)}
         onConfirm={() => associateMutation.mutate()}
       >
         <Stack spacing={1}>
-          <Typography variant="body2">
-            Texto buscado: {searchResponse?.texto_buscado}
-          </Typography>
-          <Typography variant="body2">
-            Serviço selecionado: {selectedResult?.descricao}
-          </Typography>
+          <Typography variant="body2">Termo buscado: {searchResponse?.texto_buscado}</Typography>
+          <Typography variant="body2">Serviço selecionado: {selectedResult?.descricao}</Typography>
           {associateMutation.isError ? (
             <Alert severity="error">
-              {extractApiErrorMessage(
-                associateMutation.error,
-                'Falha ao confirmar a associação.',
-              )}
+              {extractApiErrorMessage(associateMutation.error, errorMessages.associationCreate)}
             </Alert>
           ) : null}
         </Stack>

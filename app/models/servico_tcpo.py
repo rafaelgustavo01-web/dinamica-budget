@@ -42,12 +42,12 @@ class ServicoTcpo(Base, TimestampMixin):
 
     # ── Governança ──────────────────────────────────────────────────────────
     origem: Mapped[OrigemItem] = mapped_column(
-        SAEnum(OrigemItem, name="origem_item_enum"),
+        SAEnum(OrigemItem, name="origem_item_enum", create_type=False),
         nullable=False,
         default=OrigemItem.TCPO,
     )
     status_homologacao: Mapped[StatusHomologacao] = mapped_column(
-        SAEnum(StatusHomologacao, name="status_homologacao_enum"),
+        SAEnum(StatusHomologacao, name="status_homologacao_enum", create_type=False),
         nullable=False,
         default=StatusHomologacao.PENDENTE,  # Defense-in-depth: default safe state
     )

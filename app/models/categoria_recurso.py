@@ -11,7 +11,7 @@ class CategoriaRecurso(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     descricao: Mapped[str] = mapped_column(String(100), nullable=False)
     tipo_custo: Mapped[TipoCusto] = mapped_column(
-        SAEnum(TipoCusto, name="tipo_custo_enum"), nullable=False
+        SAEnum(TipoCusto, name="tipo_custo_enum", create_type=False), nullable=False
     )
 
     servicos: Mapped[list["ServicoTcpo"]] = relationship(
