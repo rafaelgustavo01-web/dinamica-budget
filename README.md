@@ -58,7 +58,7 @@ A solução é totalmente **on-premise**: nenhum dado sai da rede interna. O mod
 | Validação | Pydantic v2 |
 | Container | Docker + Docker Compose |
 | Dev DB (CLI) | pgcli 4.4.0 — autocomplete, syntax highlight, aliases |
-| Dev DB (GUI) | TablePlus — nativo, leve, edição inline |
+| Dev DB (GUI) | HeidiSQL — nativo Win32, leve, open-source (GPL) |
 
 ---
 
@@ -585,7 +585,7 @@ O projeto utiliza dois complementares para o dia a dia com o PostgreSQL:
 | Ferramenta | Tipo | Uso |
 |---|---|---|
 | **pgcli** | CLI interativa | queries rápidas, scripts, automação |
-| **TablePlus** | GUI nativa | inspeção visual, edição inline de dados |
+| **HeidiSQL** | GUI nativa Win32 | inspeção visual, edição inline, open-source |
 
 ---
 
@@ -648,30 +648,41 @@ O arquivo `configs/pgclirc.example` define:
 
 ---
 
-### TablePlus (GUI)
+### HeidiSQL (GUI)
 
-TablePlus é uma GUI nativa para Windows/Mac — abre em segundos, sem Electron, sem Java. Permite edição inline de registros, filtros visuais e abas de queries salvas.
+HeidiSQL é uma GUI open-source (GPL) nativa para Windows — binário Win32 puro, sem Java, sem Electron, sem instalação obrigatória (versão portátil disponível). Suporta PostgreSQL, MySQL, MariaDB e SQLite. Download: **https://www.heidisql.com/download.php**
 
 #### Instalação
 
-Baixe em **https://tableplus.com** (plano gratuito é suficiente para uso diário).
+Duas opções no mesmo link de download:
+- **Installer** (`HeidiSQL_xx_Setup.exe`) — instalação padrão no sistema
+- **Portable** (`HeidiSQL_xx_Portable.zip`) — extraia e execute `heidisql.exe` direto, sem instalar nada
 
 #### Configuração da conexão
 
+Ao abrir, clique em **"New"** na tela de Session Manager e preencha:
+
 | Campo | Valor |
 |---|---|
-| **Name** | Dinamica Budget (dev) |
-| **Host** | `localhost` |
+| **Network type** | `PostgreSQL (TCP/IP)` |
+| **Hostname / IP** | `127.0.0.1` |
 | **Port** | `5432` |
 | **User** | `postgres` |
 | **Password** | `postgres` _(ou o valor de `POSTGRES_PASSWORD` no `.env`)_ |
 | **Database** | `dinamica_budget` |
 
-> **Dica:** Use `Cmd+K` / `Ctrl+K` para abrir o command palette — abre qualquer tabela sem mouse.
+Salve com o nome **"Dinamica Budget dev"** e clique **Open**.
+
+> **Dicas rápidas:**
+> - `F5` — atualiza a árvore de tabelas
+> - `F9` / `Ctrl+Enter` — executa a query selecionada
+> - `Ctrl+Shift+L` — formata SQL automaticamente
+> - Clique duplo em uma célula — edição inline do valor
+> - Aba **"Table data"** → filtro visual por coluna sem escrever SQL
 
 #### Queries salvas recomendadas
 
-Salve as queries abaixo em **TablePlus → Query → Save** para acesso rápido:
+Salve as queries abaixo em **HeidiSQL → Tools → User Queries** para acesso rápido:
 
 ```sql
 -- Auditoria recente (últimas 50 operações)
@@ -705,7 +716,7 @@ ORDER BY a.frequencia_uso DESC;
 ### Pré-requisitos
 - Python 3.11+
 - PostgreSQL 16 com extensões `pgvector` e `pg_trgm`
-- TablePlus (opcional, GUI) — https://tableplus.com
+- HeidiSQL (opcional, GUI open-source) — https://www.heidisql.com/download.php
 
 ### 1. Clone e Ambiente Virtual
 ```bash

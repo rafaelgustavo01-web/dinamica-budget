@@ -5,8 +5,8 @@ version: "3.9"
 #   Uso: scripts\db.bat  (Windows)  ou  ./scripts/db.sh  (Linux/Mac)
 #   Config: copie configs/pgclirc.example → %APPDATA%\pgcli\config
 #
-# TablePlus (GUI): instalação manual — https://tableplus.com
-#   Conexão: Host=localhost | Port=5432 | User=postgres | DB=dinamica_budget
+# HeidiSQL (GUI, open-source GPL): instalação manual — https://www.heidisql.com/download.php
+#   Network type=PostgreSQL TCP/IP | Host=127.0.0.1 | Port=5432 | User=postgres | DB=dinamica_budget
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
