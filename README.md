@@ -17,6 +17,7 @@
 - [Sistema de Auditoria](#sistema-de-auditoria)
 - [Módulos ML (On-Premise)](#módulos-ml-on-premise)
 - [Migrations Alembic](#migrations-alembic)
+- [Ferramentas de Banco de Dados](#ferramentas-de-banco-de-dados)
 - [Setup e Instalação](#setup-e-instalação)
 - [Variáveis de Ambiente](#variáveis-de-ambiente)
 - [Regras de Segurança e Governança](#regras-de-segurança-e-governança)
@@ -52,10 +53,12 @@ A solução é totalmente **on-premise**: nenhum dado sai da rede interna. O mod
 | Busca Fuzzy | pg_trgm + GIN index |
 | Embeddings | Sentence Transformers `all-MiniLM-L6-v2` (on-premise) |
 | Autenticação | JWT (access 30min + refresh 7 dias) |
-| Migrações | Alembic (async) — 6 migrations |
+| Migrações | Alembic (async) — 7 migrations |
 | Logging | structlog (JSON estruturado) |
 | Validação | Pydantic v2 |
 | Container | Docker + Docker Compose |
+| Dev DB (CLI) | pgcli 4.4.0 — autocomplete, syntax highlight, aliases |
+| Dev DB (GUI) | TablePlus — nativo, leve, edição inline |
 
 ---
 
@@ -560,6 +563,7 @@ soft DELETE              → DELETE FROM tcpo_embeddings
 | 004 | `pgtrgm_and_gin_index` | `CREATE EXTENSION pg_trgm` + GIN index em `servico_tcpo.descricao` |
 | 005 | `v2_governance_rbac_audit` | Enums V2, `external_id_ad`, `usuario_perfil`, colunas de governança em `servico_tcpo`, substitui `associacao_tcpo` → `associacao_inteligente`, cria `auditoria_log` |
 | 006 | `consolidation_fixes` | `historico_busca_cliente.usuario_id FK` (substitui `usuario_origem`), `auditoria_log.usuario_id FK` + `auditoria_log.cliente_id FK`, estende enum `tipo_operacao_auditoria_enum` com `APROVAR`/`REPROVAR` |
+| 007 | `fix_defaults_and_cliente_updated_at` | `servico_tcpo.status_homologacao` server_default `APROVADO → PENDENTE` (defense-in-depth), adiciona `clientes.updated_at` |
 
 ```bash
 # Aplicar todas as migrations
@@ -574,24 +578,155 @@ alembic downgrade -1
 
 ---
 
+## Ferramentas de Banco de Dados
+
+O projeto utiliza dois complementares para o dia a dia com o PostgreSQL:
+
+| Ferramenta | Tipo | Uso |
+|---|---|---|
+| **pgcli** | CLI interativa | queries rápidas, scripts, automação |
+| **TablePlus** | GUI nativa | inspeção visual, edição inline de dados |
+
+---
+
+### pgcli (CLI)
+
+pgcli já está incluído no `requirements.txt` e é instalado junto com as dependências do projeto (`pip install -r requirements.txt`). É o `psql` com autocomplete inteligente de tabelas/colunas, syntax highlighting e histórico persistente.
+
+#### Conectar ao banco
+
+```bash
+# Windows — usa DATABASE_URL do .env automaticamente
+scripts\db.bat
+
+# Linux / Mac
+./scripts/db.sh
+
+# Conexão direta (sem script)
+.venv\Scripts\pgcli.exe postgresql://postgres:postgres@localhost:5432/dinamica_budget
+```
+
+#### Comandos essenciais dentro do pgcli
+
+```sql
+\dt                        -- lista todas as tabelas
+\d servico_tcpo            -- descreve estrutura da tabela
+\di                        -- lista índices
+\dn                        -- lista schemas
+\dT                        -- lista tipos (enums)
+\e                         -- abre editor externo (vim/vscode)
+\o arquivo.csv             -- redireciona output para arquivo
+\timing                    -- ativa/desativa cronômetro de queries
+\x                         -- modo expanded (linhas → colunas)
+\q                         -- sai
+
+-- Exemplos úteis para o projeto:
+SELECT * FROM usuarios;
+SELECT * FROM servico_tcpo WHERE origem = 'PROPRIA' LIMIT 10;
+SELECT tabela, operacao, criado_em FROM auditoria_log ORDER BY criado_em DESC LIMIT 20;
+SELECT nome_fantasia, cnpj, is_active FROM clientes;
+```
+
+#### Configuração pessoal (opcional)
+
+Copie o template de configuração para ativar syntax highlighting Monokai, expansão automática e aliases de DSN:
+
+```bash
+# Windows
+copy configs\pgclirc.example %APPDATA%\pgcli\config
+
+# Linux / Mac
+cp configs/pgclirc.example ~/.config/pgcli/config
+```
+
+O arquivo `configs/pgclirc.example` define:
+- `syntax_style = monokai` — destaque de sintaxe escuro
+- `expand = auto` — expande resultados largos automaticamente
+- `timing = True` — mostra tempo de execução
+- `table_format = rounded` — bordas arredondadas nos resultados
+- `alias_dsn.dinamica_dev` — atalho de conexão
+
+---
+
+### TablePlus (GUI)
+
+TablePlus é uma GUI nativa para Windows/Mac — abre em segundos, sem Electron, sem Java. Permite edição inline de registros, filtros visuais e abas de queries salvas.
+
+#### Instalação
+
+Baixe em **https://tableplus.com** (plano gratuito é suficiente para uso diário).
+
+#### Configuração da conexão
+
+| Campo | Valor |
+|---|---|
+| **Name** | Dinamica Budget (dev) |
+| **Host** | `localhost` |
+| **Port** | `5432` |
+| **User** | `postgres` |
+| **Password** | `postgres` _(ou o valor de `POSTGRES_PASSWORD` no `.env`)_ |
+| **Database** | `dinamica_budget` |
+
+> **Dica:** Use `Cmd+K` / `Ctrl+K` para abrir o command palette — abre qualquer tabela sem mouse.
+
+#### Queries salvas recomendadas
+
+Salve as queries abaixo em **TablePlus → Query → Save** para acesso rápido:
+
+```sql
+-- Auditoria recente (últimas 50 operações)
+SELECT u.nome, a.tabela, a.operacao, a.campo_alterado,
+       a.dados_anteriores, a.dados_novos, a.criado_em
+FROM auditoria_log a
+LEFT JOIN usuarios u ON u.id = a.usuario_id
+ORDER BY a.criado_em DESC LIMIT 50;
+
+-- Itens pendentes de homologação
+SELECT s.codigo_origem, s.descricao, s.origem,
+       s.status_homologacao, c.nome_fantasia, s.created_at
+FROM servico_tcpo s
+LEFT JOIN clientes c ON c.id = s.cliente_id
+WHERE s.status_homologacao = 'PENDENTE'
+ORDER BY s.created_at;
+
+-- Associações por cliente
+SELECT c.nome_fantasia, a.texto_busca_normalizado,
+       s.descricao, a.frequencia_uso, a.status_validacao
+FROM associacao_inteligente a
+JOIN clientes c ON c.id = a.cliente_id
+JOIN servico_tcpo s ON s.id = a.servico_tcpo_id
+ORDER BY a.frequencia_uso DESC;
+```
+
+---
+
 ## Setup e Instalação
 
 ### Pré-requisitos
 - Python 3.11+
-- Docker + Docker Compose
 - PostgreSQL 16 com extensões `pgvector` e `pg_trgm`
+- TablePlus (opcional, GUI) — https://tableplus.com
 
 ### 1. Clone e Ambiente Virtual
 ```bash
 git clone <repo>
 cd dinamica-budget
-python -m venv venv
-source venv/bin/activate      # Linux/Mac
-venv\Scripts\activate         # Windows
+python -m venv .venv
+source .venv/bin/activate      # Linux/Mac
+.venv\Scripts\activate         # Windows
 pip install -r requirements.txt
+# pgcli é instalado automaticamente junto com as demais dependências
 ```
 
-### 2. Banco de Dados (Docker)
+### 2. Banco de Dados
+
+**Opção A — PostgreSQL nativo (recomendado para Windows):**
+```bash
+# PostgreSQL 16 + pgvector: instale conforme docs/Manual_Instalacao_Dinamica_Budget.docx
+# O serviço Windows já sobe automaticamente no boot
+```
+
+**Opção B — Docker:**
 ```bash
 docker compose up db -d
 ```
@@ -607,18 +742,24 @@ cp .env.example .env
 alembic upgrade head
 ```
 
-### 5. Download do Modelo ML (única vez)
+### 5. Conectar ao banco (verificação)
+```bash
+scripts\db.bat          # Windows — abre pgcli com autocomplete
+./scripts/db.sh         # Linux/Mac
+```
+
+### 6. Download do Modelo ML (única vez)
 ```bash
 python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 # Definir SENTENCE_TRANSFORMERS_HOME no .env para cache local permanente
 ```
 
-### 6. Iniciar API
+### 7. Iniciar API
 ```bash
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### 7. Seed + Pré-computar Embeddings
+### 8. Seed + Pré-computar Embeddings
 ```bash
 # Após popular servico_tcpo com dados TCPO:
 curl -X POST http://localhost:8000/api/v1/admin/compute-embeddings \

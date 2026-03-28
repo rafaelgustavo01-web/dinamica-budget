@@ -1,5 +1,14 @@
 version: "3.9"
 
+# ── Ferramentas de banco de dados ─────────────────────────────────────────────
+# pgcli (CLI interativa): já incluído em requirements.txt — roda na venv local.
+#   Uso: scripts\db.bat  (Windows)  ou  ./scripts/db.sh  (Linux/Mac)
+#   Config: copie configs/pgclirc.example → %APPDATA%\pgcli\config
+#
+# TablePlus (GUI): instalação manual — https://tableplus.com
+#   Conexão: Host=localhost | Port=5432 | User=postgres | DB=dinamica_budget
+# ─────────────────────────────────────────────────────────────────────────────
+
 services:
   db:
     image: pgvector/pgvector:pg16

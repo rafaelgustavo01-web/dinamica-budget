@@ -37,3 +37,4 @@ pytest-cov==6.0.0
 
 # Dev utilities
 python-dotenv==1.0.1
+pgcli==4.4.0          # CLI interativo para PostgreSQL (autocomplete, syntax highlight)

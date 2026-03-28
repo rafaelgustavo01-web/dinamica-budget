@@ -1,0 +1,42 @@
+# pgcli configuration — Dinamica Budget
+# Copy to %APPDATA%\pgcli\config  (Windows)
+# Copy to ~/.config/pgcli/config  (Linux/Mac)
+#
+# Docs: https://www.pgcli.com/config
+
+[main]
+
+# Exibe o tempo de execução de cada query
+timing = True
+
+# Destaca a query atual no histórico
+smart_completion = True
+
+# Sempre expandir resultados longos (equivalente a \x auto no psql)
+expand = auto
+
+# Número máximo de linhas antes de paginar
+max_field_width = 500
+
+# Tema de syntax highlighting
+# Opções: monokai, zenburn, manni, igor, xcode, vim, autumn, borland ...
+syntax_style = monokai
+
+# Formato padrão de saída: table | csv | json | vertical
+table_format = rounded
+
+# Mostra NULL de forma visível
+null_string = <NULL>
+
+# Keymap (vi ou emacs)
+key_bindings = emacs
+
+# Log de queries executadas (útil para debug)
+# log_file = ~/.pgcli/pgcli.log
+# log_level = CRITICAL
+
+# ── Aliases de conexão (DSN shortcuts) ──────────────────────────────────────
+# Uso: pgcli -d dinamica_dev
+# ou simplesmente: pgcli $PGCLI_DSN_dinamica_dev
+[alias_dsn]
+dinamica_dev = postgresql://postgres:postgres@localhost:5432/dinamica_budget
