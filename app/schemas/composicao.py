@@ -16,3 +16,4 @@ class ClonarComposicaoRequest(BaseModel):
 class AdicionarComponenteRequest(BaseModel):
     insumo_filho_id: UUID
     quantidade_consumo: Decimal = Field(gt=0)
+    unidade_medida: str = Field(max_length=20)  # unidade do insumo_filho na composição

@@ -54,7 +54,7 @@ export function SearchPage() {
   const searchMutation = useMutation({
     mutationFn: (values: SearchFormOutput) =>
       searchApi.buscar({
-        cliente_id: selectedClientId,
+        cliente_id: selectedClientId ?? undefined,
         ...values,
       }),
     onSuccess: (data) => {
@@ -84,27 +84,19 @@ export function SearchPage() {
     },
   });
 
-  if (!selectedClientId) {
-    return (
-      <>
-        <PageHeader
-          title="Busca Inteligente"
-          description="Localize serviços do catálogo, compare resultados e confirme vínculos com rastreabilidade."
-        />
-        <EmptyState
-          title="Selecione um cliente antes da busca"
-          description="O motor de busca exige um cliente em contexto para consultar o histórico e registrar a associação correta."
-        />
-      </>
-    );
-  }
-
   return (
     <>
       <PageHeader
         title="Busca Inteligente"
         description="Busque por descrição, revise o score de confiança, confira a origem do match e confirme o vínculo do serviço selecionado."
       />
+
+      {!selectedClientId ? (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Modo busca genérica — histórico de associações e itens próprios não estão disponíveis.
+          Selecione um cliente para ativar todas as fases do motor de busca.
+        </Alert>
+      ) : null}
 
       <Stack direction={{ xs: 'column', xl: 'row' }} spacing={2} alignItems="stretch">
         <Paper sx={{ flex: 1.05, p: 3, border: '1px solid', borderColor: 'divider' }}>
@@ -272,7 +264,12 @@ export function SearchPage() {
                 </Typography>
               )}
 
-              <Button variant="contained" onClick={() => setConfirmOpen(true)}>
+              <Button
+                variant="contained"
+                onClick={() => setConfirmOpen(true)}
+                disabled={!selectedClientId}
+                title={!selectedClientId ? 'Selecione um cliente para associar' : undefined}
+              >
                 Associar
               </Button>
             </Stack>

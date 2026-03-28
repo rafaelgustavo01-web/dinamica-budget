@@ -15,8 +15,8 @@ class HistoricoBuscaCliente(Base):
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    cliente_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("clientes.id"), nullable=False, index=True
+    cliente_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("clientes.id"), nullable=True, index=True
     )
     # nullable=True: matches migration 006 (backward compat with pre-migration rows).
     # Application code always provides usuario_id for new records.
@@ -28,5 +28,5 @@ class HistoricoBuscaCliente(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    cliente: Mapped["Cliente"] = relationship(back_populates="historicos", lazy="noload")
+    cliente: Mapped["Cliente | None"] = relationship(back_populates="historicos", lazy="noload")
     usuario: Mapped["Usuario | None"] = relationship(back_populates="historicos", lazy="noload")

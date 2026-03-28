@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 
 class BuscaServicoRequest(BaseModel):
-    cliente_id: UUID
+    cliente_id: UUID | None = None  # None → busca genérica (skip fases 0 e 1)
     texto_busca: str = Field(..., min_length=2, max_length=500)
     limite_resultados: int = Field(default=5, ge=1, le=50)
     threshold_score: float = Field(default=0.65, ge=0.0, le=1.0)

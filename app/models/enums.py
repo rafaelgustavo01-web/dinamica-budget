@@ -46,3 +46,11 @@ class TipoOperacaoAuditoria(str, enum.Enum):
     DELETE = "DELETE"
     APROVAR = "APROVAR"
     REPROVAR = "REPROVAR"
+
+
+class TipoRecurso(str, enum.Enum):
+    MO = "MO"                   # Mão de obra
+    INSUMO = "INSUMO"           # Material/insumo
+    FERRAMENTA = "FERRAMENTA"   # Ferramenta
+    EQUIPAMENTO = "EQUIPAMENTO" # Equipamento
+    SERVICO = "SERVICO"         # Composição de serviços (permite explosão recursiva)

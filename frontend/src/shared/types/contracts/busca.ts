@@ -5,7 +5,7 @@ export type OrigemMatch =
   | 'PROPRIA_CLIENTE';
 
 export interface BuscaServicoRequest {
-  cliente_id: string;
+  cliente_id?: string;  // undefined → busca genérica (skip fases 0 e 1)
   texto_busca: string;
   limite_resultados: number;
   threshold_score: number;

@@ -16,7 +16,7 @@ class HistoricoRepository(BaseRepository[HistoricoBuscaCliente]):
 
     async def create_registro(
         self,
-        cliente_id: UUID,
+        cliente_id: UUID | None,
         usuario_id: UUID,
         texto_busca: str,
     ) -> HistoricoBuscaCliente:

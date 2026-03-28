@@ -60,54 +60,62 @@ class BuscaService:
 
         # ─────────────────────────────────────────────────────────────────────
         # FASE 0: Itens Próprios do Cliente (PROPRIA + APROVADO)
+        # Requer cliente_id — skip quando busca genérica
         # ─────────────────────────────────────────────────────────────────────
-        resultado = await self._fase0_itens_proprios(
-            cliente_id=request.cliente_id,
-            texto_norm=texto_norm,
-            threshold=request.threshold_score,
-            limit=request.limite_resultados,
-            servico_repo=servico_repo,
-        )
-        if resultado:
-            return await self._build_response(
-                texto_busca=request.texto_busca,
-                resultados=resultado,
-                t0=t0,
+        if request.cliente_id is not None:
+            resultado = await self._fase0_itens_proprios(
                 cliente_id=request.cliente_id,
-                usuario_id=usuario_id,
-                db=db,
+                texto_norm=texto_norm,
+                threshold=request.threshold_score,
+                limit=request.limite_resultados,
+                servico_repo=servico_repo,
             )
-        logger.info(
-            "busca_fase_0_sem_resultados",
-            cliente_id=str(request.cliente_id),
-            texto=texto_norm,
-        )
+            if resultado:
+                return await self._build_response(
+                    texto_busca=request.texto_busca,
+                    resultados=resultado,
+                    t0=t0,
+                    cliente_id=request.cliente_id,
+                    usuario_id=usuario_id,
+                    db=db,
+                )
+            logger.info(
+                "busca_fase_0_sem_resultados",
+                cliente_id=str(request.cliente_id),
+                texto=texto_norm,
+            )
+        else:
+            logger.info("busca_sem_cliente_skip_fase0", texto=texto_norm)
 
         # ─────────────────────────────────────────────────────────────────────
         # FASE 1: Associação Direta (associacao_inteligente)
+        # Requer cliente_id — skip quando busca genérica
         # ─────────────────────────────────────────────────────────────────────
-        resultado, associacao = await self._fase1_associacao(
-            cliente_id=request.cliente_id,
-            texto_norm=texto_norm,
-            assoc_repo=assoc_repo,
-            servico_repo=servico_repo,
-        )
-        if resultado:
-            if associacao:
-                await assoc_repo.fortalecer(associacao)
-            return await self._build_response(
-                texto_busca=request.texto_busca,
-                resultados=resultado,
-                t0=t0,
+        if request.cliente_id is not None:
+            resultado, associacao = await self._fase1_associacao(
                 cliente_id=request.cliente_id,
-                usuario_id=usuario_id,
-                db=db,
+                texto_norm=texto_norm,
+                assoc_repo=assoc_repo,
+                servico_repo=servico_repo,
             )
-        logger.info(
-            "busca_fase_1_sem_resultados",
-            cliente_id=str(request.cliente_id),
-            texto=texto_norm,
-        )
+            if resultado:
+                if associacao:
+                    await assoc_repo.fortalecer(associacao)
+                return await self._build_response(
+                    texto_busca=request.texto_busca,
+                    resultados=resultado,
+                    t0=t0,
+                    cliente_id=request.cliente_id,
+                    usuario_id=usuario_id,
+                    db=db,
+                )
+            logger.info(
+                "busca_fase_1_sem_resultados",
+                cliente_id=str(request.cliente_id),
+                texto=texto_norm,
+            )
+        else:
+            logger.info("busca_sem_cliente_skip_fase1", texto=texto_norm)
 
         # ─────────────────────────────────────────────────────────────────────
         # FASE 2: Fuzzy Global (pg_trgm — catálogo TCPO APROVADO)
@@ -329,7 +337,7 @@ class BuscaService:
         texto_busca: str,
         resultados: list[ResultadoBusca],
         t0: float,
-        cliente_id: UUID,
+        cliente_id: UUID | None,
         usuario_id: UUID,
         db: AsyncSession,
     ) -> BuscaServicoResponse:

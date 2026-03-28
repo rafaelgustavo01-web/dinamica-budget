@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 from app.models.composicao_tcpo import ComposicaoTcpo
 from app.models.enums import OrigemItem, StatusHomologacao
 from app.models.servico_tcpo import ServicoTcpo
+from app.models.versao_composicao import VersaoComposicao
 from app.repositories.base_repository import BaseRepository
 
 
@@ -213,6 +214,74 @@ class ServicoTcpoRepository(BaseRepository[ServicoTcpo]):
             .limit(limit)
         )
         return list(items_result.scalars().all()), total
+
+    async def get_versao_ativa(
+        self, servico_id: UUID, cliente_id: UUID | None
+    ) -> VersaoComposicao | None:
+        """
+        Returns the active VersaoComposicao for a servico, with priority:
+          1. Client's PROPRIA active version (if cliente_id provided)
+          2. Global TCPO active version (fallback)
+        """
+        if cliente_id is not None:
+            result = await self.db.execute(
+                select(VersaoComposicao)
+                .options(
+                    selectinload(VersaoComposicao.itens).selectinload(
+                        ComposicaoTcpo.insumo_filho
+                    )
+                )
+                .where(
+                    VersaoComposicao.servico_id == servico_id,
+                    VersaoComposicao.cliente_id == cliente_id,
+                    VersaoComposicao.is_ativa.is_(True),
+                )
+                .limit(1)
+            )
+            versao = result.scalar_one_or_none()
+            if versao:
+                return versao
+
+        # Fallback: global TCPO version
+        result = await self.db.execute(
+            select(VersaoComposicao)
+            .options(
+                selectinload(VersaoComposicao.itens).selectinload(
+                    ComposicaoTcpo.insumo_filho
+                )
+            )
+            .where(
+                VersaoComposicao.servico_id == servico_id,
+                VersaoComposicao.cliente_id.is_(None),
+                VersaoComposicao.is_ativa.is_(True),
+            )
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def list_versoes(
+        self, servico_id: UUID, cliente_id: UUID | None
+    ) -> list[VersaoComposicao]:
+        """Lists all versions visible to the client (TCPO global + client's PROPRIA)."""
+        from sqlalchemy import or_
+
+        filters = [VersaoComposicao.servico_id == servico_id]
+        if cliente_id is not None:
+            filters.append(
+                or_(
+                    VersaoComposicao.cliente_id.is_(None),
+                    VersaoComposicao.cliente_id == cliente_id,
+                )
+            )
+        else:
+            filters.append(VersaoComposicao.cliente_id.is_(None))
+
+        result = await self.db.execute(
+            select(VersaoComposicao)
+            .where(*filters)
+            .order_by(VersaoComposicao.numero_versao)
+        )
+        return list(result.scalars().all())
 
     async def get_without_embeddings(self, limit: int = 100) -> list[ServicoTcpo]:
         from app.models.tcpo_embeddings import TcpoEmbedding

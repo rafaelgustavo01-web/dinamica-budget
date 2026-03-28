@@ -98,6 +98,7 @@ async def adicionar_componente(
         pai_id=pai_id,
         filho_id=request.insumo_filho_id,
         quantidade_consumo=request.quantidade_consumo,
+        unidade_medida=request.unidade_medida,
         db=db,
     )
     return await servico_catalog_service.explode_composicao(pai_id, db)

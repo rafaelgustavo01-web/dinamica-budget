@@ -20,6 +20,7 @@ from app.core.exceptions import AuthorizationError, NotFoundError, ValidationErr
 from app.core.logging import get_logger
 from app.models.enums import OrigemItem, StatusHomologacao, TipoOperacaoAuditoria
 from app.models.servico_tcpo import ServicoTcpo
+from app.repositories.associacao_repository import normalize_text
 from app.repositories.servico_tcpo_repository import ServicoTcpoRepository
 from app.schemas.common import PaginatedResponse
 from app.schemas.homologacao import (
@@ -114,6 +115,7 @@ class HomologacaoService:
             servico.status_homologacao = StatusHomologacao.APROVADO
             servico.aprovado_por_id = aprovador_id
             servico.data_aprovacao = now
+            servico.descricao_tokens = normalize_text(servico.descricao)
             await embedding_sync_service.sync_create_or_update(servico.id, db)
             mensagem = "Item homologado e disponível para busca."
             operacao = TipoOperacaoAuditoria.APROVAR
@@ -169,6 +171,7 @@ class HomologacaoService:
             categoria_id=request.categoria_id,
             origem=OrigemItem.PROPRIA,
             status_homologacao=StatusHomologacao.PENDENTE,
+            descricao_tokens=normalize_text(request.descricao),
         )
         servico = await repo.create(servico)
 

@@ -11,21 +11,29 @@ from app.models.enums import OrigemAssociacao, StatusValidacaoAssociacao
 from app.repositories.base_repository import BaseRepository
 
 
+_STOP_WORDS_PT = {
+    "de", "do", "da", "dos", "das", "e", "em", "com", "para", "por",
+    "a", "o", "as", "os", "um", "uma", "no", "na", "nos", "nas",
+    "ao", "aos", "à", "às", "se", "que", "ou", "mas", "mais",
+}
+
+
 def normalize_text(text: str) -> str:
     """
     Full normalization pipeline:
-      1. Strip leading/trailing whitespace
-      2. Lowercase
-      3. Remove diacritics/accents (NFD decomposition + strip Mn category)
-      4. Collapse multiple spaces
+      1. Strip + lowercase
+      2. Remove diacritics/accents (NFD + strip Mn)
+      3. Remove punctuation (non-alphanumeric chars → space)
+      4. Remove Portuguese stop words
+      5. Dedup tokens + sort (canonical form for embedding/search)
     """
     text = text.strip().lower()
-    # Remove accents
     nfkd = unicodedata.normalize("NFD", text)
     text = "".join(c for c in nfkd if unicodedata.category(c) != "Mn")
-    # Collapse whitespace
-    text = re.sub(r"\s+", " ", text)
-    return text
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    tokens = [t for t in text.split() if t not in _STOP_WORDS_PT]
+    tokens = sorted(set(tokens))
+    return " ".join(tokens)
 
 
 class AssociacaoRepository(BaseRepository[AssociacaoInteligente]):

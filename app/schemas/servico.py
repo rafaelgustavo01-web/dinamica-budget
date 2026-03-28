@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -13,6 +14,8 @@ class ServicoTcpoResponse(BaseModel):
     categoria_id: int | None
     origem: str          # 'TCPO' | 'PROPRIA'
     cliente_id: UUID | None  # None for global TCPO items
+    tipo_recurso: str | None = None  # 'MO' | 'INSUMO' | 'FERRAMENTA' | 'EQUIPAMENTO' | 'SERVICO'
+    descricao_tokens: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -29,10 +32,29 @@ class ComposicaoItemResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class VersaoInfo(BaseModel):
+    versao_id: UUID
+    numero_versao: int
+    origem: str  # 'TCPO' | 'PROPRIA'
+    cliente_id: UUID | None
+
+
+class VersaoComposicaoResponse(BaseModel):
+    id: UUID
+    numero_versao: int
+    origem: str
+    cliente_id: UUID | None
+    is_ativa: bool
+    criado_em: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ExplodeComposicaoResponse(BaseModel):
     servico: ServicoTcpoResponse
     itens: list[ComposicaoItemResponse]
     custo_total_composicao: Decimal
+    versao_info: VersaoInfo | None = None
 
 
 class ServicoListParams(BaseModel):

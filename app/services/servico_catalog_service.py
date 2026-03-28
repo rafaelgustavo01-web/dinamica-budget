@@ -10,8 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import NotFoundError, ValidationError
 from app.core.logging import get_logger
 from app.models.composicao_tcpo import ComposicaoTcpo
-from app.models.enums import OrigemItem, StatusHomologacao
+from app.models.enums import OrigemItem, StatusHomologacao, TipoRecurso
 from app.models.servico_tcpo import ServicoTcpo
+from app.models.versao_composicao import VersaoComposicao
+from app.repositories.associacao_repository import normalize_text
 from app.repositories.servico_tcpo_repository import ServicoTcpoRepository
 from app.schemas.common import PaginatedResponse
 from app.schemas.servico import (
@@ -20,6 +22,7 @@ from app.schemas.servico import (
     ServicoCreate,
     ServicoListParams,
     ServicoTcpoResponse,
+    VersaoInfo,
 )
 from app.services.embedding_sync_service import embedding_sync_service
 
@@ -68,37 +71,107 @@ class ServicoCatalogService:
     # ─── Composição Explosion ─────────────────────────────────────────────────
 
     async def explode_composicao(
-        self, servico_id: UUID, db: AsyncSession
+        self, servico_id: UUID, db: AsyncSession, cliente_id: UUID | None = None
     ) -> ExplodeComposicaoResponse:
         repo = ServicoTcpoRepository(db)
-        servico = await repo.get_with_composicao(servico_id)
+        servico = await repo.get_active_by_id(servico_id)
         if not servico:
             raise NotFoundError("ServicoTcpo", str(servico_id))
 
-        itens = []
-        custo_total = Decimal("0")
+        versao = await repo.get_versao_ativa(servico_id, cliente_id)
+        itens, custo_total = await self._explode_recursivo(
+            servico_id=servico_id,
+            cliente_id=cliente_id,
+            visited=set(),
+            repo=repo,
+        )
 
-        for comp in servico.composicoes_pai:
-            filho = comp.insumo_filho
-            custo_item = comp.quantidade_consumo * filho.custo_unitario
-            custo_total += custo_item
-            itens.append(
-                ComposicaoItemResponse(
-                    id=comp.id,
-                    insumo_filho_id=filho.id,
-                    descricao_filho=filho.descricao,
-                    unidade_medida=filho.unidade_medida,
-                    quantidade_consumo=comp.quantidade_consumo,
-                    custo_unitario=filho.custo_unitario,
-                    custo_total=custo_item,
-                )
+        versao_info: VersaoInfo | None = None
+        if versao:
+            versao_info = VersaoInfo(
+                versao_id=versao.id,
+                numero_versao=versao.numero_versao,
+                origem=versao.origem.value,
+                cliente_id=versao.cliente_id,
             )
 
         return ExplodeComposicaoResponse(
             servico=ServicoTcpoResponse.model_validate(servico),
             itens=itens,
             custo_total_composicao=custo_total,
+            versao_info=versao_info,
         )
+
+    async def _explode_recursivo(
+        self,
+        servico_id: UUID,
+        cliente_id: UUID | None,
+        visited: set[UUID],
+        repo: "ServicoTcpoRepository",
+    ) -> tuple[list[ComposicaoItemResponse], Decimal]:
+        """
+        DFS explosion of a service composition.
+        - If a child has tipo_recurso=SERVICO, expand it recursively.
+        - Otherwise, treat it as a leaf resource (MO, INSUMO, etc.).
+        Cycle detection via `visited` set raises ValidationError on cycle.
+        """
+        if servico_id in visited:
+            raise ValidationError("Ciclo detectado na composição — referência circular.")
+        visited.add(servico_id)
+
+        versao = await repo.get_versao_ativa(servico_id, cliente_id)
+        if not versao:
+            return [], Decimal("0")
+
+        result: list[ComposicaoItemResponse] = []
+        total = Decimal("0")
+
+        for comp in versao.itens:
+            filho = comp.insumo_filho
+            if filho is None:
+                # Lazy-load fallback
+                filho = await repo.get_active_by_id(comp.insumo_filho_id)
+            if filho is None:
+                continue
+
+            if filho.tipo_recurso == TipoRecurso.SERVICO:
+                # Recursive expansion — accumulate sub-items with scaled quantities
+                sub_itens, sub_custo = await self._explode_recursivo(
+                    servico_id=filho.id,
+                    cliente_id=cliente_id,
+                    visited=visited,
+                    repo=repo,
+                )
+                for item in sub_itens:
+                    # Scale quantities by this composition's quantidade_consumo
+                    result.append(
+                        ComposicaoItemResponse(
+                            id=item.id,
+                            insumo_filho_id=item.insumo_filho_id,
+                            descricao_filho=item.descricao_filho,
+                            unidade_medida=item.unidade_medida,
+                            quantidade_consumo=item.quantidade_consumo * comp.quantidade_consumo,
+                            custo_unitario=item.custo_unitario,
+                            custo_total=item.custo_total * comp.quantidade_consumo,
+                        )
+                    )
+                total += sub_custo * comp.quantidade_consumo
+            else:
+                custo_item = comp.quantidade_consumo * filho.custo_unitario
+                result.append(
+                    ComposicaoItemResponse(
+                        id=comp.id,
+                        insumo_filho_id=filho.id,
+                        descricao_filho=filho.descricao,
+                        unidade_medida=comp.unidade_medida,
+                        quantidade_consumo=comp.quantidade_consumo,
+                        custo_unitario=filho.custo_unitario,
+                        custo_total=custo_item,
+                    )
+                )
+                total += custo_item
+
+        return result, total
 
     # ─── Anti-Loop Validation ─────────────────────────────────────────────────
 
@@ -147,11 +220,13 @@ class ServicoCatalogService:
         pai_id: UUID,
         filho_id: UUID,
         quantidade_consumo: Decimal,
+        unidade_medida: str,
         db: AsyncSession,
     ) -> ComposicaoTcpo:
         """
         Add a composition item with anti-loop guard.
         Raises ValidationError if the addition would create a circular reference.
+        Requires an active PROPRIA VersaoComposicao for pai_id.
         """
         repo = ServicoTcpoRepository(db)
 
@@ -161,6 +236,14 @@ class ServicoCatalogService:
         filho = await repo.get_active_by_id(filho_id)
         if not filho:
             raise NotFoundError("ServicoTcpo (filho)", str(filho_id))
+
+        # Get the active PROPRIA versao for this service
+        versao = await repo.get_versao_ativa(pai_id, pai.cliente_id)
+        if not versao:
+            raise ValidationError(
+                "Nenhuma versão ativa de composição encontrada. "
+                "Crie uma versão antes de adicionar componentes."
+            )
 
         if await self._detectar_ciclo(pai_id, filho_id, db):
             raise ValidationError(
@@ -173,6 +256,8 @@ class ServicoCatalogService:
             servico_pai_id=pai_id,
             insumo_filho_id=filho_id,
             quantidade_consumo=quantidade_consumo,
+            versao_id=versao.id,
+            unidade_medida=unidade_medida,
         )
         db.add(comp)
         await db.flush()
@@ -287,6 +372,7 @@ class ServicoCatalogService:
             categoria_id=data.categoria_id,
             origem=OrigemItem.TCPO,
             status_homologacao=StatusHomologacao.APROVADO,
+            descricao_tokens=normalize_text(data.descricao),
         )
         servico = await repo.create(servico)
         await embedding_sync_service.sync_create_or_update(servico.id, db)
@@ -338,17 +424,33 @@ class ServicoCatalogService:
             categoria_id=original.categoria_id,
             origem=OrigemItem.PROPRIA,
             status_homologacao=StatusHomologacao.PENDENTE,
+            descricao_tokens=normalize_text(descricao if descricao is not None else original.descricao),
         )
         db.add(novo)
         await db.flush()
 
+        # Create VersaoComposicao for the new PROPRIA service
+        nova_versao = VersaoComposicao(
+            id=uuid.uuid4(),
+            servico_id=novo.id,
+            numero_versao=1,
+            origem=OrigemItem.PROPRIA,
+            cliente_id=cliente_id,
+            is_ativa=True,
+        )
+        db.add(nova_versao)
+        await db.flush()
+
         for comp in original.composicoes_pai:
+            filho = comp.insumo_filho
             db.add(
                 ComposicaoTcpo(
                     id=uuid.uuid4(),
                     servico_pai_id=novo.id,
                     insumo_filho_id=comp.insumo_filho_id,
                     quantidade_consumo=comp.quantidade_consumo,
+                    versao_id=nova_versao.id,
+                    unidade_medida=filho.unidade_medida if filho else original.unidade_medida,
                 )
             )
 

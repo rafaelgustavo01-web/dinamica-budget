@@ -13,11 +13,13 @@ from app.models.enums import (
     StatusValidacaoAssociacao,
     TipoCusto,
     TipoOperacaoAuditoria,
+    TipoRecurso,
 )
 from app.models.historico_busca_cliente import HistoricoBuscaCliente
 from app.models.servico_tcpo import ServicoTcpo
 from app.models.tcpo_embeddings import TcpoEmbedding
 from app.models.usuario import Usuario, UsuarioPerfil
+from app.models.versao_composicao import VersaoComposicao
 
 __all__ = [
     "Base",
@@ -28,6 +30,7 @@ __all__ = [
     "CategoriaRecurso",
     "ServicoTcpo",
     "ComposicaoTcpo",
+    "VersaoComposicao",
     "TcpoEmbedding",
     "HistoricoBuscaCliente",
     "AssociacaoInteligente",
@@ -40,4 +43,5 @@ __all__ = [
     "StatusValidacaoAssociacao",
     "PerfilUsuario",
     "TipoOperacaoAuditoria",
+    "TipoRecurso",
 ]

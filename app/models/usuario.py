@@ -9,9 +9,11 @@ from app.models.base import Base, TimestampMixin
 
 
 class UsuarioPerfil(Base):
-    """Associative table: Usuario ↔ PerfilUsuario (RBAC)."""
+    """Associative table: Usuario ↔ PerfilUsuario (RBAC).
+    Table renamed to permissao_operacional in Migration 010.
+    """
 
-    __tablename__ = "usuario_perfil"
+    __tablename__ = "permissao_operacional"
 
     usuario_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("usuarios.id", ondelete="CASCADE"), primary_key=True

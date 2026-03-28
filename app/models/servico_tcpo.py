@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
-from app.models.enums import OrigemItem, StatusHomologacao
+from app.models.enums import OrigemItem, StatusHomologacao, TipoRecurso
 
 
 class ServicoTcpo(Base, TimestampMixin):
@@ -59,6 +59,15 @@ class ServicoTcpo(Base, TimestampMixin):
     data_aprovacao: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+
+    # ── Classificação de recurso ─────────────────────────────────────────────
+    tipo_recurso: Mapped[TipoRecurso | None] = mapped_column(
+        SAEnum(TipoRecurso, name="tipo_recurso_enum", create_type=False),
+        nullable=True,
+    )
+
+    # ── Tokens normalizados para busca fuzzy/semântica ───────────────────────
+    descricao_tokens: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # ── Soft delete ─────────────────────────────────────────────────────────
     deleted_at: Mapped[datetime | None] = mapped_column(

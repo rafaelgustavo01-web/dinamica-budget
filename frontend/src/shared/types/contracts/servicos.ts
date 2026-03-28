@@ -1,5 +1,7 @@
 import type { DecimalValue } from './common';
 
+export type TipoRecurso = 'MO' | 'INSUMO' | 'FERRAMENTA' | 'EQUIPAMENTO' | 'SERVICO';
+
 export interface ServicoTcpoResponse {
   id: string;
   codigo_origem: string;
@@ -9,6 +11,8 @@ export interface ServicoTcpoResponse {
   categoria_id: number | null;
   origem: 'TCPO' | 'PROPRIA';
   cliente_id: string | null;
+  tipo_recurso: TipoRecurso | null;
+  descricao_tokens: string | null;
 }
 
 export interface ComposicaoItemResponse {
@@ -21,10 +25,18 @@ export interface ComposicaoItemResponse {
   custo_total: DecimalValue;
 }
 
+export interface VersaoInfo {
+  versao_id: string;
+  numero_versao: number;
+  origem: 'TCPO' | 'PROPRIA';
+  cliente_id: string | null;
+}
+
 export interface ExplodeComposicaoResponse {
   servico: ServicoTcpoResponse;
   itens: ComposicaoItemResponse[];
   custo_total_composicao: DecimalValue;
+  versao_info: VersaoInfo | null;
 }
 
 export interface ServicoCreate {
