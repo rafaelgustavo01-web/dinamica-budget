@@ -62,7 +62,8 @@
       "Bash(PGPASSWORD=postgres \"C:/Program Files/PostgreSQL/16/bin/psql.exe\" -U postgres -d dinamica_budget -c \"\\\\dt\")",
       "Bash(PGPASSWORD=postgres \"C:/Program Files/PostgreSQL/16/bin/psql.exe\" -U postgres -d dinamica_budget -c \"SELECT typname FROM pg_type WHERE typtype=''''e'''';\")",
       "Bash(find \"C:/Users/rafae/Documents/workspace/Dinamica Budget/alembic\" -name \"*.pyc\" -delete)",
-      "Bash(find \"C:/Users/rafae/Documents/workspace/Dinamica Budget/app/models\" -name \"*.pyc\" -delete)"
+      "Bash(find \"C:/Users/rafae/Documents/workspace/Dinamica Budget/app/models\" -name \"*.pyc\" -delete)",
+      "Bash(PGPASSWORD=postgres \"C:/Program Files/PostgreSQL/16/bin/psql.exe\" -U postgres -d dinamica_budget -c \":*)"
     ]
   }
 }
