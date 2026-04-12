@@ -10,7 +10,9 @@ from app.repositories.usuario_repository import UsuarioRepository
 from app.schemas.auth import (
     LoginRequest,
     MeResponse,
+    PasswordChangeRequest,
     PerfilClienteResponse,
+    ProfileUpdateRequest,
     RefreshRequest,
     TokenResponse,
     UsuarioCreate,
@@ -105,6 +107,50 @@ async def me(
         is_admin=current_user.is_admin,
         perfis=perfis,
     )
+
+
+@router.patch("/me", response_model=MeResponse, summary="Atualizar perfil próprio")
+async def update_profile(
+    data: ProfileUpdateRequest,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    svc: AuthService = Depends(_get_auth_service),
+) -> MeResponse:
+    """Atualiza nome do próprio usuário autenticado."""
+    await svc.update_profile(current_user.id, data)
+    # Rebuild MeResponse with updated data
+    result = await db.execute(
+        select(UsuarioPerfil).where(UsuarioPerfil.usuario_id == current_user.id)
+    )
+    perfis_db = result.scalars().all()
+    perfis = [
+        PerfilClienteResponse(cliente_id=str(p.cliente_id), perfil=p.perfil)
+        for p in perfis_db
+    ]
+    if current_user.is_admin:
+        perfis.append(PerfilClienteResponse(cliente_id="*", perfil="ADMIN"))
+    updated_user = await svc.repo.get_by_id(current_user.id)
+    return MeResponse(
+        id=str(updated_user.id),
+        nome=updated_user.nome,
+        email=updated_user.email,
+        is_active=updated_user.is_active,
+        is_admin=updated_user.is_admin,
+        perfis=perfis,
+    )
+
+
+@router.post("/trocar-senha", status_code=204, summary="Trocar senha")
+async def change_password(
+    data: PasswordChangeRequest,
+    current_user=Depends(get_current_active_user),
+    svc: AuthService = Depends(_get_auth_service),
+) -> None:
+    """
+    Troca a senha do usuário autenticado.
+    Exige senha atual para validação. Revoga refresh tokens após troca.
+    """
+    await svc.change_password(current_user.id, data)
 
 
 @router.post(

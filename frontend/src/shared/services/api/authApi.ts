@@ -1,6 +1,8 @@
 import type {
   LoginRequest,
   MeResponse,
+  PasswordChangeRequest,
+  ProfileUpdateRequest,
   TokenResponse,
   UsuarioCreate,
   UsuarioResponse,
@@ -32,5 +34,14 @@ export const authApi = {
   async createUsuario(payload: UsuarioCreate) {
     const response = await apiClient.post<UsuarioResponse>('/auth/usuarios', payload);
     return response.data;
+  },
+
+  async updateProfile(payload: ProfileUpdateRequest) {
+    const response = await apiClient.patch<MeResponse>('/auth/me', payload);
+    return response.data;
+  },
+
+  async changePassword(payload: PasswordChangeRequest) {
+    await apiClient.post('/auth/trocar-senha', payload);
   },
 };

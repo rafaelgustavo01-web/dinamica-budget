@@ -17,6 +17,8 @@ export const successMessages = {
   clientActivated: 'Cliente reativado com sucesso.',
   clientDeactivated: 'Cliente desativado com sucesso.',
   embeddingsProcessed: 'Embeddings processados com sucesso. O motor de busca está atualizado.',
+  profileUpdated: 'Perfil atualizado com sucesso.',
+  passwordChanged: 'Senha alterada com sucesso. Faça login novamente.',
 } as const;
 
 export const errorMessages = {
@@ -35,6 +37,8 @@ export const errorMessages = {
   clientCreate: 'Não foi possível cadastrar o cliente. Verifique os dados e tente novamente.',
   clientUpdate: 'Não foi possível atualizar o cliente. Tente novamente.',
   embeddings: 'Não foi possível processar os embeddings. Tente novamente.',
+  profileUpdate: 'Não foi possível atualizar o perfil. Tente novamente.',
+  passwordChange: 'Não foi possível alterar a senha. Verifique a senha atual e tente novamente.',
 } as const;
 
 export const warningMessages = {

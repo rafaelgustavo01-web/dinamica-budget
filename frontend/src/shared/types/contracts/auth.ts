@@ -39,3 +39,12 @@ export interface PerfilClienteResponse {
 export interface MeResponse extends UsuarioResponse {
   perfis: PerfilClienteResponse[];
 }
+
+export interface ProfileUpdateRequest {
+  nome: string;
+}
+
+export interface PasswordChangeRequest {
+  current_password: string;
+  new_password: string;
+}
