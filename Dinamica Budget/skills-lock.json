@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "skills": {
+    "claude-code-plugin-release": {
+      "source": "thedotmack/claude-mem",
+      "sourceType": "github",
+      "computedHash": "5b6294258158d0a85a41d56f523d8c679c8490278104e45caafb6a11e65d5d88"
+    },
+    "do": {
+      "source": "thedotmack/claude-mem",
+      "sourceType": "github",
+      "computedHash": "5c1dd756790f8801bb283c7965b8ae343d417add637f7631631c2277742f5107"
+    },
+    "knowledge-agent": {
+      "source": "thedotmack/claude-mem",
+      "sourceType": "github",
+      "computedHash": "55400bc6d7f15a9b7e9c81ad8131cf1c412ac1b218c7a50212c59f335993470a"
+    },
+    "make-plan": {
+      "source": "thedotmack/claude-mem",
+      "sourceType": "github",
+      "computedHash": "9181a6c626f3335a1f712708b9f1bd8a179665e06daae239aafcafc4f2c37d95"
+    },
+    "mem-search": {
+      "source": "thedotmack/claude-mem",
+      "sourceType": "github",
+      "computedHash": "c74514ed0e7124a38caf7141c283acfb46899fa336554bed52ce022411dd86fa"
+    },
+    "smart-explore": {
+      "source": "thedotmack/claude-mem",
+      "sourceType": "github",
+      "computedHash": "cc969eeb5965b90fffc08bfb8a49418a805b8d8f3d65b650bab1e21ce55af2d1"
+    },
+    "timeline-report": {
+      "source": "thedotmack/claude-mem",
+      "sourceType": "github",
+      "computedHash": "4f58df059bd2847e655bb4da9b83548e0a34450bc958bb42f0751c309d2bdfc0"
+    }
+  }
+}
