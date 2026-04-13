@@ -75,64 +75,78 @@ echo.
 set "WSL_READY=0"
 set "NEED_REBOOT=0"
 
-:: Checar se WSL está instalado E funcional
+:: ── Detectar versão do Windows (Server 2019 = 17763, Server 2022 = 20348) ────
+for /f "tokens=4-5 delims=. " %%a in ('ver') do set "WIN_BUILD=%%a"
+echo    Windows Build: !WIN_BUILD!
+if !WIN_BUILD! LSS 17763 (
+    echo    [ERRO] Windows muito antigo para WSL2. Requer Server 2019 ou superior.
+    goto :fim_erro
+)
+if !WIN_BUILD! LSS 20348 (
+    echo    [AVISO] Servidor detectado: Windows Server 2019 (build !WIN_BUILD!)
+    echo            WSL2 no Server 2019 requer o kernel manual separado.
+    echo            Recomendado: Windows Server 2022 para suporte completo.
+    echo.
+) else (
+    echo    [OK] Windows Server 2022+ (build !WIN_BUILD^) — suporte total a WSL2
+    echo.
+)
+
+:: ── Verificar se WSL já está 100% funcional ───────────────────────────────────
 echo    Verificando WSL2...
 wsl --status >nul 2>&1
 if !errorlevel! equ 0 (
-    :: Checar se Ubuntu está instalado
     wsl -l -q 2>nul | findstr /i "Ubuntu" >nul 2>&1
     if !errorlevel! equ 0 (
-        echo    [OK] WSL2 com Ubuntu ja instalado
+        echo    [OK] WSL2 com Ubuntu ja instalado e funcional
         set "WSL_READY=1"
         goto :wsl_done
-    ) else (
-        echo    WSL2 ativo mas Ubuntu nao encontrado.
     )
-) else (
-    echo    WSL2 nao esta funcional.
+    echo    WSL2 ativo mas Ubuntu nao encontrado. Continuando instalacao...
 )
-
-echo    Iniciando instalacao/configuracao...
 echo.
 
-:: ── Verificar features do Windows ────────────────────────────────────────────
+:: ── Checar features via PowerShell (independe do idioma do Windows) ──────────
 echo    [1/5] Verificando feature: Windows Subsystem for Linux...
-set "WSL_FEAT_STATE="
-for /f "tokens=3 delims=: " %%s in ('dism /online /get-featureinfo /featurename:Microsoft-Windows-Subsystem-Linux 2^>nul ^| findstr /i "State"') do set "WSL_FEAT_STATE=%%s"
-echo          Estado atual: !WSL_FEAT_STATE!
+set "WSL_FEAT_OK=0"
+for /f "delims=" %%s in ('powershell -NoProfile -Command "(Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux).State" 2^>nul') do (
+    if /i "%%s"=="Enabled" set "WSL_FEAT_OK=1"
+)
+echo          Estado: !WSL_FEAT_OK! (1=Habilitado 0=Desabilitado)
 
-if /i "!WSL_FEAT_STATE!" neq "Enabled" (
+if "!WSL_FEAT_OK!"=="0" (
     echo          Habilitando...
     dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
     set "NEED_REBOOT=1"
-    echo          Habilitado com sucesso.
+    echo          Habilitado. Reboot necessario.
 ) else (
     echo          [OK] Ja habilitado
 )
 echo.
 
 echo    [2/5] Verificando feature: Virtual Machine Platform...
-set "VMP_FEAT_STATE="
-for /f "tokens=3 delims=: " %%s in ('dism /online /get-featureinfo /featurename:VirtualMachinePlatform 2^>nul ^| findstr /i "State"') do set "VMP_FEAT_STATE=%%s"
-echo          Estado atual: !VMP_FEAT_STATE!
+set "VMP_FEAT_OK=0"
+for /f "delims=" %%s in ('powershell -NoProfile -Command "(Get-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform).State" 2^>nul') do (
+    if /i "%%s"=="Enabled" set "VMP_FEAT_OK=1"
+)
+echo          Estado: !VMP_FEAT_OK! (1=Habilitado 0=Desabilitado)
 
-if /i "!VMP_FEAT_STATE!" neq "Enabled" (
+if "!VMP_FEAT_OK!"=="0" (
     echo          Habilitando...
     dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
     set "NEED_REBOOT=1"
-    echo          Habilitado com sucesso.
+    echo          Habilitado. Reboot necessario.
 ) else (
     echo          [OK] Ja habilitado
 )
 echo.
 
-:: ── Verificar se precisa reboot (features estão enabled mas WSL não funciona) ──
-:: Se features estão Enabled mas wsl --status falha, é REBOOT pendente
-if /i "!WSL_FEAT_STATE!"=="Enabled" if /i "!VMP_FEAT_STATE!"=="Enabled" (
+:: ── Se features OK mas WSL ainda falha → reboot pendente ─────────────────────
+if "!WSL_FEAT_OK!"=="1" if "!VMP_FEAT_OK!"=="1" (
     wsl --status >nul 2>&1
     if !errorlevel! neq 0 (
-        echo    [!] Features habilitadas mas WSL2 nao funciona.
-        echo        Isso significa que e necessario REINICIAR o servidor.
+        echo    ATENCAO: Features HABILITADAS mas WSL ainda nao responde.
+        echo    Isso ocorre porque um reboot ainda nao foi feito desde a ativacao.
         set "NEED_REBOOT=1"
     )
 )
@@ -140,91 +154,89 @@ if /i "!WSL_FEAT_STATE!"=="Enabled" if /i "!VMP_FEAT_STATE!"=="Enabled" (
 if "!NEED_REBOOT!"=="1" (
     echo.
     echo    ╔══════════════════════════════════════════════════════════════╗
-    echo    ║  REINICIALIZACAO NECESSARIA                                  ║
+    echo    ║  REBOOT NECESSARIO — E A ULTIMA VEZ                         ║
     echo    ║                                                              ║
-    echo    ║  As features do WSL2 precisam de reboot para funcionar.      ║
-    echo    ║  REINICIE o servidor e execute este script novamente.         ║
+    echo    ║  As features WSL foram habilitadas com sucesso.              ║
+    echo    ║  Ainda e preciso reiniciar UMA vez para o kernel ativar.     ║
     echo    ║                                                              ║
-    echo    ║  Apos reiniciar, basta rodar este .bat de novo que           ║
-    echo    ║  ele continua de onde parou automaticamente.                 ║
+    echo    ║  Apos reiniciar, execute este script novamente.              ║
+    echo    ║  Nao vai pedir reboot de novo — seguira para o Docker.       ║
     echo    ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo    Deseja reiniciar agora? (S/N)
     set /p "REBOOT_CHOICE="
     if /i "!REBOOT_CHOICE!"=="S" (
-        shutdown /r /t 10 /c "Reiniciando para completar instalacao WSL2 — Dinamica Budget"
-        echo    Reiniciando em 10 segundos...
+        shutdown /r /t 5 /c "Reboot final WSL2 — Dinamica Budget"
+        echo    Reiniciando em 5 segundos...
+        timeout /t 6 /nobreak >nul
         goto :fim_ok
     )
     echo    Reinicie manualmente e execute este script novamente.
     goto :fim_ok
 )
 
-:: ── Configurar WSL2 como padrão ──────────────────────────────────────────────
+:: ── [3/5] WSL2 como padrão ────────────────────────────────────────────────────
 echo    [3/5] Definindo WSL2 como versao padrao...
-wsl --set-default-version 2 2>&1
+wsl --set-default-version 2
 echo          OK
 echo.
 
-:: ── Baixar e instalar kernel WSL2 (se necessário) ───────────────────────────
-echo    [4/5] Verificando kernel WSL2...
-wsl --status 2>&1 | findstr /i "kernel" >nul 2>&1
-if !errorlevel! neq 0 (
-    echo          Baixando kernel WSL2 (~15 MB)...
-    set "KERNEL_URL=https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi"
-    set "KERNEL_PATH=%TEMP%\wsl_update_x64.msi"
-    powershell -NoProfile -Command "$ProgressPreference='Continue'; Invoke-WebRequest -Uri '!KERNEL_URL!' -OutFile '!KERNEL_PATH!' -UseBasicParsing"
-    if exist "!KERNEL_PATH!" (
-        echo          Instalando kernel...
-        msiexec /i "!KERNEL_PATH!" /quiet /norestart
-        echo          [OK] Kernel instalado
-        del "!KERNEL_PATH!" >nul 2>&1
-    ) else (
-        echo          [ERRO] Falha ao baixar kernel. Verifique conexao com internet.
-        goto :fim_erro
-    )
+:: ── [4/5] Kernel WSL2 — OBRIGATORIO no Server 2019 ───────────────────────────
+echo    [4/5] Instalando/verificando kernel WSL2...
+set "KERNEL_URL=https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi"
+set "KERNEL_PATH=%TEMP%\wsl_update_x64.msi"
+echo          Baixando kernel WSL2 (~15 MB)...
+powershell -NoProfile -Command "try { Invoke-WebRequest -Uri '%KERNEL_URL%' -OutFile '%KERNEL_PATH%' -UseBasicParsing; Write-Host '          Download OK' } catch { Write-Host '          Falha no download:' $_.Exception.Message }"
+if exist "%KERNEL_PATH%" (
+    echo          Instalando kernel...
+    msiexec /i "%KERNEL_PATH%" /quiet /norestart
+    echo          [OK] Kernel instalado
+    del "%KERNEL_PATH%" >nul 2>&1
 ) else (
-    echo          [OK] Kernel presente
+    echo          [AVISO] Nao foi possivel baixar o kernel. Continuando com versao existente...
 )
 echo.
 
-:: ── Instalar Ubuntu ──────────────────────────────────────────────────────────
-echo    [5/5] Instalando Ubuntu 22.04 (~500 MB)...
-echo          ACOMPANHE: O download pode levar 5-15 minutos dependendo da internet.
-echo          Voce vera o progresso abaixo:
+:: ── [5/5] Ubuntu 22.04 ───────────────────────────────────────────────────────
+echo    [5/5] Instalando Ubuntu 22.04...
+echo          Verificando se ja existe...
+wsl -l -q 2>nul | findstr /i "Ubuntu" >nul 2>&1
+if !errorlevel! equ 0 (
+    echo          [OK] Ubuntu ja instalado
+    goto :ubuntu_ok
+)
+
+echo          Iniciando download (~500 MB) — acompanhe o progresso:
 echo.
-
-:: Usar --no-launch mas MOSTRAR output para progresso
-wsl --install -d Ubuntu-22.04 --no-launch 2>&1
-
+wsl --install -d Ubuntu-22.04 --no-launch
 if !errorlevel! neq 0 (
-    :: Tentar método alternativo
     echo.
-    echo    [AVISO] Metodo automatico falhou. Tentando download manual...
-    echo          Baixando Ubuntu 22.04 (~500 MB)...
+    echo          Tentando metodo alternativo de instalacao...
     set "UBUNTU_URL=https://aka.ms/wslubuntu2204"
     set "UBUNTU_PATH=%TEMP%\ubuntu2204.appx"
-    powershell -NoProfile -Command "$ProgressPreference='Continue'; Write-Host '          Download iniciado...'; Invoke-WebRequest -Uri '!UBUNTU_URL!' -OutFile '!UBUNTU_PATH!' -UseBasicParsing; Write-Host '          Download concluido.'"
-    if exist "!UBUNTU_PATH!" (
-        echo          Instalando...
-        powershell -NoProfile -Command "Add-AppxPackage '!UBUNTU_PATH!'"
-        del "!UBUNTU_PATH!" >nul 2>&1
+    echo          Baixando Ubuntu 22.04...
+    powershell -NoProfile -Command "Invoke-WebRequest -Uri '%UBUNTU_URL%' -OutFile '%UBUNTU_PATH%' -UseBasicParsing"
+    if exist "%UBUNTU_PATH%" (
+        echo          Instalando pacote Ubuntu...
+        powershell -NoProfile -Command "Add-AppxPackage '%UBUNTU_PATH%'"
+        del "%UBUNTU_PATH%" >nul 2>&1
     ) else (
-        echo          [ERRO] Falha ao baixar Ubuntu. Verifique internet.
+        echo    [ERRO] Nao foi possivel baixar Ubuntu. Verifique conexao com internet.
         goto :fim_erro
     )
 )
 
+:ubuntu_ok
 echo.
-echo    [OK] Ubuntu 22.04 instalado!
+echo    [OK] Ubuntu 22.04 disponivel!
 echo.
 echo    ╔══════════════════════════════════════════════════════════════╗
-echo    ║  CONFIGURAR USUARIO LINUX                                    ║
+echo    ║  CONFIGURAR USUARIO LINUX (UMA VEZ APENAS)                  ║
 echo    ║                                                              ║
 echo    ║  Uma janela do Ubuntu vai abrir.                             ║
 echo    ║  Crie um usuario (ex: deploy) e defina uma senha.           ║
-echo    ║  Depois FECHE a janela do Ubuntu (digite: exit)              ║
-echo    ║  e este script continuara automaticamente.                   ║
+echo    ║  Depois digite: exit  e pressione Enter                      ║
+echo    ║  Este script continuara automaticamente.                     ║
 echo    ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo    Pressione qualquer tecla para abrir o Ubuntu...
