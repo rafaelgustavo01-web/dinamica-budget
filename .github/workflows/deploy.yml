@@ -1,0 +1,50 @@
+name: 🚀 Deploy — Produção
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:            # permite rodar manualmente pelo GitHub
+
+jobs:
+  deploy:
+    name: Deploy no Servidor
+    runs-on: [self-hosted, producao]   # tag configurada no servidor
+    timeout-minutes: 20
+
+    steps:
+      # ── 1. Baixar código ────────────────────────────────────────────────────
+      - name: 📥 Checkout do código
+        uses: actions/checkout@v4
+
+      # ── 2. Criar .env com o secret do GitHub ───────────────────────────────
+      #   Configure em: Settings → Secrets → Actions → New repository secret
+      #   Nome: ENV_PRODUCAO  |  Valor: conteúdo completo do seu .env
+      - name: 🔑 Criar arquivo .env
+        run: echo "${{ secrets.ENV_PRODUCAO }}" > .env
+
+      # ── 3. Deploy ───────────────────────────────────────────────────────────
+      - name: 🐳 Docker Compose — build e subir containers
+        run: |
+          docker compose pull db
+          docker compose up -d --build --remove-orphans
+
+      # ── 4. Aguardar API ficar pronta (até 2 min) ───────────────────────────
+      - name: ⏳ Aguardar API responder
+        run: |
+          echo "Aguardando API iniciar..."
+          for i in $(seq 1 24); do
+            if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+              echo "✅ API respondendo!"
+              exit 0
+            fi
+            echo "  Tentativa $i/24 — aguardando 5s..."
+            sleep 5
+          done
+          echo "❌ API não respondeu em 2 minutos"
+          docker compose logs --tail=50 api
+          exit 1
+
+      # ── 5. Status final (sempre exibe, mesmo em falha) ─────────────────────
+      - name: 📋 Status dos containers
+        if: always()
+        run: docker compose ps
