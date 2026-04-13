@@ -74,35 +74,46 @@ echo.
 
 set "WSL_READY=0"
 set "NEED_REBOOT=0"
+set "IS_SERVER_2019=0"
 
-:: ── Detectar versão do Windows (Server 2019 = 17763, Server 2022 = 20348) ────
-for /f "tokens=4-5 delims=. " %%a in ('ver') do set "WIN_BUILD=%%a"
+:: ── Detectar versão do Windows via PowerShell (evita bug de parsing do 'ver') ──
+set "WIN_BUILD=0"
+for /f "delims=" %%b in ('powershell -NoProfile -Command "[System.Environment]::OSVersion.Version.Build"') do set "WIN_BUILD=%%b"
 echo    Windows Build: !WIN_BUILD!
+
 if !WIN_BUILD! LSS 17763 (
-    echo    [ERRO] Windows muito antigo para WSL2. Requer Server 2019 ou superior.
+    echo    [ERRO] Windows muito antigo (build !WIN_BUILD!). Requer Server 2019 (17763) ou superior.
     goto :fim_erro
 )
 if !WIN_BUILD! LSS 20348 (
-    echo    [AVISO] Servidor detectado: Windows Server 2019 (build !WIN_BUILD!)
-    echo            WSL2 no Server 2019 requer o kernel manual separado.
-    echo            Recomendado: Windows Server 2022 para suporte completo.
-    echo.
+    echo    Windows Server 2019 detectado.
+    echo    WSL2 funciona, mas exige instalacao manual do kernel e do Ubuntu.
+    set "IS_SERVER_2019=1"
 ) else (
-    echo    [OK] Windows Server 2022+ (build !WIN_BUILD^) — suporte total a WSL2
-    echo.
+    echo    Windows Server 2022+ detectado — suporte nativo a WSL2.
 )
+echo.
 
-:: ── Verificar se WSL já está 100% funcional ───────────────────────────────────
-echo    Verificando WSL2...
-wsl --status >nul 2>&1
+:: ── Verificar se WSL2 + Ubuntu já estão 100% funcionais ──────────────────────
+echo    Verificando se WSL2 ja esta funcional...
+:: Nota: NO Server 2019 'wsl --status' NAO existe. Usar 'wsl -l' como teste.
+wsl -l -q >nul 2>&1
 if !errorlevel! equ 0 (
     wsl -l -q 2>nul | findstr /i "Ubuntu" >nul 2>&1
     if !errorlevel! equ 0 (
-        echo    [OK] WSL2 com Ubuntu ja instalado e funcional
-        set "WSL_READY=1"
-        goto :wsl_done
+        :: Testar se a distro realmente executa
+        wsl -d %WSL_DISTRO% -- echo "WSL2_OK" >nul 2>&1
+        if !errorlevel! equ 0 (
+            echo    [OK] WSL2 com Ubuntu instalado e funcional!
+            set "WSL_READY=1"
+            goto :wsl_done
+        )
+        echo    Ubuntu existe mas nao conseguiu executar. Continuando setup...
+    ) else (
+        echo    WSL ativo, mas Ubuntu nao instalado.
     )
-    echo    WSL2 ativo mas Ubuntu nao encontrado. Continuando instalacao...
+) else (
+    echo    WSL nao esta funcional (wsl.exe nao respondeu).
 )
 echo.
 
@@ -110,9 +121,9 @@ echo.
 echo    [1/5] Verificando feature: Windows Subsystem for Linux...
 set "WSL_FEAT_OK=0"
 for /f "delims=" %%s in ('powershell -NoProfile -Command "(Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux).State" 2^>nul') do (
+    echo          Estado: %%s
     if /i "%%s"=="Enabled" set "WSL_FEAT_OK=1"
 )
-echo          Estado: !WSL_FEAT_OK! (1=Habilitado 0=Desabilitado)
 
 if "!WSL_FEAT_OK!"=="0" (
     echo          Habilitando...
@@ -127,9 +138,9 @@ echo.
 echo    [2/5] Verificando feature: Virtual Machine Platform...
 set "VMP_FEAT_OK=0"
 for /f "delims=" %%s in ('powershell -NoProfile -Command "(Get-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform).State" 2^>nul') do (
+    echo          Estado: %%s
     if /i "%%s"=="Enabled" set "VMP_FEAT_OK=1"
 )
-echo          Estado: !VMP_FEAT_OK! (1=Habilitado 0=Desabilitado)
 
 if "!VMP_FEAT_OK!"=="0" (
     echo          Habilitando...
@@ -141,60 +152,51 @@ if "!VMP_FEAT_OK!"=="0" (
 )
 echo.
 
-:: ── Se features OK mas WSL ainda falha → reboot pendente ─────────────────────
-if "!WSL_FEAT_OK!"=="1" if "!VMP_FEAT_OK!"=="1" (
-    wsl --status >nul 2>&1
-    if !errorlevel! neq 0 (
-        echo    ATENCAO: Features HABILITADAS mas WSL ainda nao responde.
-        echo    Isso ocorre porque um reboot ainda nao foi feito desde a ativacao.
-        set "NEED_REBOOT=1"
-    )
-)
+:: ── Se features OK mas nenhum reboot → verificar se kernel ja esta instalado ──
+:: No Server 2019, NÃO podemos usar 'wsl --status' (não existe)
+:: Se features estão OK, prosseguimos para instalar kernel + Ubuntu
 
 if "!NEED_REBOOT!"=="1" (
     echo.
     echo    ╔══════════════════════════════════════════════════════════════╗
-    echo    ║  REBOOT NECESSARIO — E A ULTIMA VEZ                         ║
-    echo    ║                                                              ║
-    echo    ║  As features WSL foram habilitadas com sucesso.              ║
-    echo    ║  Ainda e preciso reiniciar UMA vez para o kernel ativar.     ║
-    echo    ║                                                              ║
-    echo    ║  Apos reiniciar, execute este script novamente.              ║
-    echo    ║  Nao vai pedir reboot de novo — seguira para o Docker.       ║
+    echo    ║  REBOOT NECESSARIO (UNICA VEZ)                               ║
+    echo    ║                                                               ║
+    echo    ║  As features WSL2 e VirtualMachine foram habilitadas.         ║
+    echo    ║  Reinicie e execute este script novamente.                    ║
+    echo    ║  Na proxima vez, vai direto para instalar Docker + Ubuntu.    ║
     echo    ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo    Deseja reiniciar agora? (S/N)
     set /p "REBOOT_CHOICE="
     if /i "!REBOOT_CHOICE!"=="S" (
-        shutdown /r /t 5 /c "Reboot final WSL2 — Dinamica Budget"
+        shutdown /r /t 5 /c "Reboot para ativar WSL2 — Dinamica Budget"
         echo    Reiniciando em 5 segundos...
         timeout /t 6 /nobreak >nul
-        goto :fim_ok
     )
-    echo    Reinicie manualmente e execute este script novamente.
     goto :fim_ok
 )
 
-:: ── [3/5] WSL2 como padrão ────────────────────────────────────────────────────
-echo    [3/5] Definindo WSL2 como versao padrao...
-wsl --set-default-version 2
-echo          OK
-echo.
-
-:: ── [4/5] Kernel WSL2 — OBRIGATORIO no Server 2019 ───────────────────────────
-echo    [4/5] Instalando/verificando kernel WSL2...
+:: ── [3/5] Instalar kernel WSL2 (OBRIGATORIO no Server 2019) ──────────────────
+echo    [3/5] Instalando kernel WSL2...
 set "KERNEL_URL=https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi"
 set "KERNEL_PATH=%TEMP%\wsl_update_x64.msi"
 echo          Baixando kernel WSL2 (~15 MB)...
-powershell -NoProfile -Command "try { Invoke-WebRequest -Uri '%KERNEL_URL%' -OutFile '%KERNEL_PATH%' -UseBasicParsing; Write-Host '          Download OK' } catch { Write-Host '          Falha no download:' $_.Exception.Message }"
+powershell -NoProfile -Command "$ProgressPreference='Continue'; try { Invoke-WebRequest -Uri '%KERNEL_URL%' -OutFile '%KERNEL_PATH%' -UseBasicParsing; Write-Host '          Download OK' } catch { Write-Host '          Falha no download:' $_.Exception.Message }"
 if exist "%KERNEL_PATH%" (
     echo          Instalando kernel...
     msiexec /i "%KERNEL_PATH%" /quiet /norestart
+    timeout /t 3 /nobreak >nul
     echo          [OK] Kernel instalado
     del "%KERNEL_PATH%" >nul 2>&1
 ) else (
     echo          [AVISO] Nao foi possivel baixar o kernel. Continuando com versao existente...
 )
+echo.
+
+:: ── [4/5] Definir WSL2 como padrão ──────────────────────────────────────────
+echo    [4/5] Definindo WSL2 como versao padrao...
+wsl --set-default-version 2 2>&1
+echo          [OK]
 echo.
 
 :: ── [5/5] Ubuntu 22.04 ───────────────────────────────────────────────────────
@@ -206,58 +208,89 @@ if !errorlevel! equ 0 (
     goto :ubuntu_ok
 )
 
-echo          Iniciando download (~500 MB) — acompanhe o progresso:
-echo.
-wsl --install -d Ubuntu-22.04 --no-launch
-if !errorlevel! neq 0 (
-    echo.
-    echo          Tentando metodo alternativo de instalacao...
-    set "UBUNTU_URL=https://aka.ms/wslubuntu2204"
+:: Server 2019 NÃO tem "wsl --install" — baixar appx manualmente
+if "!IS_SERVER_2019!"=="1" (
+    echo          Server 2019: Baixando Ubuntu como pacote AppX (~500 MB)...
+    echo          Acompanhe o progresso abaixo:
     set "UBUNTU_PATH=%TEMP%\ubuntu2204.appx"
-    echo          Baixando Ubuntu 22.04...
-    powershell -NoProfile -Command "Invoke-WebRequest -Uri '%UBUNTU_URL%' -OutFile '%UBUNTU_PATH%' -UseBasicParsing"
-    if exist "%UBUNTU_PATH%" (
-        echo          Instalando pacote Ubuntu...
-        powershell -NoProfile -Command "Add-AppxPackage '%UBUNTU_PATH%'"
-        del "%UBUNTU_PATH%" >nul 2>&1
+    powershell -NoProfile -Command "$ProgressPreference='Continue'; Write-Host '          Iniciando download...'; Invoke-WebRequest -Uri 'https://aka.ms/wslubuntu2204' -OutFile '%TEMP%\ubuntu2204.appx' -UseBasicParsing; Write-Host '          Download concluido!'"
+    if exist "%TEMP%\ubuntu2204.appx" (
+        echo          Instalando pacote Ubuntu (pode levar 1-2 minutos)...
+        powershell -NoProfile -Command "Add-AppxPackage '%TEMP%\ubuntu2204.appx'"
+        if !errorlevel! neq 0 (
+            echo          Tentando instalacao alternativa via extracao...
+            powershell -NoProfile -Command "Rename-Item '%TEMP%\ubuntu2204.appx' '%TEMP%\ubuntu2204.zip' -Force; Expand-Archive '%TEMP%\ubuntu2204.zip' '%TEMP%\ubuntu2204' -Force"
+            if exist "%TEMP%\ubuntu2204\ubuntu*.exe" (
+                for /f "delims=" %%e in ('dir /b "%TEMP%\ubuntu2204\ubuntu*.exe"') do (
+                    echo          Executando %%e...
+                    "%TEMP%\ubuntu2204\%%e" install --root
+                )
+            ) else (
+                echo          Conteudo extraido:
+                dir /b "%TEMP%\ubuntu2204\"
+                echo          Procurando .appx interno...
+                for /f "delims=" %%a in ('dir /b "%TEMP%\ubuntu2204\*.appx" 2^>nul') do (
+                    echo          Instalando %%a...
+                    powershell -NoProfile -Command "Add-AppxPackage '%TEMP%\ubuntu2204\%%a'"
+                )
+            )
+        )
+        echo          Limpando temporarios...
+        del "%TEMP%\ubuntu2204.appx" >nul 2>&1
+        rmdir /s /q "%TEMP%\ubuntu2204" >nul 2>&1
     ) else (
-        echo    [ERRO] Nao foi possivel baixar Ubuntu. Verifique conexao com internet.
+        echo          [ERRO] Download do Ubuntu falhou. Verifique conexao com internet.
         goto :fim_erro
     )
+) else (
+    :: Server 2022+ pode usar wsl --install
+    echo          Instalando via wsl --install (~500 MB)...
+    wsl --install -d Ubuntu-22.04 --no-launch 2>&1
+    if !errorlevel! neq 0 (
+        echo          [AVISO] wsl --install falhou. Tentando AppX...
+        powershell -NoProfile -Command "$ProgressPreference='Continue'; Invoke-WebRequest -Uri 'https://aka.ms/wslubuntu2204' -OutFile '%TEMP%\ubuntu2204.appx' -UseBasicParsing"
+        if exist "%TEMP%\ubuntu2204.appx" (
+            powershell -NoProfile -Command "Add-AppxPackage '%TEMP%\ubuntu2204.appx'"
+            del "%TEMP%\ubuntu2204.appx" >nul 2>&1
+        )
+    )
+)
+
+:: Verificar se Ubuntu foi instalado
+wsl -l -q 2>nul | findstr /i "Ubuntu" >nul 2>&1
+if !errorlevel! neq 0 (
+    echo    [ERRO] Ubuntu nao apareceu na lista de distribuicoes WSL.
+    echo    Distribuicoes instaladas:
+    wsl -l 2>&1
+    echo.
+    echo    Tente instalar manualmente:
+    echo      1. Baixe: https://aka.ms/wslubuntu2204
+    echo      2. Renomeie para .zip e extraia
+    echo      3. Execute o ubuntu.exe dentro da pasta extraida
+    goto :fim_erro
 )
 
 :ubuntu_ok
 echo.
 echo    [OK] Ubuntu 22.04 disponivel!
 echo.
-echo    ╔══════════════════════════════════════════════════════════════╗
-echo    ║  CONFIGURAR USUARIO LINUX (UMA VEZ APENAS)                  ║
-echo    ║                                                              ║
-echo    ║  Uma janela do Ubuntu vai abrir.                             ║
-echo    ║  Crie um usuario (ex: deploy) e defina uma senha.           ║
-echo    ║  Depois digite: exit  e pressione Enter                      ║
-echo    ║  Este script continuara automaticamente.                     ║
-echo    ╚══════════════════════════════════════════════════════════════╝
-echo.
-echo    Pressione qualquer tecla para abrir o Ubuntu...
-pause >nul
-wsl -d %WSL_DISTRO%
+
+:: Checar se o Ubuntu precisa de inicializacao (criar usuario)
+wsl -d %WSL_DISTRO% -- whoami >nul 2>&1
+if !errorlevel! neq 0 (
+    echo    CONFIGURAR USUARIO LINUX (SO NA PRIMEIRA VEZ)
+    echo    Uma janela do Ubuntu vai abrir.
+    echo    Crie um usuario (ex: deploy) e defina uma senha.
+    echo    Depois digite: exit  e pressione Enter.
+    echo    Este script continuara automaticamente.
+    echo.
+    echo    Pressione qualquer tecla para abrir o Ubuntu...
+    pause >nul
+    wsl -d %WSL_DISTRO%
+)
 set "WSL_READY=1"
 echo.
 echo    [OK] Ubuntu configurado.
-echo.
-echo    ╔══════════════════════════════════════════════════════════╗
-echo    ║  CONFIGURAR USUARIO LINUX                                ║
-echo    ║                                                          ║
-echo    ║  Uma janela do Ubuntu vai abrir.                         ║
-echo    ║  Crie um usuario (ex: deploy) e defina uma senha.       ║
-echo    ║  Depois feche a janela e este script continuará.         ║
-echo    ╚══════════════════════════════════════════════════════════╝
-echo.
-echo    Pressione qualquer tecla para abrir o Ubuntu...
-pause >nul
-wsl -d %WSL_DISTRO%
-set "WSL_READY=1"
 
 :wsl_done
 echo.
