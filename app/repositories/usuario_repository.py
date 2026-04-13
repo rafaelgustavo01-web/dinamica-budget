@@ -29,6 +29,19 @@ class UsuarioRepository(BaseRepository[Usuario]):
             user.refresh_token_hash = token_hash
             await self.db.flush()
 
+    async def update_nome(self, user_id: UUID, nome: str) -> Usuario | None:
+        user = await self.get_by_id(user_id)
+        if user:
+            user.nome = nome
+            await self.db.flush()
+        return user
+
+    async def update_hashed_password(self, user_id: UUID, hashed_password: str) -> None:
+        user = await self.get_by_id(user_id)
+        if user:
+            user.hashed_password = hashed_password
+            await self.db.flush()
+
     async def list_paginated(
         self,
         offset: int,

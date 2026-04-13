@@ -1,7 +1,10 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -35,6 +38,37 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.error("embedding_model_load_failed", error=str(exc))
         # Non-fatal: semantic search will be unavailable but app still starts
+
+    # 3. Auto-create root user if configured and not already present
+    if settings.ROOT_USER_EMAIL and settings.ROOT_USER_PASSWORD:
+        from app.core.database import async_session_factory
+        from app.core.security import hash_password
+        from app.models.usuario import Usuario
+        from sqlalchemy import select
+        import uuid as _uuid
+
+        try:
+            async with async_session_factory() as session:
+                result = await session.execute(
+                    select(Usuario).where(Usuario.email == settings.ROOT_USER_EMAIL.lower())
+                )
+                existing = result.scalar_one_or_none()
+                if not existing:
+                    root = Usuario(
+                        id=_uuid.uuid4(),
+                        nome=settings.ROOT_USER_NAME,
+                        email=settings.ROOT_USER_EMAIL.lower(),
+                        hashed_password=hash_password(settings.ROOT_USER_PASSWORD),
+                        is_admin=True,
+                        is_active=True,
+                    )
+                    session.add(root)
+                    await session.commit()
+                    logger.info("root_user_created", email=settings.ROOT_USER_EMAIL)
+                else:
+                    logger.info("root_user_exists", email=settings.ROOT_USER_EMAIL)
+        except Exception as exc:
+            logger.error("root_user_seed_failed", error=str(exc))
 
     logger.info("startup_complete")
     yield
@@ -80,11 +114,35 @@ def create_app() -> FastAPI:
     @app.get("/health", tags=["health"])
     async def health() -> dict:
         from app.ml.embedder import embedder
+        from app.core.database import async_session_factory
+        from sqlalchemy import text
 
+        db_ok = False
+        try:
+            async with async_session_factory() as session:
+                await session.execute(text("SELECT 1"))
+                db_ok = True
+        except Exception:
+            pass
+
+        status = "ok" if db_ok else "degraded"
         return {
-            "status": "ok",
+            "status": status,
             "embedder_ready": embedder.ready,
+            "database_connected": db_ok,
         }
+
+    # ── Serve frontend SPA (only if dist exists — e.g. Docker build) ─────────
+    _frontend_dir = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+    if _frontend_dir.is_dir():
+        app.mount("/assets", StaticFiles(directory=str(_frontend_dir / "assets")), name="static-assets")
+
+        @app.get("/{full_path:path}", include_in_schema=False)
+        async def serve_spa(full_path: str):
+            file_path = _frontend_dir / full_path
+            if full_path and file_path.is_file():
+                return FileResponse(str(file_path))
+            return FileResponse(str(_frontend_dir / "index.html"))
 
     return app
 

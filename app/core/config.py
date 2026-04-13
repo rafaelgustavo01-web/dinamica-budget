@@ -55,6 +55,11 @@ class Settings(BaseSettings):
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
 
+    # Root user (auto-created on first startup if not exists)
+    ROOT_USER_EMAIL: str = ""
+    ROOT_USER_PASSWORD: str = ""
+    ROOT_USER_NAME: str = "Root Admin"
+
     # CORS — configurable list of allowed origins for intranet/on-premise deploy
     # In .env: ALLOWED_ORIGINS=["http://app.intranet.local","http://localhost:3000"]
     ALLOWED_ORIGINS: list[str] = Field(

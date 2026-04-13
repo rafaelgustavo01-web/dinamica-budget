@@ -14,7 +14,7 @@ from app.core.security import (
 )
 from app.models.usuario import Usuario
 from app.repositories.usuario_repository import UsuarioRepository
-from app.schemas.auth import LoginRequest, TokenResponse, UsuarioCreate
+from app.schemas.auth import LoginRequest, PasswordChangeRequest, ProfileUpdateRequest, TokenResponse, UsuarioCreate
 
 logger = get_logger(__name__)
 
@@ -91,3 +91,21 @@ class AuthService:
             is_admin=data.is_admin,
         )
         return await self.repo.create(user)
+
+    async def update_profile(self, user_id: uuid.UUID, data: ProfileUpdateRequest) -> Usuario:
+        user = await self.repo.update_nome(user_id, data.nome)
+        if not user:
+            raise AuthenticationError("Usuário não encontrado.")
+        logger.info("user_profile_updated", user_id=str(user_id))
+        return user
+
+    async def change_password(self, user_id: uuid.UUID, data: PasswordChangeRequest) -> None:
+        user = await self.repo.get_by_id(user_id)
+        if not user:
+            raise AuthenticationError("Usuário não encontrado.")
+        if not verify_password(data.current_password, user.hashed_password):
+            raise AuthenticationError("Senha atual incorreta.")
+        await self.repo.update_hashed_password(user_id, hash_password(data.new_password))
+        # Revoke refresh tokens so user must re-login with new password
+        await self.repo.update_refresh_token(user_id, None)
+        logger.info("user_password_changed", user_id=str(user_id))

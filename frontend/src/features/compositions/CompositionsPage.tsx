@@ -125,6 +125,7 @@ export function CompositionsPage() {
       composicoesApi.adicionarComponente(selectedService!.id, {
         insumo_filho_id: selectedComponent!.id,
         quantidade_consumo: Number(addQty),
+        unidade_medida: selectedComponent!.unidade_medida,
       }),
     onSuccess: (data) => {
       showMessage(successMessages.componentAdded);

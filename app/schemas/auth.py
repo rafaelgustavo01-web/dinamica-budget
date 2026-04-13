@@ -47,3 +47,14 @@ class MeResponse(BaseModel):
     is_active: bool
     is_admin: bool
     perfis: list[PerfilClienteResponse]
+
+
+class ProfileUpdateRequest(BaseModel):
+    """Atualização parcial do perfil do próprio usuário."""
+    nome: str = Field(min_length=2, max_length=200, description="Nome completo.")
+
+
+class PasswordChangeRequest(BaseModel):
+    """Troca de senha — exige senha atual para validação."""
+    current_password: str = Field(description="Senha atual para verificação.")
+    new_password: str = Field(min_length=8, description="Nova senha com mínimo de 8 caracteres.")
