@@ -189,13 +189,13 @@ set "WSL_READY=0"
 :: Passo 1: Verificar se kernel WSL2 esta inicializado (com timeout para evitar travamento)
 call :log "   Verificando kernel WSL2 (timeout 20s)..."
 set "WSL_KERNEL_STATUS=UNKNOWN"
-for /f "delims=" %%r in ('powershell -NoProfile -Command "try{$p=Start-Process wsl.exe -ArgumentList '--status' -PassThru -WindowStyle Hidden;if($p.WaitForExit(20000)){if($p.ExitCode -eq 0){'OK'}else{'NEEDS_SETUP'}}else{try{$p.Kill()}catch{};'TIMEOUT'}}catch{'ERROR'}"') do set "WSL_KERNEL_STATUS=%%r"
+for /f "delims=" %%r in ('powershell -NoProfile -Command "try{$p=Start-Process wsl -ArgumentList '--status' -PassThru -WindowStyle Hidden;if($p.WaitForExit(20000)){if($p.ExitCode -eq 0){'OK'}else{'NEEDS_SETUP'}}else{try{$p.Kill()}catch{};'TIMEOUT'}}catch{'ERROR'}"') do set "WSL_KERNEL_STATUS=%%r"
 call :log "   Kernel WSL2: !WSL_KERNEL_STATUS!"
 
 if /i "!WSL_KERNEL_STATUS!"=="TIMEOUT" (
     call :log "   WSL2 nao respondeu — kernel nao inicializado."
     call :log "   Instalando kernel WSL2 com --web-download (Server 2022)..."
-    wsl --install --no-distribution --web-download >> "%LOG_FILE%" 2>&1
+    Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux >> "%LOG_FILE%" 2>&1
     if !errorlevel! neq 0 (
         call :log "   [AVISO] Possivel falha ao instalar kernel. Tentando prosseguir..."
     ) else (
@@ -203,8 +203,8 @@ if /i "!WSL_KERNEL_STATUS!"=="TIMEOUT" (
     )
 )
 if /i "!WSL_KERNEL_STATUS!"=="ERROR" (
-    call :log "   wsl.exe nao encontrado ou erro. Instalando WSL2..."
-    wsl --install --no-distribution --web-download >> "%LOG_FILE%" 2>&1
+    call :log "   wsl nao encontrado ou erro. Instalando WSL2..."
+    wsl --update >> "%LOG_FILE%" 2>&1
     if !errorlevel! neq 0 (
         call :log "   [ERRO] Falha ao instalar WSL2. Verifique a conexao de internet."
         goto :fim_erro
@@ -213,20 +213,20 @@ if /i "!WSL_KERNEL_STATUS!"=="ERROR" (
 )
 if /i "!WSL_KERNEL_STATUS!"=="NEEDS_SETUP" (
     call :log "   WSL2 presente mas precisa de atualizacao..."
-    wsl --update --web-download >> "%LOG_FILE%" 2>&1
+    wsl --install --distribution Ubuntu-22.04 >> "%LOG_FILE%" 2>&1
     call :log "   [OK] WSL2 atualizado"
 )
 
 :: Passo 2: Verificar se Ubuntu esta instalado (com timeout)
 call :log "   Verificando se Ubuntu esta instalado..."
 set "UBUNTU_STATUS=UNKNOWN"
-for /f "delims=" %%r in ('powershell -NoProfile -Command "try{$psi=New-Object System.Diagnostics.ProcessStartInfo;$psi.FileName='wsl.exe';$psi.Arguments='-l -q';$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true;$p=[System.Diagnostics.Process]::Start($psi);$ot=$p.StandardOutput.ReadToEndAsync();$et=$p.StandardError.ReadToEndAsync();if($p.WaitForExit(15000)){[void][Threading.Tasks.Task]::WaitAll($ot,$et);if($ot.Result -match 'Ubuntu'){'FOUND'}else{'NOT_FOUND'}}else{try{$p.Kill()}catch{};'TIMEOUT'}}catch{'ERROR'}"') do set "UBUNTU_STATUS=%%r"
+for /f "delims=" %%r in ('powershell -NoProfile -Command "try{$psi=New-Object System.Diagnostics.ProcessStartInfo;$psi.FileName='wsl';$psi.Arguments='-l -q';$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true;$p=[System.Diagnostics.Process]::Start($psi);$ot=$p.StandardOutput.ReadToEndAsync();$et=$p.StandardError.ReadToEndAsync();if($p.WaitForExit(15000)){[void][Threading.Tasks.Task]::WaitAll($ot,$et);if($ot.Result -match 'Ubuntu'){'FOUND'}else{'NOT_FOUND'}}else{try{$p.Kill()}catch{};'TIMEOUT'}}catch{'ERROR'}"') do set "UBUNTU_STATUS=%%r"
 call :log "   Ubuntu: !UBUNTU_STATUS!"
 
 if /i "!UBUNTU_STATUS!"=="FOUND" (
     :: Testar se Ubuntu responde (com timeout de 30s)
     set "UBUNTU_EXEC=UNKNOWN"
-    for /f "delims=" %%r in ('powershell -NoProfile -Command "try{$psi=New-Object System.Diagnostics.ProcessStartInfo;$psi.FileName='wsl.exe';$psi.Arguments='-d %WSL_DISTRO% -- echo WSL2_OK';$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true;$p=[System.Diagnostics.Process]::Start($psi);$ot=$p.StandardOutput.ReadToEndAsync();$et=$p.StandardError.ReadToEndAsync();if($p.WaitForExit(30000)){[void][Threading.Tasks.Task]::WaitAll($ot,$et);if($ot.Result -match 'WSL2_OK'){'OK'}else{'FAIL'}}else{try{$p.Kill()}catch{};'TIMEOUT'}}catch{'ERROR'}"') do set "UBUNTU_EXEC=%%r"
+    for /f "delims=" %%r in ('powershell -NoProfile -Command "try{$psi=New-Object System.Diagnostics.ProcessStartInfo;$psi.FileName='wsl';$psi.Arguments='-d %WSL_DISTRO% -- echo WSL2_OK';$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true;$p=[System.Diagnostics.Process]::Start($psi);$ot=$p.StandardOutput.ReadToEndAsync();$et=$p.StandardError.ReadToEndAsync();if($p.WaitForExit(30000)){[void][Threading.Tasks.Task]::WaitAll($ot,$et);if($ot.Result -match 'WSL2_OK'){'OK'}else{'FAIL'}}else{try{$p.Kill()}catch{};'TIMEOUT'}}catch{'ERROR'}"') do set "UBUNTU_EXEC=%%r"
     call :log "   Ubuntu exec: !UBUNTU_EXEC!"
     if /i "!UBUNTU_EXEC!"=="OK" (
         call :log "   [OK] WSL2 com Ubuntu ja instalado e funcional"
@@ -246,7 +246,7 @@ if "!WSL_READY!"=="0" (
 
     :: Verificar instalacao (com timeout)
     set "INSTALL_VERIFY=UNKNOWN"
-    for /f "delims=" %%r in ('powershell -NoProfile -Command "try{$psi=New-Object System.Diagnostics.ProcessStartInfo;$psi.FileName='wsl.exe';$psi.Arguments='-l -q';$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true;$p=[System.Diagnostics.Process]::Start($psi);$ot=$p.StandardOutput.ReadToEndAsync();$et=$p.StandardError.ReadToEndAsync();if($p.WaitForExit(15000)){[void][Threading.Tasks.Task]::WaitAll($ot,$et);if($ot.Result -match 'Ubuntu'){'OK'}else{'NOT_FOUND'}}else{try{$p.Kill()}catch{};'TIMEOUT'}}catch{'ERROR'}"') do set "INSTALL_VERIFY=%%r"
+    for /f "delims=" %%r in ('powershell -NoProfile -Command "try{$psi=New-Object System.Diagnostics.ProcessStartInfo;$psi.FileName='wsl';$psi.Arguments='-l -q';$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true;$p=[System.Diagnostics.Process]::Start($psi);$ot=$p.StandardOutput.ReadToEndAsync();$et=$p.StandardError.ReadToEndAsync();if($p.WaitForExit(15000)){[void][Threading.Tasks.Task]::WaitAll($ot,$et);if($ot.Result -match 'Ubuntu'){'OK'}else{'NOT_FOUND'}}else{try{$p.Kill()}catch{};'TIMEOUT'}}catch{'ERROR'}"') do set "INSTALL_VERIFY=%%r"
 
     if /i "!INSTALL_VERIFY!"=="OK" (
         call :log "   [OK] Ubuntu 22.04 instalado"
@@ -261,7 +261,7 @@ if "!WSL_READY!"=="0" (
 
 :: Verificar se Ubuntu tem usuario configurado (com timeout)
 set "WSL_USER="
-for /f "delims=" %%u in ('powershell -NoProfile -Command "try{$psi=New-Object System.Diagnostics.ProcessStartInfo;$psi.FileName='wsl.exe';$psi.Arguments='-d %WSL_DISTRO% -- whoami';$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true;$p=[System.Diagnostics.Process]::Start($psi);$ot=$p.StandardOutput.ReadToEndAsync();$et=$p.StandardError.ReadToEndAsync();if($p.WaitForExit(15000)){[void][Threading.Tasks.Task]::WaitAll($ot,$et);$r=$ot.Result.Trim();if($r){$r}else{''}}else{try{$p.Kill()}catch{};''}}"') do set "WSL_USER=%%u"
+for /f "delims=" %%u in ('powershell -NoProfile -Command "try{$psi=New-Object System.Diagnostics.ProcessStartInfo;$psi.FileName='wsl';$psi.Arguments='-d %WSL_DISTRO% -- whoami';$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true;$p=[System.Diagnostics.Process]::Start($psi);$ot=$p.StandardOutput.ReadToEndAsync();$et=$p.StandardError.ReadToEndAsync();if($p.WaitForExit(15000)){[void][Threading.Tasks.Task]::WaitAll($ot,$et);$r=$ot.Result.Trim();if($r){$r}else{''}}else{try{$p.Kill()}catch{};''}}"') do set "WSL_USER=%%u"
 if "!WSL_USER!"=="" (
     call :log "   [AVISO] Ubuntu precisa de configuracao inicial."
     call :log "   Abrindo Ubuntu para criar usuario..."
