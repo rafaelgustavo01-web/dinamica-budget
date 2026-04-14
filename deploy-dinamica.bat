@@ -137,8 +137,17 @@ for /f "delims=" %%s in ('powershell -NoProfile -Command "(Get-WindowsOptionalFe
 if "!FEAT_WSL!"=="0" (
     call :log "         Habilitando (pode levar 1-2 min)..."
     dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart >> "%LOG_FILE%" 2>&1
-    set "NEED_REBOOT=1"
-    call :log "         Habilitado. Reboot necessario."
+    set "DISM_RC=!errorlevel!"
+    if !DISM_RC! equ 0 (
+        set "NEED_REBOOT=1"
+        call :log "         Habilitado com sucesso."
+    ) else if !DISM_RC! equ 3010 (
+        set "NEED_REBOOT=1"
+        call :log "         Habilitado com sucesso (codigo 3010 = reboot necessario)."
+    ) else (
+        call :log "         [ERRO] Falha ao habilitar Microsoft-Windows-Subsystem-Linux (codigo: !DISM_RC!)"
+        goto :fim_erro
+    )
 ) else (
     call :log "         [OK] Ja habilitado"
 )
@@ -153,8 +162,17 @@ for /f "delims=" %%s in ('powershell -NoProfile -Command "(Get-WindowsOptionalFe
 if "!FEAT_VMP!"=="0" (
     call :log "         Habilitando..."
     dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart >> "%LOG_FILE%" 2>&1
-    set "NEED_REBOOT=1"
-    call :log "         Habilitado. Reboot necessario."
+    set "DISM_RC=!errorlevel!"
+    if !DISM_RC! equ 0 (
+        set "NEED_REBOOT=1"
+        call :log "         Habilitado com sucesso."
+    ) else if !DISM_RC! equ 3010 (
+        set "NEED_REBOOT=1"
+        call :log "         Habilitado com sucesso (codigo 3010 = reboot necessario)."
+    ) else (
+        call :log "         [ERRO] Falha ao habilitar VirtualMachinePlatform (codigo: !DISM_RC!)"
+        goto :fim_erro
+    )
 ) else (
     call :log "         [OK] Ja habilitado"
 )
@@ -170,11 +188,15 @@ for /f "delims=" %%s in ('powershell -NoProfile -Command "(Get-WindowsOptionalFe
 if "!FEAT_HVP!"=="0" (
     call :log "         Habilitando (corrige: HCS_E_HYPERV_NOT_INSTALLED)..."
     dism.exe /online /enable-feature /featurename:HypervisorPlatform /all /norestart >> "%LOG_FILE%" 2>&1
-    if !errorlevel! equ 0 (
+    set "DISM_RC=!errorlevel!"
+    if !DISM_RC! equ 0 (
         set "NEED_REBOOT=1"
-        call :log "         Habilitado. Reboot necessario."
+        call :log "         Habilitado com sucesso."
+    ) else if !DISM_RC! equ 3010 (
+        set "NEED_REBOOT=1"
+        call :log "         Habilitado com sucesso (codigo 3010 = reboot necessario)."
     ) else (
-        call :log "         [AVISO] Falha ao habilitar HypervisorPlatform."
+        call :log "         [AVISO] Falha ao habilitar HypervisorPlatform (codigo: !DISM_RC!)."
         call :log "         Se o servidor estiver em VM, habilite nested virtualization no host."
         call :log "         Ref: https://aka.ms/enablevirtualization"
     )
@@ -217,12 +239,12 @@ call :log "   Kernel WSL2: !WSL_KERNEL_STATUS!"
 
 if /i "!WSL_KERNEL_STATUS!"=="TIMEOUT" (
     call :log "   WSL2 nao respondeu — kernel nao inicializado."
-    call :log "   Instalando kernel WSL2 com --web-download (Server 2022)..."
-    Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux >> "%LOG_FILE%" 2>&1
+    call :log "   Atualizando kernel WSL2 (wsl --update)..."
+    wsl --update >> "%LOG_FILE%" 2>&1
     if !errorlevel! neq 0 (
-        call :log "   [AVISO] Possivel falha ao instalar kernel. Tentando prosseguir..."
+        call :log "   [AVISO] Possivel falha ao atualizar kernel. Tentando prosseguir..."
     ) else (
-        call :log "   [OK] Kernel WSL2 instalado"
+        call :log "   [OK] Kernel WSL2 atualizado"
     )
 )
 if /i "!WSL_KERNEL_STATUS!"=="ERROR" (
@@ -258,6 +280,9 @@ if /i "!UBUNTU_STATUS!"=="FOUND" (
 )
 
 if "!WSL_READY!"=="0" (
+    call :log "   Atualizando kernel WSL2 antes de instalar distro (Server 2022)..."
+    wsl --update >> "%LOG_FILE%" 2>&1
+
     call :log "   Instalando WSL2 + Ubuntu (pode levar 5-10 min)..."
     call :log "   Comando: wsl --install -d Ubuntu-22.04 --web-download --no-launch"
 
