@@ -88,5 +88,8 @@
       "Bash(.venv/Scripts/alembic.exe upgrade:*)",
       "Bash(.venv/Scripts/python.exe -c \":*)"
     ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
   }
 }
