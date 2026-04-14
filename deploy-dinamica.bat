@@ -9,7 +9,7 @@ title Dinamica Budget — Deploy Producao (Windows Server 2022)
 ::
 ::  Este script faz TUDO automaticamente:
 ::    ETAPA  1 — Verificar Administrador e pre-requisitos do SO
-::    ETAPA  2 — Habilitar features (WSL2 + VirtualMachinePlatform)
+::    ETAPA  2 — Habilitar features (WSL2 + VirtualMachinePlatform + HypervisorPlatform)
 ::    ETAPA  3 — Instalar WSL2 + Ubuntu 22.04
 ::    ETAPA  4 — Instalar Docker Engine no WSL2
 ::    ETAPA  5 — Sincronizar projeto para o WSL2
@@ -120,15 +120,15 @@ call :log "   [OK] Arquivos do projeto verificados"
 echo.
 
 :: ══════════════════════════════════════════════════════════════════════════════
-:: ETAPA 2/8 — Habilitar Features do Windows
+:: ETAPA 2/8 — Habilitar Features do Windows (3 features obrigatorias para WSL2)
 :: ══════════════════════════════════════════════════════════════════════════════
 call :log "[ETAPA 2/8] Habilitar Features do Windows (WSL2)"
 echo.
 
 set "NEED_REBOOT=0"
 
-:: [1/2] Microsoft-Windows-Subsystem-Linux
-call :log "   [1/2] Feature: Microsoft-Windows-Subsystem-Linux"
+:: [1/3] Microsoft-Windows-Subsystem-Linux
+call :log "   [1/3] Feature: Microsoft-Windows-Subsystem-Linux"
 set "FEAT_WSL=0"
 for /f "delims=" %%s in ('powershell -NoProfile -Command "(Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux).State"') do (
     call :log "         Estado: %%s"
@@ -143,8 +143,8 @@ if "!FEAT_WSL!"=="0" (
     call :log "         [OK] Ja habilitado"
 )
 
-:: [2/2] VirtualMachinePlatform
-call :log "   [2/2] Feature: VirtualMachinePlatform"
+:: [2/3] VirtualMachinePlatform
+call :log "   [2/3] Feature: VirtualMachinePlatform"
 set "FEAT_VMP=0"
 for /f "delims=" %%s in ('powershell -NoProfile -Command "(Get-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform).State"') do (
     call :log "         Estado: %%s"
@@ -159,11 +159,34 @@ if "!FEAT_VMP!"=="0" (
     call :log "         [OK] Ja habilitado"
 )
 
+:: [3/3] HypervisorPlatform (Windows Hypervisor Platform — obrigatorio para WSL2 criar VMs)
+:: Sem esta feature: erro HCS_E_HYPERV_NOT_INSTALLED ao instalar distro
+call :log "   [3/3] Feature: HypervisorPlatform (Windows Hypervisor Platform)"
+set "FEAT_HVP=0"
+for /f "delims=" %%s in ('powershell -NoProfile -Command "(Get-WindowsOptionalFeature -Online -FeatureName HypervisorPlatform).State"') do (
+    call :log "         Estado: %%s"
+    if /i "%%s"=="Enabled" set "FEAT_HVP=1"
+)
+if "!FEAT_HVP!"=="0" (
+    call :log "         Habilitando (corrige: HCS_E_HYPERV_NOT_INSTALLED)..."
+    dism.exe /online /enable-feature /featurename:HypervisorPlatform /all /norestart >> "%LOG_FILE%" 2>&1
+    if !errorlevel! equ 0 (
+        set "NEED_REBOOT=1"
+        call :log "         Habilitado. Reboot necessario."
+    ) else (
+        call :log "         [AVISO] Falha ao habilitar HypervisorPlatform."
+        call :log "         Se o servidor estiver em VM, habilite nested virtualization no host."
+        call :log "         Ref: https://aka.ms/enablevirtualization"
+    )
+) else (
+    call :log "         [OK] Ja habilitado"
+)
+
 if "!NEED_REBOOT!"=="1" (
     call :log ""
     echo    ╔══════════════════════════════════════════════════════════════╗
     echo    ║  REBOOT NECESSARIO (UNICA VEZ)                              ║
-    echo    ║  Features WSL2 foram habilitadas.                            ║
+    echo    ║  3 features WSL2 foram habilitadas.                          ║
     echo    ║  Reinicie e execute este script novamente.                   ║
     echo    ╚══════════════════════════════════════════════════════════════╝
     echo.
