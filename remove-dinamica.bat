@@ -1,269 +1,185 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul 2>&1
-title Dinamica Budget — Remocao Completa
+title Dinamica Budget - Remocao Nativa (Windows Server 2022)
 
-:: ══════════════════════════════════════════════════════════════════════════════
-::  DINAMICA BUDGET — Remocao Completa com Backup
-::  Windows Server 2022 ^| WSL2 + Docker
-::
-::  Este script remove TUDO do Dinamica Budget:
-::    1. Backup automatico do banco (pg_dump)
-::    2. Para e remove containers, imagens, volumes
-::    3. Remove port forwarding e regras de firewall
-::    4. Remove tarefas agendadas
-::    5. (Opcional) Remove distro WSL2
-::
-::  Logs: %~dp0logs\remove-YYYY-MM-DD_HHMMSS.log
-:: ══════════════════════════════════════════════════════════════════════════════
+set "SCRIPT_DIR=%~dp0"
+if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+set "APP_DIR=C:\DinamicaBudget"
+set "IIS_WEBROOT=C:\inetpub\DinamicaBudget"
+set "IIS_SITE_NAME=DinamicaBudget"
+set "IIS_APPPOOL=DinamicaBudgetPool"
+set "SERVICE_NAME=DinamicaBudgetAPI"
+set "LOG_DIR=%SCRIPT_DIR%\logs"
+set "BACKUP_DIR=%SCRIPT_DIR%\backups"
 
-set "WSL_DISTRO=Ubuntu-22.04"
-set "WSL_APP_DIR=/opt/dinamica-budget"
-set "API_PORT=8000"
-set "DB_PORT=5432"
+if not exist "%LOG_DIR%" mkdir "%LOG_DIR%"
+if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
+for /f "delims=" %%d in ('powershell -NoProfile -Command "Get-Date -Format ''yyyy-MM-dd_HHmmss''"') do set "TS=%%d"
+set "LOG_FILE=%LOG_DIR%\remove-native-%TS%.log"
+set "BACKUP_FILE=%BACKUP_DIR%\dinamica_budget_before_remove_%TS%.sql"
 
-:: Raiz do projeto
-set "PROJECT_ROOT=%~dp0"
-if "%PROJECT_ROOT:~-1%"=="\" set "PROJECT_ROOT=%PROJECT_ROOT:~0,-1%"
-cd /d "%PROJECT_ROOT%"
-
-:: Log
-if not exist "%PROJECT_ROOT%\logs" mkdir "%PROJECT_ROOT%\logs"
-for /f "delims=" %%d in ('powershell -NoProfile -Command "Get-Date -Format 'yyyy-MM-dd_HHmmss'"') do set "LOG_TS=%%d"
-set "LOG_FILE=%PROJECT_ROOT%\logs\remove-%LOG_TS%.log"
-
-goto :skip_log_func2
-:log2
-set "LOG_MSG=%~1"
-if "!LOG_MSG!"=="" (echo.) else (echo !LOG_MSG!)
->> "%LOG_FILE%" echo [%date% %time%] !LOG_MSG!
+goto :skip_log
+:log
+set "M=%~1"
+if "%M%"=="" (echo.) else (echo %M%)
+>> "%LOG_FILE%" echo [%date% %time%] %M%
 goto :eof
-:skip_log_func2
+:skip_log
 
-echo.
-echo ============================================================
-echo   DINAMICA BUDGET — Remocao Completa
-echo   Windows Server 2022 ^| WSL2 + Docker
-echo ============================================================
-echo.
-echo   ATENCAO: Este script ira:
-echo     - Fazer BACKUP do banco de dados
-echo     - PARAR todos os containers
-echo     - REMOVER containers, imagens e volumes
-echo     - REMOVER regras de firewall e port forwarding
-echo     - REMOVER tarefas agendadas
-echo.
-echo   O backup sera salvo em: %PROJECT_ROOT%\backups\
-echo.
-echo ============================================================
-echo.
+call :log "============================================================"
+call :log "DINAMICA BUDGET - REMOCAO NATIVA"
+call :log "============================================================"
+call :log "Inicio: %date% %time%"
+call :log "Log: %LOG_FILE%"
+call :log ""
 
-:: Admin check
 net session >nul 2>&1
-if !errorlevel! neq 0 (
-    call :log2 "[ERRO] Executar como Administrador."
-    goto :fim_erro2
+if errorlevel 1 (
+  call :fail "Execute este script como Administrador."
 )
 
-:: Confirmacao
-set /p "CONFIRMA=Deseja continuar com a remocao? (S/N): "
-if /i not "!CONFIRMA!"=="S" (
-    echo Remocao cancelada.
-    goto :fim_ok2
-)
-
-call :log2 ""
-call :log2 "Inicio da remocao: %date% %time%"
-call :log2 "Log: %LOG_FILE%"
 echo.
-
-:: ══════════════════════════════════════════════════════════════════════════════
-:: ETAPA 1/6 — Backup do Banco de Dados
-:: ══════════════════════════════════════════════════════════════════════════════
-call :log2 "[ETAPA 1/6] Backup do Banco de Dados"
+echo ATENCAO: este script remove o deploy nativo (IIS + servico API + arquivos).
+echo O PostgreSQL NAO sera desinstalado.
 echo.
-
-if not exist "%PROJECT_ROOT%\backups" mkdir "%PROJECT_ROOT%\backups"
-set "BACKUP_FILE=backups\dinamica_budget_REMOCAO_%LOG_TS%.sql"
-
-:: Verificar se DB container esta rodando
-set "DB_RUNNING=0"
-wsl -d %WSL_DISTRO% -- bash -c "cd %WSL_APP_DIR% && docker compose ps -q db 2>/dev/null" >nul 2>&1
-if !errorlevel! equ 0 (
-    for /f "delims=" %%c in ('wsl -d %WSL_DISTRO% -- bash -c "cd %WSL_APP_DIR% && docker compose ps -q db 2>/dev/null"') do (
-        if "%%c" neq "" set "DB_RUNNING=1"
-    )
+set /p "CONFIRM=Continuar com a remocao? (S/N): "
+if /i not "%CONFIRM%"=="S" (
+  call :log "Remocao cancelada pelo usuario."
+  goto :eof
 )
 
-if "!DB_RUNNING!"=="1" (
-    call :log2 "   Banco rodando. Executando pg_dump..."
-    wsl -d %WSL_DISTRO% -- bash -c "cd %WSL_APP_DIR% && docker compose exec -T db pg_dump -U postgres -d dinamica_budget --clean --if-exists" > "%PROJECT_ROOT%\%BACKUP_FILE%" 2>> "%LOG_FILE%"
-    if !errorlevel! equ 0 (
-        :: Verificar se arquivo tem conteudo (pelo menos headers do pg_dump)
-        for %%f in ("%PROJECT_ROOT%\%BACKUP_FILE%") do set "BKP_SIZE=%%~zf"
-        if !BKP_SIZE! gtr 100 (
-            call :log2 "   [OK] Backup salvo: %BACKUP_FILE% (!BKP_SIZE! bytes)"
-        ) else (
-            call :log2 "   [AVISO] Backup pequeno (!BKP_SIZE! bytes) - banco pode estar vazio"
-        )
+call :step "1/6" "Tentando backup do banco (pg_dump)"
+call :backup_db
+
+call :step "2/6" "Parando e removendo servico NSSM"
+sc query "%SERVICE_NAME%" >nul 2>&1
+if errorlevel 1 (
+  call :log "Servico %SERVICE_NAME% nao encontrado."
+) else (
+  nssm stop "%SERVICE_NAME%" >> "%LOG_FILE%" 2>&1
+  nssm remove "%SERVICE_NAME%" confirm >> "%LOG_FILE%" 2>&1
+  sc query "%SERVICE_NAME%" >nul 2>&1
+  if errorlevel 1 (
+    call :log "[OK] Servico %SERVICE_NAME% removido"
+  ) else (
+    call :log "[AVISO] Servico %SERVICE_NAME% ainda existe."
+  )
+)
+
+call :step "3/6" "Removendo configuracao do IIS"
+set "APPCMD=%windir%\System32\inetsrv\appcmd.exe"
+if exist "%APPCMD%" (
+  "%APPCMD%" list site "%IIS_SITE_NAME%" >nul 2>&1 && "%APPCMD%" delete site "%IIS_SITE_NAME%" >> "%LOG_FILE%" 2>&1
+  "%APPCMD%" list apppool "%IIS_APPPOOL%" >nul 2>&1 && "%APPCMD%" delete apppool "%IIS_APPPOOL%" >> "%LOG_FILE%" 2>&1
+  call :log "[OK] Site/app pool do Dinamica removidos (se existiam)."
+) else (
+  call :log "[AVISO] appcmd.exe nao encontrado (IIS possivelmente nao instalado)."
+)
+
+call :step "4/6" "Removendo regras de firewall"
+netsh advfirewall firewall delete rule name="Dinamica Budget HTTP" >nul 2>&1
+netsh advfirewall firewall delete rule name="Dinamica Budget HTTPS" >nul 2>&1
+call :log "[OK] Regras de firewall removidas (se existiam)."
+
+call :step "5/6" "Removendo arquivos da aplicacao"
+set /p "DEL_APP=Remover pasta da aplicacao (%APP_DIR%)? (S/N): "
+if /i "%DEL_APP%"=="S" (
+  if exist "%APP_DIR%" (
+    rmdir /s /q "%APP_DIR%" >> "%LOG_FILE%" 2>&1
+    if exist "%APP_DIR%" (
+      call :log "[AVISO] Nao foi possivel remover %APP_DIR%"
     ) else (
-        call :log2 "   [AVISO] pg_dump retornou erro. Backup pode estar incompleto."
+      call :log "[OK] Pasta %APP_DIR% removida"
     )
+  ) else (
+    call :log "[OK] Pasta %APP_DIR% ja nao existe"
+  )
 ) else (
-    call :log2 "   [AVISO] Container do banco nao esta rodando. Backup nao realizado."
-    call :log2 "   Se o volume 'pgdata' existir, os dados permanecem no Docker."
+  call :log "Pasta %APP_DIR% mantida por escolha do usuario."
 )
-echo.
 
-:: ══════════════════════════════════════════════════════════════════════════════
-:: ETAPA 2/6 — Parar e Remover Containers
-:: ══════════════════════════════════════════════════════════════════════════════
-call :log2 "[ETAPA 2/6] Parar e Remover Containers"
-echo.
-
-:: Verificar se WSL + Docker estao disponiveis
-wsl -d %WSL_DISTRO% -- docker info >nul 2>&1
-if !errorlevel! equ 0 (
-    :: Iniciar Docker se necessario
-    wsl -d %WSL_DISTRO% -- sudo service docker start >nul 2>&1
-    timeout /t 2 /nobreak >nul
-
-    call :log2 "   Parando e removendo containers..."
-    wsl -d %WSL_DISTRO% -- bash -c "cd %WSL_APP_DIR% && docker compose down -v --rmi all --remove-orphans 2>&1" >> "%LOG_FILE%" 2>&1
-
-    :: Verificar se parou
-    set "CONTAINERS_LEFT="
-    for /f "delims=" %%c in ('wsl -d %WSL_DISTRO% -- bash -c "cd %WSL_APP_DIR% && docker compose ps -q 2>/dev/null"') do set "CONTAINERS_LEFT=%%c"
-    if "!CONTAINERS_LEFT!"=="" (
-        call :log2 "   [OK] Containers removidos"
+set /p "DEL_IIS=Remover pasta publica do IIS (%IIS_WEBROOT%)? (S/N): "
+if /i "%DEL_IIS%"=="S" (
+  if exist "%IIS_WEBROOT%" (
+    rmdir /s /q "%IIS_WEBROOT%" >> "%LOG_FILE%" 2>&1
+    if exist "%IIS_WEBROOT%" (
+      call :log "[AVISO] Nao foi possivel remover %IIS_WEBROOT%"
     ) else (
-        call :log2 "   [AVISO] Alguns containers podem ter ficado. Forcando..."
-        wsl -d %WSL_DISTRO% -- bash -c "cd %WSL_APP_DIR% && docker compose kill 2>/dev/null; docker compose rm -f 2>/dev/null"
+      call :log "[OK] Pasta %IIS_WEBROOT% removida"
     )
-
-    :: Limpeza geral do Docker
-    call :log2 "   Limpando imagens, volumes e cache orfaos..."
-    wsl -d %WSL_DISTRO% -- bash -c "docker system prune -af --volumes 2>/dev/null || true" >> "%LOG_FILE%" 2>&1
-    call :log2 "   [OK] Cleanup Docker concluido"
+  ) else (
+    call :log "[OK] Pasta %IIS_WEBROOT% ja nao existe"
+  )
 ) else (
-    call :log2 "   [AVISO] WSL/Docker nao disponivel. Pulando remocao de containers."
+  call :log "Pasta %IIS_WEBROOT% mantida por escolha do usuario."
 )
-echo.
 
-:: ══════════════════════════════════════════════════════════════════════════════
-:: ETAPA 3/6 — Remover Arquivos do Projeto no WSL
-:: ══════════════════════════════════════════════════════════════════════════════
-call :log2 "[ETAPA 3/6] Remover arquivos do projeto no WSL"
+call :step "6/6" "Resumo"
+call :log "Remocao concluida."
+call :log "Backup DB (se executado com sucesso): %BACKUP_FILE%"
+call :log "Log completo: %LOG_FILE%"
 echo.
+echo [OK] Remocao finalizada. Log: %LOG_FILE%
+goto :eof
 
-wsl -d %WSL_DISTRO% -- test -d %WSL_APP_DIR% >nul 2>&1
-if !errorlevel! equ 0 (
-    wsl -d %WSL_DISTRO% -- bash -c "sudo rm -rf %WSL_APP_DIR%" >> "%LOG_FILE%" 2>&1
-    call :log2 "   [OK] %WSL_APP_DIR% removido do WSL"
+:backup_db
+set "ENV_FILE=%APP_DIR%\.env"
+if not exist "%ENV_FILE%" (
+  call :log "[AVISO] .env nao encontrado em %APP_DIR%. Pulando backup automatico."
+  goto :eof
+)
+
+set "DB_USER="
+set "DB_PASS="
+set "DB_HOST="
+set "DB_NAME="
+for /f "tokens=1-4 delims=|" %%a in ('powershell -NoProfile -Command "$line=(Get-Content ''%ENV_FILE%'' | Where-Object { $_ -match ''^DATABASE_URL='' } | Select-Object -First 1); if(-not $line){exit 1}; $url=$line.Split(''='',2)[1]; if($url -match ''postgresql\+asyncpg://([^:]+):([^@]+)@([^:/]+):\d+/([^?]+)''){Write-Output ($matches[1] + ''|'' + $matches[2] + ''|'' + $matches[3] + ''|'' + $matches[4])} else {exit 1}"') do (
+  set "DB_USER=%%a"
+  set "DB_PASS=%%b"
+  set "DB_HOST=%%c"
+  set "DB_NAME=%%d"
+)
+if "%DB_USER%"=="" (
+  call :log "[AVISO] Nao foi possivel parsear DATABASE_URL. Pulando backup automatico."
+  goto :eof
+)
+
+set "PG_DUMP="
+for %%p in ("C:\Program Files\PostgreSQL\16\bin\pg_dump.exe" "C:\Program Files\PostgreSQL\15\bin\pg_dump.exe" "C:\Program Files\PostgreSQL\14\bin\pg_dump.exe") do (
+  if exist "%%~p" set "PG_DUMP=%%~p"
+)
+if "%PG_DUMP%"=="" (
+  for /f "delims=" %%p in ('where pg_dump 2^>nul') do if "%PG_DUMP%"=="" set "PG_DUMP=%%p"
+)
+if "%PG_DUMP%"=="" (
+  call :log "[AVISO] pg_dump nao encontrado. Pulando backup automatico."
+  goto :eof
+)
+
+set "PGPASSWORD=%DB_PASS%"
+"%PG_DUMP%" -U "%DB_USER%" -h "%DB_HOST%" "%DB_NAME%" > "%BACKUP_FILE%" 2>> "%LOG_FILE%"
+set "BKP_RC=%ERRORLEVEL%"
+set "PGPASSWORD="
+if "%BKP_RC%"=="0" (
+  for %%f in ("%BACKUP_FILE%") do set "BKP_SIZE=%%~zf"
+  if not "%BKP_SIZE%"=="" if %BKP_SIZE% gtr 100 (
+    call :log "[OK] Backup do banco concluido: %BACKUP_FILE%"
+  ) else (
+    call :log "[AVISO] Backup gerado, mas pequeno (%BKP_SIZE% bytes)."
+  )
 ) else (
-    call :log2 "   [OK] %WSL_APP_DIR% ja nao existe"
+  call :log "[AVISO] pg_dump falhou (codigo %BKP_RC%)."
 )
-echo.
+goto :eof
 
-:: ══════════════════════════════════════════════════════════════════════════════
-:: ETAPA 4/6 — Remover Port Forwarding e Firewall
-:: ══════════════════════════════════════════════════════════════════════════════
-call :log2 "[ETAPA 4/6] Remover port forwarding e regras de firewall"
-echo.
+:step
+call :log "[ETAPA %~1] %~2"
+goto :eof
 
-:: Port forwarding
-netsh interface portproxy delete v4tov4 listenport=!API_PORT! listenaddress=0.0.0.0 >nul 2>&1
-call :log2 "   Port forwarding porta !API_PORT! removido"
-netsh interface portproxy delete v4tov4 listenport=!DB_PORT! listenaddress=0.0.0.0 >nul 2>&1
-call :log2 "   Port forwarding porta !DB_PORT! removido"
-
-:: Regras de firewall
-netsh advfirewall firewall delete rule name="Dinamica Budget API" >nul 2>&1
-call :log2 "   Regra firewall 'Dinamica Budget API' removida"
-netsh advfirewall firewall delete rule name="Dinamica Budget DB" >nul 2>&1
-call :log2 "   Regra firewall 'Dinamica Budget DB' removida"
-
-call :log2 "   [OK] Rede limpa"
+:fail
+call :log "[ERRO] %~1"
 echo.
-
-:: ══════════════════════════════════════════════════════════════════════════════
-:: ETAPA 5/6 — Remover Tarefas Agendadas
-:: ══════════════════════════════════════════════════════════════════════════════
-call :log2 "[ETAPA 5/6] Remover tarefas agendadas"
-echo.
-
-schtasks /delete /tn "DinamicaBudget-WSL-Autostart" /f >nul 2>&1
-call :log2 "   Task 'DinamicaBudget-WSL-Autostart' removida"
-schtasks /delete /tn "DinamicaBudget-PortForward" /f >nul 2>&1
-call :log2 "   Task 'DinamicaBudget-PortForward' removida"
-
-call :log2 "   [OK] Tarefas agendadas removidas"
-echo.
-
-:: ══════════════════════════════════════════════════════════════════════════════
-:: ETAPA 6/6 — Remover Distro WSL (Opcional)
-:: ══════════════════════════════════════════════════════════════════════════════
-call :log2 "[ETAPA 6/6] Remover distro WSL2 (Opcional)"
-echo.
-echo   A distro WSL2 (%WSL_DISTRO%) contem o Docker e ambiente.
-echo   Remover libera espaco em disco mas requer reinstalacao completa
-echo   no proximo deploy.
-echo.
-set /p "REMOVE_WSL=Deseja REMOVER a distro WSL2 %WSL_DISTRO%? (S/N): "
-if /i "!REMOVE_WSL!"=="S" (
-    call :log2 "   Removendo distro %WSL_DISTRO%..."
-    wsl --unregister %WSL_DISTRO% >> "%LOG_FILE%" 2>&1
-    if !errorlevel! equ 0 (
-        call :log2 "   [OK] Distro %WSL_DISTRO% removida"
-    ) else (
-        call :log2 "   [AVISO] Nao foi possivel remover. Tente: wsl --unregister %WSL_DISTRO%"
-    )
-) else (
-    call :log2 "   Distro WSL2 mantida (Docker e ambiente preservados)"
-)
-echo.
-
-:: ══════════════════════════════════════════════════════════════════════════════
-:: RESUMO
-:: ══════════════════════════════════════════════════════════════════════════════
-echo ============================================================
-echo   REMOCAO CONCLUIDA
-echo ============================================================
-echo.
-if "!DB_RUNNING!"=="1" (
-    echo   Backup: %PROJECT_ROOT%\%BACKUP_FILE%
-)
-echo   Log:    %LOG_FILE%
-echo.
-echo   O que foi removido:
-echo     - Containers, imagens e volumes Docker
-echo     - Arquivos do projeto em %WSL_APP_DIR%
-echo     - Regras de firewall (portas !API_PORT!, !DB_PORT!)
-echo     - Port forwarding WSL2 ↔ Windows
-echo     - Tarefas agendadas (auto-start)
-if /i "!REMOVE_WSL!"=="S" echo     - Distro WSL2 %WSL_DISTRO%
-echo.
-echo   PRESERVADO:
-echo     - Codigo-fonte em %PROJECT_ROOT%
-echo     - Backups em %PROJECT_ROOT%\backups\
-echo     - Logs em %PROJECT_ROOT%\logs\
-if /i not "!REMOVE_WSL!"=="S" echo     - Distro WSL2 %WSL_DISTRO% (com Docker)
-echo.
-echo   Para re-instalar: deploy-dinamica.bat
-echo.
-call :log2 "REMOCAO CONCLUIDA — %date% %time%"
-
-goto :fim_ok2
-
-:fim_erro2
-echo.
-echo [ERRO] Verifique as mensagens acima.
-echo Log: %LOG_FILE%
-echo.
-pause >nul
+echo [ERRO] %~1
+echo Verifique o log: %LOG_FILE%
 exit /b 1
-
-:fim_ok2
-echo Pressione qualquer tecla para fechar...
-pause >nul
-exit /b 0

@@ -1,0 +1,785 @@
+﻿
+
+
+
+
+
+DINAMICA BUDGET
+Sistema de OrÃ§amentaÃ§Ã£o para ConstruÃ§Ã£o Civil
+
+
+Manual de InstalaÃ§Ã£o e Deploy
+Ambiente de ProduÃ§Ã£o â€” Intranet
+
+
+
+
+
+
+
+
+Servidor: Windows Server 2022 Standard
+VersÃ£o do documento: 1.0 â€” MarÃ§o 2026
+ClassificaÃ§Ã£o: Uso Interno
+
+SumÃ¡rio
+
+
+
+1. VisÃ£o Geral
+Este manual descreve o procedimento completo de instalaÃ§Ã£o do sistema Dinamica Budget em um servidor Windows Server 2022 Standard na rede intranet corporativa. O documento cobre desde a preparaÃ§Ã£o do servidor atÃ© a validaÃ§Ã£o final do sistema em operaÃ§Ã£o.
+
+1.1 Arquitetura da SoluÃ§Ã£o
+O Dinamica Budget Ã© composto por trÃªs camadas principais:
+Backend (API): FastAPI (Python 3.12) â€” motor de busca, RBAC, composiÃ§Ãµes, homologaÃ§Ã£o
+Banco de Dados: PostgreSQL 16 com extensÃµes pgvector (busca semÃ¢ntica) e pg_trgm (busca fuzzy)
+Frontend (SPA): React 19 + TypeScript â€” build estÃ¡tico servido por IIS
+Motor ML: Sentence Transformers (all-MiniLM-L6-v2) â€” execuÃ§Ã£o local, sem internet
+
+1.2 Requisitos do Servidor
+Componente
+EspecificaÃ§Ã£o MÃ­nima
+Servidor Alvo
+Sistema Operacional
+Windows Server 2019+
+Windows Server 2022 Standard
+Processador
+4 cores x86_64
+Intel E3-1225 v6 @ 3.30GHz (4C/4T)
+MemÃ³ria RAM
+8 GB
+16 GB
+Disco
+100 GB livres
+900 GB SATA 7.200 RPM
+Rede
+1 Gbps Ethernet
+Placa integrada
+
+1.3 Softwares a Instalar
+Software
+VersÃ£o
+Finalidade
+Python
+3.12.x
+Runtime do backend FastAPI
+PostgreSQL
+16.x
+Banco de dados principal
+pgvector
+0.7.x
+ExtensÃ£o de busca vetorial
+Node.js
+20 LTS ou 22 LTS
+Build do frontend React
+IIS
+10.0 (nativo)
+Servir frontend + reverse proxy
+NSSM
+2.24+
+Gerenciar FastAPI como serviÃ§o Windows
+URL Rewrite
+2.1
+MÃ³dulo IIS para reverse proxy
+ARR
+3.0
+Application Request Routing para IIS
+
+IMPORTANTE â€” Modelo de ML
+O modelo all-MiniLM-L6-v2 (~90 MB) precisa ser baixado na primeira execuÃ§Ã£o. Se o servidor nÃ£o tiver acesso Ã  internet, faÃ§a o download em outra mÃ¡quina e copie a pasta ml_models/ para o servidor antes de iniciar a aplicaÃ§Ã£o. InstruÃ§Ãµes na SeÃ§Ã£o 6.
+
+2. PreparaÃ§Ã£o do Servidor Windows
+2.1 Configurar IP Fixo
+O servidor precisa de um endereÃ§o IP fixo na rede intranet para que os usuÃ¡rios acessem a aplicaÃ§Ã£o sempre pelo mesmo endereÃ§o.
+Abrir o Painel de Controle > Rede e Internet > Central de Rede e Compartilhamento.
+Clicar em "Alterar as configuraÃ§Ãµes do adaptador" no menu lateral esquerdo.
+Clicar com botÃ£o direito no adaptador de rede ativo > Propriedades.
+Selecionar "Protocolo IP VersÃ£o 4 (TCP/IPv4)" > Propriedades.
+Marcar "Usar o seguinte endereÃ§o IP" e preencher:
+
+Campo
+Exemplo
+O que preencher
+EndereÃ§o IP
+192.168.1.100
+IP fixo atribuÃ­do pela equipe de rede
+MÃ¡scara de sub-rede
+255.255.255.0
+MÃ¡scara da sua rede local
+Gateway padrÃ£o
+192.168.1.1
+IP do roteador/gateway da rede
+DNS preferencial
+192.168.1.1
+IP do servidor DNS interno
+DNS alternativo
+8.8.8.8
+DNS externo (se houver acesso internet)
+
+Clicar OK em todas as janelas para aplicar.
+Abrir o Prompt de Comando (cmd) e verificar:
+ipconfig
+ping 192.168.1.1
+
+2.2 Configurar Nome do Servidor (Hostname)
+Definir um nome amigÃ¡vel facilita o acesso pelos usuÃ¡rios.
+Abrir ConfiguraÃ§Ãµes > Sistema > Sobre > Renomear este computador.
+Definir um nome como: SRVBUDGET (sem espaÃ§os, sem caracteres especiais).
+Reiniciar o servidor quando solicitado.
+
+2.3 Registrar DNS na Rede (Solicitar ao Administrador de Rede)
+Para que os usuÃ¡rios acessem o sistema por um nome amigÃ¡vel (ex: budget.empresa.local), solicite Ã  equipe de infraestrutura/rede:
+
+SolicitaÃ§Ã£o para equipe de rede/infraestrutura
+Criar registro DNS tipo A no servidor DNS interno:
+   Nome: budget.empresa.local
+   Tipo: A
+   Valor: 192.168.1.100 (IP fixo do servidor)
+
+Se nÃ£o houver servidor DNS interno, os usuÃ¡rios acessarÃ£o pelo IP diretamente: http://192.168.1.100
+
+2.4 Configurar Firewall do Windows
+O firewall precisa liberar as portas usadas pela aplicaÃ§Ã£o. Abra o Windows Defender Firewall com SeguranÃ§a AvanÃ§ada.
+
+Regra 1 â€” Porta 80 (HTTP â€” acesso dos usuÃ¡rios)
+No menu esquerdo, clicar em "Regras de Entrada".
+No menu direito, clicar em "Nova Regra...".
+Selecionar "Porta" > AvanÃ§ar.
+Selecionar "TCP" e digitar: 80
+Selecionar "Permitir a conexÃ£o" > AvanÃ§ar.
+Marcar os trÃªs perfis: DomÃ­nio, Particular, PÃºblico > AvanÃ§ar.
+Nome: "Dinamica Budget HTTP" > Concluir.
+
+Regra 2 â€” Porta 443 (HTTPS â€” se usar certificado SSL futuro)
+Repetir o procedimento acima, mas para a porta 443. Nome: "Dinamica Budget HTTPS".
+
+NOTA â€” Portas internas
+As portas 8000 (FastAPI) e 5432 (PostgreSQL) NÃƒO devem ser abertas no firewall. O acesso a elas serÃ¡ feito internamente pelo IIS (reverse proxy). Isso protege o backend de acesso direto.
+
+3. InstalaÃ§Ã£o do PostgreSQL 16
+3.1 Download e InstalaÃ§Ã£o
+Acessar: https://www.enterprisedb.com/downloads/postgres-postgresql-downloads
+Baixar o instalador Windows x86-64 para PostgreSQL 16.x.
+Executar o instalador como Administrador.
+Na tela de componentes, marcar todos: PostgreSQL Server, pgAdmin 4, Stack Builder, Command Line Tools.
+DiretÃ³rio de dados: manter o padrÃ£o (C:\Program Files\PostgreSQL\16\data) ou alterar para disco com mais espaÃ§o.
+Definir a senha do superusuÃ¡rio postgres. ANOTAR ESTA SENHA â€” ela serÃ¡ usada na configuraÃ§Ã£o do .env.
+Porta: manter 5432 (padrÃ£o).
+Locale: Portuguese, Brazil (ou manter default).
+Concluir a instalaÃ§Ã£o.
+
+ANOTE ESTAS INFORMAÃ‡Ã•ES
+UsuÃ¡rio: postgres
+Senha: (a que vocÃª definiu acima)
+Porta: 5432
+Estas informaÃ§Ãµes serÃ£o usadas na SeÃ§Ã£o 5 para configurar o arquivo .env.
+
+3.2 Instalar ExtensÃ£o pgvector
+O pgvector habilita busca por similaridade semÃ¢ntica (vetorial) no banco de dados.
+Acessar: https://github.com/pgvector/pgvector/releases
+Baixar o arquivo .zip correspondente ao PostgreSQL 16 Windows.
+Extrair o conteÃºdo e copiar os arquivos para as pastas do PostgreSQL:
+vector.dll â†’ C:\Program Files\PostgreSQL\16\lib\
+vector.control e vector--*.sql â†’ C:\Program Files\PostgreSQL\16\share\extension\
+Reiniciar o serviÃ§o PostgreSQL:
+net stop postgresql-x64-16
+net start postgresql-x64-16
+
+3.3 Criar o Banco de Dados
+Abrir o pgAdmin 4 (instalado junto com o PostgreSQL).
+Conectar ao servidor local (localhost:5432) com o usuÃ¡rio postgres.
+Clicar com botÃ£o direito em "Databases" > Create > Database.
+Nome do banco: dinamica_budget
+Owner: postgres
+Clicar em Save.
+
+Abrir o Query Tool (botÃ£o SQL no pgAdmin) e executar:
+-- Habilitar extensÃµes necessÃ¡rias
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Verificar se foram instaladas:
+SELECT extname, extversion FROM pg_extension;
+
+O resultado deve listar vector e pg_trgm na lista de extensÃµes.
+
+4. InstalaÃ§Ã£o do Python 3.12
+4.1 Download e InstalaÃ§Ã£o
+Acessar: https://www.python.org/downloads/
+Baixar Python 3.12.x (Windows installer 64-bit).
+
+CRÃTICO â€” Marcar estas opÃ§Ãµes durante a instalaÃ§Ã£o
+Na PRIMEIRA tela do instalador:
+   [x] Add python.exe to PATH   â† OBRIGATÃ“RIO
+   [x] Use admin privileges when installing py
+
+Clicar em "Customize installation" e marcar:
+   [x] pip
+   [x] py launcher
+   [x] for all users
+
+AvanÃ§ar e concluir a instalaÃ§Ã£o.
+Abrir novo Prompt de Comando (cmd) e verificar:
+python --version
+# Esperado: Python 3.12.x
+
+pip --version
+# Esperado: pip 24.x from ...
+
+5. InstalaÃ§Ã£o do Node.js
+O Node.js Ã© necessÃ¡rio apenas para compilar o frontend. ApÃ³s o build, ele nÃ£o Ã© mais usado.
+Acessar: https://nodejs.org/
+Baixar a versÃ£o LTS (20 ou 22) â€” Windows Installer (.msi) 64-bit.
+Executar o instalador com todas as opÃ§Ãµes padrÃ£o.
+Verificar a instalaÃ§Ã£o:
+node --version
+# Esperado: v20.x.x ou v22.x.x
+
+npm --version
+# Esperado: 10.x.x
+
+6. Deploy do Backend (FastAPI)
+6.1 Copiar os Arquivos do Projeto
+Criar a pasta do projeto:
+mkdir C:\DinamicaBudget
+Copiar TODOS os arquivos do repositÃ³rio do projeto para C:\DinamicaBudget\
+A estrutura deve ficar assim:
+C:\DinamicaBudget\
+  app\
+  alembic\
+  frontend\
+  requirements.txt
+  .env.example
+  alembic.ini
+  ...
+
+6.2 Criar Ambiente Virtual Python
+Abrir o Prompt de Comando como Administrador.
+Navegar atÃ© a pasta do projeto e criar o ambiente virtual:
+cd C:\DinamicaBudget
+python -m venv venv
+Ativar o ambiente virtual:
+venv\Scripts\activate
+O prompt deve mudar para: (venv) C:\DinamicaBudget>
+
+6.3 Instalar DependÃªncias Python
+Com o ambiente virtual ativado, instalar as dependÃªncias:
+pip install -r requirements.txt
+
+NOTA â€” PyTorch CPU
+O PyTorch serÃ¡ instalado na versÃ£o CPU-only (~800 MB de download). Isso Ã© intencional â€” o servidor nÃ£o precisa de GPU. A instalaÃ§Ã£o pode levar 5-10 minutos dependendo da velocidade da internet.
+
+6.4 Configurar o Arquivo .env
+Copiar o arquivo de exemplo:
+copy .env.example .env
+Abrir o arquivo .env com o Bloco de Notas (ou outro editor de texto):
+notepad .env
+Editar as seguintes variÃ¡veis (as demais podem ficar com os valores padrÃ£o):
+
+VariÃ¡vel
+O que colocar
+Exemplo
+DATABASE_URL
+Dados de conexÃ£o ao PostgreSQL (trocar password pela senha do passo 3.1)
+postgresql+asyncpg://postgres:SuaSenhaAqui@localhost:5432/dinamica_budget
+SECRET_KEY
+Chave secreta de 64 caracteres (ver passo seguinte)
+(gerada automaticamente)
+ALLOWED_ORIGINS
+URLs do frontend que terÃ£o acesso
+["http://budget.empresa.local","http://192.168.1.100"]
+SENTENCE_TRANSFORMERS_HOME
+Pasta local para cache do modelo ML
+./ml_models
+DEBUG
+Manter false em produÃ§Ã£o
+false
+LOG_LEVEL
+NÃ­vel de log
+INFO
+
+Gerar a SECRET_KEY (executar no prompt com venv ativado):
+python -c "import secrets; print(secrets.token_hex(32))"
+
+# Exemplo de saÃ­da: a1b2c3d4e5f6...64 caracteres hexadecimais
+# Copiar o resultado e colar no campo SECRET_KEY do .env
+
+SEGURANÃ‡A â€” SECRET_KEY
+A SECRET_KEY protege todos os tokens JWT do sistema. NUNCA use o valor padrÃ£o em produÃ§Ã£o. NUNCA compartilhe esta chave. Se ela for comprometida, todos os tokens de autenticaÃ§Ã£o ficam vulnerÃ¡veis.
+
+6.5 Preparar o Modelo de ML (Offline)
+Se o servidor NÃƒO tem acesso Ã  internet, siga este procedimento em uma mÃ¡quina COM internet:
+Na mÃ¡quina com internet, instalar as mesmas dependÃªncias Python.
+Executar o seguinte script para baixar o modelo:
+python -c "
+from sentence_transformers import SentenceTransformer
+model = SentenceTransformer('all-MiniLM-L6-v2',
+    cache_folder='./ml_models')
+print('Modelo baixado com sucesso')"
+Copiar toda a pasta ml_models/ para C:\DinamicaBudget\ml_models\ no servidor.
+
+Se o servidor TEM acesso Ã  internet, o modelo serÃ¡ baixado automaticamente na primeira execuÃ§Ã£o.
+
+6.6 Executar as MigraÃ§Ãµes do Banco de Dados
+Com o venv ativado, executar:
+cd C:\DinamicaBudget
+alembic upgrade head
+Este comando cria todas as tabelas, Ã­ndices e extensÃµes necessÃ¡rias no banco de dados.
+Verificar o resultado â€” deve exibir algo como:
+INFO  [alembic.runtime.migration] Running upgrade  -> 001, create base tables
+INFO  [alembic.runtime.migration] Running upgrade 001 -> 002, pgvector extension
+...
+INFO  [alembic.runtime.migration] Running upgrade 006 -> 007, fix defaults
+
+6.7 Testar a API Manualmente
+Iniciar a API em modo de teste:
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+Abrir o navegador no servidor e acessar: http://127.0.0.1:8000/health
+Resposta esperada:
+{ "status": "ok", "embedder_ready": true }
+Acessar a documentaÃ§Ã£o interativa: http://127.0.0.1:8000/docs
+Se tudo funciona, parar a API com Ctrl+C.
+
+Se embedder_ready estiver false
+O modelo ML nÃ£o foi carregado. Verifique se a pasta ml_models/ existe e contÃ©m os arquivos do modelo. Verifique os logs no terminal â€” erros de carregamento serÃ£o exibidos.
+
+7. Configurar FastAPI como ServiÃ§o Windows
+Para que a API inicie automaticamente quando o servidor ligar (e reinicie em caso de falha), vamos registrÃ¡-la como um serviÃ§o Windows usando o NSSM.
+
+7.1 Instalar o NSSM
+Acessar: https://nssm.cc/download
+Baixar a versÃ£o mais recente (nssm-2.24.zip ou superior).
+Extrair o arquivo .zip.
+Copiar o nssm.exe (pasta win64) para C:\Windows\System32\ (facilita o uso no prompt).
+
+7.2 Registrar o ServiÃ§o
+Abrir o Prompt de Comando como Administrador.
+Executar:
+nssm install DinamicaBudgetAPI
+Na janela que abrir, preencher:
+
+Campo
+Valor
+Path
+C:\DinamicaBudget\venv\Scripts\python.exe
+Startup directory
+C:\DinamicaBudget
+Arguments
+-m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2
+
+Na aba "Details":
+Display name: Dinamica Budget API
+Description: FastAPI backend - sistema de orÃ§amentaÃ§Ã£o Dinamica Budget
+Startup type: Automatic
+
+Na aba "I/O" (para logs):
+Output (stdout): C:\DinamicaBudget\logs\stdout.log
+Error (stderr): C:\DinamicaBudget\logs\stderr.log
+
+Criar a pasta de logs:
+mkdir C:\DinamicaBudget\logs
+Clicar em "Install service".
+
+7.3 Configurar VariÃ¡veis de Ambiente para o ServiÃ§o
+Executar no prompt:
+nssm set DinamicaBudgetAPI AppEnvironmentExtra SENTENCE_TRANSFORMERS_HOME=C:\DinamicaBudget\ml_models
+
+7.4 Iniciar e Verificar o ServiÃ§o
+Iniciar o serviÃ§o:
+nssm start DinamicaBudgetAPI
+Verificar que estÃ¡ rodando:
+nssm status DinamicaBudgetAPI
+Esperado: SERVICE_RUNNING
+Testar: abrir http://127.0.0.1:8000/health no navegador.
+
+8. Build do Frontend
+8.1 Configurar URL da API
+Criar o arquivo de ambiente do frontend:
+cd C:\DinamicaBudget\frontend
+copy .env.example .env.production
+Editar o arquivo .env.production:
+notepad .env.production
+Definir a URL da API (vazia, pois o IIS farÃ¡ reverse proxy na mesma origem):
+VITE_API_URL=
+
+8.2 Instalar DependÃªncias e Compilar
+No prompt, executar:
+cd C:\DinamicaBudget\frontend
+npm install
+npm run build
+O build gera uma pasta dist/ com os arquivos estÃ¡ticos do frontend (HTML, CSS, JS).
+Verificar que a pasta foi criada:
+dir C:\DinamicaBudget\frontend\dist
+Deve conter: index.html, assets/ (com .js e .css).
+
+8.3 Copiar Build para Pasta do IIS
+Criar a pasta do site no IIS:
+mkdir C:\inetpub\DinamicaBudget
+Copiar os arquivos do build:
+xcopy C:\DinamicaBudget\frontend\dist\* C:\inetpub\DinamicaBudget\ /E /Y
+
+9. Configurar o IIS (Servidor Web)
+9.1 Habilitar o IIS no Windows Server
+Abrir o Server Manager (Gerenciador do Servidor).
+Clicar em "Manage" > "Add Roles and Features" (Adicionar FunÃ§Ãµes e Recursos).
+AvanÃ§ar atÃ© "Server Roles" e marcar: Web Server (IIS).
+Em "Role Services", garantir que estÃ£o marcados:
+Common HTTP Features > Default Document, Static Content
+Health and Diagnostics > HTTP Logging
+Performance > Static Content Compression
+Security > Request Filtering
+Concluir a instalaÃ§Ã£o.
+
+9.2 Instalar MÃ³dulos de Reverse Proxy
+Dois mÃ³dulos sÃ£o necessÃ¡rios para que o IIS encaminhe requisiÃ§Ãµes /api/* para o FastAPI:
+
+URL Rewrite
+Acessar: https://www.iis.net/downloads/microsoft/url-rewrite
+Baixar e instalar o URL Rewrite 2.1.
+
+Application Request Routing (ARR)
+Acessar: https://www.iis.net/downloads/microsoft/application-request-routing
+Baixar e instalar o ARR 3.0.
+ApÃ³s instalar ambos, reiniciar o IIS:
+iisreset
+
+9.3 Habilitar Proxy no ARR
+Abrir o IIS Manager (Gerenciador do IIS).
+Clicar no nome do servidor (nÃ³ raiz) na Ã¡rvore Ã  esquerda.
+Na Ã¡rea central, dar duplo clique em "Application Request Routing Cache".
+No painel direito, clicar em "Server Proxy Settings...".
+Marcar: [x] Enable proxy.
+Clicar em Apply.
+
+9.4 Criar o Site no IIS
+No IIS Manager, expandir o servidor > clicar com botÃ£o direito em "Sites" > Add Website.
+Preencher:
+
+Campo
+Valor
+Site name
+DinamicaBudget
+Physical path
+C:\inetpub\DinamicaBudget
+Binding > Type
+http
+Binding > IP address
+All Unassigned
+Binding > Port
+80
+Binding > Host name
+budget.empresa.local (ou deixar vazio se usar IP direto)
+
+Clicar OK.
+Se o "Default Web Site" estiver ocupando a porta 80, pare-o ou altere sua porta:
+Clicar com botÃ£o direito em "Default Web Site" > Manage Website > Stop.
+
+9.5 Configurar Reverse Proxy (URL Rewrite)
+Agora vamos configurar o IIS para encaminhar todas as requisiÃ§Ãµes /api/* e /health para o FastAPI (porta 8000).
+Selecionar o site "DinamicaBudget" no IIS Manager.
+Dar duplo clique em "URL Rewrite".
+No painel direito, clicar em "Add Rule(s)..." > Blank Rule > OK.
+
+Regra 1 â€” API Reverse Proxy
+Campo
+Valor
+Name
+API Reverse Proxy
+Match URL > Pattern
+^(api/.*|health|docs|redoc|openapi.json)(.*)$
+Action > Action type
+Rewrite
+Action > Rewrite URL
+http://127.0.0.1:8000/{R:0}
+[x] Stop processing
+Marcado
+
+Clicar em Apply.
+
+Regra 2 â€” SPA Fallback (para React Router)
+Como o frontend Ã© uma Single Page Application (SPA), todas as rotas desconhecidas devem retornar o index.html:
+Adicionar nova regra:
+Campo
+Valor
+Name
+SPA Fallback
+Match URL > Pattern
+(.*)
+Conditions > Logical grouping
+Match All
+Condition 1
+{REQUEST_FILENAME} Is Not A File
+Condition 2
+{REQUEST_FILENAME} Is Not A Directory
+Action > Action type
+Rewrite
+Action > Rewrite URL
+/index.html
+
+Clicar em Apply.
+
+ORDEM DAS REGRAS
+A regra "API Reverse Proxy" DEVE estar ANTES da regra "SPA Fallback". Use as setas de prioridade no IIS para reordenar se necessÃ¡rio.
+
+9.6 Alternativa â€” web.config Manual
+Se preferir, crie diretamente o arquivo web.config em C:\inetpub\DinamicaBudget\:
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <system.webServer>
+    <rewrite>
+      <rules>
+        <rule name="API Reverse Proxy" stopProcessing="true">
+          <match url="^(api/.*|health|docs|redoc|openapi.json)(.*)$" />
+          <action type="Rewrite" url="http://127.0.0.1:8000/{R:0}" />
+        </rule>
+        <rule name="SPA Fallback" stopProcessing="true">
+          <match url="(.*)" />
+          <conditions>
+            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+            <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+          </conditions>
+          <action type="Rewrite" url="/index.html" />
+        </rule>
+      </rules>
+    </rewrite>
+  </system.webServer>
+</configuration>
+
+10. ValidaÃ§Ã£o da InstalaÃ§Ã£o
+10.1 Checklist de VerificaÃ§Ã£o
+Execute cada teste abaixo a partir de uma estaÃ§Ã£o de trabalho na rede (nÃ£o no prÃ³prio servidor):
+
+#
+Teste
+Como verificar
+Resultado esperado
+1
+Health check API
+Acessar http://budget.empresa.local/health
+{ "status": "ok", "embedder_ready": true }
+2
+DocumentaÃ§Ã£o API
+Acessar http://budget.empresa.local/docs
+Swagger UI com todos os endpoints
+3
+Frontend carrega
+Acessar http://budget.empresa.local
+Tela de login do Dinamica Budget
+4
+Login funciona
+Fazer login com usuÃ¡rio admin criado
+Redireciona para o Dashboard
+5
+Busca funciona
+Pesquisar um serviÃ§o TCPO
+Resultados com scores e fases
+6
+PostgreSQL ativo
+No servidor: nssm status postgresql-x64-16
+SERVICE_RUNNING
+7
+FastAPI ativo
+No servidor: nssm status DinamicaBudgetAPI
+SERVICE_RUNNING
+
+11. Cutover â€” ConfiguraÃ§Ãµes PÃ³s-InstalaÃ§Ã£o
+ApÃ³s a instalaÃ§Ã£o e validaÃ§Ã£o tÃ©cnica, siga os passos abaixo para colocar o sistema em operaÃ§Ã£o.
+
+11.1 Criar o UsuÃ¡rio Administrador
+Abrir a documentaÃ§Ã£o interativa: http://budget.empresa.local/docs
+Localizar o endpoint POST /api/v1/auth/login â€” usar para testar.
+Como o sistema Ã© novo e nÃ£o tem usuÃ¡rios, Ã© necessÃ¡rio criar o primeiro admin diretamente no banco.
+Abrir o pgAdmin 4 e conectar ao banco dinamica_budget.
+Executar o seguinte SQL para criar o hash da senha:
+
+No prompt do servidor (com venv ativado):
+python -c "
+from passlib.hash import bcrypt
+senha = input('Digite a senha do admin: ')
+print('Hash:', bcrypt.hash(senha))"
+
+# Copiar o hash gerado (comeÃ§a com $2b$12$...)
+
+No pgAdmin, executar:
+INSERT INTO usuarios (id, nome, email, senha_hash, is_active, is_admin)
+VALUES (
+  gen_random_uuid(),
+  'Administrador',
+  'admin@empresa.local',
+  '$2b$12$...COLE_O_HASH_AQUI...',
+  true,
+  true
+);
+
+Testar o login: acessar http://budget.empresa.local e fazer login com o email e senha definidos.
+
+11.2 Importar Dados TCPO
+O catÃ¡logo de serviÃ§os TCPO precisa ser populado no banco de dados. Os dados podem vir de um arquivo SQL, CSV ou script especÃ­fico da sua base TCPO.
+Preparar o arquivo SQL ou CSV com os serviÃ§os TCPO.
+Importar via pgAdmin (Query Tool) ou script Python.
+ApÃ³s importar, gerar os embeddings para busca semÃ¢ntica:
+
+No Swagger (http://budget.empresa.local/docs):
+Autenticar com o botÃ£o "Authorize" usando email/senha do admin
+Executar: POST /api/v1/admin/compute-embeddings
+Este processo pode levar alguns minutos dependendo da quantidade de serviÃ§os importados.
+
+11.3 Criar Clientes
+Cada empresa/departamento que usa o sistema deve ser cadastrado como um "Cliente".
+No Swagger, executar POST /api/v1/clientes/ com:
+{
+  "nome_fantasia": "Nome da Empresa",
+  "cnpj": "12345678000190"
+}
+Repetir para cada cliente.
+
+11.4 Criar UsuÃ¡rios e Atribuir Perfis
+Criar usuÃ¡rios via POST /api/v1/auth/usuarios:
+{
+  "nome": "JoÃ£o Silva",
+  "email": "joao@empresa.local",
+  "password": "SenhaSegura123",
+  "is_admin": false
+}
+Vincular o usuÃ¡rio a um cliente com perfil via PUT /api/v1/usuarios/{id}/perfis-cliente:
+{
+  "cliente_id": "uuid-do-cliente",
+  "perfis": ["USUARIO"]
+}
+
+Perfil
+Pode fazer
+USUARIO
+Buscar serviÃ§os, criar itens prÃ³prios (PENDENTE), visualizar composiÃ§Ãµes
+APROVADOR
+Tudo do USUARIO + aprovar/reprovar itens, clonar composiÃ§Ãµes, excluir associaÃ§Ãµes
+ADMIN (is_admin)
+Acesso total: criar usuÃ¡rios, clientes, serviÃ§os TCPO, compute embeddings
+
+12. ManutenÃ§Ã£o e OperaÃ§Ã£o
+12.1 Logs
+Os logs da aplicaÃ§Ã£o ficam em:
+Stdout: C:\DinamicaBudget\logs\stdout.log
+Stderr: C:\DinamicaBudget\logs\stderr.log
+IIS: C:\inetpub\logs\LogFiles\
+
+12.2 Reiniciar a API
+nssm restart DinamicaBudgetAPI
+
+12.3 Atualizar a AplicaÃ§Ã£o
+Parar o serviÃ§o:
+nssm stop DinamicaBudgetAPI
+Copiar os novos arquivos do projeto para C:\DinamicaBudget\ (substituir).
+Ativar o venv e instalar novas dependÃªncias (se houver):
+cd C:\DinamicaBudget
+venv\Scripts\activate
+pip install -r requirements.txt
+Executar migraÃ§Ãµes de banco (se houver novas):
+alembic upgrade head
+Recompilar o frontend (se houver alteraÃ§Ãµes):
+cd frontend
+npm install
+npm run build
+xcopy dist\* C:\inetpub\DinamicaBudget\ /E /Y
+Reiniciar o serviÃ§o:
+nssm start DinamicaBudgetAPI
+
+12.4 Backup do Banco de Dados
+Agendar backup diÃ¡rio via Agendador de Tarefas do Windows:
+Criar o script de backup:
+REM C:\DinamicaBudget\scripts\backup.bat
+@echo off
+set PGPASSWORD=SuaSenhaPostgres
+set BACKUP_DIR=C:\DinamicaBudget\backups
+set FILENAME=%BACKUP_DIR%\dinamica_%date:~6,4%%date:~3,2%%date:~0,2%.sql
+
+"C:\Program Files\PostgreSQL\16\bin\pg_dump" -U postgres -h localhost dinamica_budget > %FILENAME%
+
+echo Backup salvo em %FILENAME%
+Abrir o Agendador de Tarefas (taskschd.msc).
+Criar Tarefa BÃ¡sica > Nome: "Backup Dinamica Budget" > DiÃ¡rio > 02:00.
+AÃ§Ã£o: Iniciar Programa > C:\DinamicaBudget\scripts\backup.bat.
+
+12.5 Monitoramento de SaÃºde
+O endpoint /health pode ser usado por ferramentas de monitoramento:
+curl http://127.0.0.1:8000/health
+
+# Resposta normal:
+{ "status": "ok", "embedder_ready": true }
+
+# Se embedder_ready = false:
+# O modelo ML nÃ£o estÃ¡ carregado. Reinicie o servico.
+
+13. ResoluÃ§Ã£o de Problemas
+Sintoma
+Causa ProvÃ¡vel
+SoluÃ§Ã£o
+Tela de login nÃ£o carrega (ERR_CONNECTION_REFUSED)
+IIS nÃ£o estÃ¡ rodando ou porta 80 nÃ£o estÃ¡ liberada no firewall
+1. Verificar IIS: iisreset
+2. Verificar firewall: porta 80 liberada
+3. Verificar se o site estÃ¡ Started no IIS Manager
+Login retorna erro 502 Bad Gateway
+ServiÃ§o FastAPI nÃ£o estÃ¡ rodando
+1. Executar: nssm status DinamicaBudgetAPI
+2. Se parado: nssm start DinamicaBudgetAPI
+3. Verificar logs: C:\DinamicaBudget\logs\stderr.log
+Erro "SECRET_KEY insegura" nos logs
+O arquivo .env nÃ£o tem uma SECRET_KEY vÃ¡lida
+Gerar nova chave: python -c "import secrets; print(secrets.token_hex(32))"
+Colar no .env e reiniciar o servico
+Busca semÃ¢ntica nÃ£o funciona (sÃ³ fuzzy retorna)
+embedder_ready = false
+1. Verificar se ml_models/ existe e contÃ©m o modelo
+2. Reiniciar o servico: nssm restart DinamicaBudgetAPI
+3. Verificar logs de erro no startup
+Erro de conexÃ£o ao banco (OperationalError)
+PostgreSQL parado ou dados de conexÃ£o errados no .env
+1. Verificar PostgreSQL: net start postgresql-x64-16
+2. Verificar DATABASE_URL no .env
+3. Testar conexÃ£o via pgAdmin
+Frontend mostra pÃ¡gina em branco
+Build do frontend nÃ£o foi copiado ou web.config incorreto
+1. Verificar C:\inetpub\DinamicaBudget\index.html existe
+2. Verificar web.config (regras de rewrite)
+3. Verificar console do navegador (F12)
+Rotas como /composicoes retornam 404
+Regra SPA Fallback nÃ£o estÃ¡ configurada no IIS
+Adicionar regra SPA Fallback no URL Rewrite (ver SeÃ§Ã£o 9.5)
+Timeout ao importar muitos serviÃ§os TCPO
+Compute-embeddings demora em grandes volumes
+O processo Ã© batch com paginaÃ§Ã£o. Aguardar â€” pode levar 10-30 min para 50.000+ itens. NÃ£o interromper.
+
+
+14. Diagrama de Fluxo de Rede
+
+
+  ESTAÃ‡Ã•ES DE TRABALHO           SERVIDOR (SRVBUDGET)   
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•   
+
+  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”               â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   
+  â”‚  Navegador   â”‚â”€â”€â”€â”€ HTTP â”€â”€â”€â”€â–ºâ”‚   IIS (porta 80) â”‚   
+  â”‚  do UsuÃ¡rio  â”‚   porta 80    â”‚                  â”‚   
+  â”‚              â”‚               â”‚  /api/*  â”€â”€â”€â”€â”€â”€â–º â”‚â”€â”€â–ºâ”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜               â”‚  /health â”€â”€â”€â”€â”€â”€â–º â”‚   â”‚  FastAPI        â”‚
+                                 â”‚                  â”‚   â”‚  (porta 8000)   â”‚
+                                 â”‚  /* (frontend)   â”‚   â”‚                 â”‚
+                                 â”‚  serve index.htmlâ”‚   â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚
+                                 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â”‚  â”‚ ML Model  â”‚  â”‚
+                                                        â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚
+                                                        â”‚        â”‚        â”‚
+                                                        â””â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                                                 â”‚         
+                                                                 â–¼         
+                                                        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                                                        â”‚  PostgreSQL 16   â”‚
+                                                        â”‚  (porta 5432)    â”‚
+                                                        â”‚  + pgvector      â”‚
+                                                        â”‚  + pg_trgm       â”‚
+                                                        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+
+  PORTAS ABERTAS NO FIREWALL: 80 (HTTP)                                    
+  PORTAS INTERNAS (sem firewall): 8000, 5432                               
+
+
+â€” Fim do Manual de InstalaÃ§Ã£o â€”
