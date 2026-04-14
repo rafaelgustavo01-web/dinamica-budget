@@ -48,8 +48,9 @@ set "INFO_FILE=%PROJECT_ROOT%\logs\deploy-info.txt"
 :: Uso: call :log "mensagem"
 goto :skip_log_func
 :log
-echo %~1
-echo [%date% %time%] %~1 >> "%LOG_FILE%"
+set "LOG_MSG=%~1"
+if "!LOG_MSG!"=="" (echo.) else (echo !LOG_MSG!)
+>> "%LOG_FILE%" echo [%date% %time%] !LOG_MSG!
 goto :eof
 :skip_log_func
 
@@ -76,7 +77,7 @@ echo.
 :: ══════════════════════════════════════════════════════════════════════════════
 :: ETAPA 1/8 — Verificar Administrador + Pre-requisitos
 :: ══════════════════════════════════════════════════════════════════════════════
-call :log ">> ETAPA 1/8 — Verificar Administrador e SO"
+call :log "[ETAPA 1/8] Verificar Administrador e SO"
 echo.
 
 :: Admin check
@@ -121,7 +122,7 @@ echo.
 :: ══════════════════════════════════════════════════════════════════════════════
 :: ETAPA 2/8 — Habilitar Features do Windows
 :: ══════════════════════════════════════════════════════════════════════════════
-call :log ">> ETAPA 2/8 — Habilitar Features do Windows (WSL2)"
+call :log "[ETAPA 2/8] Habilitar Features do Windows (WSL2)"
 echo.
 
 set "NEED_REBOOT=0"
@@ -179,48 +180,88 @@ echo.
 :: ══════════════════════════════════════════════════════════════════════════════
 :: ETAPA 3/8 — Instalar WSL2 + Ubuntu
 :: ══════════════════════════════════════════════════════════════════════════════
-call :log ">> ETAPA 3/8 — Instalar WSL2 + Ubuntu 22.04"
+call :log "[ETAPA 3/8] Instalar WSL2 + Ubuntu 22.04"
 echo.
 
 :: Verificar se WSL2 + Ubuntu ja estao funcionais
 set "WSL_READY=0"
-wsl -l -q >nul 2>&1
-if !errorlevel! equ 0 (
-    wsl -l -q 2>nul | findstr /i "Ubuntu" >nul 2>&1
-    if !errorlevel! equ 0 (
-        wsl -d %WSL_DISTRO% -- echo "WSL2_OK" >nul 2>&1
-        if !errorlevel! equ 0 (
-            call :log "   [OK] WSL2 com Ubuntu ja instalado e funcional"
-            set "WSL_READY=1"
-        )
+
+:: Passo 1: Verificar se kernel WSL2 esta inicializado (com timeout para evitar travamento)
+call :log "   Verificando kernel WSL2 (timeout 20s)..."
+set "WSL_KERNEL_STATUS=UNKNOWN"
+for /f "delims=" %%r in ('powershell -NoProfile -Command "try{$p=Start-Process wsl.exe -ArgumentList '--status' -PassThru -WindowStyle Hidden;if($p.WaitForExit(20000)){if($p.ExitCode -eq 0){'OK'}else{'NEEDS_SETUP'}}else{try{$p.Kill()}catch{};'TIMEOUT'}}catch{'ERROR'}"') do set "WSL_KERNEL_STATUS=%%r"
+call :log "   Kernel WSL2: !WSL_KERNEL_STATUS!"
+
+if /i "!WSL_KERNEL_STATUS!"=="TIMEOUT" (
+    call :log "   WSL2 nao respondeu — kernel nao inicializado."
+    call :log "   Instalando kernel WSL2 com --web-download (Server 2022)..."
+    wsl --install --no-distribution --web-download >> "%LOG_FILE%" 2>&1
+    if !errorlevel! neq 0 (
+        call :log "   [AVISO] Possivel falha ao instalar kernel. Tentando prosseguir..."
+    ) else (
+        call :log "   [OK] Kernel WSL2 instalado"
+    )
+)
+if /i "!WSL_KERNEL_STATUS!"=="ERROR" (
+    call :log "   wsl.exe nao encontrado ou erro. Instalando WSL2..."
+    wsl --install --no-distribution --web-download >> "%LOG_FILE%" 2>&1
+    if !errorlevel! neq 0 (
+        call :log "   [ERRO] Falha ao instalar WSL2. Verifique a conexao de internet."
+        goto :fim_erro
+    )
+    call :log "   [OK] WSL2 instalado"
+)
+if /i "!WSL_KERNEL_STATUS!"=="NEEDS_SETUP" (
+    call :log "   WSL2 presente mas precisa de atualizacao..."
+    wsl --update --web-download >> "%LOG_FILE%" 2>&1
+    call :log "   [OK] WSL2 atualizado"
+)
+
+:: Passo 2: Verificar se Ubuntu esta instalado (com timeout)
+call :log "   Verificando se Ubuntu esta instalado..."
+set "UBUNTU_STATUS=UNKNOWN"
+for /f "delims=" %%r in ('powershell -NoProfile -Command "try{$psi=New-Object System.Diagnostics.ProcessStartInfo;$psi.FileName='wsl.exe';$psi.Arguments='-l -q';$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true;$p=[System.Diagnostics.Process]::Start($psi);$ot=$p.StandardOutput.ReadToEndAsync();$et=$p.StandardError.ReadToEndAsync();if($p.WaitForExit(15000)){[void][Threading.Tasks.Task]::WaitAll($ot,$et);if($ot.Result -match 'Ubuntu'){'FOUND'}else{'NOT_FOUND'}}else{try{$p.Kill()}catch{};'TIMEOUT'}}catch{'ERROR'}"') do set "UBUNTU_STATUS=%%r"
+call :log "   Ubuntu: !UBUNTU_STATUS!"
+
+if /i "!UBUNTU_STATUS!"=="FOUND" (
+    :: Testar se Ubuntu responde (com timeout de 30s)
+    set "UBUNTU_EXEC=UNKNOWN"
+    for /f "delims=" %%r in ('powershell -NoProfile -Command "try{$psi=New-Object System.Diagnostics.ProcessStartInfo;$psi.FileName='wsl.exe';$psi.Arguments='-d %WSL_DISTRO% -- echo WSL2_OK';$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true;$p=[System.Diagnostics.Process]::Start($psi);$ot=$p.StandardOutput.ReadToEndAsync();$et=$p.StandardError.ReadToEndAsync();if($p.WaitForExit(30000)){[void][Threading.Tasks.Task]::WaitAll($ot,$et);if($ot.Result -match 'WSL2_OK'){'OK'}else{'FAIL'}}else{try{$p.Kill()}catch{};'TIMEOUT'}}catch{'ERROR'}"') do set "UBUNTU_EXEC=%%r"
+    call :log "   Ubuntu exec: !UBUNTU_EXEC!"
+    if /i "!UBUNTU_EXEC!"=="OK" (
+        call :log "   [OK] WSL2 com Ubuntu ja instalado e funcional"
+        set "WSL_READY=1"
     )
 )
 
 if "!WSL_READY!"=="0" (
     call :log "   Instalando WSL2 + Ubuntu (pode levar 5-10 min)..."
-    call :log "   Comando: wsl --install -d Ubuntu-22.04 --no-launch"
+    call :log "   Comando: wsl --install -d Ubuntu-22.04 --web-download --no-launch"
 
-    :: Server 2022 suporta wsl --install nativamente
-    wsl --install -d Ubuntu-22.04 --no-launch >> "%LOG_FILE%" 2>&1
+    :: Server 2022 — usar --web-download (Microsoft Store nao disponivel)
+    wsl --install -d Ubuntu-22.04 --web-download --no-launch >> "%LOG_FILE%" 2>&1
 
     :: Definir WSL2 como padrao
     wsl --set-default-version 2 >> "%LOG_FILE%" 2>&1
 
-    :: Testar novamente
-    wsl -l -q 2>nul | findstr /i "Ubuntu" >nul 2>&1
-    if !errorlevel! equ 0 (
+    :: Verificar instalacao (com timeout)
+    set "INSTALL_VERIFY=UNKNOWN"
+    for /f "delims=" %%r in ('powershell -NoProfile -Command "try{$psi=New-Object System.Diagnostics.ProcessStartInfo;$psi.FileName='wsl.exe';$psi.Arguments='-l -q';$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true;$p=[System.Diagnostics.Process]::Start($psi);$ot=$p.StandardOutput.ReadToEndAsync();$et=$p.StandardError.ReadToEndAsync();if($p.WaitForExit(15000)){[void][Threading.Tasks.Task]::WaitAll($ot,$et);if($ot.Result -match 'Ubuntu'){'OK'}else{'NOT_FOUND'}}else{try{$p.Kill()}catch{};'TIMEOUT'}}catch{'ERROR'}"') do set "INSTALL_VERIFY=%%r"
+
+    if /i "!INSTALL_VERIFY!"=="OK" (
         call :log "   [OK] Ubuntu 22.04 instalado"
     ) else (
         call :log "   [AVISO] Ubuntu pode precisar de reboot ou inicializacao manual."
+        call :log "   Resultado: !INSTALL_VERIFY!"
         call :log "   Execute: wsl -d Ubuntu-22.04"
         call :log "   Crie usuario e senha, depois execute este script novamente."
         goto :fim_erro
     )
 )
 
-:: Verificar se Ubuntu tem usuario configurado
+:: Verificar se Ubuntu tem usuario configurado (com timeout)
 set "WSL_USER="
-for /f "delims=" %%u in ('wsl -d %WSL_DISTRO% -- whoami 2^>nul') do set "WSL_USER=%%u"
+for /f "delims=" %%u in ('powershell -NoProfile -Command "try{$psi=New-Object System.Diagnostics.ProcessStartInfo;$psi.FileName='wsl.exe';$psi.Arguments='-d %WSL_DISTRO% -- whoami';$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true;$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true;$p=[System.Diagnostics.Process]::Start($psi);$ot=$p.StandardOutput.ReadToEndAsync();$et=$p.StandardError.ReadToEndAsync();if($p.WaitForExit(15000)){[void][Threading.Tasks.Task]::WaitAll($ot,$et);$r=$ot.Result.Trim();if($r){$r}else{''}}else{try{$p.Kill()}catch{};''}}"') do set "WSL_USER=%%u"
 if "!WSL_USER!"=="" (
     call :log "   [AVISO] Ubuntu precisa de configuracao inicial."
     call :log "   Abrindo Ubuntu para criar usuario..."
@@ -244,7 +285,7 @@ echo.
 :: ══════════════════════════════════════════════════════════════════════════════
 :: ETAPA 4/8 — Instalar Docker Engine no WSL2
 :: ══════════════════════════════════════════════════════════════════════════════
-call :log ">> ETAPA 4/8 — Instalar Docker Engine no WSL2"
+call :log "[ETAPA 4/8] Instalar Docker Engine no WSL2"
 echo.
 
 :: Verificar se Docker ja funciona dentro do WSL
@@ -344,7 +385,7 @@ echo.
 :: ══════════════════════════════════════════════════════════════════════════════
 :: ETAPA 5/8 — Sincronizar Projeto para WSL2
 :: ══════════════════════════════════════════════════════════════════════════════
-call :log ">> ETAPA 5/8 — Sincronizar projeto para WSL2"
+call :log "[ETAPA 5/8] Sincronizar projeto para WSL2"
 echo.
 
 :: Converter caminho Windows → WSL
@@ -396,7 +437,7 @@ echo.
 :: ══════════════════════════════════════════════════════════════════════════════
 :: ETAPA 6/8 — Gerar .env de Producao
 :: ══════════════════════════════════════════════════════════════════════════════
-call :log ">> ETAPA 6/8 — Gerar .env de producao"
+call :log "[ETAPA 6/8] Gerar .env de producao"
 echo.
 
 :: Verificar se .env ja existe no destino
@@ -441,7 +482,7 @@ echo.
 :: ══════════════════════════════════════════════════════════════════════════════
 :: ETAPA 7/8 — Docker Compose: Build + Deploy
 :: ══════════════════════════════════════════════════════════════════════════════
-call :log ">> ETAPA 7/8 — Docker Compose: Build + Deploy"
+call :log "[ETAPA 7/8] Docker Compose: Build + Deploy"
 echo.
 
 :: [1/4] Parar containers anteriores
@@ -529,7 +570,7 @@ echo.
 :: ══════════════════════════════════════════════════════════════════════════════
 :: ETAPA 8/8 — Health Check + Firewall + Info
 :: ══════════════════════════════════════════════════════════════════════════════
-call :log ">> ETAPA 8/8 — Health Check + Firewall + Informacoes"
+call :log "[ETAPA 8/8] Health Check + Firewall + Informacoes"
 echo.
 
 :: ── Health Check ─────────────────────────────────────────────────────────────

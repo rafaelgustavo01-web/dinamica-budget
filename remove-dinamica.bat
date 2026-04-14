@@ -34,8 +34,9 @@ set "LOG_FILE=%PROJECT_ROOT%\logs\remove-%LOG_TS%.log"
 
 goto :skip_log_func2
 :log2
-echo %~1
-echo [%date% %time%] %~1 >> "%LOG_FILE%"
+set "LOG_MSG=%~1"
+if "!LOG_MSG!"=="" (echo.) else (echo !LOG_MSG!)
+>> "%LOG_FILE%" echo [%date% %time%] !LOG_MSG!
 goto :eof
 :skip_log_func2
 
@@ -79,7 +80,7 @@ echo.
 :: ══════════════════════════════════════════════════════════════════════════════
 :: ETAPA 1/6 — Backup do Banco de Dados
 :: ══════════════════════════════════════════════════════════════════════════════
-call :log2 ">> ETAPA 1/6 — Backup do Banco de Dados"
+call :log2 "[ETAPA 1/6] Backup do Banco de Dados"
 echo.
 
 if not exist "%PROJECT_ROOT%\backups" mkdir "%PROJECT_ROOT%\backups"
@@ -117,7 +118,7 @@ echo.
 :: ══════════════════════════════════════════════════════════════════════════════
 :: ETAPA 2/6 — Parar e Remover Containers
 :: ══════════════════════════════════════════════════════════════════════════════
-call :log2 ">> ETAPA 2/6 — Parar e Remover Containers"
+call :log2 "[ETAPA 2/6] Parar e Remover Containers"
 echo.
 
 :: Verificar se WSL + Docker estao disponiveis
@@ -152,7 +153,7 @@ echo.
 :: ══════════════════════════════════════════════════════════════════════════════
 :: ETAPA 3/6 — Remover Arquivos do Projeto no WSL
 :: ══════════════════════════════════════════════════════════════════════════════
-call :log2 ">> ETAPA 3/6 — Remover arquivos do projeto no WSL"
+call :log2 "[ETAPA 3/6] Remover arquivos do projeto no WSL"
 echo.
 
 wsl -d %WSL_DISTRO% -- test -d %WSL_APP_DIR% >nul 2>&1
@@ -167,7 +168,7 @@ echo.
 :: ══════════════════════════════════════════════════════════════════════════════
 :: ETAPA 4/6 — Remover Port Forwarding e Firewall
 :: ══════════════════════════════════════════════════════════════════════════════
-call :log2 ">> ETAPA 4/6 — Remover port forwarding e regras de firewall"
+call :log2 "[ETAPA 4/6] Remover port forwarding e regras de firewall"
 echo.
 
 :: Port forwarding
@@ -188,7 +189,7 @@ echo.
 :: ══════════════════════════════════════════════════════════════════════════════
 :: ETAPA 5/6 — Remover Tarefas Agendadas
 :: ══════════════════════════════════════════════════════════════════════════════
-call :log2 ">> ETAPA 5/6 — Remover tarefas agendadas"
+call :log2 "[ETAPA 5/6] Remover tarefas agendadas"
 echo.
 
 schtasks /delete /tn "DinamicaBudget-WSL-Autostart" /f >nul 2>&1
@@ -202,7 +203,7 @@ echo.
 :: ══════════════════════════════════════════════════════════════════════════════
 :: ETAPA 6/6 — Remover Distro WSL (Opcional)
 :: ══════════════════════════════════════════════════════════════════════════════
-call :log2 ">> ETAPA 6/6 — Remover distro WSL2 (Opcional)"
+call :log2 "[ETAPA 6/6] Remover distro WSL2 (Opcional)"
 echo.
 echo   A distro WSL2 (%WSL_DISTRO%) contem o Docker e ambiente.
 echo   Remover libera espaco em disco mas requer reinstalacao completa
