@@ -31,7 +31,8 @@ set "APPCMD=%windir%\System32\inetsrv\appcmd.exe"
 REM ── LOGGING ─────────────────────────────────────────────────────────────────
 set "LOGD=!SRC!\logs"
 if not exist "!LOGD!" mkdir "!LOGD!"
-for /f "delims=" %%d in ('powershell -NoProfile -Command "Get-Date -Format ''yyyyMMdd_HHmmss''"') do set "TS=%%d"
+for /f "delims=" %%d in ('powershell -NoProfile -Command "(Get-Date).ToString(''yyyyMMdd_HHmmss'')"') do set "TS=%%d"
+if not defined TS set "TS=%RANDOM%_%RANDOM%"
 set "LOG=!LOGD!\deploy-!TS!.log"
 set "PENDF=!LOGD!\PENDENCIAS_MANUAIS_!TS!.txt"
 
@@ -220,7 +221,7 @@ if not errorlevel 1 (
     ) else (
         set "HAS_NSSM=0"
         call :warn "NSSM nao encontrado. Servico Windows nao sera criado automaticamente."
-        call :pend "Instalar NSSM 2.24+: https://nssm.cc/download — copiar nssm.exe (win64) para C:\Windows\System32\"
+        call :pend "Instalar NSSM 2.24+: https://nssm.cc/download — copiar nssm.exe (win64) para C:\Windows\System32"
     )
 )
 
@@ -653,7 +654,7 @@ if "!HAS_NET!"=="1" (
 ) else (
     call :warn "Sem acesso a internet. Modelo ML nao pode ser baixado automaticamente."
     call :pend "MODELO ML: Em maquina com internet, executar: python -c \"from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2',cache_folder='./ml_models')\""
-    call :pend "MODELO ML: Copiar pasta ml_models/ para !ML_DIR!\"
+    call :pend "MODELO ML: Copiar pasta ml_models/ para !ML_DIR!"
 )
 
 REM ─── ETAPA 7/11: BUILD DO FRONTEND ─────────────────────────────────────────
@@ -845,7 +846,7 @@ REM Start/restart service
 if errorlevel 1 (
     "!NSSM_CMD!" start "!SVC!" >> "!LOG!" 2>&1
     if errorlevel 1 (
-        call :warn "Falha ao iniciar servico !SVC!. Verifique logs em !APP!\logs\"
+        call :warn "Falha ao iniciar servico !SVC!. Verifique logs em !APP!\logs"
         call :pend "Iniciar servico manualmente: nssm start !SVC! — verificar !APP!\logs\stderr.log"
     ) else (
         call :ok "Servico !SVC! iniciado"

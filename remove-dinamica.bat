@@ -37,6 +37,8 @@ if not exist "!LOGD!" (
     if not exist "!LOGD!" mkdir "!LOGD!"
 )
 for /f "delims=" %%d in ('powershell -NoProfile -Command "Get-Date -Format ''yyyyMMdd_HHmmss''"') do set "TS=%%d"
+if not defined TS for /f "delims=" %%d in ('powershell -NoProfile -Command "(Get-Date).ToString(''yyyyMMdd_HHmmss'')"') do set "TS=%%d"
+if not defined TS set "TS=%RANDOM%_%RANDOM%"
 set "LOG=!LOGD!\remove-!TS!.log"
 
 REM ── CONTADORES ──────────────────────────────────────────────────────────────
