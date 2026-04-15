@@ -6,6 +6,7 @@ python-multipart==0.0.12
 # Database
 sqlalchemy[asyncio]==2.0.36
 asyncpg==0.30.0
+psycopg2-binary==2.9.11
 alembic==1.14.0
 pgvector==0.3.6
 
@@ -22,7 +23,7 @@ slowapi==0.1.9
 
 # ML / Embeddings
 sentence-transformers==3.3.1
-torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+torch>=2.5.1
 
 # Fuzzy Search
 rapidfuzz==3.10.1

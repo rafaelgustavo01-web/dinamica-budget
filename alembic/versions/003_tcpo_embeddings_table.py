@@ -24,6 +24,7 @@ EMBEDDING_DIM = 384  # all-MiniLM-L6-v2
 
 
 def upgrade() -> None:
+    # Create base table first (always succeeds)
     op.create_table(
         "tcpo_embeddings",
         sa.Column(
@@ -32,21 +33,25 @@ def upgrade() -> None:
             sa.ForeignKey("servico_tcpo.id", ondelete="CASCADE"),
             primary_key=True,
         ),
-        sa.Column("vetor", sa.Text, nullable=True),   # stored as text then cast; pgvector handles via SQL
+        sa.Column("vetor", sa.Text, nullable=True),
         sa.Column("metadata", postgresql.JSONB, nullable=True),
     )
 
-    # Add vetor column as actual vector type (requires pgvector extension from 002)
-    op.execute("ALTER TABLE tcpo_embeddings DROP COLUMN IF EXISTS vetor")
-    op.execute(f"ALTER TABLE tcpo_embeddings ADD COLUMN vetor vector({EMBEDDING_DIM})")
-
-    # HNSW index for cosine similarity (best recall for bounded catalog sizes)
+    # Conditionally upgrade vetor column to vector type if pgvector is installed
     op.execute(
-        """
-        CREATE INDEX ix_tcpo_embeddings_hnsw
-        ON tcpo_embeddings
-        USING hnsw (vetor vector_cosine_ops)
-        WITH (m = 16, ef_construction = 64)
+        f"""
+        DO $emb$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector') THEN
+                ALTER TABLE tcpo_embeddings DROP COLUMN IF EXISTS vetor;
+                EXECUTE 'ALTER TABLE tcpo_embeddings ADD COLUMN vetor vector({EMBEDDING_DIM})';
+                CREATE INDEX ix_tcpo_embeddings_hnsw
+                    ON tcpo_embeddings
+                    USING hnsw (vetor vector_cosine_ops)
+                    WITH (m = 16, ef_construction = 64);
+            ELSE
+                RAISE NOTICE 'pgvector not installed; tcpo_embeddings.vetor kept as TEXT';
+            END IF;
+        END $emb$;
         """
     )
 

@@ -19,6 +19,8 @@
 - [Migrations Alembic](#migrations-alembic)
 - [Ferramentas de Banco de Dados](#ferramentas-de-banco-de-dados)
 - [Setup e Instalação](#setup-e-instalação)
+- [Deploy Automatizado — Windows Server](#deploy-automatizado--windows-server)
+- [Scripts de Operação](#scripts-de-operação)
 - [Variáveis de Ambiente](#variáveis-de-ambiente)
 - [Regras de Segurança e Governança](#regras-de-segurança-e-governança)
 - [Correções Sprint 1 (P0/P1)](#correções-sprint-1-p0p1)
@@ -49,14 +51,18 @@ A solução é totalmente **on-premise**: nenhum dado sai da rede interna. O mod
 | Framework Web | FastAPI (async) |
 | ORM | SQLAlchemy 2.0 (async + asyncpg) |
 | Banco de Dados | PostgreSQL 16 |
-| Busca Vetorial | pgvector (HNSW, Vector(384)) |
+| Busca Vetorial | pgvector 0.8.0 (HNSW, Vector(384)) |
 | Busca Fuzzy | pg_trgm + GIN index |
 | Embeddings | Sentence Transformers `all-MiniLM-L6-v2` (on-premise) |
 | Autenticação | JWT (access 30min + refresh 7 dias) |
-| Migrações | Alembic (async) — 7 migrations |
+| Migrações | Alembic — 11 migrations |
 | Logging | structlog (JSON estruturado) |
 | Validação | Pydantic v2 |
-| Container | Docker + Docker Compose |
+| Serviço Windows | NSSM (Non-Sucking Service Manager) |
+| Servidor Web | IIS 10 + ARR 3.0 + URL Rewrite 2.1 (reverse proxy) |
+| Frontend | React + Vite 6 + TypeScript (build estático servido pelo IIS) |
+| Container | Docker + Docker Compose (dev/staging) |
+| Deploy | `deploy-dinamica.bat` — instalador nativo Windows Server |
 | Dev DB (CLI) | pgcli 4.4.0 — autocomplete, syntax highlight, aliases |
 | Dev DB (GUI) | HeidiSQL — nativo Win32, leve, open-source (GPL) |
 
@@ -564,6 +570,10 @@ soft DELETE              → DELETE FROM tcpo_embeddings
 | 005 | `v2_governance_rbac_audit` | Enums V2, `external_id_ad`, `usuario_perfil`, colunas de governança em `servico_tcpo`, substitui `associacao_tcpo` → `associacao_inteligente`, cria `auditoria_log` |
 | 006 | `consolidation_fixes` | `historico_busca_cliente.usuario_id FK` (substitui `usuario_origem`), `auditoria_log.usuario_id FK` + `auditoria_log.cliente_id FK`, estende enum `tipo_operacao_auditoria_enum` com `APROVAR`/`REPROVAR` |
 | 007 | `fix_defaults_and_cliente_updated_at` | `servico_tcpo.status_homologacao` server_default `APROVADO → PENDENTE` (defense-in-depth), adiciona `clientes.updated_at` |
+| 008 | `tipo_recurso_tokens` | Novo enum `tipo_recurso_enum` (MO/INSUMO/FERRAMENTA/EQUIPAMENTO/SERVICO), adiciona `tipo_recurso` e `descricao_tokens` (TEXT) em `servico_tcpo` |
+| 009 | `versao_composicao` | Tabela `versao_composicao` (versionamento de composições), adiciona `versao_id` e `unidade_medida` em `composicao_tcpo` |
+| 010 | `rename_usuario_perfil` | Renomeia tabela `usuario_perfil` → `permissao_operacional` (sem perda de dados) |
+| 011 | `nullable_cliente_historico` | `historico_busca_cliente.cliente_id` nullable (suporte a busca genérica), popula `descricao_tokens` em linhas existentes via SQL |
 
 ```bash
 # Aplicar todas as migrations
@@ -718,6 +728,8 @@ ORDER BY a.frequencia_uso DESC;
 - PostgreSQL 16 com extensões `pgvector` e `pg_trgm`
 - HeidiSQL (opcional, GUI open-source) — https://www.heidisql.com/download.php
 
+> **Para deploy automatizado em Windows Server**, veja a seção [Deploy Automatizado — Windows Server](#deploy-automatizado--windows-server) abaixo.
+
 ### 1. Clone e Ambiente Virtual
 ```bash
 git clone <repo>
@@ -778,6 +790,142 @@ curl -X POST http://localhost:8000/api/v1/admin/compute-embeddings \
 ```
 
 **Swagger UI:** `http://localhost:8000/docs`
+
+---
+
+## Deploy Automatizado — Windows Server
+
+Para ambientes de produção em Windows Server 2019/2022, o projeto inclui um instalador nativo completo que configura **tudo automaticamente** com uma única execução.
+
+### Pré-requisitos do servidor
+
+| Componente | Versão mínima | Observação |
+|---|---|---|
+| Windows Server | 2019 / 2022 | Build 17763+ |
+| Python | 3.11+ | Adicionado ao PATH do sistema |
+| Node.js | 18+ | Para build do frontend |
+| PostgreSQL | 16 | Serviço `postgresql-x64-16` no Windows |
+| IIS | 10 | Feature `Web-Server` habilitada |
+| URL Rewrite | 2.1 | Módulo IIS |
+| ARR | 3.0 | Application Request Routing (reverse proxy) |
+| NSSM | qualquer | No PATH do sistema |
+
+### Executar o deploy
+
+```bat
+REM Clique com botão direito -> "Executar como Administrador"
+deploy-dinamica.bat
+```
+
+O script solicita apenas a **senha do PostgreSQL** e executa as 11 etapas automaticamente:
+
+| Etapa | O que faz |
+|---|---|
+| 0 — Pré-requisitos | Valida Python, Node.js, NSSM, IIS, ARR, URL Rewrite |
+| 1 — Sync de arquivos | `robocopy` da origem para `C:\DinamicaBudget` (exclui venv/logs/node_modules) |
+| 2 — Python venv | Cria/atualiza venv, instala torch CPU + dependências + pgcli |
+| 3 — Arquivo `.env` | Gera `.env` com `SECRET_KEY` aleatória se não existir |
+| 4 — PostgreSQL | Cria banco, ativa `pgvector` e `pg_trgm`; chama `install-pgvector.ps1` |
+| 5 — Alembic | `alembic upgrade head` (migrations 001–011) |
+| 6 — Modelo ML | Verifica/baixa `all-MiniLM-L6-v2` para cache local |
+| 7 — Frontend | `npm install` + `npm run build` para `C:\inetpub\DinamicaBudget` |
+| 8 — Serviço NSSM | Cria/atualiza serviço `DinamicaBudgetAPI` (uvicorn, auto-start) |
+| 9 — IIS | Cria site `DinamicaBudget` na porta 80 com Virtual Directory |
+| 10 — Firewall | Abre portas 80, 443, 8000 |
+| 11 — Verificação | Testa `/health`, relata status final |
+
+### pgvector em Windows Server
+
+Quando `pgvector` não está instalado como extensão PostgreSQL, o script `scripts/install-pgvector.ps1` é chamado automaticamente pela etapa 4. Ele:
+
+1. Verifica se `vector.control` já existe — pula se sim
+2. Localiza `vcvars64.bat` (VS Build Tools) em caminhos padrão
+3. Se não encontrado: baixa o bootstrapper do VS Build Tools (~2,5 GB) e instala silenciosamente
+4. Baixa o fonte de pgvector v0.8.0 do GitHub
+5. Compila com `nmake /F Makefile.win` usando o compilador MSVC
+6. Copia os binários para `%PG_ROOT%\lib` e `%PG_ROOT%\share\extension`
+7. Executa `CREATE EXTENSION vector` no banco
+8. Faz upgrade da coluna `tcpo_embeddings.vetor` de TEXT para `vector(384)` + cria índice HNSW
+
+### Modos de execução
+
+O deploy detecta automaticamente se é uma **instalação nova** ou uma **atualização**:
+
+- **Nova instalação**: cria tudo do zero (venv, .env, banco, serviço NSSM, site IIS)
+- **Atualização**: sincroniza arquivos, atualiza dependências, roda migrations incrementais, reinicia serviço
+
+### Resultado esperado após deploy bem-sucedido
+
+```
+[OK] API rodando: {"status":"ok","database_connected":true,"embedder_ready":true}
+[OK] Frontend acessivel em http://<servidor>/
+[OK] Swagger UI em http://<servidor>:8000/docs
+```
+
+Arquivos de log gerados em `C:\Dinamica-Budget\logs\`:
+- `deploy-YYYYMMDD_HHMMSS.log` — log completo do deploy
+- `install-pgvector.log` — log da compilação/instalação do pgvector
+- `C:\DinamicaBudget\logs\uvicorn.log` — log de runtime da API
+
+---
+
+## Scripts de Operação
+
+Todos os scripts estão em `scripts/` e são executados em PowerShell.
+
+### `scripts/status.ps1` — Painel de saúde do sistema
+
+Exibe o estado de todos os componentes em tempo real, sem parâmetros:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\status.ps1
+```
+
+Verifica e reporta **[OK]** / **[FAIL]** / **[WARN]** para:
+
+| Seção | O que inspeciona |
+|---|---|
+| Serviços Windows | PostgreSQL 16, DinamicaBudgetAPI (NSSM), IIS (W3SVC) |
+| Portas | 80, 443, 8000, 5432 — estado LISTEN + processo responsável |
+| API Health | `GET /health` (status, database_connected, embedder_ready) e `GET /docs` |
+| PostgreSQL | Versão, existência do banco, extensões vector e pg_trgm |
+| Migrations | Versões aplicadas em `alembic_version`, contagem de tabelas |
+| Coluna vetor | Tipo atual de `tcpo_embeddings.vetor` e existência do índice HNSW |
+| IIS Sites | Nome, estado e binding de cada site |
+| Processos Python | PIDs e consumo de RAM de cada worker uvicorn |
+| Disco e memória | Espaço livre em C:, RAM livre/total |
+| Diretórios | Deploy dir, venv, ml_models, IIS webroot |
+| Log da API | Últimas 8 linhas de `uvicorn.log` |
+
+### `scripts/install-pgvector.ps1` — Instalação do pgvector
+
+Usado internamente pelo deploy, mas pode ser executado manualmente com elevação:
+
+```powershell
+# Requer Administrador
+Start-Process PowerShell -Verb RunAs -ArgumentList '-ExecutionPolicy Bypass -File "C:\Dinamica-Budget\scripts\install-pgvector.ps1"'
+```
+
+Parâmetros opcionais:
+
+```powershell
+-PgRoot    "C:\Program Files\PostgreSQL\16"   # caminho do PostgreSQL
+-DbName    "dinamica_budget"                   # banco alvo
+-EnvFile   "C:\DinamicaBudget\.env"            # arquivo .env para leitura da senha
+```
+
+### `scripts/backup-db.ps1` — Backup do banco
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\backup-db.ps1
+```
+
+### `scripts/db.bat` / `scripts/db.sh` — Cliente pgcli
+
+```bat
+REM Windows — abre pgcli com autocomplete no banco de desenvolvimento
+scripts\db.bat
+```
 
 ---
 
@@ -903,4 +1051,4 @@ pytest app/tests/unit/ -v
 
 ---
 
-*Dinamica Budget — Backend API v2.2 | On-Premise | FastAPI + PostgreSQL + pgvector*
+*Dinamica Budget — Backend API v2.2 | On-Premise | FastAPI + PostgreSQL 16 + pgvector 0.8.0 + IIS + NSSM*

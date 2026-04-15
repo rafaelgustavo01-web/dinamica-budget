@@ -1,16 +1,19 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul 2>&1
-title ══ Dinamica Budget — Instalador Nativo v2.0 ══
+title ══ Dinamica Budget — Instalador Nativo v3.0 ══
 
 REM ============================================================================
 REM  DINAMICA BUDGET — Instalador Nativo para Windows Server 2022
-REM  Versao: 2.0 — Abril 2026
+REM  Versao: 3.0 — Abril 2026
 REM  Compativel: Windows Server 2019+ / Windows 10 21H2+
 REM ============================================================================
+REM  * Instala AUTOMATICAMENTE: Python 3.12, PostgreSQL 16, NSSM, URL Rewrite,
+REM    ARR 3.0 — sem nenhuma intervencao manual
+REM  * Se versao do Python for incompativel, desinstala e reinstala 3.12.x
 REM  * Cada etapa detecta se ja foi concluida e pula automaticamente
 REM  * Reexecucao segura (idempotente)
-REM  * Ao final gera PENDENCIAS_MANUAIS.txt com acoes de intervencao manual
+REM  * Ao final gera PENDENCIAS_MANUAIS.txt com acoes restantes
 REM  * Log completo em logs\deploy-<timestamp>.log
 REM ============================================================================
 
@@ -31,7 +34,11 @@ set "APPCMD=%windir%\System32\inetsrv\appcmd.exe"
 REM ── LOGGING ─────────────────────────────────────────────────────────────────
 set "LOGD=!SRC!\logs"
 if not exist "!LOGD!" mkdir "!LOGD!"
-for /f "delims=" %%d in ('powershell -NoProfile -Command "(Get-Date).ToString(''yyyyMMdd_HHmmss'')"') do set "TS=%%d"
+set "TS=%date:~-4%%date:~3,2%%date:~0,2%_%time:~0,2%%time:~3,2%%time:~6,2%"
+set "TS=!TS: =0!"
+set "TS=!TS:/=!"
+set "TS=!TS::=!"
+set "TS=!TS:,=!"
 if not defined TS set "TS=%RANDOM%_%RANDOM%"
 set "LOG=!LOGD!\deploy-!TS!.log"
 set "PENDF=!LOGD!\PENDENCIAS_MANUAIS_!TS!.txt"
@@ -125,7 +132,7 @@ REM ═════════════════════════�
 :main
 REM ═══════════════════════════════════════════════════════════════════════════
 
-call :hdr "DINAMICA BUDGET — INSTALADOR NATIVO v2.0"
+call :hdr "DINAMICA BUDGET — INSTALADOR NATIVO v3.0"
 >> "!LOG!" echo Inicio: %date% %time%
 >> "!LOG!" echo Origem: !SRC!
 >> "!LOG!" echo Destino: !APP!
@@ -153,61 +160,151 @@ for /f "tokens=3" %%b in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\Current
 if not defined WIN_BUILD set "WIN_BUILD=0"
 if !WIN_BUILD! geq 20348 (
     call :ok "Windows Server 2022 (Build !WIN_BUILD!)"
-) else if !WIN_BUILD! geq 17763 (
-    call :warn "Build !WIN_BUILD! (Server 2019). Recomendado: Server 2022 (20348+)"
 ) else (
-    call :warn "Build !WIN_BUILD! abaixo do recomendado (20348+)"
+    if !WIN_BUILD! geq 17763 (
+        call :warn "Build !WIN_BUILD! (Server 2019). Recomendado: Server 2022 (20348+)"
+    ) else (
+        call :warn "Build !WIN_BUILD! abaixo do recomendado (20348+)"
+    )
 )
 
-REM Python check
+REM Python check — instala 3.12 automaticamente se ausente ou versao incorreta
+set "PY_NEED_INSTALL=0"
+set "PY_VER="
 where python >nul 2>&1
-if errorlevel 1 (
-    echo   !R![FAIL]!N! Python nao encontrado no PATH.
-    echo          Instale Python 3.12.x: https://www.python.org/downloads/
-    echo          MARQUE: [x] Add python.exe to PATH
-    >> "!LOG!" echo [FAIL] Python nao encontrado
-    call :pend "Instalar Python 3.12.x com 'Add to PATH': https://www.python.org/downloads/"
-    goto :abort
+if not errorlevel 1 (
+    for /f "tokens=2" %%v in ('python --version 2^>^&1') do set "PY_VER=%%v"
 )
-for /f "tokens=2" %%v in ('python --version 2^>^&1') do set "PY_VER=%%v"
+REM Verifica se e exatamente 3.12.x
 echo !PY_VER! | findstr /r "^3\.12\." >nul 2>&1
-if errorlevel 1 (
-    call :warn "Python !PY_VER! detectado. Recomendado: 3.12.x"
+if errorlevel 1 set "PY_NEED_INSTALL=1"
+if not defined PY_VER set "PY_NEED_INSTALL=1"
+
+if "!PY_NEED_INSTALL!"=="1" (
+    if defined PY_VER (
+        call :warn "Python !PY_VER! incompativel. Desinstalando e instalando Python 3.12.x..."
+        REM Desinstala versao atual via registro (silencioso)
+        for /f "tokens=*" %%g in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s /f "Python" 2^>nul ^| findstr /i "python 3\."') do (
+            for /f "tokens=2*" %%a in ('reg query "%%g" /v UninstallString 2^>nul ^| findstr UninstallString') do (
+                "%%b" /quiet /norestart >nul 2>&1
+            )
+        )
+        for /f "tokens=*" %%g in ('reg query "HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall" /s /f "Python" 2^>nul ^| findstr /i "python 3\."') do (
+            for /f "tokens=2*" %%a in ('reg query "%%g" /v UninstallString 2^>nul ^| findstr UninstallString') do (
+                "%%b" /quiet /norestart >nul 2>&1
+            )
+        )
+        call :info "Versao anterior desinstalada."
+    ) else (
+        call :info "Python nao encontrado. Instalando Python 3.12.10..."
+    )
+    REM Download Python 3.12.10 e instala silenciosamente
+    set "PY_MSI=%TEMP%\python-3.12.10-amd64.exe"
+    call :info "Baixando Python 3.12.10 (~25MB)..."
+    powershell -NoProfile -Command "try{[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe' -OutFile '!PY_MSI!' -UseBasicParsing; exit 0}catch{exit 1}" >> "!LOG!" 2>&1
+    if not exist "!PY_MSI!" (
+        echo   !R![FAIL]!N! Nao foi possivel baixar Python 3.12.10. Verifique conexao com internet.
+        >> "!LOG!" echo [FAIL] Download Python 3.12.10 falhou
+        goto :abort
+    )
+    call :info "Instalando Python 3.12.10 (silencioso)..."
+    "!PY_MSI!" /quiet InstallAllUsers=1 PrependPath=1 Include_test=0 Include_pip=1 >> "!LOG!" 2>&1
+    if errorlevel 1 (
+        echo   !R![FAIL]!N! Falha ao instalar Python 3.12.10.
+        >> "!LOG!" echo [FAIL] Instalacao Python 3.12.10 falhou
+        goto :abort
+    )
+    REM Recarrega PATH para encontrar o Python recem instalado
+    for /f "skip=2 tokens=3*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul') do set "SYS_PATH=%%a %%b"
+    for /f "skip=2 tokens=3*" %%a in ('reg query "HKCU\Environment" /v Path 2^>nul') do set "USR_PATH=%%a %%b"
+    set "PATH=!SYS_PATH!;!USR_PATH!"
+    REM Garante que Python 3.12 esta no PATH (caminhos padrao do instalador EDB)
+    for %%p in ("C:\Python312" "C:\Program Files\Python312" "C:\Users\%USERNAME%\AppData\Local\Programs\Python\Python312") do (
+        if exist "%%~p\python.exe" (
+            set "PATH=%%~p;%%~p\Scripts;!PATH!"
+        )
+    )
+    REM Apaga venv antigo incompativel se existir
+    if exist "!APP!\venv" (
+        call :info "Removendo venv antigo incompativel com nova versao do Python..."
+        rmdir /s /q "!APP!\venv" >> "!LOG!" 2>&1
+    )
+    call :ok "Python 3.12.10 instalado com sucesso"
+    set "PY_VER=3.12.10"
 ) else (
     call :ok "Python !PY_VER!"
 )
 
-REM pip check
+REM pip check — usa python -m pip se pip nao estiver no PATH
 where pip >nul 2>&1
 if errorlevel 1 (
-    echo   !R![FAIL]!N! pip nao encontrado no PATH.
-    >> "!LOG!" echo [FAIL] pip nao encontrado
-    goto :abort
+    python -m pip --version >nul 2>&1
+    if errorlevel 1 (
+        echo   !R![FAIL]!N! pip nao encontrado.
+        >> "!LOG!" echo [FAIL] pip nao encontrado
+        goto :abort
+    )
 )
 call :ok "pip disponivel"
 
-REM Node.js check
+REM Node.js check — instala automaticamente se ausente
 where node >nul 2>&1
-if errorlevel 1 (
-    echo   !R![FAIL]!N! Node.js nao encontrado no PATH.
-    echo          Instale Node.js LTS: https://nodejs.org/
-    >> "!LOG!" echo [FAIL] Node.js nao encontrado
-    call :pend "Instalar Node.js 20/22 LTS: https://nodejs.org/"
-    goto :abort
+if not errorlevel 1 (
+    for /f "delims=" %%v in ('node --version 2^>^&1') do set "NODE_VER=%%v"
+    call :ok "Node.js !NODE_VER!"
+) else (
+    call :info "Node.js nao encontrado. Baixando Node.js 20 LTS..."
+    set "NODE_MSI=%TEMP%\node-v20-lts-x64.msi"
+    powershell -NoProfile -Command "try{[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $ver=(Invoke-RestMethod -Uri 'https://nodejs.org/dist/latest-v20.x/SHASUMS256.txt' -UseBasicParsing -ErrorAction Stop).Split([char]10) | Where-Object {$_ -match 'node-v[\d.]+-x64.msi'} | Select-Object -First 1; $fname=($ver -split '\s+')[1].Trim(); Invoke-WebRequest -Uri \"https://nodejs.org/dist/latest-v20.x/$fname\" -OutFile '!NODE_MSI!' -UseBasicParsing; exit 0}catch{exit 1}" >> "!LOG!" 2>&1
+    if not exist "!NODE_MSI!" (
+        REM URL fixa como fallback
+        powershell -NoProfile -Command "try{[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://nodejs.org/dist/v20.19.1/node-v20.19.1-x64.msi' -OutFile '!NODE_MSI!' -UseBasicParsing; exit 0}catch{exit 1}" >> "!LOG!" 2>&1
+    )
+    if exist "!NODE_MSI!" (
+        call :info "Instalando Node.js 20 LTS (silencioso)..."
+        msiexec /i "!NODE_MSI!" /qn /norestart >> "!LOG!" 2>&1
+        REM Recarrega PATH
+        for /f "skip=2 tokens=3*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul') do set "SYS_PATH=%%a %%b"
+        set "PATH=!SYS_PATH!;!PATH!"
+        where node >nul 2>&1
+        if errorlevel 1 (
+            REM Adiciona path padrao manualmente
+            if exist "C:\Program Files\nodejs\node.exe" set "PATH=C:\Program Files\nodejs;!PATH!"
+        )
+        where node >nul 2>&1
+        if not errorlevel 1 (
+            for /f "delims=" %%v in ('node --version 2^>^&1') do set "NODE_VER=%%v"
+            call :ok "Node.js !NODE_VER! instalado automaticamente"
+        ) else (
+            echo   !R![FAIL]!N! Node.js instalado mas nao encontrado no PATH.
+            call :pend "Reiniciar o script apos adicionar Node.js ao PATH ou reiniciar o servidor"
+            goto :abort
+        )
+    ) else (
+        echo   !R![FAIL]!N! Download do Node.js falhou. Verifique conexao com internet.
+        >> "!LOG!" echo [FAIL] Download Node.js falhou
+        call :pend "Instalar Node.js 20/22 LTS: https://nodejs.org/"
+        goto :abort
+    )
 )
-for /f "delims=" %%v in ('node --version 2^>^&1') do set "NODE_VER=%%v"
-call :ok "Node.js !NODE_VER!"
 
 REM npm check
 where npm >nul 2>&1
-if errorlevel 1 (
-    echo   !R![FAIL]!N! npm nao encontrado no PATH.
-    >> "!LOG!" echo [FAIL] npm nao encontrado
-    goto :abort
+if not errorlevel 1 (
+    call :ok "npm disponivel"
+) else (
+    REM npm vem com Node.js — adiciona caminho padrao
+    if exist "C:\Program Files\nodejs\npm.cmd" (
+        set "PATH=C:\Program Files\nodejs;!PATH!"
+        call :ok "npm encontrado em C:\Program Files\nodejs"
+    ) else (
+        echo   !R![FAIL]!N! npm nao encontrado. Reinstale o Node.js.
+        >> "!LOG!" echo [FAIL] npm nao encontrado
+        goto :abort
+    )
 )
-call :ok "npm disponivel"
 
-REM NSSM check
+REM NSSM check — baixa automaticamente se ausente
 set "NSSM_BIN="
 where nssm >nul 2>&1
 if not errorlevel 1 (
@@ -219,44 +316,133 @@ if not errorlevel 1 (
         set "NSSM_BIN=C:\Windows\System32\nssm.exe"
         call :ok "NSSM encontrado em System32"
     ) else (
-        set "HAS_NSSM=0"
-        call :warn "NSSM nao encontrado. Servico Windows nao sera criado automaticamente."
-        call :pend "Instalar NSSM 2.24+: https://nssm.cc/download — copiar nssm.exe (win64) para C:\Windows\System32"
+        call :info "NSSM nao encontrado. Baixando NSSM 2.24..."
+        powershell -NoProfile -Command "try{[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://nssm.cc/ci/nssm-2.24-101-g897c7ad.zip' -OutFile '%TEMP%\nssm.zip' -UseBasicParsing; exit 0}catch{exit 1}" >> "!LOG!" 2>&1
+        if exist "%TEMP%\nssm.zip" (
+            powershell -NoProfile -Command "Expand-Archive -Path '%TEMP%\nssm.zip' -DestinationPath '%TEMP%\nssm' -Force" >> "!LOG!" 2>&1
+            copy /y "%TEMP%\nssm\nssm-2.24-101-g897c7ad\win64\nssm.exe" "C:\Windows\System32\nssm.exe" >nul 2>&1
+            if exist "C:\Windows\System32\nssm.exe" (
+                set "HAS_NSSM=1"
+                set "NSSM_BIN=C:\Windows\System32\nssm.exe"
+                call :ok "NSSM 2.24 instalado automaticamente"
+            ) else (
+                set "HAS_NSSM=0"
+                call :warn "NSSM nao pode ser copiado para System32. Tentando pasta do app..."
+                if not exist "!APP!" mkdir "!APP!"
+                copy /y "%TEMP%\nssm\nssm-2.24-101-g897c7ad\win64\nssm.exe" "!APP!\nssm.exe" >nul 2>&1
+                if exist "!APP!\nssm.exe" (
+                    set "HAS_NSSM=1"
+                    set "NSSM_BIN=!APP!\nssm.exe"
+                    call :ok "NSSM em !APP!\nssm.exe"
+                ) else (
+                    call :warn "NSSM nao disponivel. Servico Windows nao sera criado automaticamente."
+                    call :pend "Instalar NSSM 2.24+: https://nssm.cc/download — copiar nssm.exe (win64) para C:\Windows\System32"
+                )
+            )
+        ) else (
+            set "HAS_NSSM=0"
+            call :warn "Download do NSSM falhou. Servico nao sera criado."
+            call :pend "Instalar NSSM 2.24+: https://nssm.cc/download — copiar nssm.exe (win64) para C:\Windows\System32"
+        )
     )
 )
 
-REM IIS check
-if not exist "!APPCMD!" (
-    echo   !R![FAIL]!N! IIS nao instalado (appcmd.exe nao encontrado).
-    echo          Instale o role Web-Server via Server Manager ou:
-    echo          Install-WindowsFeature Web-Server -IncludeManagementTools
-    >> "!LOG!" echo [FAIL] IIS nao instalado
-    call :pend "Instalar IIS: Install-WindowsFeature Web-Server -IncludeManagementTools"
-    goto :abort
-)
+REM IIS check — usa goto para evitar bloco parentizado com echo de parens
+call :info "Verificando IIS..."
+if exist "%APPCMD%" goto :iis_found
+>> "!LOG!" echo [FAIL] IIS nao instalado - appcmd nao em %APPCMD%
+echo   !R![FAIL]!N! IIS nao instalado. appcmd.exe nao encontrado.
+echo          Execute: Install-WindowsFeature Web-Server -IncludeManagementTools
+call :pend "Instalar IIS: Install-WindowsFeature Web-Server -IncludeManagementTools"
+goto :abort
+:iis_found
 call :ok "IIS instalado"
 
 REM URL Rewrite check
-if exist "%windir%\System32\inetsrv\rewrite.dll" (
-    set "HAS_REWRITE=1"
-    call :ok "URL Rewrite 2.1 detectado"
-) else (
-    set "HAS_REWRITE=0"
-    call :warn "URL Rewrite 2.1 NAO detectado. Reverse proxy nao funcionara."
-    call :pend "Instalar URL Rewrite 2.1: https://www.iis.net/downloads/microsoft/url-rewrite"
-)
+if exist "%windir%\System32\inetsrv\rewrite.dll" goto :rw_ok
+call :info "URL Rewrite ausente. Instalando automaticamente..."
+powershell -NoProfile -Command "Invoke-WebRequest -Uri 'https://download.microsoft.com/download/1/2/8/128E2E22-C1B9-44A4-BE2A-5859ED1D4592/rewrite_amd64_en-US.msi' -OutFile '%TEMP%\urlrewrite.msi' -UseBasicParsing" >> "!LOG!" 2>&1
+if exist "%TEMP%\urlrewrite.msi" msiexec /i "%TEMP%\urlrewrite.msi" /qn /norestart >> "!LOG!" 2>&1
+if exist "%windir%\System32\inetsrv\rewrite.dll" goto :rw_ok
+set "HAS_REWRITE=0"
+call :warn "URL Rewrite 2.1 instalacao automatica falhou. Reverse proxy nao funcionara."
+call :pend "Instalar URL Rewrite 2.1 manualmente: https://www.iis.net/downloads/microsoft/url-rewrite"
+goto :rw_done
+:rw_ok
+set "HAS_REWRITE=1"
+call :ok "URL Rewrite 2.1 disponivel"
+:rw_done
 
-REM ARR check
-if exist "%windir%\System32\inetsrv\requestRouter.dll" (
-    set "HAS_ARR=1"
-    call :ok "ARR 3.0 detectado"
-) else (
-    set "HAS_ARR=0"
-    call :warn "ARR 3.0 NAO detectado. Reverse proxy nao funcionara."
-    call :pend "Instalar ARR 3.0: https://www.iis.net/downloads/microsoft/application-request-routing"
+REM ARR check — deteccao multi-ponto antes de instalar
+if exist "%windir%\System32\inetsrv\requestRouter.dll" goto :arr_ok
+REM Verifica via IIS modules (ARR pode estar instalado sem DLL no caminho padrao)
+"%APPCMD%" list modules 2>nul | findstr /i "requestRouter" >nul 2>&1
+if not errorlevel 1 goto :arr_ok
+REM Verifica via registro de instalacao
+reg query "HKLM\SOFTWARE\Microsoft\IIS Extensions\Application Request Routing" >nul 2>&1
+if not errorlevel 1 goto :arr_ok
+call :info "ARR 3.0 ausente. Instalando automaticamente..."
+
+REM Estrategia 1: WebPI ja instalado no sistema — tenta direto
+set "WEBPICMD="
+for %%p in ("C:\Program Files\Microsoft\Web Platform Installer\WebpiCmd-x64.exe" "C:\Program Files\Microsoft\Web Platform Installer\WebpiCmd.exe" "C:\Program Files (x86)\Microsoft\Web Platform Installer\WebpiCmd.exe") do (
+    if not defined WEBPICMD if exist "%%~p" set "WEBPICMD=%%~p"
 )
+if not defined WEBPICMD where WebpiCmd >nul 2>&1
+if not defined WEBPICMD if not errorlevel 1 set "WEBPICMD=WebpiCmd"
+if defined WEBPICMD goto :arr_use_webpi
+
+REM Estrategia 2: Baixar WebPI e instalar (aguarda conclusao real com Start-Process -Wait)
+call :info "Baixando Web Platform Installer (~1.5MB)..."
+set "WEBPI_MSI=%TEMP%\WebPI51.msi"
+powershell -NoProfile -Command "try{[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://download.microsoft.com/download/C/F/F/CFF3A0B8-99D4-41A2-AE1A-496C08BEB904/WebPlatformInstaller_amd64_en-US.msi' -OutFile '!WEBPI_MSI!' -UseBasicParsing; exit 0}catch{exit 1}" >> "!LOG!" 2>&1
+if not exist "!WEBPI_MSI!" goto :arr_msi_direct
+call :info "Instalando WebPI (aguardando conclusao)..."
+REM Start-Process -Wait garante que msiexec termina antes de continuar
+powershell -NoProfile -Command "Start-Process msiexec -ArgumentList '/i','!WEBPI_MSI!','/qn','/norestart' -Wait -NoNewWindow -PassThru | Out-Null" >> "!LOG!" 2>&1
+REM Aguarda ate 45s pelo WebpiCmd aparecer no disco
+set "_W=0"
+:arr_wait_webpi
+for %%p in ("C:\Program Files\Microsoft\Web Platform Installer\WebpiCmd-x64.exe" "C:\Program Files\Microsoft\Web Platform Installer\WebpiCmd.exe") do (
+    if not defined WEBPICMD if exist "%%~p" set "WEBPICMD=%%~p"
+)
+if defined WEBPICMD goto :arr_use_webpi
+set /a "_W+=3"
+if !_W! lss 45 (
+    timeout /t 3 /nobreak >nul 2>&1
+    goto :arr_wait_webpi
+)
+goto :arr_msi_direct
+
+:arr_use_webpi
+call :info "Instalando ARR 3.0 via WebPI..."
+for %%prod in (ARR ARRv3_0 IISApplicationRequestRouting3) do (
+    if not exist "%windir%\System32\inetsrv\requestRouter.dll" (
+        "!WEBPICMD!" /Install /Products:%%prod /AcceptEULA /SuppressReboot >> "!LOG!" 2>&1
+    )
+)
+if exist "%windir%\System32\inetsrv\requestRouter.dll" goto :arr_ok
+
+:arr_msi_direct
+REM Estrategia 3: MSI direto
+call :info "Tentando MSI direto do ARR 3.0..."
+set "ARR_MSI=%TEMP%\arr3_amd64.msi"
+powershell -NoProfile -Command "try{[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://download.microsoft.com/download/E/9/8/E9849D6A-020E-47E4-9FD0-A023E99B54EB/requestRouter_amd64.msi' -OutFile '!ARR_MSI!' -UseBasicParsing; exit 0}catch{exit 1}" >> "!LOG!" 2>&1
+if exist "!ARR_MSI!" (
+    powershell -NoProfile -Command "Start-Process msiexec -ArgumentList '/i','!ARR_MSI!','/qn','/norestart' -Wait -NoNewWindow" >> "!LOG!" 2>&1
+    if exist "%windir%\System32\inetsrv\requestRouter.dll" goto :arr_ok
+)
+set "HAS_ARR=0"
+call :warn "ARR 3.0 instalacao automatica falhou. Reverse proxy nao funcionara."
+call :pend "Instalar ARR 3.0 manualmente: https://www.iis.net/downloads/microsoft/application-request-routing"
+goto :arr_done
+:arr_ok
+set "HAS_ARR=1"
+call :ok "ARR 3.0 disponivel"
+:arr_done
 
 REM PostgreSQL service check
+call :info "Entrando no check do PostgreSQL..."
 sc query "!PG_SVC!" >nul 2>&1
 if errorlevel 1 (
     REM Try other service names
@@ -271,9 +457,83 @@ if errorlevel 1 (
         )
     )
     if "!PG_FOUND!"=="0" (
-        set "HAS_PG=0"
-        call :warn "Servico PostgreSQL nao encontrado. Etapas de banco serao puladas."
-        call :pend "Instalar PostgreSQL 16: https://www.enterprisedb.com/downloads/postgres-postgresql-downloads"
+        call :info "PostgreSQL nao encontrado. Baixando PostgreSQL 16 (~300MB)..."
+
+        REM Tenta winget primeiro (mais rapido)
+        set "PG_INSTALLED=0"
+        where winget >nul 2>&1
+        if not errorlevel 1 (
+            call :info "Tentando instalar via winget..."
+            winget install EDB.PostgreSQL.16 --silent --accept-package-agreements --accept-source-agreements --override "/S" >> "!LOG!" 2>&1
+            for %%s in (postgresql-x64-16 postgresql-x64-17 postgresql-x64-15) do (
+                if "!PG_INSTALLED!"=="0" (
+                    sc query "%%s" >nul 2>&1
+                    if not errorlevel 1 (
+                        set "PG_SVC=%%s"
+                        set "PG_INSTALLED=1"
+                    )
+                )
+            )
+        )
+
+        if "!PG_INSTALLED!"=="0" (
+            REM Download instalador EDB direto
+            set "PG_INST=%TEMP%\postgresql-16-installer.exe"
+            call :info "Baixando instalador EDB PostgreSQL 16..."
+            powershell -NoProfile -Command "try{[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://sbp.enterprisedb.com/getfile.jsp?fileid=1258893' -OutFile '!PG_INST!' -UseBasicParsing; exit 0}catch{exit 1}" >> "!LOG!" 2>&1
+            if not exist "!PG_INST!" (
+                REM URL alternativa via get.enterprisedb.com
+                powershell -NoProfile -Command "try{[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://get.enterprisedb.com/postgresql/postgresql-16.6-1-windows-x64.exe' -OutFile '!PG_INST!' -UseBasicParsing; exit 0}catch{exit 1}" >> "!LOG!" 2>&1
+            )
+            if exist "!PG_INST!" (
+                call :info "Instalando PostgreSQL 16 (silencioso, pode levar 2-3 min)..."
+                REM Instala em modo unattended com senha 'postgres' para o superuser
+                REM A senha sera sobrescrita depois pelo .env
+                "!PG_INST!" --mode unattended --superpassword "PostgresSetup123!" --serverport 5432 --servicename "postgresql-x64-16" --serviceaccount "NT AUTHORITY\NetworkService" >> "!LOG!" 2>&1
+                REM Aguarda servico iniciar
+                timeout /t 8 /nobreak >nul 2>&1
+                for %%s in (postgresql-x64-16 postgresql-x64-17 postgresql-x64-15) do (
+                    if "!PG_INSTALLED!"=="0" (
+                        sc query "%%s" >nul 2>&1
+                        if not errorlevel 1 (
+                            set "PG_SVC=%%s"
+                            set "PG_INSTALLED=1"
+                        )
+                    )
+                )
+                if "!PG_INSTALLED!"=="1" (
+                    call :ok "PostgreSQL 16 instalado com sucesso"
+                    set "PG_FOUND=1"
+                    set "PG_DEFAULT_PASS=PostgresSetup123!"
+                ) else (
+                    call :warn "PostgreSQL instalado mas servico nao encontrado ainda. Tentando localizar..."
+                    for %%v in (17 16 15 14) do (
+                        if exist "C:\Program Files\PostgreSQL\%%v\bin\pg_ctl.exe" (
+                            if "!PG_INSTALLED!"=="0" (
+                                set "PG_INSTALLED=1"
+                                set "PG_SVC=postgresql-x64-%%v"
+                                set "PG_FOUND=1"
+                                set "PG_DEFAULT_PASS=PostgresSetup123!"
+                                call :ok "PostgreSQL %%v encontrado em C:\Program Files\PostgreSQL\%%v"
+                            )
+                        )
+                    )
+                )
+            ) else (
+                call :warn "Download do PostgreSQL falhou. Verifique conexao com internet."
+            )
+        ) else (
+            set "PG_FOUND=1"
+            call :ok "PostgreSQL instalado via winget"
+        )
+
+        if "!PG_FOUND!"=="0" (
+            set "HAS_PG=0"
+            call :warn "PostgreSQL nao instalado. Etapas de banco serao puladas."
+            call :pend "Instalar PostgreSQL 16: https://www.enterprisedb.com/downloads/postgres-postgresql-downloads"
+        ) else (
+            set "HAS_PG=1"
+        )
     ) else (
         set "HAS_PG=1"
     )
@@ -288,12 +548,22 @@ if "!HAS_PG!"=="1" (
     ) else (
         call :info "Tentando iniciar !PG_SVC!..."
         net start "!PG_SVC!" >> "!LOG!" 2>&1
-        if errorlevel 1 (
-            set "HAS_PG=0"
-            call :warn "Falha ao iniciar !PG_SVC!. Etapas de banco serao puladas."
-            call :pend "Iniciar PostgreSQL manualmente: net start !PG_SVC!"
-        ) else (
+        set "NET_RC=!ERRORLEVEL!"
+        REM "ja foi iniciado" (NET HELPMSG 2182) retorna codigo 2 — tratar como sucesso
+        if !NET_RC! equ 0 (
             call :ok "PostgreSQL (!PG_SVC!) iniciado"
+        ) else if !NET_RC! equ 2 (
+            call :ok "PostgreSQL (!PG_SVC!) ja estava rodando"
+        ) else (
+            REM Verifica o estado real antes de desistir
+            for /f "tokens=4" %%s in ('sc query "!PG_SVC!" ^| findstr /i STATE') do set "PG_STATE2=%%s"
+            if /i "!PG_STATE2!"=="RUNNING" (
+                call :ok "PostgreSQL (!PG_SVC!) rodando (verificado)"
+            ) else (
+                set "HAS_PG=0"
+                call :warn "Falha ao iniciar !PG_SVC! (codigo !NET_RC!). Etapas de banco serao puladas."
+                call :pend "Iniciar PostgreSQL manualmente: net start !PG_SVC!"
+            )
         )
     )
 )
@@ -359,10 +629,22 @@ if !RC! gtr 7 (
 REM ─── ETAPA 2/11: AMBIENTE VIRTUAL PYTHON ───────────────────────────────────
 call :step "2/11" "Ambiente virtual Python e dependencias"
 
+REM Verifica se venv existente e compativel com Python 3.12
+set "VENV_OK=0"
 if exist "!APP!\venv\Scripts\python.exe" (
-    call :skip "venv ja existe"
+    for /f "tokens=2" %%v in ('"!APP!\venv\Scripts\python.exe" --version 2^>^&1') do set "VENV_PY=%%v"
+    echo !VENV_PY! | findstr /r "^3\.12\." >nul 2>&1
+    if not errorlevel 1 set "VENV_OK=1"
+)
+
+if "!VENV_OK!"=="1" (
+    call :skip "venv ja existe e e compativel (Python !VENV_PY!)"
 ) else (
-    call :info "Criando ambiente virtual..."
+    if exist "!APP!\venv" (
+        call :info "Removendo venv incompativel..."
+        rmdir /s /q "!APP!\venv" >> "!LOG!" 2>&1
+    )
+    call :info "Criando ambiente virtual Python 3.12..."
     python -m venv "!APP!\venv" >> "!LOG!" 2>&1
     if errorlevel 1 (
         echo   !R![FAIL]!N! Falha ao criar venv.
@@ -378,16 +660,81 @@ set "PIP=!APP!\venv\Scripts\pip.exe"
 call :info "Atualizando pip..."
 "!PY!" -m pip install --upgrade pip >> "!LOG!" 2>&1
 
-call :info "Instalando dependencias (pode levar 5-10 minutos na primeira vez)..."
-"!PIP!" install -r "!APP!\requirements.txt" >> "!LOG!" 2>&1
+REM Certificar que o pip do venv funciona — fallback para python -m pip
+if not exist "!PIP!" set "PIP=!PY! -m pip"
+
+REM Instalar torch primeiro (separado para controlar versao por Python)
+call :info "Instalando torch CPU para Python !PY_VER!..."
+for /f "tokens=2 delims=." %%m in ("!PY_VER!") do set "PY_MINOR=%%m"
+if !PY_MINOR! geq 13 (
+    "!APP!\venv\Scripts\pip.exe" install "torch>=2.9.0" --index-url https://download.pytorch.org/whl/cpu >> "!LOG!" 2>&1
+) else (
+    "!APP!\venv\Scripts\pip.exe" install "torch>=2.5.1" --index-url https://download.pytorch.org/whl/cpu >> "!LOG!" 2>&1
+)
+
+REM Instalar dependencias por grupo para melhor controle de erros
+call :info "Instalando dependencias Python (pode levar 5-10 min na 1a vez)..."
+
+REM Grupo 1: core sem compilacao
+"!APP!\venv\Scripts\pip.exe" install ^
+    fastapi==0.115.5 ^
+    "uvicorn[standard]==0.32.1" ^
+    python-multipart==0.0.12 ^
+    "sqlalchemy[asyncio]==2.0.36" ^
+    alembic==1.14.0 ^
+    pgvector==0.3.6 ^
+    "pydantic==2.10.3" ^
+    "pydantic-settings==2.6.1" ^
+    "pydantic[email]==2.10.3" ^
+    "passlib[bcrypt]==1.7.4" ^
+    "bcrypt==4.0.1" ^
+    "python-jose[cryptography]==3.3.0" ^
+    slowapi==0.1.9 ^
+    "sentence-transformers==3.3.1" ^
+    structlog==24.4.0 ^
+    python-dotenv==1.0.1 ^
+    pytest==8.3.4 ^
+    pytest-asyncio==0.24.0 ^
+    httpx==0.28.1 ^
+    pytest-cov==6.0.0 >> "!LOG!" 2>&1
+set "RC1=!ERRORLEVEL!"
+
+REM asyncpg: tenta wheel pre-compilado, senao compila
+"!APP!\venv\Scripts\pip.exe" install asyncpg==0.30.0 >> "!LOG!" 2>&1
 if errorlevel 1 (
-    call :warn "pip install falhou com requirements.txt direto. Tentando fallback..."
-    "!PIP!" install torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu >> "!LOG!" 2>&1
-    "!PIP!" install -r "!APP!\requirements.txt" >> "!LOG!" 2>&1
+    call :warn "asyncpg 0.30.0 falhou. Tentando versao mais recente..."
+    "!APP!\venv\Scripts\pip.exe" install asyncpg >> "!LOG!" 2>&1
+)
+
+REM rapidfuzz: prefere wheel, nunca compila da fonte em ambiente restrito
+call :info "Instalando rapidfuzz (wheel pre-compilado)..."
+"!APP!\venv\Scripts\pip.exe" install "rapidfuzz>=3.10.0" --prefer-binary >> "!LOG!" 2>&1
+if errorlevel 1 (
+    call :warn "rapidfuzz preferred-binary falhou. Tentando versao sem restricao..."
+    "!APP!\venv\Scripts\pip.exe" install rapidfuzz --prefer-binary >> "!LOG!" 2>&1
     if errorlevel 1 (
+        call :warn "rapidfuzz nao instalado. Busca fuzzy ficara indisponivel."
+        call :pend "Instalar rapidfuzz manualmente: venv\Scripts\pip install rapidfuzz --prefer-binary"
+    ) else (
+        call :ok "rapidfuzz instalado (versao mais recente)"
+    )
+) else (
+    call :ok "rapidfuzz instalado"
+)
+
+REM pgcli: opcional, pode falhar sem C compiler
+"!APP!\venv\Scripts\pip.exe" install pgcli==4.4.0 --prefer-binary >> "!LOG!" 2>&1
+if errorlevel 1 (
+    call :warn "pgcli nao instalado (opcional). Nao afeta funcionamento."
+)
+
+if !RC1! neq 0 (
+    call :warn "Alguns pacotes core falharam. Tentando instalar tudo de uma vez como fallback..."
+    "!APP!\venv\Scripts\pip.exe" install -r "!APP!\requirements.txt" --prefer-binary >> "!LOG!" 2>&1
+    if errorlevel 1 (
+        >> "!LOG!" echo [FAIL] pip install requirements.txt falhou
         echo   !R![FAIL]!N! Falha ao instalar dependencias Python.
         echo          Verifique conexao com internet e o log: !LOG!
-        >> "!LOG!" echo [FAIL] pip install requirements.txt falhou
         goto :abort
     )
 )
@@ -409,8 +756,23 @@ if exist "!APP!\.env" (
 
 if "!NEEDS_ENV!"=="0" (
     call :skip ".env ja configurado"
-    REM Parse DB password from existing .env for later use
-    for /f "delims=" %%p in ('powershell -NoProfile -Command "$l=^(Get-Content '!APP!\.env' ^| Where-Object {$_ -match '^DATABASE_URL='}^); if^($l -match '://[^:]+:^([^@]+^)@'^){$Matches[1]}"') do set "DB_PASS=%%p"
+
+    REM Valida campos obrigatorios e corrige senha placeholder automaticamente
+    powershell -NoProfile -Command ^
+      "$envFile='!APP!\.env'; $lines=Get-Content $envFile -Encoding UTF8; $changed=$false;" ^
+      "$required=@('DATABASE_URL','SECRET_KEY','ROOT_USER_EMAIL','ROOT_USER_PASSWORD');" ^
+      "foreach($k in $required){ $l=$lines|Where-Object{$_ -match '^'+$k+'='}; if(-not $l){ Write-Host '[WARN] Campo ausente no .env: '+$k } elseif(($l -split'=',2)[1] -match 'CHANGE_ME|your_password|placeholder'){ Write-Host '[WARN] '+$k+' tem valor placeholder.' } };" ^
+      "$dbLine=$lines|Where-Object{$_ -match '^DATABASE_URL='};" ^
+      "if($dbLine -and $dbLine -match '://[^:]+:(password|your_password)@' -and '!PG_DEFAULT_PASS!'){ $newLine=$dbLine -replace ':(password|your_password)@',':!PG_DEFAULT_PASS!@'; $lines=$lines -replace [regex]::Escape($dbLine),$newLine; Set-Content $envFile $lines -Encoding UTF8; Write-Host '[OK] Senha placeholder corrigida no .env ($newLine)'; $changed=$true };" ^
+      "if(-not $changed){ Write-Host '[OK] .env validado' }" >> "!LOG!" 2>&1
+
+    REM Parse DB password — usa arquivo temp para preservar caracteres especiais (ex: ! no final)
+    powershell -NoProfile -Command "$c=(Get-Content '!APP!\.env') | Where-Object {$_ -match '^DATABASE_URL='}; if($c -match '://[^:]+:([^@]+)@'){$Matches[1] | Out-File -NoNewline -Encoding utf8 (Join-Path $env:TEMP '_dbp.tmp')}" >> "!LOG!" 2>&1
+    setlocal DisableDelayedExpansion
+    set "DB_PASS="
+    if exist "%TEMP%\_dbp.tmp" for /f "usebackq delims=" %%x in ("%TEMP%\_dbp.tmp") do set "DB_PASS=%%x"
+    endlocal & set "DB_PASS=%DB_PASS%"
+    del "%TEMP%\_dbp.tmp" >nul 2>&1
     goto :etapa4
 )
 
@@ -429,10 +791,17 @@ echo.
 REM Prompt: PostgreSQL password
 :prompt_pg
 set "PG_PASS="
-set /p "PG_PASS=  Senha do usuario 'postgres' no PostgreSQL: "
-if "!PG_PASS!"=="" (
-    echo   A senha nao pode ser vazia.
-    goto :prompt_pg
+REM Se PostgreSQL foi instalado automaticamente, usa a senha padrao do instalador
+if defined PG_DEFAULT_PASS (
+    set "PG_PASS=!PG_DEFAULT_PASS!"
+    call :info "Usando senha padrao do PostgreSQL instalado automaticamente."
+    call :info "Voce pode alterar depois via pgAdmin ou ALTER USER postgres PASSWORD '...';"
+) else (
+    set /p "PG_PASS=  Senha do usuario 'postgres' no PostgreSQL: "
+    if "!PG_PASS!"=="" (
+        echo   A senha nao pode ser vazia.
+        goto :prompt_pg
+    )
 )
 
 REM Prompt: Admin email
@@ -472,7 +841,7 @@ REM Write .env file using PowerShell to handle special characters safely
 powershell -NoProfile -Command ^
   "$content = @'" & echo. & ^
   echo # --- Database --- & ^
-  echo DATABASE_URL=postgresql+asyncpg://postgres:!PG_PASS!@localhost:5432/dinamica_budget & ^
+  echo DATABASE_URL=postgresql+asyncpg://postgres:!PG_PASS!@127.0.0.1:5432/dinamica_budget & ^
   echo DATABASE_POOL_SIZE=10 & ^
   echo DATABASE_MAX_OVERFLOW=20 & ^
   echo. & ^
@@ -508,7 +877,7 @@ powershell -NoProfile -Command ^
 if not exist "!APP!\.env" (
     REM Fallback: write .env line by line
     > "!APP!\.env" echo # --- Database ---
-    >> "!APP!\.env" echo DATABASE_URL=postgresql+asyncpg://postgres:!PG_PASS!@localhost:5432/dinamica_budget
+    >> "!APP!\.env" echo DATABASE_URL=postgresql+asyncpg://postgres:!PG_PASS!@127.0.0.1:5432/dinamica_budget
     >> "!APP!\.env" echo DATABASE_POOL_SIZE=10
     >> "!APP!\.env" echo DATABASE_MAX_OVERFLOW=20
     >> "!APP!\.env" echo.
@@ -560,62 +929,69 @@ if "!HAS_PSQL!"=="0" (
     goto :etapa5
 )
 
-if not defined DB_PASS (
-    call :warn "Senha do PostgreSQL nao disponivel. Pulando operacoes de banco."
-    call :pend "Criar banco 'dinamica_budget' manualmente via pgAdmin"
-    goto :etapa5
+REM Chama script PowerShell dedicado que le o .env diretamente
+REM (evita problemas com ! @ # em senhas em variaveis batch)
+REM O script tambem detecta e corrige automaticamente senha errada no .env
+set "PG_SETUP_PS1=!SRC!\scripts\pg_setup.ps1"
+if not exist "!PG_SETUP_PS1!" set "PG_SETUP_PS1=!APP!\scripts\pg_setup.ps1"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "!PG_SETUP_PS1!" -EnvFile "!APP!\.env" -PsqlBin "!PSQL_BIN!" -DbName "!DB_NAME!" -SvcName "!PG_SVC!" >> "!LOG!" 2>&1
+set "PG4_RC=!ERRORLEVEL!"
+
+REM Relata resultado baseado nas linhas escritas no log
+for /f "tokens=*" %%l in ('findstr /i "\[OK\]\|\[SKIP\]\|\[WARN\]\|\[FAIL\]\|\[PEND\]\|\[INFO\]" "%TEMP%\__ " 2^>nul') do rem
+powershell -NoProfile -Command "$l=Get-Content '!LOG!' -Tail 20; $l | Where-Object {$_ -match '\[(OK|SKIP|WARN|FAIL|INFO|PEND)\]'} | ForEach-Object {Write-Host $_ }" 2>nul
+
+if !PG4_RC! neq 0 (
+    call :warn "Configuracao do banco falhou (codigo !PG4_RC!). Verifique o log."
+    call :pend "Executar manualmente: powershell -File '!SRC!\scripts\pg_setup.ps1' -EnvFile '!APP!\.env'"
+) else (
+    call :ok "PostgreSQL: banco e extensoes configurados"
 )
 
-set "PGPASSWORD=!DB_PASS!"
+REM ─── pgvector: instala extensao de busca vetorial ───────────────────────────
+REM Detecta se vector.control ja existe antes de tentar compilar
+set "PG_CTRL=!PSQL_BIN:psql.exe=..!\share\extension\vector.control"
+if not exist "!PG_CTRL!" set "PG_CTRL=C:\Program Files\PostgreSQL\16\share\extension\vector.control"
 
-REM Check if database exists
-"!PSQL_BIN!" -U postgres -h localhost -tc "SELECT 1 FROM pg_database WHERE datname = '!DB_NAME!'" 2>nul | findstr "1" >nul 2>&1
-if errorlevel 1 (
-    call :info "Criando banco !DB_NAME!..."
-    "!PSQL_BIN!" -U postgres -h localhost -c "CREATE DATABASE !DB_NAME!" >> "!LOG!" 2>&1
-    if errorlevel 1 (
-        call :warn "Falha ao criar banco. Verifique a senha do postgres."
-        call :pend "Criar banco '!DB_NAME!' manualmente via pgAdmin (owner: postgres)"
-        set "PGPASSWORD="
-        goto :etapa5
+set "PGVEC_PS1=!SRC!\scripts\install-pgvector.ps1"
+if not exist "!PGVEC_PS1!" set "PGVEC_PS1=!APP!\scripts\install-pgvector.ps1"
+
+if exist "!PGVEC_PS1!" (
+    call :info "Instalando/verificando pgvector (pode demorar se precisar compilar)..."
+    powershell -NoProfile -ExecutionPolicy Bypass -File "!PGVEC_PS1!" ^
+        -PgRoot "C:\Program Files\PostgreSQL\16" ^
+        -DbName "!DB_NAME!" ^
+        -EnvFile "!APP!\.env" ^
+        -DeployDir "!APP!" >> "!LOG!" 2>&1
+    set "PGV_RC=!ERRORLEVEL!"
+    if !PGV_RC! neq 0 (
+        call :warn "pgvector nao instalado (codigo !PGV_RC!). Busca vetorial sera desativada."
+        call :pend "Executar apos deploy: powershell -File '!SRC!\scripts\install-pgvector.ps1'"
+    ) else (
+        call :ok "pgvector configurado (busca vetorial ativa)"
     )
-    call :ok "Banco !DB_NAME! criado"
 ) else (
-    call :skip "Banco !DB_NAME! ja existe"
+    call :warn "install-pgvector.ps1 nao encontrado. Busca vetorial desativada."
+    call :pend "Copiar scripts\install-pgvector.ps1 e executar manualmente."
 )
-
-REM Create extensions
-"!PSQL_BIN!" -U postgres -h localhost -d "!DB_NAME!" -c "CREATE EXTENSION IF NOT EXISTS vector;" >> "!LOG!" 2>&1
-if errorlevel 1 (
-    call :warn "Falha ao criar extensao pgvector. Verifique se pgvector esta instalado."
-    call :pend "Instalar pgvector para PostgreSQL: https://github.com/pgvector/pgvector/releases"
-    call :pend "Executar no banco: CREATE EXTENSION IF NOT EXISTS vector;"
-) else (
-    call :ok "Extensao pgvector ativa"
-)
-
-"!PSQL_BIN!" -U postgres -h localhost -d "!DB_NAME!" -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;" >> "!LOG!" 2>&1
-if errorlevel 1 (
-    call :warn "Falha ao criar extensao pg_trgm."
-) else (
-    call :ok "Extensao pg_trgm ativa"
-)
-
-set "PGPASSWORD="
 
 REM ─── ETAPA 5/11: MIGRACOES ALEMBIC ─────────────────────────────────────────
 :etapa5
 call :step "5/11" "Migracoes de banco (Alembic)"
 
 pushd "!APP!"
-"!PY!" -m alembic upgrade head >> "!LOG!" 2>&1
+REM Usa o executavel alembic do venv diretamente (mais confiavel que python -m alembic)
+set "ALEMBIC_EXE=!APP!\venv\Scripts\alembic.exe"
+if not exist "!ALEMBIC_EXE!" set "ALEMBIC_EXE=!APP!\venv\Scripts\alembic"
+"!ALEMBIC_EXE!" upgrade head >> "!LOG!" 2>&1
 set "ARC=!ERRORLEVEL!"
 popd
 
 if !ARC! neq 0 (
     call :warn "Alembic upgrade head falhou (codigo !ARC!)."
     call :info "Causas comuns: PostgreSQL parado, banco nao criado, extensoes ausentes."
-    call :pend "Executar manualmente: cd !APP! && venv\Scripts\python -m alembic upgrade head"
+    call :pend "Executar manualmente: cd !APP! ^&^& venv\Scripts\alembic.exe upgrade head"
 ) else (
     call :ok "Migracoes aplicadas com sucesso"
 )
@@ -973,7 +1349,6 @@ exit /b 0
 REM ═══════════════════════════════════════════════════════════════════════════
 :abort
 REM ═══════════════════════════════════════════════════════════════════════════
-call :write_pend
 echo.
 echo   !R!DEPLOY INTERROMPIDO — erro critico encontrado.!N!
 echo   Corrija o problema acima e reexecute o script.

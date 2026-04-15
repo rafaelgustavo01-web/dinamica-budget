@@ -11,8 +11,15 @@ from app.core.config import settings
 
 config = context.config
 
-# Override sqlalchemy.url with settings value
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Use synchronous psycopg2 driver for migrations.
+# asyncpg (the runtime driver) causes DO-block exceptions to propagate past
+# PL/pgSQL EXCEPTION handlers; psycopg2 handles them correctly.
+_sync_url = settings.DATABASE_URL.replace(
+    "postgresql+asyncpg://", "postgresql+psycopg2://", 1
+).replace(
+    "postgresql+asyncio://", "postgresql+psycopg2://", 1
+)
+config.set_main_option("sqlalchemy.url", _sync_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -72,7 +79,17 @@ async def run_async_migrations() -> None:
 
 
 def run_migrations_online() -> None:
-    asyncio.run(run_async_migrations())
+    # Use synchronous engine (psycopg2) so PL/pgSQL EXCEPTION blocks work correctly
+    from sqlalchemy import engine_from_config  # noqa: PLC0415
+
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+    with connectable.connect() as connection:
+        do_run_migrations(connection)
+    connectable.dispose()
 
 
 if context.is_offline_mode():

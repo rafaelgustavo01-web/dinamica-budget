@@ -1,0 +1,322 @@
+â•â•â• DINAMICA BUDGET â€” INSTALADOR NATIVO v3.0
+Inicio: 15/04/2026  1:37:54,76
+Origem: C:\Dinamica-Budget
+Destino: C:\DinamicaBudget
+[15/04/2026  1:37:54,78] [INFO] Origem:  C:\Dinamica-Budget
+[15/04/2026  1:37:54,79] [INFO] Destino: C:\DinamicaBudget
+[15/04/2026  1:37:54,79] [INFO] Log:     C:\Dinamica-Budget\logs\deploy-20260415_013754.log
+[15/04/2026  1:37:54,80] [ETAPA 0/11] Verificacao de pre-requisitos
+[15/04/2026  1:37:54,83] [OK] Executando como Administrador
+[15/04/2026  1:37:54,87] [OK] Windows Server 2022 (Build 20348)
+[15/04/2026  1:37:55,14] [OK] Python 3.12.10
+[15/04/2026  1:37:55,35] [OK] pip disponivel
+[15/04/2026  1:37:55,59] [OK] Node.js v20.3.1
+[15/04/2026  1:37:55,80] [OK] npm disponivel
+[15/04/2026  1:37:56,00] [OK] NSSM disponivel no PATH
+[15/04/2026  1:37:56,01] [INFO] Verificando IIS...
+[15/04/2026  1:37:56,01] [OK] IIS instalado
+[15/04/2026  1:37:56,02] [OK] URL Rewrite 2.1 disponivel
+[15/04/2026  1:37:56,03] [INFO] ARR 3.0 ausente. Instalando automaticamente...
+[15/04/2026  1:37:56,11] [INFO] Baixando Web Platform Installer (~1.5MB)...
+[15/04/2026  1:37:56,45] [INFO] Tentando MSI direto do ARR 3.0...
+[15/04/2026  1:37:59,59] [WARN] ARR 3.0 instalacao automatica falhou. Reverse proxy nao funcionara.
+[15/04/2026  1:37:59,60] [PEND] Instalar ARR 3.0 manualmente: https://www.iis.net/downloads/microsoft/application-request-routing
+[15/04/2026  1:37:59,60] [INFO] Entrando no check do PostgreSQL...
+[15/04/2026  1:37:59,65] [INFO] Tentando iniciar postgresql-x64-16...
+O servi‡o solicitado j  foi iniciado.
+
+Para obter mais ajuda, digite NET HELPMSG 2182.
+
+[15/04/2026  1:37:59,68] [OK] PostgreSQL (postgresql-x64-16) ja estava rodando
+[15/04/2026  1:37:59,69] [OK] psql encontrado
+[15/04/2026  1:37:59,70] [OK] Arquivos de origem validados
+[15/04/2026  1:37:59,70] [INFO] Modo: ATUALIZACAO (instalacao existente detectada)
+[15/04/2026  1:37:59,71] [ETAPA 1/11] Sincronizar arquivos do projeto
+
+-------------------------------------------------------------------------------
+   ROBOCOPY     ::     Robust File Copy para Windows                              
+-------------------------------------------------------------------------------
+
+  Iniciado: quarta-feira, 15 de abril de 2026 01:37:59
+   Origem : C:\Dinamica-Budget\
+     Destino : C:\DinamicaBudget\
+
+    Arquivos: *.*
+	    
+ DiretÃ³rios Exc: .git
+	    node_modules
+	    venv
+	    .venv
+	    logs
+	    output
+	    __pycache__
+	    .mypy_cache
+	    .pytest_cache
+	    
+  OpÃ§Ãµes: *.* /NDL /NFL /S /E /DCOPY:DA /COPY:DAT /PURGE /MIR /NP /R:2 /W:2 
+
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+
+               Total   Copiada  IgnoradaIncompatibilidade     FALHA    Extras
+DiretÃ³rios:       118         0       118         0         0         4
+ Arquivos:       605         1       604         0         0         0
+    Bytes:    7.37 m    62.7 k    7.31 m         0         0         0
+N.Âº de Vezes:   0:00:00   0:00:00                       0:00:00   0:00:00
+   Finalizado em: quarta-feira, 15 de abril de 2026 01:37:59
+
+[15/04/2026  1:37:59,75] [OK] Projeto sincronizado para C:\DinamicaBudget
+[15/04/2026  1:37:59,76] [ETAPA 2/11] Ambiente virtual Python e dependencias
+[15/04/2026  1:37:59,81] [SKIP] venv ja existe e e compativel (Python 3.12.10)
+[15/04/2026  1:37:59,81] [INFO] Atualizando pip...
+Requirement already satisfied: pip in C:\DinamicaBudget\venv\Lib\site-packages (26.0.1)
+[15/04/2026  1:38:01,07] [INFO] Instalando torch CPU para Python 3.12.10...
+Looking in indexes: https://download.pytorch.org/whl/cpu
+Requirement already satisfied: torch>=2.5.1 in C:\DinamicaBudget\venv\Lib\site-packages (2.11.0+cpu)
+Requirement already satisfied: filelock in C:\DinamicaBudget\venv\Lib\site-packages (from torch>=2.5.1) (3.25.2)
+Requirement already satisfied: typing-extensions>=4.10.0 in C:\DinamicaBudget\venv\Lib\site-packages (from torch>=2.5.1) (4.15.0)
+Requirement already satisfied: setuptools<82 in C:\DinamicaBudget\venv\Lib\site-packages (from torch>=2.5.1) (70.2.0)
+Requirement already satisfied: sympy>=1.13.3 in C:\DinamicaBudget\venv\Lib\site-packages (from torch>=2.5.1) (1.14.0)
+Requirement already satisfied: networkx>=2.5.1 in C:\DinamicaBudget\venv\Lib\site-packages (from torch>=2.5.1) (3.6.1)
+Requirement already satisfied: jinja2 in C:\DinamicaBudget\venv\Lib\site-packages (from torch>=2.5.1) (3.1.6)
+Requirement already satisfied: fsspec>=0.8.5 in C:\DinamicaBudget\venv\Lib\site-packages (from torch>=2.5.1) (2026.2.0)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in C:\DinamicaBudget\venv\Lib\site-packages (from sympy>=1.13.3->torch>=2.5.1) (1.3.0)
+Requirement already satisfied: MarkupSafe>=2.0 in C:\DinamicaBudget\venv\Lib\site-packages (from jinja2->torch>=2.5.1) (3.0.3)
+[15/04/2026  1:38:01,98] [INFO] Instalando dependencias Python (pode levar 5-10 min na 1a vez)...
+Requirement already satisfied: fastapi==0.115.5 in C:\DinamicaBudget\venv\Lib\site-packages (0.115.5)
+Requirement already satisfied: uvicorn==0.32.1 in C:\DinamicaBudget\venv\Lib\site-packages (from uvicorn[standard]==0.32.1) (0.32.1)
+Requirement already satisfied: python-multipart==0.0.12 in C:\DinamicaBudget\venv\Lib\site-packages (0.0.12)
+Requirement already satisfied: sqlalchemy==2.0.36 in C:\DinamicaBudget\venv\Lib\site-packages (from sqlalchemy[asyncio]==2.0.36) (2.0.36)
+Requirement already satisfied: alembic==1.14.0 in C:\DinamicaBudget\venv\Lib\site-packages (1.14.0)
+Requirement already satisfied: pgvector==0.3.6 in C:\DinamicaBudget\venv\Lib\site-packages (0.3.6)
+Requirement already satisfied: pydantic==2.10.3 in C:\DinamicaBudget\venv\Lib\site-packages (2.10.3)
+Requirement already satisfied: pydantic-settings==2.6.1 in C:\DinamicaBudget\venv\Lib\site-packages (2.6.1)
+Requirement already satisfied: passlib==1.7.4 in C:\DinamicaBudget\venv\Lib\site-packages (from passlib[bcrypt]==1.7.4) (1.7.4)
+Requirement already satisfied: bcrypt==4.0.1 in C:\DinamicaBudget\venv\Lib\site-packages (4.0.1)
+Requirement already satisfied: python-jose==3.3.0 in C:\DinamicaBudget\venv\Lib\site-packages (from python-jose[cryptography]==3.3.0) (3.3.0)
+Requirement already satisfied: slowapi==0.1.9 in C:\DinamicaBudget\venv\Lib\site-packages (0.1.9)
+Requirement already satisfied: sentence-transformers==3.3.1 in C:\DinamicaBudget\venv\Lib\site-packages (3.3.1)
+Requirement already satisfied: structlog==24.4.0 in C:\DinamicaBudget\venv\Lib\site-packages (24.4.0)
+Requirement already satisfied: python-dotenv==1.0.1 in C:\DinamicaBudget\venv\Lib\site-packages (1.0.1)
+Requirement already satisfied: pytest==8.3.4 in C:\DinamicaBudget\venv\Lib\site-packages (8.3.4)
+Requirement already satisfied: pytest-asyncio==0.24.0 in C:\DinamicaBudget\venv\Lib\site-packages (0.24.0)
+Requirement already satisfied: httpx==0.28.1 in C:\DinamicaBudget\venv\Lib\site-packages (0.28.1)
+Requirement already satisfied: pytest-cov==6.0.0 in C:\DinamicaBudget\venv\Lib\site-packages (6.0.0)
+Requirement already satisfied: starlette<0.42.0,>=0.40.0 in C:\DinamicaBudget\venv\Lib\site-packages (from fastapi==0.115.5) (0.41.3)
+Requirement already satisfied: typing-extensions>=4.8.0 in C:\DinamicaBudget\venv\Lib\site-packages (from fastapi==0.115.5) (4.15.0)
+Requirement already satisfied: annotated-types>=0.6.0 in C:\DinamicaBudget\venv\Lib\site-packages (from pydantic==2.10.3) (0.7.0)
+Requirement already satisfied: pydantic-core==2.27.1 in C:\DinamicaBudget\venv\Lib\site-packages (from pydantic==2.10.3) (2.27.1)
+Requirement already satisfied: click>=7.0 in C:\DinamicaBudget\venv\Lib\site-packages (from uvicorn==0.32.1->uvicorn[standard]==0.32.1) (8.1.7)
+Requirement already satisfied: h11>=0.8 in C:\DinamicaBudget\venv\Lib\site-packages (from uvicorn==0.32.1->uvicorn[standard]==0.32.1) (0.16.0)
+Requirement already satisfied: greenlet!=0.4.17 in C:\DinamicaBudget\venv\Lib\site-packages (from sqlalchemy==2.0.36->sqlalchemy[asyncio]==2.0.36) (3.4.0)
+Requirement already satisfied: Mako in C:\DinamicaBudget\venv\Lib\site-packages (from alembic==1.14.0) (1.3.11)
+Requirement already satisfied: numpy in C:\DinamicaBudget\venv\Lib\site-packages (from pgvector==0.3.6) (2.4.4)
+Requirement already satisfied: ecdsa!=0.15 in C:\DinamicaBudget\venv\Lib\site-packages (from python-jose==3.3.0->python-jose[cryptography]==3.3.0) (0.19.2)
+Requirement already satisfied: rsa in C:\DinamicaBudget\venv\Lib\site-packages (from python-jose==3.3.0->python-jose[cryptography]==3.3.0) (4.9.1)
+Requirement already satisfied: pyasn1 in C:\DinamicaBudget\venv\Lib\site-packages (from python-jose==3.3.0->python-jose[cryptography]==3.3.0) (0.6.3)
+Requirement already satisfied: limits>=2.3 in C:\DinamicaBudget\venv\Lib\site-packages (from slowapi==0.1.9) (5.8.0)
+Requirement already satisfied: transformers<5.0.0,>=4.41.0 in C:\DinamicaBudget\venv\Lib\site-packages (from sentence-transformers==3.3.1) (4.57.6)
+Requirement already satisfied: tqdm in C:\DinamicaBudget\venv\Lib\site-packages (from sentence-transformers==3.3.1) (4.67.3)
+Requirement already satisfied: torch>=1.11.0 in C:\DinamicaBudget\venv\Lib\site-packages (from sentence-transformers==3.3.1) (2.11.0+cpu)
+Requirement already satisfied: scikit-learn in C:\DinamicaBudget\venv\Lib\site-packages (from sentence-transformers==3.3.1) (1.8.0)
+Requirement already satisfied: scipy in C:\DinamicaBudget\venv\Lib\site-packages (from sentence-transformers==3.3.1) (1.17.1)
+Requirement already satisfied: huggingface-hub>=0.20.0 in C:\DinamicaBudget\venv\Lib\site-packages (from sentence-transformers==3.3.1) (0.36.2)
+Requirement already satisfied: Pillow in C:\DinamicaBudget\venv\Lib\site-packages (from sentence-transformers==3.3.1) (12.2.0)
+Requirement already satisfied: colorama in C:\DinamicaBudget\venv\Lib\site-packages (from pytest==8.3.4) (0.4.6)
+Requirement already satisfied: iniconfig in C:\DinamicaBudget\venv\Lib\site-packages (from pytest==8.3.4) (2.3.0)
+Requirement already satisfied: packaging in C:\DinamicaBudget\venv\Lib\site-packages (from pytest==8.3.4) (26.1)
+Requirement already satisfied: pluggy<2,>=1.5 in C:\DinamicaBudget\venv\Lib\site-packages (from pytest==8.3.4) (1.6.0)
+Requirement already satisfied: anyio in C:\DinamicaBudget\venv\Lib\site-packages (from httpx==0.28.1) (4.13.0)
+Requirement already satisfied: certifi in C:\DinamicaBudget\venv\Lib\site-packages (from httpx==0.28.1) (2026.2.25)
+Requirement already satisfied: httpcore==1.* in C:\DinamicaBudget\venv\Lib\site-packages (from httpx==0.28.1) (1.0.9)
+Requirement already satisfied: idna in C:\DinamicaBudget\venv\Lib\site-packages (from httpx==0.28.1) (3.11)
+Requirement already satisfied: coverage>=7.5 in C:\DinamicaBudget\venv\Lib\site-packages (from coverage[toml]>=7.5->pytest-cov==6.0.0) (7.13.5)
+Requirement already satisfied: email-validator>=2.0.0 in C:\DinamicaBudget\venv\Lib\site-packages (from pydantic[email]==2.10.3) (2.3.0)
+Requirement already satisfied: cryptography>=3.4.0 in C:\DinamicaBudget\venv\Lib\site-packages (from python-jose[cryptography]==3.3.0) (46.0.7)
+Requirement already satisfied: httptools>=0.6.3 in C:\DinamicaBudget\venv\Lib\site-packages (from uvicorn[standard]==0.32.1) (0.7.1)
+Requirement already satisfied: pyyaml>=5.1 in C:\DinamicaBudget\venv\Lib\site-packages (from uvicorn[standard]==0.32.1) (6.0.3)
+Requirement already satisfied: watchfiles>=0.13 in C:\DinamicaBudget\venv\Lib\site-packages (from uvicorn[standard]==0.32.1) (1.1.1)
+Requirement already satisfied: websockets>=10.4 in C:\DinamicaBudget\venv\Lib\site-packages (from uvicorn[standard]==0.32.1) (16.0)
+Requirement already satisfied: filelock in C:\DinamicaBudget\venv\Lib\site-packages (from transformers<5.0.0,>=4.41.0->sentence-transformers==3.3.1) (3.25.2)
+Requirement already satisfied: regex!=2019.12.17 in C:\DinamicaBudget\venv\Lib\site-packages (from transformers<5.0.0,>=4.41.0->sentence-transformers==3.3.1) (2026.4.4)
+Requirement already satisfied: requests in C:\DinamicaBudget\venv\Lib\site-packages (from transformers<5.0.0,>=4.41.0->sentence-transformers==3.3.1) (2.33.1)
+Requirement already satisfied: tokenizers<=0.23.0,>=0.22.0 in C:\DinamicaBudget\venv\Lib\site-packages (from transformers<5.0.0,>=4.41.0->sentence-transformers==3.3.1) (0.22.2)
+Requirement already satisfied: safetensors>=0.4.3 in C:\DinamicaBudget\venv\Lib\site-packages (from transformers<5.0.0,>=4.41.0->sentence-transformers==3.3.1) (0.7.0)
+Requirement already satisfied: fsspec>=2023.5.0 in C:\DinamicaBudget\venv\Lib\site-packages (from huggingface-hub>=0.20.0->sentence-transformers==3.3.1) (2026.2.0)
+Requirement already satisfied: cffi>=2.0.0 in C:\DinamicaBudget\venv\Lib\site-packages (from cryptography>=3.4.0->python-jose[cryptography]==3.3.0) (2.0.0)
+Requirement already satisfied: pycparser in C:\DinamicaBudget\venv\Lib\site-packages (from cffi>=2.0.0->cryptography>=3.4.0->python-jose[cryptography]==3.3.0) (3.0)
+Requirement already satisfied: six>=1.9.0 in C:\DinamicaBudget\venv\Lib\site-packages (from ecdsa!=0.15->python-jose==3.3.0->python-jose[cryptography]==3.3.0) (1.17.0)
+Requirement already satisfied: dnspython>=2.0.0 in C:\DinamicaBudget\venv\Lib\site-packages (from email-validator>=2.0.0->pydantic[email]==2.10.3) (2.8.0)
+Requirement already satisfied: deprecated>=1.2 in C:\DinamicaBudget\venv\Lib\site-packages (from limits>=2.3->slowapi==0.1.9) (1.3.1)
+Requirement already satisfied: wrapt<3,>=1.10 in C:\DinamicaBudget\venv\Lib\site-packages (from deprecated>=1.2->limits>=2.3->slowapi==0.1.9) (2.1.2)
+Requirement already satisfied: setuptools<82 in C:\DinamicaBudget\venv\Lib\site-packages (from torch>=1.11.0->sentence-transformers==3.3.1) (70.2.0)
+Requirement already satisfied: sympy>=1.13.3 in C:\DinamicaBudget\venv\Lib\site-packages (from torch>=1.11.0->sentence-transformers==3.3.1) (1.14.0)
+Requirement already satisfied: networkx>=2.5.1 in C:\DinamicaBudget\venv\Lib\site-packages (from torch>=1.11.0->sentence-transformers==3.3.1) (3.6.1)
+Requirement already satisfied: jinja2 in C:\DinamicaBudget\venv\Lib\site-packages (from torch>=1.11.0->sentence-transformers==3.3.1) (3.1.6)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in C:\DinamicaBudget\venv\Lib\site-packages (from sympy>=1.13.3->torch>=1.11.0->sentence-transformers==3.3.1) (1.3.0)
+Requirement already satisfied: MarkupSafe>=2.0 in C:\DinamicaBudget\venv\Lib\site-packages (from jinja2->torch>=1.11.0->sentence-transformers==3.3.1) (3.0.3)
+Requirement already satisfied: charset_normalizer<4,>=2 in C:\DinamicaBudget\venv\Lib\site-packages (from requests->transformers<5.0.0,>=4.41.0->sentence-transformers==3.3.1) (3.4.7)
+Requirement already satisfied: urllib3<3,>=1.26 in C:\DinamicaBudget\venv\Lib\site-packages (from requests->transformers<5.0.0,>=4.41.0->sentence-transformers==3.3.1) (2.6.3)
+Requirement already satisfied: joblib>=1.3.0 in C:\DinamicaBudget\venv\Lib\site-packages (from scikit-learn->sentence-transformers==3.3.1) (1.5.3)
+Requirement already satisfied: threadpoolctl>=3.2.0 in C:\DinamicaBudget\venv\Lib\site-packages (from scikit-learn->sentence-transformers==3.3.1) (3.6.0)
+Requirement already satisfied: asyncpg==0.30.0 in C:\DinamicaBudget\venv\Lib\site-packages (0.30.0)
+[15/04/2026  1:38:03,98] [INFO] Instalando rapidfuzz (wheel pre-compilado)...
+Requirement already satisfied: rapidfuzz>=3.10.0 in C:\DinamicaBudget\venv\Lib\site-packages (3.14.5)
+[15/04/2026  1:38:04,87] [OK] rapidfuzz instalado
+Requirement already satisfied: pgcli==4.4.0 in C:\DinamicaBudget\venv\Lib\site-packages (4.4.0)
+Requirement already satisfied: pgspecial>=2.0.0 in C:\DinamicaBudget\venv\Lib\site-packages (from pgcli==4.4.0) (2.2.1)
+Requirement already satisfied: click<8.1.8,>=4.1 in C:\DinamicaBudget\venv\Lib\site-packages (from pgcli==4.4.0) (8.1.7)
+Requirement already satisfied: Pygments>=2.0 in C:\DinamicaBudget\venv\Lib\site-packages (from pgcli==4.4.0) (2.20.0)
+Requirement already satisfied: prompt_toolkit<4.0.0,>=2.0.6 in C:\DinamicaBudget\venv\Lib\site-packages (from pgcli==4.4.0) (3.0.52)
+Requirement already satisfied: psycopg-binary>=3.0.14 in C:\DinamicaBudget\venv\Lib\site-packages (from pgcli==4.4.0) (3.3.3)
+Requirement already satisfied: sqlparse<0.6,>=0.3.0 in C:\DinamicaBudget\venv\Lib\site-packages (from pgcli==4.4.0) (0.5.5)
+Requirement already satisfied: configobj>=5.0.6 in C:\DinamicaBudget\venv\Lib\site-packages (from pgcli==4.4.0) (5.0.9)
+Requirement already satisfied: cli_helpers>=2.4.0 in C:\DinamicaBudget\venv\Lib\site-packages (from cli_helpers[styles]>=2.4.0->pgcli==4.4.0) (2.14.0)
+Requirement already satisfied: tzlocal>=5.2 in C:\DinamicaBudget\venv\Lib\site-packages (from pgcli==4.4.0) (5.3.1)
+Requirement already satisfied: colorama in C:\DinamicaBudget\venv\Lib\site-packages (from click<8.1.8,>=4.1->pgcli==4.4.0) (0.4.6)
+Requirement already satisfied: wcwidth in C:\DinamicaBudget\venv\Lib\site-packages (from prompt_toolkit<4.0.0,>=2.0.6->pgcli==4.4.0) (0.6.0)
+Requirement already satisfied: tabulate~=0.10.0 in C:\DinamicaBudget\venv\Lib\site-packages (from tabulate[widechars]~=0.10.0->cli_helpers>=2.4.0->cli_helpers[styles]>=2.4.0->pgcli==4.4.0) (0.10.0)
+Requirement already satisfied: psycopg>=3.0.10 in C:\DinamicaBudget\venv\Lib\site-packages (from pgspecial>=2.0.0->pgcli==4.4.0) (3.3.3)
+Requirement already satisfied: typing-extensions>=4.6 in C:\DinamicaBudget\venv\Lib\site-packages (from psycopg>=3.0.10->pgspecial>=2.0.0->pgcli==4.4.0) (4.15.0)
+Requirement already satisfied: tzdata in C:\DinamicaBudget\venv\Lib\site-packages (from psycopg>=3.0.10->pgspecial>=2.0.0->pgcli==4.4.0) (2026.1)
+[15/04/2026  1:38:05,77] [OK] Dependencias Python instaladas
+[15/04/2026  1:38:05,77] [ETAPA 3/11] Configuracao do arquivo .env
+[15/04/2026  1:38:05,80] [SKIP] .env ja configurado
+[15/04/2026  1:38:05,99] [ETAPA 4/11] PostgreSQL: banco de dados e extensoes
+[15/04/2026  1:38:05,99] [WARN] Senha do PostgreSQL nao disponivel. Pulando operacoes de banco.
+[15/04/2026  1:38:06,01] [PEND] Criar banco 'dinamica_budget' manualmente via pgAdmin
+[15/04/2026  1:38:06,01] [ETAPA 5/11] Migracoes de banco (Alembic)
+Traceback (most recent call last):
+  File "C:\Program Files\Python312\Lib\asyncio\windows_events.py", line 462, in finish_socket_func
+    return ov.getresult()
+           ^^^^^^^^^^^^^^
+OSError: [WinError 64] O nome da rede especificado não está mais disponível
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Program Files\Python312\Lib\asyncio\proactor_events.py", line 286, in _loop_reading
+    length = fut.result()
+             ^^^^^^^^^^^^
+  File "C:\Program Files\Python312\Lib\asyncio\windows_events.py", line 803, in _poll
+    value = callback(transferred, key, ov)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python312\Lib\asyncio\windows_events.py", line 466, in finish_socket_func
+    raise ConnectionResetError(*exc.args)
+ConnectionResetError: [WinError 64] O nome da rede especificado não está mais disponível
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\DinamicaBudget\venv\Scripts\alembic.exe\__main__.py", line 5, in <module>
+  File "C:\DinamicaBudget\venv\Lib\site-packages\alembic\config.py", line 636, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "C:\DinamicaBudget\venv\Lib\site-packages\alembic\config.py", line 626, in main
+    self.run_cmd(cfg, options)
+  File "C:\DinamicaBudget\venv\Lib\site-packages\alembic\config.py", line 603, in run_cmd
+    fn(
+  File "C:\DinamicaBudget\venv\Lib\site-packages\alembic\command.py", line 406, in upgrade
+    script.run_env()
+  File "C:\DinamicaBudget\venv\Lib\site-packages\alembic\script\base.py", line 586, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "C:\DinamicaBudget\venv\Lib\site-packages\alembic\util\pyfiles.py", line 95, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\alembic\util\pyfiles.py", line 113, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "C:\DinamicaBudget\alembic\env.py", line 81, in <module>
+    run_migrations_online()
+  File "C:\DinamicaBudget\alembic\env.py", line 75, in run_migrations_online
+    asyncio.run(run_async_migrations())
+  File "C:\Program Files\Python312\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python312\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python312\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\alembic\env.py", line 69, in run_async_migrations
+    async with connectable.connect() as connection:
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\ext\asyncio\base.py", line 121, in __aenter__
+    return await self.start(is_ctxmanager=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\ext\asyncio\engine.py", line 273, in start
+    await greenlet_spawn(self.sync_engine.connect)
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3278, in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 146, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3302, in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 449, in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1263, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 308, in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 390, in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\engine\create.py", line 643, in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 621, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 949, in connect
+    await_only(creator_fn(*arg, **kw)),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\asyncpg\connection.py", line 2421, in connect
+    return await connect_utils._connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\asyncpg\connect_utils.py", line 1049, in _connect
+    conn = await _connect_addr(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\asyncpg\connect_utils.py", line 886, in _connect_addr
+    return await __connect_addr(params, True, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\DinamicaBudget\venv\Lib\site-packages\asyncpg\connect_utils.py", line 934, in __connect_addr
+    await connected
+asyncpg.exceptions.ConnectionDoesNotExistError: connection was closed in the middle of operation
+[15/04/2026  1:38:06,93] [WARN] Alembic upgrade head falhou (codigo 1).
+[15/04/2026  1:38:06,93] [INFO] Causas comuns: PostgreSQL parado, banco nao criado, extensoes ausentes.
+[15/04/2026  1:38:06,94] [PEND] Executar manualmente: cd C:\DinamicaBudget 
+[15/04/2026  1:38:06,96] [ETAPA 6/11] Modelo de Machine Learning

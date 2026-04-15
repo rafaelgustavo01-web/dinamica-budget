@@ -18,8 +18,26 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.execute("CREATE EXTENSION IF NOT EXISTS vector")
+    # Use PL/pgSQL DO block so PostgreSQL handles the error gracefully
+    # without propagating it through asyncpg to Python.
+    op.execute(
+        """
+        DO $pgv$ BEGIN
+            CREATE EXTENSION IF NOT EXISTS vector;
+        EXCEPTION WHEN OTHERS THEN
+            RAISE NOTICE 'pgvector not installed, skipping: %', SQLERRM;
+        END $pgv$;
+        """
+    )
 
 
 def downgrade() -> None:
-    op.execute("DROP EXTENSION IF EXISTS vector")
+    op.execute(
+        """
+        DO $pgv$ BEGIN
+            DROP EXTENSION IF EXISTS vector;
+        EXCEPTION WHEN OTHERS THEN
+            RAISE NOTICE 'pgvector drop skipped: %', SQLERRM;
+        END $pgv$;
+        """
+    )
