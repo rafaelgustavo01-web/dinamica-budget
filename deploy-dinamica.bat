@@ -1,11 +1,11 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul 2>&1
-title ══ Dinamica Budget — Instalador Nativo v3.0 ══
+title ══ Dinamica Budget — Instalador Nativo v4.0 ══
 
 REM ============================================================================
 REM  DINAMICA BUDGET — Instalador Nativo para Windows Server 2022
-REM  Versao: 3.0 — Abril 2026
+REM  Versao: 4.0 — Abril 2026
 REM  Compativel: Windows Server 2019+ / Windows 10 21H2+
 REM ============================================================================
 REM  * Instala AUTOMATICAMENTE: Python 3.12, PostgreSQL 16, NSSM, URL Rewrite,
@@ -13,6 +13,7 @@ REM    ARR 3.0 — sem nenhuma intervencao manual
 REM  * Se versao do Python for incompativel, desinstala e reinstala 3.12.x
 REM  * Cada etapa detecta se ja foi concluida e pula automaticamente
 REM  * Reexecucao segura (idempotente)
+REM  * Configura URL amigavel (dinamica-budget.local) + acesso via IP
 REM  * Ao final gera PENDENCIAS_MANUAIS.txt com acoes restantes
 REM  * Log completo em logs\deploy-<timestamp>.log
 REM ============================================================================
@@ -30,6 +31,7 @@ set "HTTP_PORT=80"
 set "PG_SVC=postgresql-x64-16"
 set "DB_NAME=dinamica_budget"
 set "APPCMD=%windir%\System32\inetsrv\appcmd.exe"
+set "HOSTNAME_URL=dinamica-budget.local"
 
 REM ── LOGGING ─────────────────────────────────────────────────────────────────
 set "LOGD=!SRC!\logs"
@@ -1253,8 +1255,42 @@ if errorlevel 1 (
     call :ok "Firewall: porta 443 (HTTPS) liberada"
 )
 
-REM ─── ETAPA 11/11: VALIDACAO ─────────────────────────────────────────────────
-call :step "11/11" "Validacao e Health Check"
+REM ─── ETAPA 11/13: CONFIGURAR HOSTNAME (URL AMIGAVEL) ────────────────────────
+call :step "11/13" "Configurar URL amigavel (!HOSTNAME_URL!)"
+
+REM Detectar IP do servidor
+for /f "delims=" %%i in ('powershell -NoProfile -Command "Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -ne '127.0.0.1' -and $_.PrefixOrigin -ne 'WellKnown' } | Select-Object -First 1 -ExpandProperty IPAddress"') do set "SERVER_IP=%%i"
+if not defined SERVER_IP set "SERVER_IP=127.0.0.1"
+
+REM Adicionar binding com hostname no IIS
+if exist "!APPCMD!" (
+    "!APPCMD!" set site /site.name:"!IIS_SITE!" /+"bindings.[protocol='http',bindingInformation='*:!HTTP_PORT!:!HOSTNAME_URL!']" >nul 2>&1
+    call :ok "IIS binding: http://!HOSTNAME_URL!"
+)
+
+REM Atualizar hosts file
+set "HOSTS_FILE=%windir%\System32\drivers\etc\hosts"
+powershell -NoProfile -Command ^
+    "$h=Get-Content '!HOSTS_FILE!' -Encoding ASCII -ErrorAction SilentlyContinue;" ^
+    "$h=$h | Where-Object { $_ -notmatch 'dinamica-budget' };" ^
+    "$h+=''; $h+='# Dinamica Budget - Sistema de Orcamentacao'; $h+='127.0.0.1       !HOSTNAME_URL!';" ^
+    "$h | Set-Content '!HOSTS_FILE!' -Encoding ASCII -Force" >> "!LOG!" 2>&1
+call :ok "Hosts: !HOSTNAME_URL! -> 127.0.0.1"
+call :info "Em maquinas clientes adicionar: !SERVER_IP!       !HOSTNAME_URL!"
+
+REM ─── ETAPA 12/13: ATUALIZAR CORS ───────────────────────────────────────────
+call :step "12/13" "Atualizar CORS no .env"
+
+powershell -NoProfile -Command ^
+    "$f=Get-Content '!APP!\.env' -Encoding UTF8;" ^
+    "$old=$f | Where-Object { $_ -match '^ALLOWED_ORIGINS=' };" ^
+    "$new='ALLOWED_ORIGINS=[\"http://!SERVER_IP!\",\"http://!HOSTNAME_URL!\",\"http://localhost\",\"http://127.0.0.1\",\"http://localhost:5173\",\"http://localhost:3000\"]';" ^
+    "if($old){ $f=$f -replace [regex]::Escape($old),$new } else { $f+=$new };" ^
+    "$f | Set-Content '!APP!\.env' -Encoding UTF8" >> "!LOG!" 2>&1
+call :ok "CORS atualizado com IP (!SERVER_IP!) e hostname (!HOSTNAME_URL!)"
+
+REM ─── ETAPA 13/13: VALIDACAO ─────────────────────────────────────────────────
+call :step "13/13" "Validacao e Health Check"
 
 REM Health check — API direct (wait up to 60s)
 call :info "Aguardando API iniciar (ate 60s)..."
@@ -1294,11 +1330,25 @@ if errorlevel 1 (
     call :ok "Frontend acessivel em http://127.0.0.1/"
 )
 
-REM ─── RESUMO FINAL ──────────────────────────────────────────────────────────
+REM Hostname check
+powershell -NoProfile -Command "try{$r=Invoke-WebRequest -Uri 'http://!HOSTNAME_URL!/' -TimeoutSec 5 -UseBasicParsing; if($r.StatusCode -eq 200){exit 0}else{exit 1}}catch{exit 1}" >nul 2>&1
+if errorlevel 1 (
+    call :warn "URL amigavel nao respondeu: http://!HOSTNAME_URL!/"
+) else (
+    call :ok "URL amigavel funcionando: http://!HOSTNAME_URL!/"
+)
 
-REM Detect access URL
-set "ACCESS_URL=http://127.0.0.1"
-if defined ACCESS_HOST if not "!ACCESS_HOST!"=="127.0.0.1" set "ACCESS_URL=http://!ACCESS_HOST!"
+REM IP check
+if defined SERVER_IP (
+    powershell -NoProfile -Command "try{$r=Invoke-WebRequest -Uri 'http://!SERVER_IP!/' -TimeoutSec 5 -UseBasicParsing; if($r.StatusCode -eq 200){exit 0}else{exit 1}}catch{exit 1}" >nul 2>&1
+    if errorlevel 1 (
+        call :warn "Acesso via IP: http://!SERVER_IP!/ nao respondeu"
+    ) else (
+        call :ok "Acesso via IP: http://!SERVER_IP!/"
+    )
+)
+
+REM ─── RESUMO FINAL ──────────────────────────────────────────────────────────
 
 call :write_pend
 echo.
@@ -1321,10 +1371,15 @@ if !PEND! gtr 0 (
 
 echo.
 echo   !W!ACESSO AO SISTEMA:!N!
-echo   API (local):   http://127.0.0.1:!API_PORT!/health
-echo   Frontend:      !ACCESS_URL!
-echo   Swagger:       !ACCESS_URL!/docs
-echo   Admin login:   !ACCESS_URL! (usar credenciais configuradas no .env)
+echo   Pelo IP:       http://!SERVER_IP!
+echo   Pela URL:      http://!HOSTNAME_URL!
+echo   API Docs:      http://!HOSTNAME_URL!/docs
+echo   API Health:    http://127.0.0.1:!API_PORT!/health
+echo   Admin login:   http://!HOSTNAME_URL! (usar credenciais do .env)
+echo.
+echo   !W!PARA CLIENTES NA REDE:!N!
+echo   Adicionar no hosts (C:\Windows\System32\drivers\etc\hosts):
+echo   !SERVER_IP!       !HOSTNAME_URL!
 echo.
 echo   !W!LOGS:!N!
 echo   Deploy:        !LOG!

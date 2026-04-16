@@ -1,13 +1,14 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul 2>&1
-title ══ Dinamica Budget — Desinstalador v2.0 ══
+title ══ Dinamica Budget — Desinstalador v3.0 ══
 
 REM ============================================================================
 REM  DINAMICA BUDGET — Desinstalador para Windows Server 2022
-REM  Versao: 2.0 — Abril 2026
+REM  Versao: 3.0 — Abril 2026
 REM  * Backup automatico do banco antes de qualquer acao
 REM  * Cada etapa detecta se ja foi removida e pula automaticamente
+REM  * Remove entrada do hosts file (dinamica-budget.local)
 REM  * Nao remove PostgreSQL nem IIS (apenas o site/pool e banco da aplicacao)
 REM ============================================================================
 
@@ -18,6 +19,7 @@ set "IIS_SITE=DinamicaBudget"
 set "IIS_POOL=DinamicaBudgetPool"
 set "SVC=DinamicaBudgetAPI"
 set "DB_NAME=dinamica_budget"
+set "HOSTNAME_URL=dinamica-budget.local"
 set "APPCMD=%windir%\System32\inetsrv\appcmd.exe"
 
 REM ── ANSI ESCAPE ─────────────────────────────────────────────────────────────
@@ -89,7 +91,7 @@ REM ═════════════════════════�
 :main
 REM ═══════════════════════════════════════════════════════════════════════════
 
-call :hdr "DINAMICA BUDGET — DESINSTALADOR v2.0"
+call :hdr "DINAMICA BUDGET — DESINSTALADOR v3.0"
 
 REM Admin check
 net session >nul 2>&1
@@ -129,7 +131,7 @@ if /i not "!CONFIRMACAO!"=="S" (
 )
 
 REM ── ETAPA 1/6: BACKUP DO BANCO ─────────────────────────────────────────────
-call :step "1/6" "Backup do banco de dados"
+call :step "1/7" "Backup do banco de dados"
 
 set "PGDUMP_BIN="
 for %%v in (17 16 15 14) do (
@@ -193,7 +195,7 @@ if defined DB_PASS (
 
 REM ── ETAPA 2/6: PARAR E REMOVER SERVICO ─────────────────────────────────────
 :etapa2
-call :step "2/6" "Remover servico Windows (!SVC!)"
+call :step "2/7" "Remover servico Windows (!SVC!)"
 
 sc query "!SVC!" >nul 2>&1
 if errorlevel 1 (
@@ -239,7 +241,7 @@ if errorlevel 1 (
 
 REM ── ETAPA 3/6: REMOVER SITE IIS ────────────────────────────────────────────
 :etapa3
-call :step "3/6" "Remover site e app pool do IIS"
+call :step "3/7" "Remover site e app pool do IIS"
 
 if not exist "!APPCMD!" (
     call :skip "IIS nao instalado (appcmd nao encontrado)"
@@ -274,9 +276,9 @@ if errorlevel 1 (
     )
 )
 
-REM ── ETAPA 4/6: REMOVER FIREWALL ────────────────────────────────────────────
+REM ── ETAPA 4/7: REMOVER FIREWALL ────────────────────────────────────────────
 :etapa4
-call :step "4/6" "Remover regras de Firewall"
+call :step "4/7" "Remover regras de Firewall"
 
 netsh advfirewall firewall show rule name="Dinamica Budget HTTP" >nul 2>&1
 if errorlevel 1 (
@@ -294,8 +296,23 @@ if errorlevel 1 (
     call :ok "Regra 'Dinamica Budget HTTPS' removida"
 )
 
-REM ── ETAPA 5/6: REMOVER DIRETORIOS ──────────────────────────────────────────
-call :step "5/6" "Remover diretorios da aplicacao"
+REM ── ETAPA 5/7: REMOVER HOSTNAME DO HOSTS FILE ─────────────────────────────
+call :step "5/7" "Remover hostname do hosts file"
+
+set "HOSTS_FILE=%windir%\System32\drivers\etc\hosts"
+findstr /i "dinamica-budget" "!HOSTS_FILE!" >nul 2>&1
+if errorlevel 1 (
+    call :skip "Nenhuma entrada dinamica-budget no hosts file"
+) else (
+    powershell -NoProfile -Command ^
+        "$h=Get-Content '!HOSTS_FILE!' -Encoding ASCII;" ^
+        "$h=$h | Where-Object { $_ -notmatch 'dinamica-budget' };" ^
+        "$h | Set-Content '!HOSTS_FILE!' -Encoding ASCII -Force" >> "!LOG!" 2>&1
+    call :ok "Entrada '!HOSTNAME_URL!' removida do hosts file"
+)
+
+REM ── ETAPA 6/7: REMOVER DIRETORIOS ──────────────────────────────────────────
+call :step "6/7" "Remover diretorios da aplicacao"
 
 echo.
 echo   Diretorios que podem ser removidos:
@@ -349,8 +366,8 @@ if /i "!RM_DIRS!"=="S" (
     call :skip "Diretorios mantidos por decisao do usuario"
 )
 
-REM ── ETAPA 6/6: REMOVER BANCO (OPCIONAL) ────────────────────────────────────
-call :step "6/6" "Remover banco de dados (opcional)"
+REM ── ETAPA 7/7: REMOVER BANCO (OPCIONAL) ────────────────────────────────────
+call :step "7/7" "Remover banco de dados (opcional)"
 
 set "RM_DB="
 set /p "RM_DB=  Deseja REMOVER o banco '!DB_NAME!' do PostgreSQL? (S/N) [N]: "
