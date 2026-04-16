@@ -31,15 +31,22 @@ function Die {
 
 function RunPsql {
     param([string]$sql)
-    return (& $psql -U postgres -h 127.0.0.1 -d $DbName -t -c $sql 2>&1)
+    return (& $psql -U postgres -h 127.0.0.1 -d $DbName -t -c $sql 2>&1 | ForEach-Object { $_.ToString() })
+}
+
+function FirstTrimmedLine {
+    param([object[]]$Rows, [string]$Pattern = '\S')
+    $line = $Rows | Where-Object { $_ -match $Pattern } | Select-Object -First 1
+    if ($null -eq $line) { return '' }
+    return $line.ToString().Trim()
 }
 
 # ── Ler senha do .env ────────────────────────────────────────────────────────
 $pgPass = 'PostgresSetup123!'
 if (Test-Path $EnvFile) {
     $urlLine = Get-Content $EnvFile | Where-Object { $_ -match '^DATABASE_URL=' } | Select-Object -First 1
-    if ($urlLine -match '://[^:]+:([^@]+)@') {
-        $pgPass = $Matches[1]
+    if ($urlLine -match '^DATABASE_URL=(postgresql(?:\+\w+)?://[^:]+:)(.+)(@[^/]+/.+)$') {
+        $pgPass = [System.Uri]::UnescapeDataString($Matches[2])
     }
 }
 $env:PGPASSWORD = $pgPass
@@ -47,10 +54,17 @@ $psql     = "$PgRoot\bin\psql.exe"
 $ctrlFile = "$PgRoot\share\extension\vector.control"
 Log "PG password length: $($pgPass.Length)"
 
+# Falha rapida se o banco alvo nao existir.
+$dbExistsOut = (& $psql -U postgres -h 127.0.0.1 -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DbName';" 2>&1 | ForEach-Object { $_.ToString() })
+$dbExists = FirstTrimmedLine -Rows $dbExistsOut -Pattern '^\s*\d+\s*$'
+if ($dbExists -ne '1') {
+    Die "Banco '$DbName' nao existe. Corrija em pg_setup antes de instalar pgvector."
+}
+
 # ── Etapa 1: verificar se ja ativo ──────────────────────────────────────────
 Log "[1] Verificando extensao vector no banco..."
 $extRow = RunPsql "SELECT count(*) FROM pg_extension WHERE extname='vector';"
-$extCount = ($extRow | Where-Object { $_ -match '^\s*\d' } | ForEach-Object { $_.Trim() } | Select-Object -First 1)
+$extCount = FirstTrimmedLine -Rows $extRow -Pattern '^\s*\d'
 
 if ($extCount -eq '1') {
     Log "[1] Extensao vector ja ativa."
@@ -193,7 +207,7 @@ if ($extCount -eq '1') {
     foreach ($l in $extOut) { Log "  psql>> $l" }
 
     $ec = RunPsql "SELECT count(*) FROM pg_extension WHERE extname='vector';"
-    $ecVal = ($ec | Where-Object { $_ -match '^\s*\d' } | ForEach-Object { $_.Trim() } | Select-Object -First 1)
+    $ecVal = FirstTrimmedLine -Rows $ec -Pattern '^\s*\d'
     if ($ecVal -ne '1') { Die "Extensao vector nao foi ativada no banco." }
     Log "[5] Extensao vector ativa!"
 }
@@ -201,7 +215,7 @@ if ($extCount -eq '1') {
 # ── Etapa 6: upgrade coluna TEXT -> vector(384) ──────────────────────────────
 Log "[6] Verificando tipo da coluna vetor..."
 $colRows = RunPsql "SELECT data_type FROM information_schema.columns WHERE table_name='tcpo_embeddings' AND column_name='vetor';"
-$colType = ($colRows | Where-Object { $_ -match '\S' } | ForEach-Object { $_.Trim() } | Select-Object -First 1)
+$colType = FirstTrimmedLine -Rows $colRows
 Log "[6] Tipo atual: $colType"
 
 if ($colType -eq 'text') {
@@ -227,7 +241,7 @@ END $upg$;
 
 # ── Resumo ────────────────────────────────────────────────────────────────────
 $udtRows  = RunPsql "SELECT udt_name FROM information_schema.columns WHERE table_name='tcpo_embeddings' AND column_name='vetor';"
-$finalUdt = ($udtRows | Where-Object { $_ -match '\S' } | ForEach-Object { $_.Trim() } | Select-Object -First 1)
+$finalUdt = FirstTrimmedLine -Rows $udtRows
 
 Log ""
 Log "============================================="

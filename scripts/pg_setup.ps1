@@ -117,9 +117,14 @@ if ($dbUrl -notmatch 'postgresql(?:\+\w+)?://([^:@]+):(.+)@([^:/]+):(\d+)/([^/?]
     exit 1
 }
 $pgUser = $Matches[1]
-$pgPass = $Matches[2]
+$pgPass = [System.Uri]::UnescapeDataString($Matches[2])
 $pgHost = $Matches[3]
 $pgPort = [int]$Matches[4]
+
+# Sempre usar IPv4 local para evitar resolver "localhost" para ::1 em hosts sem DB sincronizado.
+if ($pgHost -eq 'localhost') {
+    $pgHost = '127.0.0.1'
+}
 
 Write-Host "[INFO] Testando conexao: $pgUser@${pgHost}:${pgPort}..."
 
@@ -225,8 +230,13 @@ if ($null -eq $okPass) {
     $escapedOldHost = [regex]::Escape($pgHost)
     $newUrl  = $dbUrl -replace "(?<=://[^:]+:)$escapedOldPass(?=@)", $newPass
     $newUrl  = $newUrl -replace "(?<=@)$escapedOldHost(?=:)", "127.0.0.1"
-    Set-Content $EnvFile ($envLines -replace [regex]::Escape($dbUrlLine), "DATABASE_URL=$newUrl") -Encoding UTF8
-    Write-Host "[OK] DATABASE_URL atualizado no .env"
+    try {
+        Set-Content $EnvFile ($envLines -replace [regex]::Escape($dbUrlLine), "DATABASE_URL=$newUrl") -Encoding UTF8 -ErrorAction Stop
+        Write-Host "[OK] DATABASE_URL atualizado no .env"
+    } catch {
+        Write-Host "[FAIL] Nao foi possivel atualizar ${EnvFile}: $($_.Exception.Message)"
+        exit 1
+    }
 
     $okPass = $newPass
     $okHost = '127.0.0.1'
@@ -240,8 +250,13 @@ if ($okPass -ne $pgPass -or $okHost -ne $pgHost) {
     $escapedOldHost = [regex]::Escape($pgHost)
     $newUrl  = $dbUrl -replace "(?<=://[^:]+:)$escapedOldPass(?=@)", $okPass
     $newUrl  = $newUrl -replace "(?<=@)$escapedOldHost(?=:)", $okHost
-    Set-Content $EnvFile ($envLines -replace [regex]::Escape($dbUrlLine), "DATABASE_URL=$newUrl") -Encoding UTF8
-    Write-Host "[OK] DATABASE_URL atualizado no .env (senha/host corrigidos)"
+    try {
+        Set-Content $EnvFile ($envLines -replace [regex]::Escape($dbUrlLine), "DATABASE_URL=$newUrl") -Encoding UTF8 -ErrorAction Stop
+        Write-Host "[OK] DATABASE_URL atualizado no .env (senha/host corrigidos)"
+    } catch {
+        Write-Host "[FAIL] Nao foi possivel atualizar ${EnvFile}: $($_.Exception.Message)"
+        exit 1
+    }
     $pgPass = $okPass
     $pgHost = $okHost
 }
@@ -265,6 +280,31 @@ if ($dbChk -ne '1') {
     Write-Host "[OK] Banco $DbName criado"
 } else {
     Write-Host "[SKIP] Banco $DbName ja existe"
+}
+
+# Confirmacao obrigatoria para evitar seguir com falso positivo de ambiente.
+$dbChk2Raw = & $PsqlBin -U $pgUser -h $pgHost -p $pgPort -tAc "SELECT 1 FROM pg_database WHERE datname='$DbName'" 2>&1
+$dbChk2 = ($dbChk2Raw | Where-Object { $_ -match '^\s*\d+\s*$' } | Select-Object -First 1) -replace '\s',''
+if ($dbChk2 -ne '1') {
+    Write-Host "[FAIL] Banco $DbName nao ficou disponivel apos criacao/validacao."
+    exit 1
+}
+
+# Verificacao final por conexao direta ao banco alvo (evita falso positivo em consultas de catalogo).
+$dbConnTest = & $PsqlBin -U $pgUser -h $pgHost -p $pgPort -d $DbName -tAc 'SELECT 1' 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[WARN] Banco $DbName ainda nao conecta diretamente. Tentando criar novamente..."
+    $r2 = & $PsqlBin -U $pgUser -h $pgHost -p $pgPort -c "CREATE DATABASE $DbName" 2>&1
+    if ($LASTEXITCODE -ne 0 -and (($r2 | Out-String) -notmatch 'already exists')) {
+        Write-Host "[FAIL] Falha ao garantir banco ${DbName}: $r2"
+        exit 1
+    }
+
+    $dbConnTest2 = & $PsqlBin -U $pgUser -h $pgHost -p $pgPort -d $DbName -tAc 'SELECT 1' 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[FAIL] Banco $DbName segue indisponivel para conexao direta: $dbConnTest2"
+        exit 1
+    }
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

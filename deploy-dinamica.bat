@@ -1,11 +1,11 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul 2>&1
-title ══ Dinamica Budget — Instalador Nativo v4.0 ══
+title ══ Dinamica Budget — Instalador Nativo v5.0 ══
 
 REM ============================================================================
 REM  DINAMICA BUDGET — Instalador Nativo para Windows Server 2022
-REM  Versao: 4.0 — Abril 2026
+REM  Versao: 5.0 — Abril 2026
 REM  Compativel: Windows Server 2019+ / Windows 10 21H2+
 REM ============================================================================
 REM  * Instala AUTOMATICAMENTE: Python 3.12, PostgreSQL 16, NSSM, URL Rewrite,
@@ -134,7 +134,7 @@ REM ═════════════════════════�
 :main
 REM ═══════════════════════════════════════════════════════════════════════════
 
-call :hdr "DINAMICA BUDGET — INSTALADOR NATIVO v3.0"
+call :hdr "DINAMICA BUDGET — INSTALADOR NATIVO v5.0"
 >> "!LOG!" echo Inicio: %date% %time%
 >> "!LOG!" echo Origem: !SRC!
 >> "!LOG!" echo Destino: !APP!
@@ -684,6 +684,7 @@ REM Grupo 1: core sem compilacao
     python-multipart==0.0.12 ^
     "sqlalchemy[asyncio]==2.0.36" ^
     alembic==1.14.0 ^
+    psycopg2-binary==2.9.11 ^
     pgvector==0.3.6 ^
     "pydantic==2.10.3" ^
     "pydantic-settings==2.6.1" ^
@@ -802,8 +803,10 @@ echo.
 REM Prompt: PostgreSQL password
 :prompt_pg
 set "PG_PASS="
+setlocal DisableDelayedExpansion
 set /p "PG_PASS=  Senha do usuario 'postgres' no PostgreSQL (obrigatorio): "
-if "!PG_PASS!"=="" (
+endlocal & set "PG_PASS=%PG_PASS%"
+if "%PG_PASS%"=="" (
     echo   A senha nao pode ser vazia.
     goto :prompt_pg
 )
@@ -827,8 +830,10 @@ if "!ADMIN_EMAIL!"=="" (
 REM Prompt: Admin password
 :prompt_adm_pass
 set "ADMIN_PASS="
+setlocal DisableDelayedExpansion
 set /p "ADMIN_PASS=  Senha do administrador (min 8 caracteres, obrigatorio): "
-if "!ADMIN_PASS!"=="" (
+endlocal & set "ADMIN_PASS=%ADMIN_PASS%"
+if "%ADMIN_PASS%"=="" (
     echo   A senha nao pode ser vazia.
     goto :prompt_adm_pass
 )
@@ -867,78 +872,60 @@ REM Generate SECRET_KEY
 for /f "delims=" %%k in ('"!PY!" -c "import secrets; print(secrets.token_hex(32))"') do set "SECRET_KEY=%%k"
 
 call :info "Gerando .env..."
-set "DB_PASS=!PG_PASS!"
+set "DB_PASS=%PG_PASS%"
+set "ENV_PG_PASS=%PG_PASS%"
+set "ENV_ADMIN_EMAIL=%ADMIN_EMAIL%"
+set "ENV_ADMIN_PASS=%ADMIN_PASS%"
+set "ENV_ADMIN_NAME=%ADMIN_NAME%"
+set "ENV_ACCESS_HOST=%ACCESS_HOST%"
 
-REM Write .env file using PowerShell to handle special characters safely
+REM Write .env via PowerShell using environment variables (safe for ! @ % and other special chars)
 powershell -NoProfile -Command ^
-  "$content = @'" & echo. & ^
-  echo # --- Database --- & ^
-  echo DATABASE_URL=postgresql+asyncpg://postgres:!PG_PASS!@127.0.0.1:5432/dinamica_budget & ^
-  echo DATABASE_POOL_SIZE=10 & ^
-  echo DATABASE_MAX_OVERFLOW=20 & ^
-  echo. & ^
-  echo # --- JWT --- & ^
-  echo SECRET_KEY=!SECRET_KEY! & ^
-  echo ALGORITHM=HS256 & ^
-  echo ACCESS_TOKEN_EXPIRE_MINUTES=30 & ^
-  echo REFRESH_TOKEN_EXPIRE_DAYS=7 & ^
-  echo. & ^
-  echo # --- ML / Embeddings --- & ^
-  echo EMBEDDING_MODEL_NAME=all-MiniLM-L6-v2 & ^
-  echo SENTENCE_TRANSFORMERS_HOME=C:/DinamicaBudget/ml_models & ^
-  echo FUZZY_THRESHOLD=0.85 & ^
-  echo SEMANTIC_THRESHOLD=0.65 & ^
-  echo. & ^
-  echo # --- App --- & ^
-  echo API_V1_PREFIX=/api/v1 & ^
-  echo DEBUG=false & ^
-  echo LOG_LEVEL=INFO & ^
-  echo APP_HOST=0.0.0.0 & ^
-  echo APP_PORT=8000 & ^
-  echo. & ^
-  echo # --- Root User (auto-created on first startup) --- & ^
-  echo ROOT_USER_EMAIL=!ADMIN_EMAIL! & ^
-  echo ROOT_USER_PASSWORD=!ADMIN_PASS! & ^
-  echo ROOT_USER_NAME=!ADMIN_NAME! & ^
-  echo. & ^
-  echo # --- CORS --- & ^
-  echo ALLOWED_ORIGINS=["http://!ACCESS_HOST!","http://localhost","http://127.0.0.1"] & ^
-  echo '@ & ^
-  echo $content ^| Set-Content -Path '!APP!\.env' -Encoding UTF8 -Force" >> "!LOG!" 2>&1
+    "$dbPassEnc=[Uri]::EscapeDataString($env:ENV_PG_PASS);" ^
+    "$content=@'" & echo. & ^
+    echo # --- Database --- & ^
+    echo DATABASE_URL=postgresql+asyncpg://postgres:$dbPassEnc@127.0.0.1:5432/dinamica_budget & ^
+    echo DATABASE_POOL_SIZE=10 & ^
+    echo DATABASE_MAX_OVERFLOW=20 & ^
+    echo. & ^
+    echo # --- JWT --- & ^
+    echo SECRET_KEY=!SECRET_KEY! & ^
+    echo ALGORITHM=HS256 & ^
+    echo ACCESS_TOKEN_EXPIRE_MINUTES=30 & ^
+    echo REFRESH_TOKEN_EXPIRE_DAYS=7 & ^
+    echo. & ^
+    echo # --- ML / Embeddings --- & ^
+    echo EMBEDDING_MODEL_NAME=all-MiniLM-L6-v2 & ^
+    echo SENTENCE_TRANSFORMERS_HOME=C:/DinamicaBudget/ml_models & ^
+    echo FUZZY_THRESHOLD=0.85 & ^
+    echo SEMANTIC_THRESHOLD=0.65 & ^
+    echo. & ^
+    echo # --- App --- & ^
+    echo API_V1_PREFIX=/api/v1 & ^
+    echo DEBUG=false & ^
+    echo LOG_LEVEL=INFO & ^
+    echo APP_HOST=0.0.0.0 & ^
+    echo APP_PORT=8000 & ^
+    echo. & ^
+    echo # --- Root User (auto-created on first startup) --- & ^
+    echo ROOT_USER_EMAIL=$env:ENV_ADMIN_EMAIL & ^
+    echo ROOT_USER_PASSWORD=$env:ENV_ADMIN_PASS & ^
+    echo ROOT_USER_NAME=$env:ENV_ADMIN_NAME & ^
+    echo. & ^
+    echo # --- CORS --- & ^
+    echo ALLOWED_ORIGINS=["http://$env:ENV_ACCESS_HOST","http://localhost","http://127.0.0.1"] & ^
+    echo '@; $content ^| Set-Content -Path '!APP!\.env' -Encoding UTF8 -Force" >> "!LOG!" 2>&1
+
+set "ENV_PG_PASS="
+set "ENV_ADMIN_EMAIL="
+set "ENV_ADMIN_PASS="
+set "ENV_ADMIN_NAME="
+set "ENV_ACCESS_HOST="
 
 if not exist "!APP!\.env" (
-    REM Fallback: write .env line by line
-    > "!APP!\.env" echo # --- Database ---
-    >> "!APP!\.env" echo DATABASE_URL=postgresql+asyncpg://postgres:!PG_PASS!@127.0.0.1:5432/dinamica_budget
-    >> "!APP!\.env" echo DATABASE_POOL_SIZE=10
-    >> "!APP!\.env" echo DATABASE_MAX_OVERFLOW=20
-    >> "!APP!\.env" echo.
-    >> "!APP!\.env" echo # --- JWT ---
-    >> "!APP!\.env" echo SECRET_KEY=!SECRET_KEY!
-    >> "!APP!\.env" echo ALGORITHM=HS256
-    >> "!APP!\.env" echo ACCESS_TOKEN_EXPIRE_MINUTES=30
-    >> "!APP!\.env" echo REFRESH_TOKEN_EXPIRE_DAYS=7
-    >> "!APP!\.env" echo.
-    >> "!APP!\.env" echo # --- ML / Embeddings ---
-    >> "!APP!\.env" echo EMBEDDING_MODEL_NAME=all-MiniLM-L6-v2
-    >> "!APP!\.env" echo SENTENCE_TRANSFORMERS_HOME=C:/DinamicaBudget/ml_models
-    >> "!APP!\.env" echo FUZZY_THRESHOLD=0.85
-    >> "!APP!\.env" echo SEMANTIC_THRESHOLD=0.65
-    >> "!APP!\.env" echo.
-    >> "!APP!\.env" echo # --- App ---
-    >> "!APP!\.env" echo API_V1_PREFIX=/api/v1
-    >> "!APP!\.env" echo DEBUG=false
-    >> "!APP!\.env" echo LOG_LEVEL=INFO
-    >> "!APP!\.env" echo APP_HOST=0.0.0.0
-    >> "!APP!\.env" echo APP_PORT=8000
-    >> "!APP!\.env" echo.
-    >> "!APP!\.env" echo # --- Root User ---
-    >> "!APP!\.env" echo ROOT_USER_EMAIL=!ADMIN_EMAIL!
-    >> "!APP!\.env" echo ROOT_USER_PASSWORD=!ADMIN_PASS!
-    >> "!APP!\.env" echo ROOT_USER_NAME=!ADMIN_NAME!
-    >> "!APP!\.env" echo.
-    >> "!APP!\.env" echo # --- CORS ---
-    >> "!APP!\.env" echo ALLOWED_ORIGINS=["http://!ACCESS_HOST!","http://localhost","http://127.0.0.1"]
+        echo   !R![FAIL]!N! Falha ao gerar .env com PowerShell.
+        >> "!LOG!" echo [FAIL] Falha ao gerar .env com PowerShell
+        goto :abort
 )
 
 call :ok ".env criado com SECRET_KEY gerada e credenciais configuradas"
@@ -946,9 +933,18 @@ call :ok ".env criado com SECRET_KEY gerada e credenciais configuradas"
 echo.
 echo   ============================================================
 echo    REVISAO DO .env GERADO
-echo    Confira todos os dados (inclusive credenciais) abaixo
+echo    Confira os dados abaixo (campos sensiveis mascarados)
 echo   ============================================================
-type "!APP!\.env"
+powershell -NoProfile -Command ^
+    "$p='!APP!\.env';" ^
+    "$lines=Get-Content $p -Encoding UTF8;" ^
+    "$lines = $lines | ForEach-Object {" ^
+    " if($_ -match '^SECRET_KEY='){ 'SECRET_KEY=***MASKED***' }" ^
+    " elseif($_ -match '^ROOT_USER_PASSWORD='){ 'ROOT_USER_PASSWORD=***MASKED***' }" ^
+    " elseif($_ -match '^DATABASE_URL='){ $_ -replace '://([^:]+):([^@]+)@','://$1:***MASKED***@' }" ^
+    " else { $_ }" ^
+    "};" ^
+    "$lines | ForEach-Object { Write-Host $_ }" 
 echo.
 
 set "CONFIRM_ENV="
@@ -962,6 +958,17 @@ call :ok ".env confirmado pelo usuario"
 REM ─── ETAPA 4/11: POSTGRESQL BANCO E EXTENSOES ──────────────────────────────
 :etapa4
 call :step "4/11" "PostgreSQL: banco de dados e extensoes"
+
+REM Normaliza senha em DATABASE_URL para formato URL-encoded (evita falhas com acentos/simbolos)
+powershell -NoProfile -Command ^
+    "$f='!APP!\.env'; if(Test-Path $f){" ^
+    "$lines=Get-Content $f -Encoding UTF8; $db=$lines|Where-Object{$_ -match '^DATABASE_URL='}|Select-Object -First 1;" ^
+    "if($db){ $url=($db -split '=',2)[1];" ^
+    "if($url -match '^(postgresql(?:\+\w+)?://[^:]+:)(.+)(@[^/]+/.+)$'){" ^
+    "$raw=[Uri]::UnescapeDataString($Matches[2]); $enc=[Uri]::EscapeDataString($raw);" ^
+    "$new='DATABASE_URL='+$Matches[1]+$enc+$Matches[3];" ^
+    "if($new -ne $db){ $lines=$lines -replace [regex]::Escape($db),$new; Set-Content $f $lines -Encoding UTF8; Write-Host '[OK] DATABASE_URL normalizada (senha URL-encoded)' }" ^
+    "}}}" >> "!LOG!" 2>&1
 
 if "!HAS_PG!"=="0" (
     call :skip "PostgreSQL nao disponivel. Configuracao manual necessaria."
@@ -985,6 +992,7 @@ if not exist "!PG_SETUP_PS1!" set "PG_SETUP_PS1=!APP!\scripts\pg_setup.ps1"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "!PG_SETUP_PS1!" -EnvFile "!APP!\.env" -PsqlBin "!PSQL_BIN!" -DbName "!DB_NAME!" -SvcName "!PG_SVC!" >> "!LOG!" 2>&1
 set "PG4_RC=!ERRORLEVEL!"
+set "DB_READY=1"
 
 REM Relata resultado baseado nas linhas escritas no log
 for /f "tokens=*" %%l in ('findstr /i "\[OK\]\|\[SKIP\]\|\[WARN\]\|\[FAIL\]\|\[PEND\]\|\[INFO\]" "%TEMP%\__ " 2^>nul') do rem
@@ -993,6 +1001,7 @@ powershell -NoProfile -Command "$l=Get-Content '!LOG!' -Tail 20; $l | Where-Obje
 if !PG4_RC! neq 0 (
     call :warn "Configuracao do banco falhou (codigo !PG4_RC!). Verifique o log."
     call :pend "Executar manualmente: powershell -File '!SRC!\scripts\pg_setup.ps1' -EnvFile '!APP!\.env'"
+    set "DB_READY=0"
 ) else (
     call :ok "PostgreSQL: banco e extensoes configurados"
 )
@@ -1005,7 +1014,7 @@ if not exist "!PG_CTRL!" set "PG_CTRL=C:\Program Files\PostgreSQL\16\share\exten
 set "PGVEC_PS1=!SRC!\scripts\install-pgvector.ps1"
 if not exist "!PGVEC_PS1!" set "PGVEC_PS1=!APP!\scripts\install-pgvector.ps1"
 
-if exist "!PGVEC_PS1!" (
+if /i "!DB_READY!"=="1" if exist "!PGVEC_PS1!" (
     call :info "Instalando/verificando pgvector (pode demorar se precisar compilar)..."
     powershell -NoProfile -ExecutionPolicy Bypass -File "!PGVEC_PS1!" ^
         -PgRoot "C:\Program Files\PostgreSQL\16" ^
@@ -1020,13 +1029,24 @@ if exist "!PGVEC_PS1!" (
         call :ok "pgvector configurado (busca vetorial ativa)"
     )
 ) else (
-    call :warn "install-pgvector.ps1 nao encontrado. Busca vetorial desativada."
-    call :pend "Copiar scripts\install-pgvector.ps1 e executar manualmente."
+    if /i not "!DB_READY!"=="1" (
+        call :skip "pgvector ignorado: etapa de banco falhou."
+        call :pend "Apos corrigir o banco, executar: powershell -File '!SRC!\scripts\install-pgvector.ps1'"
+    ) else (
+        call :warn "install-pgvector.ps1 nao encontrado. Busca vetorial desativada."
+        call :pend "Copiar scripts\install-pgvector.ps1 e executar manualmente."
+    )
 )
 
 REM ─── ETAPA 5/11: MIGRACOES ALEMBIC ─────────────────────────────────────────
 :etapa5
 call :step "5/11" "Migracoes de banco (Alembic)"
+
+if /i not "!DB_READY!"=="1" (
+    call :skip "Migracoes ignoradas: banco indisponivel nesta execucao."
+    call :pend "Apos corrigir o banco, executar: cd !APP! ^&^& venv\Scripts\alembic.exe upgrade head"
+    goto :etapa6
+)
 
 pushd "!APP!"
 REM Usa o executavel alembic do venv diretamente (mais confiavel que python -m alembic)
@@ -1045,10 +1065,13 @@ if !ARC! neq 0 (
 )
 
 REM ─── ETAPA 6/11: MODELO ML ─────────────────────────────────────────────────
+:etapa6
 call :step "6/11" "Modelo de Machine Learning"
 
 set "ML_DIR=!APP!\ml_models"
 set "ML_MODEL_DIR=!ML_DIR!\models--sentence-transformers--all-MiniLM-L6-v2"
+set "ENSURE_ML_PS1=!SRC!\scripts\ensure-ml-model.ps1"
+if not exist "!ENSURE_ML_PS1!" set "ENSURE_ML_PS1=!APP!\scripts\ensure-ml-model.ps1"
 
 if exist "!ML_MODEL_DIR!\snapshots" (
     call :skip "Modelo all-MiniLM-L6-v2 ja presente em ml_models/"
@@ -1060,25 +1083,27 @@ if exist "!ML_MODEL_DIR!" (
     call :info "Diretorio do modelo existe mas pode estar incompleto"
 )
 
-REM Check internet connectivity
-set "HAS_NET=0"
-powershell -NoProfile -Command "try{[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;$null=Invoke-WebRequest -Uri 'https://huggingface.co' -TimeoutSec 5 -UseBasicParsing;exit 0}catch{exit 1}" >nul 2>&1
-if !ERRORLEVEL! equ 0 set "HAS_NET=1"
+if exist "!ENSURE_ML_PS1!" (
+    call :info "Garantindo modelo all-MiniLM-L6-v2 (auto-download se ausente)..."
+    powershell -NoProfile -ExecutionPolicy Bypass -File "!ENSURE_ML_PS1!" -PythonExe "!PY!" -ModelCacheDir "!ML_DIR!" -TimeoutSec 900 >> "!LOG!" 2>&1
+    set "ML_RC=!ERRORLEVEL!"
 
-if "!HAS_NET!"=="1" (
-    call :info "Internet disponivel. Baixando modelo ML (~90MB, pode levar alguns minutos)..."
-    if not exist "!ML_DIR!" mkdir "!ML_DIR!"
-    "!PY!" -c "from sentence_transformers import SentenceTransformer; m=SentenceTransformer('all-MiniLM-L6-v2',cache_folder=r'!ML_DIR!'); print('OK')" >> "!LOG!" 2>&1
-    if errorlevel 1 (
-        call :warn "Download do modelo ML falhou."
-        call :pend "Baixar modelo ML em maquina com internet e copiar para !ML_DIR! (ver secao 6.5 do manual)"
+    if "!ML_RC!"=="0" (
+        call :ok "Modelo ML pronto (all-MiniLM-L6-v2)"
+    ) else if "!ML_RC!"=="10" (
+        call :warn "Sem internet: modelo ML nao pode ser baixado agora."
+        call :pend "MODELO ML: Conectar internet e executar novamente o deploy (etapa 6)"
+        call :pend "MODELO ML: Ou executar manualmente: powershell -File '!SRC!\scripts\ensure-ml-model.ps1'"
+    ) else if "!ML_RC!"=="124" (
+        call :warn "Timeout no download do modelo ML (15 min)."
+        call :pend "Executar manualmente: powershell -File '!SRC!\scripts\ensure-ml-model.ps1' -TimeoutSec 1800"
     ) else (
-        call :ok "Modelo ML baixado com sucesso"
+        call :warn "Falha ao garantir modelo ML (codigo !ML_RC!)."
+        call :pend "Ver log: !LOG! e executar: powershell -File '!SRC!\scripts\ensure-ml-model.ps1'"
     )
 ) else (
-    call :warn "Sem acesso a internet. Modelo ML nao pode ser baixado automaticamente."
-    call :pend "MODELO ML: Em maquina com internet, executar: python -c \"from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2',cache_folder='./ml_models')\""
-    call :pend "MODELO ML: Copiar pasta ml_models/ para !ML_DIR!"
+    call :warn "Script ensure-ml-model.ps1 nao encontrado."
+    call :pend "Restaurar arquivo scripts\ensure-ml-model.ps1 e reexecutar deploy"
 )
 
 REM ─── ETAPA 7/11: BUILD DO FRONTEND ─────────────────────────────────────────

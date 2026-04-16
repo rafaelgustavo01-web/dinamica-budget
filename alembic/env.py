@@ -1,10 +1,12 @@
 import asyncio
 import os
+from urllib.parse import unquote
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import MetaData, pool
 from sqlalchemy.engine import Connection
+from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.core.config import settings
@@ -14,12 +16,16 @@ config = context.config
 # Use synchronous psycopg2 driver for migrations.
 # asyncpg (the runtime driver) causes DO-block exceptions to propagate past
 # PL/pgSQL EXCEPTION handlers; psycopg2 handles them correctly.
-_sync_url = settings.DATABASE_URL.replace(
-    "postgresql+asyncpg://", "postgresql+psycopg2://", 1
-).replace(
-    "postgresql+asyncio://", "postgresql+psycopg2://", 1
+_parsed = make_url(settings.DATABASE_URL)
+_pwd = _parsed.password
+if _pwd is not None:
+    # Keep plain password on URL object; SQLAlchemy encodes when rendering.
+    _pwd = unquote(_pwd)
+_sync_url = _parsed.set(drivername="postgresql+psycopg2", password=_pwd).render_as_string(
+    hide_password=False
 )
-config.set_main_option("sqlalchemy.url", _sync_url)
+# Alembic uses ConfigParser interpolation where '%' must be escaped as '%%'.
+config.set_main_option("sqlalchemy.url", _sync_url.replace("%", "%%"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
