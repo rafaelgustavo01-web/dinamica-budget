@@ -1,13 +1,14 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul 2>&1
-title ══ Dinamica Budget — Desinstalador v3.0 ══
+title ══ Dinamica Budget — Desinstalador v4.0 ══
 
 REM ============================================================================
 REM  DINAMICA BUDGET — Desinstalador para Windows Server 2022
-REM  Versao: 3.0 — Abril 2026
+REM  Versao: 4.0 — Abril 2026
 REM  * Backup automatico do banco antes de qualquer acao
 REM  * Cada etapa detecta se ja foi removida e pula automaticamente
+REM  * Permite remover sem backup (modo rapido)
 REM  * Remove entrada do hosts file (dinamica-budget.local)
 REM  * Nao remove PostgreSQL nem IIS (apenas o site/pool e banco da aplicacao)
 REM ============================================================================
@@ -91,7 +92,7 @@ REM ═════════════════════════�
 :main
 REM ═══════════════════════════════════════════════════════════════════════════
 
-call :hdr "DINAMICA BUDGET — DESINSTALADOR v3.0"
+call :hdr "DINAMICA BUDGET — DESINSTALADOR v4.0"
 
 REM Admin check
 net session >nul 2>&1
@@ -130,8 +131,17 @@ if /i not "!CONFIRMACAO!"=="S" (
     exit /b 0
 )
 
+set "SKIP_BACKUP=N"
+set /p "SKIP_BACKUP=  Pular backup e remover banco diretamente? (S/N) [N]: "
+if "!SKIP_BACKUP!"=="" set "SKIP_BACKUP=N"
+
 REM ── ETAPA 1/6: BACKUP DO BANCO ─────────────────────────────────────────────
 call :step "1/7" "Backup do banco de dados"
+
+if /i "!SKIP_BACKUP!"=="S" (
+    call :skip "Backup pulado por opcao do usuario"
+    goto :etapa2
+)
 
 set "PGDUMP_BIN="
 for %%v in (17 16 15 14) do (
@@ -166,7 +176,11 @@ for %%v in (17 16 15 14) do (
 REM Try to get DB password from .env
 set "DB_PASS="
 if exist "!APP!\.env" (
-    for /f "delims=" %%p in ('powershell -NoProfile -Command "$l=^(Get-Content '!APP!\.env' ^| Where-Object {$_ -match '^DATABASE_URL='}^); if^($l -match '://[^:]+:^([^@]+^)@'^){$Matches[1]}"') do set "DB_PASS=%%p"
+    powershell -NoProfile -Command "$l=(Get-Content '!APP!\.env') | Where-Object {$_ -match '^DATABASE_URL='}; if($l -match '://[^:]+:([^@]+)@'){$Matches[1] | Out-File -NoNewline -Encoding utf8 (Join-Path $env:TEMP '_dbpass_remove.tmp')}" >nul 2>&1
+    setlocal DisableDelayedExpansion
+    if exist "%TEMP%\_dbpass_remove.tmp" for /f "usebackq delims=" %%p in ("%TEMP%\_dbpass_remove.tmp") do set "DB_PASS=%%p"
+    endlocal & set "DB_PASS=%DB_PASS%"
+    del "%TEMP%\_dbpass_remove.tmp" >nul 2>&1
 )
 
 if not defined DB_PASS (
@@ -239,6 +253,15 @@ if errorlevel 1 (
     call :warn "Servico pode precisar de reboot para ser completamente removido"
 )
 
+REM Limpa processos residuais da aplicacao
+for /f "tokens=2" %%p in ('wmic process where "Name='python.exe' and ExecutablePath like 'C:\\DinamicaBudget%%'" get ProcessId /value 2^>nul ^| find "="') do (
+    taskkill /PID %%p /F >nul 2>&1
+)
+for /f "tokens=2" %%p in ('wmic process where "Name='node.exe' and ExecutablePath like 'C:\\DinamicaBudget%%'" get ProcessId /value 2^>nul ^| find "="') do (
+    taskkill /PID %%p /F >nul 2>&1
+)
+call :info "Processos residuais do sistema encerrados (se existentes)"
+
 REM ── ETAPA 3/6: REMOVER SITE IIS ────────────────────────────────────────────
 :etapa3
 call :step "3/7" "Remover site e app pool do IIS"
@@ -305,9 +328,9 @@ if errorlevel 1 (
     call :skip "Nenhuma entrada dinamica-budget no hosts file"
 ) else (
     powershell -NoProfile -Command ^
-        "$h=Get-Content '!HOSTS_FILE!' -Encoding ASCII;" ^
-        "$h=$h | Where-Object { $_ -notmatch 'dinamica-budget' };" ^
-        "$h | Set-Content '!HOSTS_FILE!' -Encoding ASCII -Force" >> "!LOG!" 2>&1
+        "$h=Get-Content '!HOSTS_FILE!' -Encoding ASCII -ErrorAction SilentlyContinue;" ^
+        "$h=$h | Where-Object { $_ -notmatch 'dinamica-budget\\.local' -and $_ -notmatch '# Dinamica Budget' };" ^
+        "$txt=''; if($h){$txt=[string]::Join([Environment]::NewLine,$h)}; [System.IO.File]::WriteAllText('!HOSTS_FILE!',$txt + [Environment]::NewLine,[System.Text.Encoding]::ASCII); ipconfig /flushdns | Out-Null" >> "!LOG!" 2>&1
     call :ok "Entrada '!HOSTNAME_URL!' removida do hosts file"
 )
 
@@ -395,6 +418,15 @@ if not defined DB_PASS (
 
 if defined DB_PASS (
     set "PGPASSWORD=!DB_PASS!"
+
+    set "DB_EXISTS="
+    for /f "delims=" %%d in ('"!PSQL_BIN!" -U postgres -h localhost -tAc "SELECT 1 FROM pg_database WHERE datname = ''!DB_NAME!'';" 2^>nul') do set "DB_EXISTS=%%d"
+    set "DB_EXISTS=!DB_EXISTS: =!"
+    if not "!DB_EXISTS!"=="1" (
+        call :skip "Banco !DB_NAME! nao existe"
+        set "PGPASSWORD="
+        goto :final
+    )
 
     REM Terminate active connections
     "!PSQL_BIN!" -U postgres -h localhost -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '!DB_NAME!' AND pid ^<^> pg_backend_pid();" >> "!LOG!" 2>&1

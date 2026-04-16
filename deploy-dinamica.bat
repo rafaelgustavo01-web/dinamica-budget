@@ -759,13 +759,20 @@ if exist "!APP!\.env" (
 if "!NEEDS_ENV!"=="0" (
     call :skip ".env ja configurado"
 
+    set "RECONF=S"
+    set /p "RECONF=  Reconfigurar credenciais sensiveis (.env)? (S/N) [S]: "
+    if "!RECONF!"=="" set "RECONF=S"
+    if /i "!RECONF!"=="S" goto :env_interactive
+
     REM Valida campos obrigatorios e corrige senha placeholder automaticamente
-    powershell -NoProfile -Command ^
-      "$envFile='!APP!\.env'; $lines=Get-Content $envFile -Encoding UTF8; $changed=$false;" ^
+        powershell -NoProfile -Command ^
+            "$envFile='!APP!\.env'; $lines=Get-Content $envFile -Encoding UTF8; $changed=$false;" ^
       "$required=@('DATABASE_URL','SECRET_KEY','ROOT_USER_EMAIL','ROOT_USER_PASSWORD');" ^
       "foreach($k in $required){ $l=$lines|Where-Object{$_ -match '^'+$k+'='}; if(-not $l){ Write-Host '[WARN] Campo ausente no .env: '+$k } elseif(($l -split'=',2)[1] -match 'CHANGE_ME|your_password|placeholder'){ Write-Host '[WARN] '+$k+' tem valor placeholder.' } };" ^
       "$dbLine=$lines|Where-Object{$_ -match '^DATABASE_URL='};" ^
+            "$skLine=$lines|Where-Object{$_ -match '^SECRET_KEY='};" ^
       "if($dbLine -and $dbLine -match '://[^:]+:(password|your_password)@' -and '!PG_DEFAULT_PASS!'){ $newLine=$dbLine -replace ':(password|your_password)@',':!PG_DEFAULT_PASS!@'; $lines=$lines -replace [regex]::Escape($dbLine),$newLine; Set-Content $envFile $lines -Encoding UTF8; Write-Host '[OK] Senha placeholder corrigida no .env ($newLine)'; $changed=$true };" ^
+            "if($skLine -and $skLine -match 'CHANGE_ME|changeme|secret$|insecure$'){ $newSk='SECRET_KEY=' + [Guid]::NewGuid().ToString('N') + [Guid]::NewGuid().ToString('N'); $lines=$lines -replace [regex]::Escape($skLine),$newSk; Set-Content $envFile $lines -Encoding UTF8; Write-Host '[OK] SECRET_KEY insegura substituida automaticamente'; $changed=$true };" ^
       "if(-not $changed){ Write-Host '[OK] .env validado' }" >> "!LOG!" 2>&1
 
     REM Parse DB password — usa arquivo temp para preservar caracteres especiais (ex: ! no final)
@@ -778,6 +785,8 @@ if "!NEEDS_ENV!"=="0" (
     goto :etapa4
 )
 
+:env_interactive
+
 REM Copy template if .env doesn't exist
 if not exist "!APP!\.env" (
     copy /y "!APP!\.env.example" "!APP!\.env" >nul 2>&1
@@ -786,52 +795,73 @@ if not exist "!APP!\.env" (
 echo.
 echo   ============================================================
 echo    CONFIGURACAO INTERATIVA DO SISTEMA
-echo    Pressione ENTER para aceitar o valor padrao entre colchetes
+echo    Informe os dados obrigatorios (sem valores padrao fixos)
 echo   ============================================================
 echo.
 
 REM Prompt: PostgreSQL password
 :prompt_pg
 set "PG_PASS="
-REM Se PostgreSQL foi instalado automaticamente, usa a senha padrao do instalador
-if defined PG_DEFAULT_PASS (
-    set "PG_PASS=!PG_DEFAULT_PASS!"
-    call :info "Usando senha padrao do PostgreSQL instalado automaticamente."
-    call :info "Voce pode alterar depois via pgAdmin ou ALTER USER postgres PASSWORD '...';"
-) else (
-    set /p "PG_PASS=  Senha do usuario 'postgres' no PostgreSQL: "
-    if "!PG_PASS!"=="" (
-        echo   A senha nao pode ser vazia.
-        goto :prompt_pg
-    )
+set /p "PG_PASS=  Senha do usuario 'postgres' no PostgreSQL (obrigatorio): "
+if "!PG_PASS!"=="" (
+    echo   A senha nao pode ser vazia.
+    goto :prompt_pg
 )
 
 REM Prompt: Admin email
 set "ADMIN_EMAIL="
-set /p "ADMIN_EMAIL=  Email do administrador [admin@empresa.local]: "
-if "!ADMIN_EMAIL!"=="" set "ADMIN_EMAIL=admin@empresa.local"
+set /p "ADMIN_EMAIL=  Email do administrador (obrigatorio): "
+if "!ADMIN_EMAIL!"=="" (
+    echo   O email nao pode ser vazio.
+    goto :prompt_adm_email
+)
+goto :prompt_adm_pass
+
+:prompt_adm_email
+set /p "ADMIN_EMAIL=  Email do administrador (obrigatorio): "
+if "!ADMIN_EMAIL!"=="" (
+    echo   O email nao pode ser vazio.
+    goto :prompt_adm_email
+)
 
 REM Prompt: Admin password
-:prompt_adm
+:prompt_adm_pass
 set "ADMIN_PASS="
-set /p "ADMIN_PASS=  Senha do administrador (min 8 caracteres): "
+set /p "ADMIN_PASS=  Senha do administrador (min 8 caracteres, obrigatorio): "
 if "!ADMIN_PASS!"=="" (
     echo   A senha nao pode ser vazia.
-    goto :prompt_adm
+    goto :prompt_adm_pass
 )
 
 REM Prompt: Admin name
+:prompt_adm_name
 set "ADMIN_NAME="
-set /p "ADMIN_NAME=  Nome do administrador [Administrador]: "
-if "!ADMIN_NAME!"=="" set "ADMIN_NAME=Administrador"
+set /p "ADMIN_NAME=  Nome do administrador (obrigatorio): "
+if "!ADMIN_NAME!"=="" (
+    echo   O nome nao pode ser vazio.
+    goto :prompt_adm_name
+)
 
 REM Detect server IPs
 set "SERVER_IP=127.0.0.1"
 for /f "delims=" %%i in ('powershell -NoProfile -Command "Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -ne '127.0.0.1' -and $_.PrefixOrigin -ne 'WellKnown' } | Select-Object -First 1 -ExpandProperty IPAddress"') do set "SERVER_IP=%%i"
 
 set "ACCESS_HOST="
-set /p "ACCESS_HOST=  Hostname/IP para acesso dos usuarios [!SERVER_IP!]: "
-if "!ACCESS_HOST!"=="" set "ACCESS_HOST=!SERVER_IP!"
+set /p "ACCESS_HOST=  Hostname/IP para acesso dos usuarios (obrigatorio): "
+if "!ACCESS_HOST!"=="" (
+    echo   O hostname/IP nao pode ser vazio.
+    goto :prompt_access_host
+)
+goto :env_secret
+
+:prompt_access_host
+set /p "ACCESS_HOST=  Hostname/IP para acesso dos usuarios (obrigatorio): "
+if "!ACCESS_HOST!"=="" (
+    echo   O hostname/IP nao pode ser vazio.
+    goto :prompt_access_host
+)
+
+:env_secret
 
 REM Generate SECRET_KEY
 for /f "delims=" %%k in ('"!PY!" -c "import secrets; print(secrets.token_hex(32))"') do set "SECRET_KEY=%%k"
@@ -912,6 +942,22 @@ if not exist "!APP!\.env" (
 )
 
 call :ok ".env criado com SECRET_KEY gerada e credenciais configuradas"
+
+echo.
+echo   ============================================================
+echo    REVISAO DO .env GERADO
+echo    Confira todos os dados (inclusive credenciais) abaixo
+echo   ============================================================
+type "!APP!\.env"
+echo.
+
+set "CONFIRM_ENV="
+set /p "CONFIRM_ENV=  Confirmar .env e continuar deploy? (S/N): "
+if /i not "!CONFIRM_ENV!"=="S" (
+    call :warn "Deploy cancelado pelo usuario na confirmacao do .env"
+    goto :abort_cleanup
+)
+call :ok ".env confirmado pelo usuario"
 
 REM ─── ETAPA 4/11: POSTGRESQL BANCO E EXTENSOES ──────────────────────────────
 :etapa4
@@ -1272,9 +1318,9 @@ REM Atualizar hosts file
 set "HOSTS_FILE=%windir%\System32\drivers\etc\hosts"
 powershell -NoProfile -Command ^
     "$h=Get-Content '!HOSTS_FILE!' -Encoding ASCII -ErrorAction SilentlyContinue;" ^
-    "$h=$h | Where-Object { $_ -notmatch 'dinamica-budget' };" ^
-    "$h+=''; $h+='# Dinamica Budget - Sistema de Orcamentacao'; $h+='127.0.0.1       !HOSTNAME_URL!';" ^
-    "$h | Set-Content '!HOSTS_FILE!' -Encoding ASCII -Force" >> "!LOG!" 2>&1
+    "$h=$h | Where-Object { $_ -notmatch 'dinamica-budget\\.local' -and $_ -notmatch '# Dinamica Budget' };" ^
+    "if($h -and $h.Count -gt 0 -and $h[-1] -ne ''){$h += ''}; $h += '# Dinamica Budget'; $h += '127.0.0.1       !HOSTNAME_URL!';" ^
+    "$txt=[string]::Join([Environment]::NewLine,$h) + [Environment]::NewLine; [System.IO.File]::WriteAllText('!HOSTS_FILE!',$txt,[System.Text.Encoding]::ASCII); ipconfig /flushdns | Out-Null" >> "!LOG!" 2>&1
 call :ok "Hosts: !HOSTNAME_URL! -> 127.0.0.1"
 call :info "Em maquinas clientes adicionar: !SERVER_IP!       !HOSTNAME_URL!"
 
@@ -1288,6 +1334,15 @@ powershell -NoProfile -Command ^
     "if($old){ $f=$f -replace [regex]::Escape($old),$new } else { $f+=$new };" ^
     "$f | Set-Content '!APP!\.env' -Encoding UTF8" >> "!LOG!" 2>&1
 call :ok "CORS atualizado com IP (!SERVER_IP!) e hostname (!HOSTNAME_URL!)"
+
+REM Garantir estado final do IIS (evita redirecionamento indevido para localhost:8000)
+if exist "!APPCMD!" (
+    "!APPCMD!" set config -section:system.webServer/httpRedirect /enabled:"False" /destination:"" /exactDestination:"False" /httpResponseStatus:"Found" /childOnly:"False" /commit:apphost >nul 2>&1
+    "!APPCMD!" set config "!IIS_SITE!" -section:system.webServer/httpRedirect /enabled:"False" /destination:"" /exactDestination:"False" /httpResponseStatus:"Found" >nul 2>&1
+    "!APPCMD!" stop site "Default Web Site" >nul 2>&1
+    "!APPCMD!" start site "!IIS_SITE!" >nul 2>&1
+    call :ok "IIS validado (redirect desativado, site !IIS_SITE! ativo)"
+)
 
 REM ─── ETAPA 13/13: VALIDACAO ─────────────────────────────────────────────────
 call :step "13/13" "Validacao e Health Check"
@@ -1400,6 +1455,46 @@ echo !C!════════════════════════
 
 endlocal
 exit /b 0
+
+REM ═══════════════════════════════════════════════════════════════════════════
+:abort_cleanup
+REM ═══════════════════════════════════════════════════════════════════════════
+echo.
+echo   !Y!Iniciando rollback do deploy (limpeza do que ja foi aplicado)...!N!
+>> "!LOG!" echo [ROLLBACK] Inicio do rollback por cancelamento na confirmacao do .env
+
+sc query "!SVC!" >nul 2>&1
+if not errorlevel 1 (
+    if exist "C:\Windows\System32\nssm.exe" (
+        "C:\Windows\System32\nssm.exe" stop "!SVC!" >nul 2>&1
+        "C:\Windows\System32\nssm.exe" remove "!SVC!" confirm >nul 2>&1
+    )
+    sc stop "!SVC!" >nul 2>&1
+    sc delete "!SVC!" >nul 2>&1
+)
+
+if exist "!APPCMD!" (
+    "!APPCMD!" stop site "!IIS_SITE!" >nul 2>&1
+    "!APPCMD!" delete site "!IIS_SITE!" >nul 2>&1
+    "!APPCMD!" stop apppool "!IIS_POOL!" >nul 2>&1
+    "!APPCMD!" delete apppool "!IIS_POOL!" >nul 2>&1
+)
+
+netsh advfirewall firewall delete rule name="Dinamica Budget HTTP" >nul 2>&1
+netsh advfirewall firewall delete rule name="Dinamica Budget HTTPS" >nul 2>&1
+
+set "HOSTS_FILE=%windir%\System32\drivers\etc\hosts"
+powershell -NoProfile -Command ^
+    "$h=Get-Content '!HOSTS_FILE!' -Encoding ASCII -ErrorAction SilentlyContinue;" ^
+    "$h=$h | Where-Object { $_ -notmatch 'dinamica-budget\\.local' -and $_ -notmatch '# Dinamica Budget' };" ^
+    "$txt=''; if($h -and $h.Count -gt 0){$txt=[string]::Join([Environment]::NewLine,$h) + [Environment]::NewLine}; [System.IO.File]::WriteAllText('!HOSTS_FILE!',$txt,[System.Text.Encoding]::ASCII); ipconfig /flushdns | Out-Null" >> "!LOG!" 2>&1
+
+if exist "!IIS_ROOT!" rmdir /s /q "!IIS_ROOT!" >nul 2>&1
+if exist "!APP!" rmdir /s /q "!APP!" >nul 2>&1
+
+echo   !Y!Rollback concluido. Deploy sera interrompido.!N!
+>> "!LOG!" echo [ROLLBACK] Rollback concluido com sucesso
+goto :abort
 
 REM ═══════════════════════════════════════════════════════════════════════════
 :abort
