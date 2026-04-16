@@ -61,7 +61,6 @@ A solução é totalmente **on-premise**: nenhum dado sai da rede interna. O mod
 | Serviço Windows | NSSM (Non-Sucking Service Manager) |
 | Servidor Web | IIS 10 + ARR 3.0 + URL Rewrite 2.1 (reverse proxy) |
 | Frontend | React + Vite 6 + TypeScript (build estático servido pelo IIS) |
-| Container | Docker + Docker Compose (dev/staging) |
 | Deploy | `deploy-dinamica.bat` — instalador nativo Windows Server |
 | Dev DB (CLI) | pgcli 4.4.0 — autocomplete, syntax highlight, aliases |
 | Dev DB (GUI) | HeidiSQL — nativo Win32, leve, open-source (GPL) |
@@ -174,7 +173,7 @@ dinamica-budget/
 │   └── 006_consolidation_fixes.py      # usuario_id FK historico + auditoria_log FKs
 ├── requirements.txt
 ├── .env.example
-└── docker-compose.yml
+└── deploy-dinamica.bat
 ```
 
 ---
@@ -741,17 +740,12 @@ pip install -r requirements.txt
 # pgcli é instalado automaticamente junto com as demais dependências
 ```
 
-### 2. Banco de Dados
+### 2. Banco de Dados (nativo)
 
-**Opção A — PostgreSQL nativo (recomendado para Windows):**
+**PostgreSQL nativo (Windows Server):**
 ```bash
 # PostgreSQL 16 + pgvector: instale conforme docs/Manual_Instalacao_Dinamica_Budget.docx
 # O serviço Windows já sobe automaticamente no boot
-```
-
-**Opção B — Docker:**
-```bash
-docker compose up db -d
 ```
 
 ### 3. Variáveis de Ambiente
@@ -817,7 +811,7 @@ REM Clique com botão direito -> "Executar como Administrador"
 deploy-dinamica.bat
 ```
 
-O script solicita apenas a **senha do PostgreSQL** e executa as 11 etapas automaticamente:
+O script solicita as credenciais necessárias no modo interativo e executa as **13 etapas** automaticamente:
 
 | Etapa | O que faz |
 |---|---|
@@ -829,10 +823,34 @@ O script solicita apenas a **senha do PostgreSQL** e executa as 11 etapas automa
 | 5 — Alembic | `alembic upgrade head` (migrations 001–011) |
 | 6 — Modelo ML | Verifica/baixa `all-MiniLM-L6-v2` para cache local |
 | 7 — Frontend | `npm install` + `npm run build` para `C:\inetpub\DinamicaBudget` |
-| 8 — Serviço NSSM | Cria/atualiza serviço `DinamicaBudgetAPI` (uvicorn, auto-start) |
-| 9 — IIS | Cria site `DinamicaBudget` na porta 80 com Virtual Directory |
+| 8 — IIS | Cria e valida site/pool/bindings para frontend + reverse proxy |
+| 9 — Serviço NSSM | Cria/atualiza serviço `DinamicaBudgetAPI` (uvicorn, auto-start) |
 | 10 — Firewall | Abre portas 80, 443, 8000 |
-| 11 — Verificação | Testa `/health`, relata status final |
+| 11 — Hostname | Configura `dinamica-budget.local` no IIS e hosts local |
+| 12 — CORS | Atualiza `ALLOWED_ORIGINS` no `.env` |
+| 13 — Validação resiliente | Testa API/IIS/SPA/login e roda autocorreções até estabilizar |
+
+### Autorrecuperação no final do deploy
+
+Na etapa 13, o instalador executa um ciclo de validação e correção automática (até 3 rodadas):
+
+1. Testa API local (`/health`), proxy IIS, URL amigável, deep-link SPA (`/login`) e endpoint de login (`/api/v1/auth/login`)
+2. Se houver falha, aplica autocorreções encadeadas:
+  - `scripts/enforce-dinamica-site-admin.ps1`
+  - `scripts/fix-hosts-format-admin.ps1`
+  - `scripts/fix-spa-rewrite-admin.ps1`
+  - `scripts/fix-auth-login-admin.ps1`
+3. Retesta automaticamente até estabilizar ou atingir o limite de tentativas
+
+### Gate obrigatório de finalização
+
+O deploy só finaliza com sucesso quando todos os gates abaixo passam:
+
+1. Stack estável (API + IIS + URL amigável + SPA + login)
+2. Validação de todas as rotas da API via OpenAPI sem falhas críticas (`5xx`/conexão)
+3. Auditoria de observabilidade completa (serviços, saúde, logs e sinais de falha)
+
+Se qualquer gate falhar, o deploy é interrompido com `exit code 1`.
 
 ### pgvector em Windows Server
 
@@ -896,6 +914,54 @@ Verifica e reporta **[OK]** / **[FAIL]** / **[WARN]** para:
 | Disco e memória | Espaço livre em C:, RAM livre/total |
 | Diretórios | Deploy dir, venv, ml_models, IIS webroot |
 | Log da API | Últimas 8 linhas de `uvicorn.log` |
+
+### `scripts/status-completo-admin.ps1` — Status completo (infra + app + IA)
+
+Painel consolidado para operação, com foco em produção Windows Server:
+
+1. Serviços essenciais (`postgresql-x64-16`, `DinamicaBudgetAPI`, `W3SVC`)
+2. Portas críticas (`80/443/8000/5432`)
+3. Saúde da API (`/health`)
+4. Frontend e deep-link SPA (`/` e `/login`)
+5. Presença do modelo de IA
+6. Tail dos logs principais
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\status-completo-admin.ps1
+```
+
+### `scripts/validate-all-routes-admin.ps1` — Validação completa de rotas
+
+Lê `openapi.json`, percorre todas as operações e valida alcançabilidade de cada rota.
+Falha apenas em erro crítico de infraestrutura/API (`5xx` ou falha de conexão).
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\validate-all-routes-admin.ps1
+```
+
+Relatórios gerados:
+
+1. `logs/api-routes-validation.log`
+2. `logs/api-routes-validation.json`
+
+### `scripts/observability-audit-admin.ps1` — Auditoria de observabilidade
+
+Executa auditoria completa do sistema com verificação de:
+
+1. Serviços e saúde
+2. Frontend/IIS
+3. Reachability do endpoint de login
+4. Validação de todas as rotas (integra `validate-all-routes-admin.ps1`)
+5. Sinais de falha em logs recentes
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\observability-audit-admin.ps1
+```
+
+Relatórios gerados:
+
+1. `logs/observability-audit.log`
+2. `logs/observability-audit.json`
 
 ### `scripts/install-pgvector.ps1` — Instalação do pgvector
 

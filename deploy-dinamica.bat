@@ -32,6 +32,7 @@ set "PG_SVC=postgresql-x64-16"
 set "DB_NAME=dinamica_budget"
 set "APPCMD=%windir%\System32\inetsrv\appcmd.exe"
 set "HOSTNAME_URL=dinamica-budget.local"
+set "MAX_VALIDATE_ATTEMPTS=3"
 
 REM ── LOGGING ─────────────────────────────────────────────────────────────────
 set "LOGD=!SRC!\logs"
@@ -1371,6 +1372,11 @@ if exist "!APPCMD!" (
 
 REM ─── ETAPA 13/13: VALIDACAO ─────────────────────────────────────────────────
 call :step "13/13" "Validacao e Health Check"
+set /a "VALIDATION_ATTEMPT=0"
+
+:validation_retry
+set /a "VALIDATION_ATTEMPT+=1"
+call :info "Rodada de validacao/autocorrecao !VALIDATION_ATTEMPT!/!MAX_VALIDATE_ATTEMPTS!"
 
 REM Health check — API direct (wait up to 60s)
 call :info "Aguardando API iniciar (ate 60s)..."
@@ -1414,8 +1420,193 @@ REM Hostname check
 powershell -NoProfile -Command "try{$r=Invoke-WebRequest -Uri 'http://!HOSTNAME_URL!/' -TimeoutSec 5 -UseBasicParsing; if($r.StatusCode -eq 200){exit 0}else{exit 1}}catch{exit 1}" >nul 2>&1
 if errorlevel 1 (
     call :warn "URL amigavel nao respondeu: http://!HOSTNAME_URL!/"
+
+    REM Auto-correct hostname routing if friendly URL fails at final validation
+    set "URL_FIX_PS1=!SRC!\scripts\enforce-dinamica-site-admin.ps1"
+    if not exist "!URL_FIX_PS1!" set "URL_FIX_PS1=!APP!\scripts\enforce-dinamica-site-admin.ps1"
+    set "HOSTS_FIX_PS1=!SRC!\scripts\fix-hosts-format-admin.ps1"
+    if not exist "!HOSTS_FIX_PS1!" set "HOSTS_FIX_PS1=!APP!\scripts\fix-hosts-format-admin.ps1"
+    set "URL_RECOVERED=0"
+
+    if exist "!URL_FIX_PS1!" (
+        call :info "Aplicando autocorrecao da URL amigavel..."
+        powershell -NoProfile -ExecutionPolicy Bypass -File "!URL_FIX_PS1!" >> "!LOG!" 2>&1
+        if errorlevel 1 (
+            call :warn "Script de autocorrecao da URL retornou erro."
+            call :pend "Executar manualmente: powershell -ExecutionPolicy Bypass -File '!URL_FIX_PS1!'"
+        ) else (
+            call :info "Autocorrecao aplicada. Retestando URL amigavel..."
+            powershell -NoProfile -Command "$ok=$false; 1..8 | ForEach-Object { try{$r=Invoke-WebRequest -Uri 'http://!HOSTNAME_URL!/' -TimeoutSec 4 -UseBasicParsing; if($r.StatusCode -eq 200){$ok=$true; break} } catch {}; Start-Sleep -Seconds 2 }; if($ok){exit 0}else{exit 1}" >nul 2>&1
+            if errorlevel 1 (
+                call :warn "URL amigavel ainda falhou apos autocorrecao IIS: http://!HOSTNAME_URL!/"
+            ) else (
+                set "URL_RECOVERED=1"
+                call :ok "URL amigavel recuperada apos autocorrecao IIS: http://!HOSTNAME_URL!/"
+            )
+        )
+    ) else (
+        call :warn "Script de autocorrecao IIS nao encontrado."
+        call :pend "Restaurar scripts\enforce-dinamica-site-admin.ps1 e reexecutar deploy"
+    )
+
+    if /i not "!URL_RECOVERED!"=="1" (
+        if exist "!HOSTS_FIX_PS1!" (
+            call :info "Aplicando correcao de formato do hosts e retestando URL amigavel..."
+            powershell -NoProfile -ExecutionPolicy Bypass -File "!HOSTS_FIX_PS1!" >> "!LOG!" 2>&1
+            powershell -NoProfile -Command "$ok=$false; 1..6 | ForEach-Object { try{$r=Invoke-WebRequest -Uri 'http://!HOSTNAME_URL!/' -TimeoutSec 4 -UseBasicParsing; if($r.StatusCode -eq 200){$ok=$true; break} } catch {}; Start-Sleep -Seconds 2 }; if($ok){exit 0}else{exit 1}" >nul 2>&1
+            if errorlevel 1 (
+                call :warn "URL amigavel ainda falhou apos correcao do hosts: http://!HOSTNAME_URL!/"
+                call :pend "Verificar IIS/hosts e executar: powershell -ExecutionPolicy Bypass -File '!URL_FIX_PS1!'"
+                call :pend "Executar formatacao do hosts: powershell -ExecutionPolicy Bypass -File '!HOSTS_FIX_PS1!'"
+            ) else (
+                set "URL_RECOVERED=1"
+                call :ok "URL amigavel recuperada apos correcao do hosts: http://!HOSTNAME_URL!/"
+            )
+        ) else (
+            call :warn "Script de correcao de hosts nao encontrado."
+            call :pend "Restaurar scripts\fix-hosts-format-admin.ps1 e reexecutar deploy"
+        )
+    )
 ) else (
     call :ok "URL amigavel funcionando: http://!HOSTNAME_URL!/"
+)
+
+REM SPA deep-link check (refresh em /login deve retornar index.html)
+powershell -NoProfile -Command "try{$r=Invoke-WebRequest -Uri 'http://!HOSTNAME_URL!/login' -TimeoutSec 6 -UseBasicParsing; if($r.StatusCode -eq 200){exit 0}else{exit 1}}catch{exit 1}" >nul 2>&1
+if errorlevel 1 (
+    call :warn "SPA deep-link falhou em http://!HOSTNAME_URL!/login (refresh retorna 404)"
+    set "SPA_FIX_PS1=!SRC!\scripts\fix-spa-rewrite-admin.ps1"
+    if not exist "!SPA_FIX_PS1!" set "SPA_FIX_PS1=!APP!\scripts\fix-spa-rewrite-admin.ps1"
+
+    if exist "!SPA_FIX_PS1!" (
+        call :info "Aplicando correcao SPA Rewrite no IIS..."
+        powershell -NoProfile -ExecutionPolicy Bypass -File "!SPA_FIX_PS1!" >> "!LOG!" 2>&1
+        if errorlevel 1 (
+            call :warn "Correcao SPA Rewrite falhou."
+            call :pend "Executar manualmente: powershell -ExecutionPolicy Bypass -File '!SPA_FIX_PS1!'"
+        ) else (
+            call :info "Correcao SPA aplicada. Retestando /login..."
+            powershell -NoProfile -Command "$ok=$false; 1..6 | ForEach-Object { try{$r=Invoke-WebRequest -Uri 'http://!HOSTNAME_URL!/login' -TimeoutSec 4 -UseBasicParsing; if($r.StatusCode -eq 200){$ok=$true; break} } catch {}; Start-Sleep -Seconds 2 }; if($ok){exit 0}else{exit 1}" >nul 2>&1
+            if errorlevel 1 (
+                call :warn "SPA deep-link ainda falhou apos correcao: http://!HOSTNAME_URL!/login"
+                call :pend "Verificar web.config em !IIS_ROOT! e modulo URL Rewrite no IIS"
+            ) else (
+                call :ok "SPA deep-link funcionando: http://!HOSTNAME_URL!/login"
+            )
+        )
+    ) else (
+        call :warn "Script de correcao SPA nao encontrado."
+        call :pend "Restaurar scripts\fix-spa-rewrite-admin.ps1 e reexecutar deploy"
+    )
+) else (
+    call :ok "SPA deep-link funcionando: http://!HOSTNAME_URL!/login"
+)
+
+REM Auth/login stack check (API proxy + admin user + service health)
+set "AUTH_FIX_PS1=!SRC!\scripts\fix-auth-login-admin.ps1"
+if not exist "!AUTH_FIX_PS1!" set "AUTH_FIX_PS1=!APP!\scripts\fix-auth-login-admin.ps1"
+if exist "!AUTH_FIX_PS1!" (
+    call :info "Validando login (admin/banco/proxy) e aplicando autocorrecao se necessario..."
+    powershell -NoProfile -ExecutionPolicy Bypass -File "!AUTH_FIX_PS1!" >> "!LOG!" 2>&1
+    if errorlevel 1 (
+        call :warn "Validacao/correcao de login encontrou problema."
+        call :pend "Revisar log: !SRC!\logs\fix-auth-login-admin.log"
+        call :pend "Se necessario, definir ROOT_USER_EMAIL/ROOT_USER_PASSWORD no .env e reexecutar deploy"
+    ) else (
+        call :ok "Login validado (admin no banco + endpoint /api/v1/auth/login alcancavel)"
+    )
+) else (
+    call :warn "Script de validacao de login nao encontrado."
+    call :pend "Restaurar scripts\fix-auth-login-admin.ps1 e reexecutar deploy"
+)
+
+REM Consolidated stack gate (API + IIS + hostname + SPA + auth endpoint)
+set "STACK_HEALTHY=0"
+powershell -NoProfile -Command ^
+    "$ok=$true;" ^
+    "try{$h=Invoke-RestMethod -Uri 'http://127.0.0.1:!API_PORT!/health' -TimeoutSec 4; if($h.status -ne 'ok' -and $h.status -ne 'degraded'){$ok=$false}; if($h.database_connected -ne $true){$ok=$false}}catch{$ok=$false};" ^
+    "try{$r=Invoke-WebRequest -Uri 'http://!HOSTNAME_URL!/' -TimeoutSec 4 -UseBasicParsing; if($r.StatusCode -ne 200){$ok=$false}}catch{$ok=$false};" ^
+    "try{$r=Invoke-WebRequest -Uri 'http://!HOSTNAME_URL!/login' -TimeoutSec 4 -UseBasicParsing; if($r.StatusCode -ne 200){$ok=$false}}catch{$ok=$false};" ^
+    "$payload='{\"email\":\"invalid@example.com\",\"password\":\"invalid123\"}'; $code=0;" ^
+    "try{$lr=Invoke-WebRequest -Uri 'http://!HOSTNAME_URL!/api/v1/auth/login' -Method Post -ContentType 'application/json' -Body $payload -TimeoutSec 6 -UseBasicParsing; $code=[int]$lr.StatusCode}" ^
+    "catch [System.Net.WebException]{ if($_.Exception.Response){$code=[int]$_.Exception.Response.StatusCode}else{$code=0} }" ^
+    "catch{$code=0};" ^
+    "if($code -eq 0 -or $code -eq 502 -or $code -eq 404){$ok=$false};" ^
+    "if($ok){exit 0}else{exit 1}" >nul 2>&1
+
+if errorlevel 1 (
+    call :warn "Validacao consolidada falhou nesta rodada."
+    if !VALIDATION_ATTEMPT! geq !MAX_VALIDATE_ATTEMPTS! (
+        call :warn "Limite de tentativas automaticas atingido (!MAX_VALIDATE_ATTEMPTS!)."
+        call :pend "Verificar logs de autocorrecao: !SRC!\logs\fix-auth-login-admin.log e !LOG!"
+        call :pend "Executar manualmente: powershell -ExecutionPolicy Bypass -File '!SRC!\scripts\recover-deploy-admin.ps1'"
+    ) else (
+        call :info "Executando ciclo de autorrecuperacao completo e repetindo validacao..."
+        set "AUTO_URL_FIX=!SRC!\scripts\enforce-dinamica-site-admin.ps1"
+        if not exist "!AUTO_URL_FIX!" set "AUTO_URL_FIX=!APP!\scripts\enforce-dinamica-site-admin.ps1"
+        if exist "!AUTO_URL_FIX!" powershell -NoProfile -ExecutionPolicy Bypass -File "!AUTO_URL_FIX!" >> "!LOG!" 2>&1
+
+        set "AUTO_HOSTS_FIX=!SRC!\scripts\fix-hosts-format-admin.ps1"
+        if not exist "!AUTO_HOSTS_FIX!" set "AUTO_HOSTS_FIX=!APP!\scripts\fix-hosts-format-admin.ps1"
+        if exist "!AUTO_HOSTS_FIX!" powershell -NoProfile -ExecutionPolicy Bypass -File "!AUTO_HOSTS_FIX!" >> "!LOG!" 2>&1
+
+        set "AUTO_SPA_FIX=!SRC!\scripts\fix-spa-rewrite-admin.ps1"
+        if not exist "!AUTO_SPA_FIX!" set "AUTO_SPA_FIX=!APP!\scripts\fix-spa-rewrite-admin.ps1"
+        if exist "!AUTO_SPA_FIX!" powershell -NoProfile -ExecutionPolicy Bypass -File "!AUTO_SPA_FIX!" >> "!LOG!" 2>&1
+
+        set "AUTO_AUTH_FIX=!SRC!\scripts\fix-auth-login-admin.ps1"
+        if not exist "!AUTO_AUTH_FIX!" set "AUTO_AUTH_FIX=!APP!\scripts\fix-auth-login-admin.ps1"
+        if exist "!AUTO_AUTH_FIX!" powershell -NoProfile -ExecutionPolicy Bypass -File "!AUTO_AUTH_FIX!" >> "!LOG!" 2>&1
+
+        nssm restart !SVC! >nul 2>&1
+        goto :validation_retry
+    )
+) else (
+    set "STACK_HEALTHY=1"
+    call :ok "Validacao consolidada final: stack estavel (API/IIS/SPA/Login)"
+)
+
+if /i not "!STACK_HEALTHY!"=="1" (
+    call :warn "Stack nao estabilizou apos tentativas automaticas. Deploy sera interrompido."
+    goto :abort
+)
+
+REM OpenAPI full route validation (fail deployment on critical failures)
+set "ROUTES_FIX_PS1=!SRC!\scripts\validate-all-routes-admin.ps1"
+if not exist "!ROUTES_FIX_PS1!" set "ROUTES_FIX_PS1=!APP!\scripts\validate-all-routes-admin.ps1"
+if exist "!ROUTES_FIX_PS1!" (
+    call :info "Validando todas as rotas da API via OpenAPI (sem aceitar falhas 5xx/conexao)..."
+    powershell -NoProfile -ExecutionPolicy Bypass -File "!ROUTES_FIX_PS1!" >> "!LOG!" 2>&1
+    if errorlevel 1 (
+        call :warn "Falha na validacao completa de rotas da API."
+        call :pend "Revisar logs: !SRC!\logs\api-routes-validation.log e api-routes-validation.json"
+        goto :abort
+    ) else (
+        call :ok "Todas as rotas da API validadas (OpenAPI)"
+    )
+) else (
+    call :warn "Script de validacao completa de rotas nao encontrado."
+    call :pend "Restaurar scripts\validate-all-routes-admin.ps1"
+    goto :abort
+)
+
+REM Full observability audit gate
+set "OBS_FIX_PS1=!SRC!\scripts\observability-audit-admin.ps1"
+if not exist "!OBS_FIX_PS1!" set "OBS_FIX_PS1=!APP!\scripts\observability-audit-admin.ps1"
+if exist "!OBS_FIX_PS1!" (
+    call :info "Executando auditoria de observabilidade completa (saude + falhas + logs)..."
+    powershell -NoProfile -ExecutionPolicy Bypass -File "!OBS_FIX_PS1!" >> "!LOG!" 2>&1
+    if errorlevel 1 (
+        call :warn "Auditoria de observabilidade reprovada. Deploy sera interrompido."
+        call :pend "Revisar logs: !SRC!\logs\observability-audit.log e observability-audit.json"
+        goto :abort
+    ) else (
+        call :ok "Observabilidade completa validada"
+    )
+) else (
+    call :warn "Script de observabilidade completa nao encontrado."
+    call :pend "Restaurar scripts\observability-audit-admin.ps1"
+    goto :abort
 )
 
 REM IP check
