@@ -24,8 +24,32 @@ import { ConfirmationDialog } from '../../shared/components/ConfirmationDialog';
 
 const searchSchema = z.object({
   texto_busca: z.string().min(2, 'Informe ao menos 2 caracteres.').max(500),
-  limite_resultados: z.coerce.number().min(1).max(50),
-  threshold_score: z.coerce.number().min(0).max(1),
+  limite_resultados: z.preprocess(
+    (value) => {
+      if (typeof value === 'number') {
+        return value;
+      }
+      if (typeof value === 'string') {
+        const normalized = value.trim();
+        return normalized ? Number(normalized) : Number.NaN;
+      }
+      return Number.NaN;
+    },
+    z.number().min(1).max(50),
+  ),
+  threshold_score: z.preprocess(
+    (value) => {
+      if (typeof value === 'number') {
+        return value;
+      }
+      if (typeof value === 'string') {
+        const normalized = value.trim().replace(',', '.');
+        return normalized ? Number(normalized) : Number.NaN;
+      }
+      return Number.NaN;
+    },
+    z.number().min(0).max(1),
+  ),
 });
 
 type SearchFormInput = z.input<typeof searchSchema>;
@@ -54,7 +78,7 @@ export function SearchPage() {
   const searchMutation = useMutation({
     mutationFn: (values: SearchFormOutput) =>
       searchApi.buscar({
-        cliente_id: selectedClientId ?? undefined,
+        cliente_id: selectedClientId || undefined,
         ...values,
       }),
     onSuccess: (data) => {
@@ -119,7 +143,7 @@ export function SearchPage() {
                 type="number"
                 error={Boolean(errors.limite_resultados)}
                 helperText={errors.limite_resultados?.message}
-                {...register('limite_resultados', { valueAsNumber: true })}
+                {...register('limite_resultados')}
               />
               <TextField
                 label="Threshold"
@@ -127,7 +151,7 @@ export function SearchPage() {
                 inputProps={{ step: '0.01', min: '0', max: '1' }}
                 error={Boolean(errors.threshold_score)}
                 helperText={errors.threshold_score?.message}
-                {...register('threshold_score', { valueAsNumber: true })}
+                {...register('threshold_score')}
               />
             </Stack>
 

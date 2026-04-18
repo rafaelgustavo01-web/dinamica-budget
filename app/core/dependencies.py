@@ -57,6 +57,35 @@ async def get_current_admin_user(current_user=Depends(get_current_active_user)):
     return current_user
 
 
+async def get_current_catalog_import_user(
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Allows catalog import for:
+      1) platform admins (is_admin=True)
+      2) users that hold ADMIN perfil on at least one client
+    """
+    if current_user.is_admin:
+        return current_user
+
+    from app.models.usuario import UsuarioPerfil
+
+    result = await db.execute(
+        select(UsuarioPerfil.usuario_id).where(
+            UsuarioPerfil.usuario_id == current_user.id,
+            UsuarioPerfil.perfil == "ADMIN",
+        ).limit(1)
+    )
+    has_admin_profile = result.scalar_one_or_none() is not None
+    if not has_admin_profile:
+        raise AuthorizationError(
+            "Acesso restrito: atribua perfil ADMIN em ao menos um cliente para executar carga."
+        )
+
+    return current_user
+
+
 async def _get_perfis_para_cliente(
     usuario_id: UUID,
     cliente_id: UUID,

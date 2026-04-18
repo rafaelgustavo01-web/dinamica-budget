@@ -11,10 +11,16 @@ import {
   ProtectedRoute,
   PublicOnlyRoute,
 } from '../shared/components/navigation/ProtectedRoute';
+import { hasAdminPanelAccess } from '../shared/utils/permissions';
 
 const AdminPage = lazy(() =>
   import('../features/admin/AdminPage').then((module) => ({
     default: module.AdminPage,
+  })),
+);
+const UploadTcpoPage = lazy(() =>
+  import('../features/admin/UploadTcpoPage').then((module) => ({
+    default: module.UploadTcpoPage,
   })),
 );
 const AssociationsPage = lazy(() =>
@@ -77,6 +83,11 @@ const UsersPage = lazy(() =>
     default: module.UsersPage,
   })),
 );
+const PcTabelasPage = lazy(() =>
+  import('../features/pc-tabelas/PcTabelasPage').then((module) => ({
+    default: module.PcTabelasPage,
+  })),
+);
 
 function RouteFallback() {
   return (
@@ -105,7 +116,7 @@ function AuthenticatedApp() {
 function AdminOnlyLayout() {
   return (
     <PermissionGuard
-      isAllowed={(user) => Boolean(user?.is_admin)}
+      isAllowed={(user) => hasAdminPanelAccess(user)}
       redirectTo="/dashboard"
     >
       <Outlet />
@@ -135,10 +146,13 @@ export function AppRouter() {
           <Route path="/composicoes" element={<CompositionsPage />} />
           <Route path="/associacoes" element={<AssociationsPage />} />
           <Route path="/relatorios" element={<ReportsPage />} />
+          <Route path="/pc-tabelas" element={<PcTabelasPage />} />
           <Route path="/perfil" element={<ProfilePage />} />
 
           <Route element={<AdminOnlyLayout />}>
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/upload" element={<UploadTcpoPage />} />
+            <Route path="/governanca/upload-tcpo" element={<Navigate to="/upload" replace />} />
             <Route path="/usuarios" element={<UsersPage />} />
             <Route path="/clientes" element={<ClientsPage />} />
             <Route path="/permissoes" element={<PermissionsPage />} />

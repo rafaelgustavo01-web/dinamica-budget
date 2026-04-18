@@ -1,9 +1,18 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: EmailStr | None = None
+    username: EmailStr | None = None
     password: str
+
+    @model_validator(mode="after")
+    def normalize_login_identifier(self):
+        if self.email is None and self.username is not None:
+            self.email = self.username
+        if self.email is None:
+            raise ValueError("Informe email (ou username) para login.")
+        return self
 
 
 class TokenResponse(BaseModel):

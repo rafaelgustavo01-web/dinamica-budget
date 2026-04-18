@@ -6,13 +6,16 @@ import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
+import PublishOutlinedIcon from '@mui/icons-material/PublishOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import SourceOutlinedIcon from '@mui/icons-material/SourceOutlined';
 import SpaceDashboardOutlinedIcon from '@mui/icons-material/SpaceDashboardOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
+import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import type { ReactNode } from 'react';
 
 import type { MeResponse } from '../../types/contracts/auth';
+import { hasAdminPanelAccess } from '../../utils/permissions';
 
 export type NavigationStatus = 'active' | 'partial' | 'missing';
 
@@ -90,7 +93,23 @@ export const navigationItems: NavigationItem[] = [
     group: 'Governança',
     icon: <AdminPanelSettingsOutlinedIcon fontSize="small" />,
     status: 'active',
-    visible: (user) => Boolean(user?.is_admin),
+    visible: (user) => hasAdminPanelAccess(user),
+  },
+  {
+    label: 'PC Tabelas',
+    path: '/pc-tabelas',
+    group: 'Operação',
+    icon: <TableChartOutlinedIcon fontSize="small" />,
+    status: 'active',
+    visible: () => true,
+  },
+  {
+    label: 'Upload',
+    path: '/upload',
+    group: 'Governança',
+    icon: <PublishOutlinedIcon fontSize="small" />,
+    status: 'active',
+    visible: (user) => hasAdminPanelAccess(user),
   },
   {
     label: 'Usuários',
@@ -98,7 +117,7 @@ export const navigationItems: NavigationItem[] = [
     group: 'Governança',
     icon: <GroupOutlinedIcon fontSize="small" />,
     status: 'active',
-    visible: (user) => Boolean(user?.is_admin),
+    visible: (user) => hasAdminPanelAccess(user),
   },
   {
     label: 'Clientes',
@@ -106,7 +125,7 @@ export const navigationItems: NavigationItem[] = [
     group: 'Governança',
     icon: <StorefrontOutlinedIcon fontSize="small" />,
     status: 'active',
-    visible: (user) => Boolean(user?.is_admin),
+    visible: (user) => hasAdminPanelAccess(user),
   },
   {
     label: 'Permissões',
@@ -115,7 +134,7 @@ export const navigationItems: NavigationItem[] = [
     icon: <ManageAccountsOutlinedIcon fontSize="small" />,
     status: 'missing',
     showInMenu: false,
-    visible: (user) => Boolean(user?.is_admin),
+    visible: (user) => hasAdminPanelAccess(user),
   },
   {
     label: 'Meu Perfil',

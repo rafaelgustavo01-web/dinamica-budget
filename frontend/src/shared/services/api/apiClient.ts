@@ -78,6 +78,11 @@ async function refreshAccessToken() {
 apiClient.interceptors.request.use((config) => {
   const currentSession = readSessionTokens();
 
+  // Let the browser set multipart boundaries for uploads.
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
+
   if (currentSession?.accessToken) {
     config.headers.Authorization = `Bearer ${currentSession.accessToken}`;
   }
@@ -128,12 +133,39 @@ function isApiErrorPayload(data: unknown): data is ApiErrorPayload {
   );
 }
 
+function extractFastApiValidationMessage(data: unknown): string | null {
+  if (!data || typeof data !== 'object' || !('detail' in data)) {
+    return null;
+  }
+
+  const detail = (data as { detail?: unknown }).detail;
+  if (typeof detail === 'string' && detail) {
+    return detail;
+  }
+
+  if (Array.isArray(detail) && detail.length) {
+    const first = detail[0];
+    if (first && typeof first === 'object' && 'msg' in first) {
+      const message = (first as { msg?: unknown }).msg;
+      if (typeof message === 'string' && message) {
+        return message;
+      }
+    }
+  }
+
+  return null;
+}
+
 export function extractApiErrorMessage(
   error: unknown,
   fallback = 'Falha ao processar a operação.',
 ) {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data;
+    const validationMessage = extractFastApiValidationMessage(data);
+    if (validationMessage) {
+      return validationMessage;
+    }
     if (isApiErrorPayload(data)) {
       return data.error.message;
     }
