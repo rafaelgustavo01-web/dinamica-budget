@@ -78,6 +78,11 @@ const ServicesPage = lazy(() =>
     default: module.ServicesPage,
   })),
 );
+const ExtractionPage = lazy(() =>
+  import('../features/extraction/ExtractionPage').then((module) => ({
+    default: module.ExtractionPage,
+  })),
+);
 const UsersPage = lazy(() =>
   import('../features/users/UsersPage').then((module) => ({
     default: module.UsersPage,
@@ -146,7 +151,11 @@ export function AppRouter() {
           <Route path="/composicoes" element={<CompositionsPage />} />
           <Route path="/associacoes" element={<AssociationsPage />} />
           <Route path="/relatorios" element={<ReportsPage />} />
+<<<<<<< HEAD
+          <Route path="/extracao" element={<ExtractionPage />} />
+=======
           <Route path="/pc-tabelas" element={<PcTabelasPage />} />
+>>>>>>> 5f0973541797732f99516ee792729f7f3cef10c2
           <Route path="/perfil" element={<ProfilePage />} />
 
           <Route element={<AdminOnlyLayout />}>

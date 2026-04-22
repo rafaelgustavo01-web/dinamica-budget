@@ -12,10 +12,11 @@ EMBEDDING_DIM = 384  # all-MiniLM-L6-v2
 
 class TcpoEmbedding(Base):
     __tablename__ = "tcpo_embeddings"
+    __table_args__ = {"schema": "referencia"}
 
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("servico_tcpo.id", ondelete="CASCADE"),
+        ForeignKey("referencia.base_tcpo.id", ondelete="CASCADE"),
         primary_key=True,
     )
     vetor: Mapped[list[float] | None] = mapped_column(Vector(EMBEDDING_DIM), nullable=True)
@@ -24,6 +25,6 @@ class TcpoEmbedding(Base):
         JSONB, nullable=True, name="metadata"  # DB column keeps the name 'metadata'
     )
 
-    servico: Mapped["ServicoTcpo"] = relationship(
+    base_tcpo: Mapped["BaseTcpo"] = relationship(
         back_populates="embedding", lazy="noload"
     )

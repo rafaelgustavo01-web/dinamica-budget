@@ -10,6 +10,7 @@ from app.models.base import Base, TimestampMixin
 
 class Cliente(Base, TimestampMixin):
     __tablename__ = "clientes"
+    __table_args__ = {"schema": "operacional"}
 
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -24,4 +25,8 @@ class Cliente(Base, TimestampMixin):
     )
     historicos: Mapped[list["HistoricoBuscaCliente"]] = relationship(
         back_populates="cliente", lazy="noload"
+    )
+    itens_proprios: Mapped[list["ItemProprio"]] = relationship(
+        "ItemProprio", foreign_keys="ItemProprio.cliente_id",
+        lazy="noload"
     )

@@ -207,11 +207,11 @@ def test_set_perfis_cliente_request_allows_empty():
 
 # ─── 16: status_homologacao defaults to PENDENTE ─────────────────────────────
 
-def test_servico_tcpo_model_defaults_to_pendente():
-    """ServicoTcpo ORM default must be PENDENTE (defense-in-depth)."""
-    from app.models.servico_tcpo import ServicoTcpo
+def test_item_proprio_model_defaults_to_pendente():
+    """ItemProprio ORM default must be PENDENTE (defense-in-depth)."""
+    from app.models.itens_proprios import ItemProprio
     from app.models.enums import StatusHomologacao
 
-    field = ServicoTcpo.__table__.columns["status_homologacao"]
+    field = ItemProprio.__table__.columns["status_homologacao"]
     # Check the ORM-level default (Column.default.arg)
     assert field.default.arg == StatusHomologacao.PENDENTE

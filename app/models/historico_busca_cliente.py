@@ -11,17 +11,18 @@ from app.models.base import Base
 
 class HistoricoBuscaCliente(Base):
     __tablename__ = "historico_busca_cliente"
+    __table_args__ = {"schema": "operacional"}
 
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     cliente_id: Mapped[UUID | None] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("clientes.id"), nullable=True, index=True
+        PGUUID(as_uuid=True), ForeignKey("operacional.clientes.id"), nullable=True, index=True
     )
     # nullable=True: matches migration 006 (backward compat with pre-migration rows).
     # Application code always provides usuario_id for new records.
     usuario_id: Mapped[UUID | None] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True, index=True
+        PGUUID(as_uuid=True), ForeignKey("operacional.usuarios.id", ondelete="SET NULL"), nullable=True, index=True
     )
     texto_busca: Mapped[str] = mapped_column(Text, nullable=False)
     criado_em: Mapped[datetime] = mapped_column(

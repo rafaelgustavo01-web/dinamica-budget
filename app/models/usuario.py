@@ -14,18 +14,20 @@ class UsuarioPerfil(Base):
     """
 
     __tablename__ = "permissao_operacional"
+    __table_args__ = {"schema": "operacional"}
 
     usuario_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("usuarios.id", ondelete="CASCADE"), primary_key=True
+        PGUUID(as_uuid=True), ForeignKey("operacional.usuarios.id", ondelete="CASCADE"), primary_key=True
     )
     cliente_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("clientes.id", ondelete="CASCADE"), primary_key=True
+        PGUUID(as_uuid=True), ForeignKey("operacional.clientes.id", ondelete="CASCADE"), primary_key=True
     )
     perfil: Mapped[str] = mapped_column(String(50), primary_key=True)  # PerfilUsuario enum value
 
 
 class Usuario(Base, TimestampMixin):
     __tablename__ = "usuarios"
+    __table_args__ = {"schema": "operacional"}
 
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -53,9 +55,9 @@ class Usuario(Base, TimestampMixin):
         lazy="noload",
         cascade="all, delete-orphan",
     )
-    itens_aprovados: Mapped[list["ServicoTcpo"]] = relationship(
-        "ServicoTcpo",
-        foreign_keys="ServicoTcpo.aprovado_por_id",
+    itens_aprovados: Mapped[list["ItemProprio"]] = relationship(
+        "ItemProprio",
+        foreign_keys="ItemProprio.aprovado_por_id",
         back_populates="aprovado_por",
         lazy="noload",
     )

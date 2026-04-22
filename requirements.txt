@@ -28,6 +28,9 @@ torch>=2.5.1
 # Fuzzy Search
 rapidfuzz==3.10.1
 
+# Excel ETL
+openpyxl>=3.1.0
+
 # Logging
 structlog==24.4.0
 
