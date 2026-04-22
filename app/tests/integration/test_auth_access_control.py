@@ -12,6 +12,11 @@ import pytest
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from app.core.dependencies import get_current_active_user
+from app.models.cliente import Cliente
+from app.models.enums import StatusHomologacao
+from app.models.itens_proprios import ItemProprio
+
 
 @pytest.mark.asyncio
 async def test_create_usuario_unauthenticated_returns_401(client):
@@ -111,3 +116,50 @@ async def test_cors_headers_not_wildcard(client):
         f"CORS must not return wildcard '*'. Got: '{acao}'. "
         "Configure specific origins via ALLOWED_ORIGINS setting."
     )
+
+
+@pytest.mark.asyncio
+async def test_servico_propria_readable_without_client_link(client, db_session):
+    """
+    Open-read policy: authenticated user without explicit UsuarioPerfil link
+    can still read PROPRIA item by id.
+    """
+    cliente = Cliente(
+        id=uuid.uuid4(),
+        nome_fantasia="Cliente Sem Vinculo",
+        cnpj="12345678000199",
+        is_active=True,
+    )
+    db_session.add(cliente)
+
+    item = ItemProprio(
+        id=uuid.uuid4(),
+        cliente_id=cliente.id,
+        codigo_origem="IP-001",
+        descricao="Item proprio de teste",
+        unidade_medida="m2",
+        custo_unitario=100,
+        status_homologacao=StatusHomologacao.APROVADO,
+    )
+    db_session.add(item)
+    await db_session.flush()
+
+    class FakeUser:
+        def __init__(self):
+            self.id = uuid.uuid4()
+            self.email = "worker@example.com"
+            self.nome = "Worker"
+            self.is_admin = False
+            self.is_active = True
+
+    async def _override_user():
+        return FakeUser()
+
+    app = client._transport.app
+    app.dependency_overrides[get_current_active_user] = _override_user
+
+    try:
+        resp = await client.get(f"/api/v1/servicos/{item.id}")
+        assert resp.status_code == 200, resp.text
+    finally:
+        app.dependency_overrides.pop(get_current_active_user, None)

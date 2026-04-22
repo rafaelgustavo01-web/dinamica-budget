@@ -6,7 +6,7 @@ Tests covered:
   P0.3 — App fails with insecure SECRET_KEY
   P0.4 — CORS does not use wildcard *
   P1.6 — Short password fails Pydantic validation
-  P0.1 — GET /servicos/{id} tenant isolation (via mock)
+  S-01 — Open read authorization model (on-premise)
   P1.7 — Phase 3 batch load (covered in test_busca_service.py)
   P1.8 — Auth endpoints have rate limiter configured
 """
@@ -108,117 +108,22 @@ def test_usuario_create_accepts_long_password():
     assert len(user.password) >= 8
 
 
-# ─── P0.1: Cross-tenant isolation (mock-based unit test) ─────────────────────
+# ─── S-01: Open-read policy (on-premise) ─────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_get_servico_propria_blocks_wrong_tenant():
-    """
-    GET /servicos/{id}: A PROPRIA item (cliente_id set) from client B must not be
-    visible to a user that only has access to client A.
-    """
+async def test_get_servico_propria_open_to_any_authenticated_user():
+    """GET /servicos/{id} must return PROPRIA item for any authenticated user."""
     import uuid
     from unittest.mock import AsyncMock, MagicMock, patch
 
-    from app.core.exceptions import NotFoundError
+    from app.api.v1.endpoints.servicos import get_servico
 
     servico_id = uuid.uuid4()
     client_b_id = uuid.uuid4()
 
-    # ItemProprio — has a cliente_id (non-None signals PROPRIA)
     mock_servico = MagicMock()
     mock_servico.id = servico_id
     mock_servico.cliente_id = client_b_id
-
-    # User from client A (has no access to client B)
-    user_a = MagicMock()
-    user_a.id = uuid.uuid4()
-    user_a.is_admin = False
-    user_a.is_active = True
-
-    mock_db = AsyncMock()
-
-    # _get_perfis_para_cliente returns [] — user has no access to client B
-    with (
-        patch(
-            "app.api.v1.endpoints.servicos.servico_catalog_service.get_servico",
-            new=AsyncMock(return_value=mock_servico),
-        ),
-        patch(
-            "app.api.v1.endpoints.servicos._get_perfis_para_cliente",
-            new=AsyncMock(return_value=[]),
-        ),
-    ):
-        from app.api.v1.endpoints.servicos import get_servico
-
-        with pytest.raises(NotFoundError):
-            await get_servico(
-                servico_id=servico_id,
-                current_user=user_a,
-                db=mock_db,
-            )
-
-
-@pytest.mark.asyncio
-async def test_get_servico_propria_allows_correct_tenant():
-    """
-    GET /servicos/{id}: A PROPRIA item (cliente_id set) from client A IS visible
-    to a user that has access to client A.
-    """
-    import uuid
-    from unittest.mock import AsyncMock, MagicMock, patch
-
-    servico_id = uuid.uuid4()
-    client_a_id = uuid.uuid4()
-
-    mock_servico = MagicMock()
-    mock_servico.id = servico_id
-    mock_servico.cliente_id = client_a_id
-
-    user_a = MagicMock()
-    user_a.id = uuid.uuid4()
-    user_a.is_admin = False
-    user_a.is_active = True
-
-    mock_db = AsyncMock()
-
-    with (
-        patch(
-            "app.api.v1.endpoints.servicos.servico_catalog_service.get_servico",
-            new=AsyncMock(return_value=mock_servico),
-        ),
-        patch(
-            "app.api.v1.endpoints.servicos._get_perfis_para_cliente",
-            new=AsyncMock(return_value=["USUARIO"]),
-        ),
-        patch("app.api.v1.endpoints.servicos.ServicoTcpoResponse") as mock_resp,
-    ):
-        mock_resp.model_validate = MagicMock(return_value=mock_servico)
-
-        from app.api.v1.endpoints.servicos import get_servico
-
-        # Should NOT raise
-        result = await get_servico(
-            servico_id=servico_id,
-            current_user=user_a,
-            db=mock_db,
-        )
-        assert result is not None
-
-
-@pytest.mark.asyncio
-async def test_get_servico_tcpo_global_accessible_to_any_user():
-    """
-    GET /servicos/{id}: Global BaseTcpo items (cliente_id=None) are accessible
-    to any authenticated user without tenant check.
-    """
-    import uuid
-    from unittest.mock import AsyncMock, MagicMock, patch
-
-    servico_id = uuid.uuid4()
-
-    mock_servico = MagicMock()
-    mock_servico.id = servico_id
-    mock_servico.cliente_id = None  # global BaseTcpo — no tenant
 
     user = MagicMock()
     user.id = uuid.uuid4()
@@ -227,76 +132,192 @@ async def test_get_servico_tcpo_global_accessible_to_any_user():
 
     mock_db = AsyncMock()
 
-    with (
-        patch(
-            "app.api.v1.endpoints.servicos.servico_catalog_service.get_servico",
-            new=AsyncMock(return_value=mock_servico),
-        ),
-        patch(
-            "app.api.v1.endpoints.servicos._get_perfis_para_cliente",
-            new=AsyncMock(return_value=[]),  # would fail if called
-        ) as mock_perfis,
-        patch("app.api.v1.endpoints.servicos.ServicoTcpoResponse") as mock_resp,
+    with patch(
+        "app.api.v1.endpoints.servicos.servico_catalog_service.get_servico",
+        new=AsyncMock(return_value=mock_servico),
     ):
-        mock_resp.model_validate = MagicMock(return_value=mock_servico)
-
-        from app.api.v1.endpoints.servicos import get_servico
-
         result = await get_servico(
             servico_id=servico_id,
             current_user=user,
             db=mock_db,
         )
-        # _get_perfis_para_cliente must NOT be called for global BaseTcpo items
-        mock_perfis.assert_not_called()
-        assert result is not None
+        assert result is mock_servico
 
 
 @pytest.mark.asyncio
-async def test_get_servico_admin_bypasses_tenant_check():
-    """
-    GET /servicos/{id}: is_admin=True bypasses tenant check for PROPRIA items.
-    """
+async def test_list_servicos_with_cliente_id_no_access_check():
+    """GET /servicos?cliente_id=... must not call require_cliente_access."""
     import uuid
     from unittest.mock import AsyncMock, MagicMock, patch
 
-    servico_id = uuid.uuid4()
-    client_b_id = uuid.uuid4()
+    from app.api.v1.endpoints.servicos import list_servicos
 
-    mock_servico = MagicMock()
-    mock_servico.id = servico_id
-    mock_servico.cliente_id = client_b_id
-
-    admin_user = MagicMock()
-    admin_user.id = uuid.uuid4()
-    admin_user.is_admin = True  # bypass
-    admin_user.is_active = True
+    client_id = uuid.uuid4()
+    user = MagicMock()
+    user.id = uuid.uuid4()
+    user.is_admin = False
+    user.is_active = True
 
     mock_db = AsyncMock()
+    mock_response = MagicMock(items=[], total=0, page=1, page_size=20, pages=0)
+    mock_service = AsyncMock()
+    mock_service.list_servicos = AsyncMock(return_value=mock_response)
 
     with (
+        patch("app.api.v1.endpoints.servicos.servico_catalog_service", mock_service),
         patch(
-            "app.api.v1.endpoints.servicos.servico_catalog_service.get_servico",
-            new=AsyncMock(return_value=mock_servico),
+            "app.api.v1.endpoints.servicos.require_cliente_access",
+            new=AsyncMock(side_effect=AssertionError("should not be called")),
         ),
-        patch(
-            "app.api.v1.endpoints.servicos._get_perfis_para_cliente",
-            new=AsyncMock(return_value=[]),
-        ) as mock_perfis,
-        patch("app.api.v1.endpoints.servicos.ServicoTcpoResponse") as mock_resp,
     ):
-        mock_resp.model_validate = MagicMock(return_value=mock_servico)
-
-        from app.api.v1.endpoints.servicos import get_servico
-
-        result = await get_servico(
-            servico_id=servico_id,
-            current_user=admin_user,
+        result = await list_servicos(
+            q=None,
+            categoria_id=None,
+            cliente_id=client_id,
+            page=1,
+            page_size=20,
+            current_user=user,
             db=mock_db,
         )
-        # Admin bypasses — perfis check must not be called
-        mock_perfis.assert_not_called()
+        assert result.total == 0
+        mock_service.list_servicos.assert_awaited_once()
+        assert mock_service.list_servicos.call_args.kwargs["cliente_id"] == client_id
+
+
+@pytest.mark.asyncio
+async def test_list_versoes_open_to_any_authenticated_user():
+    """GET /servicos/{item_id}/versoes must not call require_cliente_access."""
+    import uuid
+    from datetime import UTC, datetime
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from app.api.v1.endpoints.versoes import list_versoes
+
+    item_id = uuid.uuid4()
+    user = MagicMock()
+    user.id = uuid.uuid4()
+    user.is_admin = False
+    user.is_active = True
+
+    item = MagicMock()
+    item.id = item_id
+    item.cliente_id = uuid.uuid4()
+
+    versao = MagicMock()
+    versao.id = uuid.uuid4()
+    versao.numero_versao = 1
+    versao.is_ativa = True
+    versao.criado_em = datetime.now(UTC)
+
+    propria_repo = AsyncMock()
+    propria_repo.get_active_by_id = AsyncMock(return_value=item)
+    versao_repo = AsyncMock()
+    versao_repo.list_versoes = AsyncMock(return_value=[versao])
+
+    with (
+        patch("app.api.v1.endpoints.versoes.ItensPropiosRepository", return_value=propria_repo),
+        patch("app.api.v1.endpoints.versoes.VersaoComposicaoRepository", return_value=versao_repo),
+        patch(
+            "app.api.v1.endpoints.versoes.require_cliente_access",
+            new=AsyncMock(side_effect=AssertionError("should not be called")),
+        ),
+    ):
+        result = await list_versoes(
+            item_id=item_id,
+            current_user=user,
+            db=AsyncMock(),
+        )
+        assert len(result) == 1
+
+
+@pytest.mark.asyncio
+async def test_buscar_servicos_no_cliente_access_required():
+    """POST /busca/servicos must not call require_cliente_access."""
+    import uuid
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from app.api.v1.endpoints.busca import buscar_servicos
+    from app.schemas.busca import BuscaServicoRequest
+
+    client_id = uuid.uuid4()
+    user = MagicMock()
+    user.id = uuid.uuid4()
+    user.is_admin = False
+    user.is_active = True
+
+    request = BuscaServicoRequest(cliente_id=client_id, texto_busca="escavacao")
+    mock_service = AsyncMock()
+    mock_service.buscar = AsyncMock(return_value=MagicMock())
+
+    with (
+        patch("app.api.v1.endpoints.busca.busca_service", mock_service),
+        patch(
+            "app.api.v1.endpoints.busca.require_cliente_access",
+            new=AsyncMock(side_effect=AssertionError("should not be called")),
+        ),
+    ):
+        result = await buscar_servicos(
+            request=request,
+            current_user=user,
+            db=AsyncMock(),
+        )
         assert result is not None
+        mock_service.buscar.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_list_associacoes_no_cliente_access_required():
+    """GET /busca/associacoes must not call require_cliente_access."""
+    import uuid
+    from unittest.mock import AsyncMock, patch
+
+    from app.api.v1.endpoints.busca import list_associacoes
+
+    client_id = uuid.uuid4()
+    user = object()
+
+    repo = AsyncMock()
+    repo.list_by_cliente = AsyncMock(return_value=([], 0))
+
+    with (
+        patch("app.api.v1.endpoints.busca.AssociacaoRepository", return_value=repo),
+        patch(
+            "app.api.v1.endpoints.busca.require_cliente_access",
+            new=AsyncMock(side_effect=AssertionError("should not be called")),
+        ),
+    ):
+        result = await list_associacoes(
+            cliente_id=client_id,
+            page=1,
+            page_size=20,
+            current_user=user,
+            db=AsyncMock(),
+        )
+        assert result.total == 0
+
+
+def test_write_endpoints_still_require_client_perfil():
+    """Write endpoints must still enforce require_cliente_perfil/access."""
+    import inspect
+    from app.api.v1.endpoints import busca, composicoes, homologacao, versoes
+
+    write_routes = [
+        (composicoes.clonar_composicao, "POST /composicoes/clonar"),
+        (composicoes.adicionar_componente, "POST /composicoes/{id}/componentes"),
+        (composicoes.remover_componente, "DELETE /composicoes/{id}/componentes/{comp_id}"),
+        (homologacao.criar_item_proprio, "POST /homologacao/itens-proprios"),
+        (homologacao.aprovar_item, "POST /homologacao/aprovar"),
+        (versoes.criar_versao, "POST /composicoes/{id}/versoes"),
+        (versoes.ativar_versao, "PATCH /composicoes/versoes/{id}/ativar"),
+        (busca.criar_associacao, "POST /busca/associar"),
+        (busca.delete_associacao, "DELETE /busca/associacoes/{id}"),
+    ]
+
+    for func, name in write_routes:
+        src = inspect.getsource(func)
+        assert "require_cliente_perfil" in src or "require_cliente_access" in src, (
+            f"{name} must keep write authorization checks"
+        )
 
 
 # ─── P0.2: POST /auth/usuarios protection ────────────────────────────────────

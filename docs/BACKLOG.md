@@ -12,7 +12,7 @@ Responsável: Research AI
 
 | Sprint | Status | Prioridade | Dependências | Objetivo | Critérios de aceite |
 |---|---|---|---|---|---|
-| `S-01` | PLAN | P0 | — | Alinhar autorização ao modelo on-premise (cliente como vínculo de orçamento, não tenant) | Revisão e ajuste das regras RBAC para permitir acesso operacional a todos os clientes conforme política de negócio; remoção de bloqueios indevidos por cliente; testes de integração cobrindo política nova |
+| `S-01` | TODO | P0 | — | Alinhar autorização ao modelo on-premise (cliente como vínculo de orçamento, não tenant) | Revisão e ajuste das regras RBAC para permitir acesso operacional a todos os clientes conforme política de negócio; remoção de bloqueios indevidos por cliente; testes de integração cobrindo política nova |
 | `S-02` | BACKLOG | P0 | `S-01` | Consolidar arquitetura em camadas (endpoint -> service -> repository) | Endpoints sem regra de negócio/SQL direto em `auth`, `servicos`, `versoes`; regras migradas para services; testes unitários dos services novos/ajustados |
 | `S-03` | BACKLOG | P1 | `S-02` | Revisar fronteira transacional para reduzir commit implícito global | Estratégia transacional documentada e aplicada; operações de leitura sem efeitos colaterais; regressão de autenticação/busca/homologação validada |
 | `S-04` | BACKLOG | P1 | `S-01` | Endurecer suíte de segurança e RBAC | Cobertura de autorização em todos endpoints sensíveis; testes de regressão para perfis `USUARIO`, `APROVADOR`, `ADMIN` e `is_admin`; checklist OWASP API básica executada |
