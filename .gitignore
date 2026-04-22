@@ -97,3 +97,12 @@ playwright-report/
 logs
 tabelas
 reseultado
+
+# ─── AGENTS ──────────────
+.opencode/
+.kimi/
+.kiro/
+.claude/
+.amazonq/
+.agents
+.codex
