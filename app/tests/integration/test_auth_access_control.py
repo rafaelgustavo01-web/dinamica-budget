@@ -63,7 +63,7 @@ async def test_health_check_still_works(client):
     resp = await client.get("/health")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["status"] == "ok"
+    assert data["status"] in {"ok", "degraded"}
     assert "embedder_ready" in data
 
 

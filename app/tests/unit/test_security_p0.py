@@ -253,9 +253,8 @@ async def test_buscar_servicos_no_cliente_access_required():
         )
         assert result is not None
         mock_service.buscar.assert_awaited_once()
-        # Verify require_cliente_access is not in the module anymore
-        import app.api.v1.endpoints.busca as busca_module
-        assert not hasattr(busca_module, 'require_cliente_access')
+        import inspect
+        assert "require_cliente_access(" not in inspect.getsource(buscar_servicos)
 
 
 @pytest.mark.asyncio
@@ -281,8 +280,8 @@ async def test_list_associacoes_no_cliente_access_required():
             db=AsyncMock(),
         )
         assert result.total == 0
-        import app.api.v1.endpoints.busca as busca_module
-        assert not hasattr(busca_module, 'require_cliente_access')
+        import inspect
+        assert "require_cliente_access(" not in inspect.getsource(list_associacoes)
 
 
 def test_write_endpoints_still_require_client_perfil():

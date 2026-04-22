@@ -1,22 +1,9 @@
-<<<<<<< HEAD
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.dependencies import get_current_admin_user, get_db
-from app.schemas.etl import (
-    EtlExecuteRequest,
-    EtlExecuteResponse,
-    EtlStatusResponse,
-    EtlUploadResponse,
-)
-from app.services.etl_service import etl_service
-=======
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -28,8 +15,14 @@ from app.schemas.admin import (
     ImportPreviewResponse,
     ImportSourceType,
 )
+from app.schemas.etl import (
+    EtlExecuteRequest,
+    EtlExecuteResponse,
+    EtlStatusResponse,
+    EtlUploadResponse,
+)
+from app.services.etl_service import etl_service
 from app.services.import_preview_service import generate_import_preview
->>>>>>> 5f0973541797732f99516ee792729f7f3cef10c2
 from app.services.servico_catalog_service import servico_catalog_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -41,16 +34,13 @@ async def compute_embeddings(
     db: AsyncSession = Depends(get_db),
 ) -> ComputeEmbeddingsResponse:
     count = await servico_catalog_service.compute_all_embeddings(db)
-<<<<<<< HEAD
-    return {"status": "ok", "embeddings_computados": count}
+    return ComputeEmbeddingsResponse(status="ok", embeddings_computados=count)
 
-
-# ── ETL endpoints ──────────────────────────────────────────────────────────────
 
 @router.post(
     "/etl/upload-tcpo",
     response_model=EtlUploadResponse,
-    summary="Fazer upload de Composições TCPO - PINI.xlsx e obter pré-visualização",
+    summary="Fazer upload de Composicoes TCPO - PINI.xlsx e obter pre-visualizacao",
 )
 async def etl_upload_tcpo(
     file: UploadFile,
@@ -71,7 +61,7 @@ async def etl_upload_tcpo(
 @router.post(
     "/etl/upload-converter",
     response_model=EtlUploadResponse,
-    summary="Fazer upload de Converter em Data Center.xlsx e obter pré-visualização",
+    summary="Fazer upload de Converter em Data Center.xlsx e obter pre-visualizacao",
 )
 async def etl_upload_converter(
     file: UploadFile,
@@ -92,7 +82,7 @@ async def etl_upload_converter(
 @router.post(
     "/etl/execute",
     response_model=EtlExecuteResponse,
-    summary="Executar carga ETL usando tokens de upload já processados",
+    summary="Executar carga ETL usando tokens de upload ja processados",
 )
 async def etl_execute(
     request: EtlExecuteRequest,
@@ -115,8 +105,6 @@ async def etl_status(
     db: AsyncSession = Depends(get_db),
 ) -> EtlStatusResponse:
     return await etl_service.get_status(db)
-=======
-    return ComputeEmbeddingsResponse(status="ok", embeddings_computados=count)
 
 
 @router.post("/import/preview", response_model=ImportPreviewResponse)
@@ -126,9 +114,9 @@ async def preview_import(
     _=Depends(get_current_catalog_import_user),
 ) -> ImportPreviewResponse:
     if not file.filename:
-        raise ValidationError("Arquivo inválido para preview.")
+        raise ValidationError("Arquivo invalido para preview.")
     if not file.filename.lower().endswith(".xlsx"):
-        raise ValidationError("Somente arquivos .xlsx são suportados no preview.")
+        raise ValidationError("Somente arquivos .xlsx sao suportados no preview.")
 
     payload = await file.read()
     if not payload:
@@ -145,11 +133,11 @@ async def execute_import(
     _=Depends(get_current_catalog_import_user),
 ) -> ImportExecuteResponse:
     if not confirm:
-        raise ValidationError("Confirmação obrigatória para executar a carga.")
+        raise ValidationError("Confirmacao obrigatoria para executar a carga.")
     if not file.filename:
-        raise ValidationError("Arquivo inválido para carga.")
+        raise ValidationError("Arquivo invalido para carga.")
     if not file.filename.lower().endswith(".xlsx"):
-        raise ValidationError("Somente arquivos .xlsx são suportados na carga.")
+        raise ValidationError("Somente arquivos .xlsx sao suportados na carga.")
 
     data = await file.read()
     if not data:
@@ -172,7 +160,7 @@ async def execute_import(
     )
     if len(mapped_confidences) < 3 or avg_confidence < 0.45:
         raise ValidationError(
-            "Mapeamento semântico insuficiente para executar a carga com segurança.",
+            "Mapeamento semantico insuficiente para executar a carga com seguranca.",
             details={
                 "average_confidence": round(avg_confidence, 4),
                 "mapped_fields": len(mapped_confidences),
@@ -192,7 +180,7 @@ async def execute_import(
 
         script_path = Path("scripts") / "etl_popular_base_consulta.py"
         if not script_path.exists():
-            raise ValidationError("Script ETL não encontrado no servidor.")
+            raise ValidationError("Script ETL nao encontrado no servidor.")
 
         cmd = [
             sys.executable,
@@ -221,7 +209,7 @@ async def execute_import(
 
         if completed.returncode != 0:
             raise ValidationError(
-                "Falha na execução da carga ETL.",
+                "Falha na execucao da carga ETL.",
                 details={"log_excerpt": excerpt},
             )
 
@@ -235,4 +223,3 @@ async def execute_import(
     finally:
         if temp_path and temp_path.exists():
             temp_path.unlink(missing_ok=True)
->>>>>>> 5f0973541797732f99516ee792729f7f3cef10c2

@@ -18,9 +18,9 @@
       "provider": "OpenAI",
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
       "available": false,
-      "busy": false,
-      "reserved_for_sprint": null,
-      "last_checked_at": null
+      "busy": true,
+      "reserved_for_sprint": "S-05",
+      "last_checked_at": "2026-04-22T14:15:00-03:00"
     },
     {
       "worker_id": "gemini-3.1",
