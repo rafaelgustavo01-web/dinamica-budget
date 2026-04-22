@@ -30,3 +30,9 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 
 ## INBOX
 
+### [DONE] 2026-04-22T22:00Z — Sprint S-01
+- From: worker (OpenCode)
+- Action: REVIEW
+- Feedback: @docs/technical-feedback-2026-04-22-v1.md
+- Notes: Aceita. 75/75 testes. 2 correções aplicadas pelo QA (test_health_endpoint + SAWarnings). S-01 → DONE.
+
