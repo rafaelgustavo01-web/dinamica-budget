@@ -3,9 +3,7 @@ export interface ComputeEmbeddingsResponse {
   embeddings_computados: number;
 }
 
-<<<<<<< HEAD
-// ── ETL ────────────────────────────────────────────────────────────────────────
-
+// ETL legacy endpoints
 export type EtlMode = 'upsert' | 'replace';
 
 export interface EtlItemPreview {
@@ -59,7 +57,9 @@ export interface EtlStatusResponse {
   total_composicoes_base: number;
   total_embeddings: number;
   ultima_carga: string | null;
-=======
+}
+
+// Semantic import endpoints
 export type ImportSourceType = 'TCPO' | 'PC';
 
 export interface FieldMappingPreview {
@@ -92,5 +92,4 @@ export interface ImportExecuteResponse {
   file_name: string;
   message: string;
   log_excerpt?: string | null;
->>>>>>> 5f0973541797732f99516ee792729f7f3cef10c2
 }
