@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_active_user, get_db, require_cliente_access, require_cliente_perfil
-from app.core.exceptions import AuthorizationError, NotFoundError
+from app.core.exceptions import NotFoundError
 from app.repositories.associacao_repository import AssociacaoRepository
 from app.schemas.associacao import AssociacaoListItem
 from app.schemas.busca import (
@@ -26,8 +26,6 @@ async def buscar_servicos(
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> BuscaServicoResponse:
-    if request.cliente_id is not None:
-        await require_cliente_access(request.cliente_id, current_user, db)
     return await busca_service.buscar(
         request=request,
         usuario_id=current_user.id,
@@ -63,9 +61,8 @@ async def list_associacoes(
 ) -> PaginatedResponse[AssociacaoListItem]:
     """
     Returns paginated list of intelligent associations for a client.
-    Requires any RBAC binding with that client.
+    On-premise model: any authenticated user may read associations.
     """
-    await require_cliente_access(cliente_id, current_user, db)
     repo = AssociacaoRepository(db)
     offset = (page - 1) * page_size
     items, total = await repo.list_by_cliente(cliente_id=cliente_id, offset=offset, limit=page_size)
