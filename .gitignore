@@ -2,6 +2,7 @@
 #Template for AL projects for Dynamics 365 Business Central
 #launch.json folder
 .vscode/
+<<<<<<< HEAD
 #Cache folder
 .alcache/
 #Symbols folder
@@ -20,3 +21,48 @@ rad.json
 *.flf
 #Test results file
 TestResults.xml
+=======
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*.sublime-*
+
+# ─── OS ──────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# ─── Docker ──────────────────────────────────────────────────────
+docker-compose.override.yml
+
+# ─── Deploy Artifacts ────────────────────────────────────────────
+output/
+ETAPA
+*.bak
+*.tmp
+
+# ─── Playwright / Browser Tests ──────────────────────────────────
+.playwright-cli/
+output/playwright/
+test-results/
+playwright-report/
+
+# ─── Database Backups (keep out of git) ──────────────────────────
+*.sql
+*.dump
+*.pgdump
+!alembic/versions/*.py
+
+# ─── NSSM / Installers (downloaded at deploy time) ──────────────
+*.msi
+*.exe
+!deploy-dinamica.bat
+!remove-dinamica.bat
+
+logs
+tabelas
+reseultado
+>>>>>>> 5f0973541797732f99516ee792729f7f3cef10c2

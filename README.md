@@ -958,6 +958,17 @@ Executa auditoria completa do sistema com verificação de:
 powershell -ExecutionPolicy Bypass -File scripts\observability-audit-admin.ps1
 ```
 
+### `scripts/etl-popular-base-consulta-admin.ps1` — ETL inicial da base de consulta
+
+Carrega automaticamente os dois arquivos da pasta `tabelas`:
+
+1. `Composições TCPO - PINI.xlsx` para base global de consulta (`servico_tcpo`, `composicao_tcpo`, `versao_composicao` com origem `TCPO` e status `APROVADO`).
+2. `PC tabelas.xlsx` para tabelas `pc_*` criadas para parametrização da planilha operacional.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\etl-popular-base-consulta-admin.ps1
+```
+
 Relatórios gerados:
 
 1. `logs/observability-audit.log`

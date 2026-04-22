@@ -26,7 +26,8 @@ async def buscar_servicos(
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> BuscaServicoResponse:
-    await require_cliente_access(request.cliente_id, current_user, db)
+    if request.cliente_id is not None:
+        await require_cliente_access(request.cliente_id, current_user, db)
     return await busca_service.buscar(
         request=request,
         usuario_id=current_user.id,

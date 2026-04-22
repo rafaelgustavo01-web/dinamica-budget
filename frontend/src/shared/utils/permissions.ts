@@ -44,3 +44,15 @@ export function hasClientePerfil(
 export function hasAnyOperationalAccess(user: MeResponse | null) {
   return Boolean(user?.is_admin || getAvailableClientIds(user).length);
 }
+
+export function hasAdminPanelAccess(user: MeResponse | null) {
+  if (!user) {
+    return false;
+  }
+
+  if (user.is_admin) {
+    return true;
+  }
+
+  return user.perfis.some((perfil) => perfil.perfil.trim().toUpperCase() === 'ADMIN');
+}

@@ -1,7 +1,7 @@
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class BuscaServicoRequest(BaseModel):
@@ -9,6 +9,30 @@ class BuscaServicoRequest(BaseModel):
     texto_busca: str = Field(..., min_length=2, max_length=500)
     limite_resultados: int = Field(default=5, ge=1, le=50)
     threshold_score: float = Field(default=0.65, ge=0.0, le=1.0)
+
+    @field_validator("cliente_id", mode="before")
+    @classmethod
+    def normalize_cliente_id(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return value
+
+    @field_validator("limite_resultados", mode="before")
+    @classmethod
+    def normalize_limite_resultados(cls, value):
+        if isinstance(value, str):
+            return int(value.strip())
+        return value
+
+    @field_validator("threshold_score", mode="before")
+    @classmethod
+    def normalize_threshold_score(cls, value):
+        if isinstance(value, str):
+            return float(value.strip().replace(",", "."))
+        return value
 
 
 class ResultadoBusca(BaseModel):

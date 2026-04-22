@@ -21,6 +21,19 @@ from app.models.itens_proprios import ItemProprio
 from app.models.tcpo_embeddings import TcpoEmbedding
 from app.models.usuario import Usuario, UsuarioPerfil
 from app.models.versao_composicao import VersaoComposicao
+from app.models.pc_tabelas import (
+    EtlCarga,
+    PcCabecalho,
+    PcMaoObraItem,
+    PcEquipamentoPremissa,
+    PcEquipamentoItem,
+    PcEncargoItem,
+    PcEpiItem,
+    PcEpiDistribuicaoFuncao,
+    PcFerramentaItem,
+    PcMobilizacaoItem,
+    PcMobilizacaoQuantidadeFuncao,
+)
 
 __all__ = [
     "Base",

@@ -873,59 +873,63 @@ REM Generate SECRET_KEY
 for /f "delims=" %%k in ('"!PY!" -c "import secrets; print(secrets.token_hex(32))"') do set "SECRET_KEY=%%k"
 
 call :info "Gerando .env..."
-set "DB_PASS=%PG_PASS%"
+setlocal DisableDelayedExpansion
 set "ENV_PG_PASS=%PG_PASS%"
 set "ENV_ADMIN_EMAIL=%ADMIN_EMAIL%"
 set "ENV_ADMIN_PASS=%ADMIN_PASS%"
 set "ENV_ADMIN_NAME=%ADMIN_NAME%"
 set "ENV_ACCESS_HOST=%ACCESS_HOST%"
+set "ENV_SECRET_KEY=%SECRET_KEY%"
 
-REM Write .env via PowerShell using environment variables (safe for ! @ % and other special chars)
+REM Write .env via PowerShell with UTF-8 sem BOM and URL-encoded DB password.
 powershell -NoProfile -Command ^
-    "$dbPassEnc=[Uri]::EscapeDataString($env:ENV_PG_PASS);" ^
-    "$content=@'" & echo. & ^
-    echo # --- Database --- & ^
-    echo DATABASE_URL=postgresql+asyncpg://postgres:$dbPassEnc@127.0.0.1:5432/dinamica_budget & ^
-    echo DATABASE_POOL_SIZE=10 & ^
-    echo DATABASE_MAX_OVERFLOW=20 & ^
-    echo. & ^
-    echo # --- JWT --- & ^
-    echo SECRET_KEY=!SECRET_KEY! & ^
-    echo ALGORITHM=HS256 & ^
-    echo ACCESS_TOKEN_EXPIRE_MINUTES=30 & ^
-    echo REFRESH_TOKEN_EXPIRE_DAYS=7 & ^
-    echo. & ^
-    echo # --- ML / Embeddings --- & ^
-    echo EMBEDDING_MODEL_NAME=all-MiniLM-L6-v2 & ^
-    echo SENTENCE_TRANSFORMERS_HOME=C:/DinamicaBudget/ml_models & ^
-    echo FUZZY_THRESHOLD=0.85 & ^
-    echo SEMANTIC_THRESHOLD=0.65 & ^
-    echo. & ^
-    echo # --- App --- & ^
-    echo API_V1_PREFIX=/api/v1 & ^
-    echo DEBUG=false & ^
-    echo LOG_LEVEL=INFO & ^
-    echo APP_HOST=0.0.0.0 & ^
-    echo APP_PORT=8000 & ^
-    echo. & ^
-    echo # --- Root User (auto-created on first startup) --- & ^
-    echo ROOT_USER_EMAIL=$env:ENV_ADMIN_EMAIL & ^
-    echo ROOT_USER_PASSWORD=$env:ENV_ADMIN_PASS & ^
-    echo ROOT_USER_NAME=$env:ENV_ADMIN_NAME & ^
-    echo. & ^
-    echo # --- CORS --- & ^
-    echo ALLOWED_ORIGINS=["http://$env:ENV_ACCESS_HOST","http://localhost","http://127.0.0.1"] & ^
-    echo '@; $content ^| Set-Content -Path '!APP!\.env' -Encoding UTF8 -Force" >> "!LOG!" 2>&1
-
-set "ENV_PG_PASS="
-set "ENV_ADMIN_EMAIL="
-set "ENV_ADMIN_PASS="
-set "ENV_ADMIN_NAME="
-set "ENV_ACCESS_HOST="
+    "$dbPassEnc = [Uri]::EscapeDataString($env:ENV_PG_PASS);" ^
+    "$cors = @('http://' + $env:ENV_ACCESS_HOST, 'http://localhost', 'http://127.0.0.1') | ConvertTo-Json -Compress;" ^
+    "$lines = @(" ^
+    "'# --- Database ---'," ^
+    "'DATABASE_URL=postgresql+asyncpg://postgres:' + $dbPassEnc + '@127.0.0.1:5432/dinamica_budget'," ^
+    "'DATABASE_POOL_SIZE=10'," ^
+    "'DATABASE_MAX_OVERFLOW=20'," ^
+    "''," ^
+    "'# --- JWT ---'," ^
+    "'SECRET_KEY=' + $env:ENV_SECRET_KEY," ^
+    "'ALGORITHM=HS256'," ^
+    "'ACCESS_TOKEN_EXPIRE_MINUTES=30'," ^
+    "'REFRESH_TOKEN_EXPIRE_DAYS=7'," ^
+    "''," ^
+    "'# --- ML / Embeddings ---'," ^
+    "'EMBEDDING_MODEL_NAME=all-MiniLM-L6-v2'," ^
+    "'SENTENCE_TRANSFORMERS_HOME=C:/DinamicaBudget/ml_models'," ^
+    "'FUZZY_THRESHOLD=0.85'," ^
+    "'SEMANTIC_THRESHOLD=0.65'," ^
+    "''," ^
+    "'# --- App ---'," ^
+    "'API_V1_PREFIX=/api/v1'," ^
+    "'DEBUG=false'," ^
+    "'LOG_LEVEL=INFO'," ^
+    "'APP_HOST=0.0.0.0'," ^
+    "'APP_PORT=8000'," ^
+    "''," ^
+    "'# --- Root User (auto-created on first startup) ---'," ^
+    "'ROOT_USER_EMAIL=' + $env:ENV_ADMIN_EMAIL," ^
+    "'ROOT_USER_PASSWORD=' + $env:ENV_ADMIN_PASS," ^
+    "'ROOT_USER_NAME=' + $env:ENV_ADMIN_NAME," ^
+    "''," ^
+    "'# --- CORS ---'," ^
+    "'ALLOWED_ORIGINS=' + $cors" ^
+    ");" ^
+    "[System.IO.File]::WriteAllLines('%APP%\\.env', $lines, [System.Text.UTF8Encoding]::new($false))" >> "!LOG!" 2>&1
+set "ENV_WRITE_RC=%ERRORLEVEL%"
+endlocal & set "ENV_WRITE_RC=%ENV_WRITE_RC%"
 
 if not exist "!APP!\.env" (
         echo   !R![FAIL]!N! Falha ao gerar .env com PowerShell.
         >> "!LOG!" echo [FAIL] Falha ao gerar .env com PowerShell
+        goto :abort
+)
+if not "!ENV_WRITE_RC!"=="0" (
+        echo   !R![FAIL]!N! Falha ao gerar .env com PowerShell (codigo !ENV_WRITE_RC!).
+        >> "!LOG!" echo [FAIL] Falha ao gerar .env com PowerShell (codigo !ENV_WRITE_RC!)
         goto :abort
 )
 

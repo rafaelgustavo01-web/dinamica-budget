@@ -176,7 +176,7 @@ for %%v in (17 16 15 14) do (
 REM Try to get DB password from .env
 set "DB_PASS="
 if exist "!APP!\.env" (
-    powershell -NoProfile -Command "$l=(Get-Content '!APP!\.env') | Where-Object {$_ -match '^DATABASE_URL='}; if($l -match '://[^:]+:([^@]+)@'){$Matches[1] | Out-File -NoNewline -Encoding utf8 (Join-Path $env:TEMP '_dbpass_remove.tmp')}" >nul 2>&1
+    powershell -NoProfile -Command "$l=(Get-Content '!APP!\.env') | Where-Object {$_ -match '^DATABASE_URL='}; if($l -match '://[^:]+:([^@]+)@'){ [Uri]::UnescapeDataString($Matches[1]) | Out-File -NoNewline -Encoding utf8 (Join-Path $env:TEMP '_dbpass_remove.tmp')}" >nul 2>&1
     setlocal DisableDelayedExpansion
     if exist "%TEMP%\_dbpass_remove.tmp" for /f "usebackq delims=" %%p in ("%TEMP%\_dbpass_remove.tmp") do set "DB_PASS=%%p"
     endlocal & set "DB_PASS=%DB_PASS%"
@@ -184,25 +184,28 @@ if exist "!APP!\.env" (
 )
 
 if not defined DB_PASS (
+    setlocal DisableDelayedExpansion
     set /p "DB_PASS=  Senha do postgres para backup: "
+    endlocal & set "DB_PASS=%DB_PASS%"
 )
 
 if defined DB_PASS (
-    set "PGPASSWORD=!DB_PASS!"
     set "BK_DIR=C:\DinamicaBudget_backups"
     if not exist "!BK_DIR!" mkdir "!BK_DIR!"
     set "BK_FILE=!BK_DIR!\!DB_NAME!_!TS!.sql"
 
     call :info "Executando pg_dump..."
-    "!PGDUMP_BIN!" -U postgres -h localhost -d "!DB_NAME!" -F p -f "!BK_FILE!" >> "!LOG!" 2>&1
-    if errorlevel 1 (
+    setlocal DisableDelayedExpansion
+    powershell -NoProfile -Command "$env:PGPASSWORD='%DB_PASS%'; & '%PGDUMP_BIN%' -U postgres -h localhost -d '%DB_NAME%' -F p -f '%BK_FILE%'; exit $LASTEXITCODE" >> "!LOG!" 2>&1
+    set "BK_RC=%ERRORLEVEL%"
+    endlocal & set "BK_RC=%BK_RC%"
+    if not "!BK_RC!"=="0" (
         call :warn "Backup falhou. Banco pode nao existir ou senha incorreta."
         echo   !Y!O banco '!DB_NAME!' pode ja ter sido removido.!N!
     ) else (
         for %%f in ("!BK_FILE!") do set "BK_SIZE=%%~zf"
         call :ok "Backup salvo: !BK_FILE! (!BK_SIZE! bytes)"
     )
-    set "PGPASSWORD="
 ) else (
     call :warn "Sem senha — backup pulado."
 )
@@ -413,33 +416,34 @@ if not defined PSQL_BIN (
 )
 
 if not defined DB_PASS (
+    setlocal DisableDelayedExpansion
     set /p "DB_PASS=  Senha do postgres: "
+    endlocal & set "DB_PASS=%DB_PASS%"
 )
 
 if defined DB_PASS (
-    set "PGPASSWORD=!DB_PASS!"
+    setlocal DisableDelayedExpansion
+    powershell -NoProfile -Command ^
+        "$env:PGPASSWORD='%DB_PASS%';" ^
+        "$psql='%PSQL_BIN%';" ^
+        "$db='%DB_NAME%';" ^
+        "$exists=(((& $psql -U postgres -h localhost -tAc \"SELECT 1 FROM pg_database WHERE datname = '$db';\" 2>$null) -join '').Trim());" ^
+        "if($exists -ne '1'){ exit 10 }" ^
+        "& $psql -U postgres -h localhost -c \"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$db' AND pid <> pg_backend_pid();\" | Out-Null;" ^
+        "& $psql -U postgres -h localhost -c \"DROP DATABASE IF EXISTS $db;\" | Out-Null;" ^
+        "exit $LASTEXITCODE" >> "!LOG!" 2>&1
+    set "DROP_RC=%ERRORLEVEL%"
+    endlocal & set "DROP_RC=%DROP_RC%"
 
-    set "DB_EXISTS="
-    for /f "delims=" %%d in ('"!PSQL_BIN!" -U postgres -h localhost -tAc "SELECT 1 FROM pg_database WHERE datname = ''!DB_NAME!'';" 2^>nul') do set "DB_EXISTS=%%d"
-    set "DB_EXISTS=!DB_EXISTS: =!"
-    if not "!DB_EXISTS!"=="1" (
+    if "!DROP_RC!"=="10" (
         call :skip "Banco !DB_NAME! nao existe"
-        set "PGPASSWORD="
         goto :final
     )
-
-    REM Terminate active connections
-    "!PSQL_BIN!" -U postgres -h localhost -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '!DB_NAME!' AND pid ^<^> pg_backend_pid();" >> "!LOG!" 2>&1
-
-    REM Drop database
-    "!PSQL_BIN!" -U postgres -h localhost -c "DROP DATABASE IF EXISTS !DB_NAME!;" >> "!LOG!" 2>&1
-    if errorlevel 1 (
+    if not "!DROP_RC!"=="0" (
         call :warn "Falha ao remover banco !DB_NAME!"
     ) else (
         call :ok "Banco !DB_NAME! removido"
     )
-
-    set "PGPASSWORD="
 ) else (
     call :warn "Sem senha — banco nao removido"
 )

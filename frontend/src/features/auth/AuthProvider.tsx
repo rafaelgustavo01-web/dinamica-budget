@@ -35,14 +35,22 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string) {
+  return UUID_REGEX.test(value);
+}
+
 function syncSelectedClient(
   user: MeResponse | null,
   setSelectedClient: (value: string) => void,
 ) {
   const storedClientId = readSelectedClientId().trim();
   const availableClientIds = getAvailableClientIds(user);
+  const adminStoredClientIsValid = user?.is_admin && isUuid(storedClientId);
   const nextClientId =
-    storedClientId && (user?.is_admin || availableClientIds.includes(storedClientId))
+    storedClientId && (adminStoredClientIsValid || availableClientIds.includes(storedClientId))
       ? storedClientId
       : availableClientIds[0] ?? '';
 
@@ -147,6 +155,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
       if (!normalized) {
         setSelectedClientIdState('');
         persistSelectedClientId('');
+        return;
+      }
+
+      if (user?.is_admin && !isUuid(normalized)) {
         return;
       }
 
