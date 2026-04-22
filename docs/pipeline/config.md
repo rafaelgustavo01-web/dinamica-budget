@@ -1,4 +1,4 @@
-# Pipeline Config
+﻿# Pipeline Config
 
 > Dynamic configuration for the Role-Inbox Broadcast protocol.
 > Any agent reads this file at the start of every cycle.
@@ -6,6 +6,11 @@
 ## Polling
 - interval_minutes: 10
 - jitter_seconds: 30
+
+## Pipeline State
+- status: STOPPED
+- started_at: 2026-04-22T20:13:23Z
+- stopped_at: 2026-04-22T20:13:26Z
 
 ## WIP
 - max_active_sprints: 2

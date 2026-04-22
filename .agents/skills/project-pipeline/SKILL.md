@@ -81,6 +81,28 @@ Communication between roles happens exclusively through **inbox sections inside 
 - Remove duplicate or accidental nested paths when a canonical path already exists.
 - Update `PROJECT MAP.md` after structural changes.
 
+## Pipeline Control CLI
+
+A PowerShell controller manages the Windows Task Scheduler tasks for all active roles.
+
+Script: `scripts/pipeline-control.ps1`
+
+### Commands
+
+- **`start`** — Reads active roles from `docs/pipeline/config.md`, creates one Task Scheduler task per role running `scripts/pipeline-agent.ps1` at the configured interval, and sets `status: RUNNING`.
+- **`stop`** — Deletes all `Dinamica-Pipeline-*` tasks and sets `status: STOPPED`.
+- **`time_set -Interval <minutes>`** — Updates `interval_minutes` in config. If pipeline is RUNNING, stops and recreates all tasks with the new interval.
+
+### Agent Polling Script
+
+Script: `scripts/pipeline-agent.ps1`
+
+Each role's Task Scheduler task invokes this script with `-Role <name>`. It:
+1. Reads `docs/pipeline/config.md` and exits silently if `status: STOPPED`.
+2. Reads the role's `docs/roles/[role]-readme.md` and extracts the `## INBOX` section.
+3. Parses `[PENDING]`, `[DONE]`, and `[BLOCKED]` messages.
+4. Outputs actionable handoffs for the calling role to consume.
+
 ## Completion Checklist
 
 - Backlog status matches actual artifact state.
