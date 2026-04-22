@@ -2,12 +2,13 @@
 from app.models.associacao_inteligente import AssociacaoInteligente
 from app.models.auditoria_log import AuditoriaLog
 from app.models.base import Base, TimestampMixin
+from app.models.base_tcpo import BaseTcpo
 from app.models.categoria_recurso import CategoriaRecurso
 from app.models.cliente import Cliente
-from app.models.composicao_tcpo import ComposicaoTcpo
+from app.models.composicao_base import ComposicaoBase
+from app.models.composicao_cliente import ComposicaoCliente
 from app.models.enums import (
     OrigemAssociacao,
-    OrigemItem,
     PerfilUsuario,
     StatusHomologacao,
     StatusValidacaoAssociacao,
@@ -16,7 +17,7 @@ from app.models.enums import (
     TipoRecurso,
 )
 from app.models.historico_busca_cliente import HistoricoBuscaCliente
-from app.models.servico_tcpo import ServicoTcpo
+from app.models.itens_proprios import ItemProprio
 from app.models.tcpo_embeddings import TcpoEmbedding
 from app.models.usuario import Usuario, UsuarioPerfil
 from app.models.versao_composicao import VersaoComposicao
@@ -28,8 +29,10 @@ __all__ = [
     "UsuarioPerfil",
     "Cliente",
     "CategoriaRecurso",
-    "ServicoTcpo",
-    "ComposicaoTcpo",
+    "BaseTcpo",
+    "ItemProprio",
+    "ComposicaoBase",
+    "ComposicaoCliente",
     "VersaoComposicao",
     "TcpoEmbedding",
     "HistoricoBuscaCliente",
@@ -37,7 +40,6 @@ __all__ = [
     "AuditoriaLog",
     # enums
     "TipoCusto",
-    "OrigemItem",
     "StatusHomologacao",
     "OrigemAssociacao",
     "StatusValidacaoAssociacao",

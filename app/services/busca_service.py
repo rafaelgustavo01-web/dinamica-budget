@@ -1,12 +1,12 @@
 """
-Motor de Busca em Cascata — V2
+Motor de Busca em Cascata — V3 (dual-schema)
 
 Fluxo:
   Fase 0 (Itens Próprios): Busca pg_trgm restrita a itens PROPRIA do cliente com status APROVADO
   Fase 1 (Associação Direta): Lookup em associacao_inteligente com cliente_id + texto normalizado
                                → se CONSOLIDADA: circuit break imediato
                                → se VALIDADA/SUGERIDA: retorna e fortalece
-  Fase 2 (Fuzzy Global): pg_trgm sobre catálogo global (TCPO APROVADO)
+  Fase 2 (Fuzzy Global): pg_trgm sobre catálogo global TCPO (referencia.base_tcpo)
   Fase 3 (IA Semântica): pgvector cosine similarity
 
 Normalização obrigatória em todas as fases:
@@ -26,10 +26,11 @@ from app.core.exceptions import NotFoundError, ValidationError
 from app.core.logging import get_logger
 from app.ml.embedder import embedder
 from app.ml.vector_search import vector_searcher
-from app.models.enums import OrigemAssociacao, OrigemItem, StatusHomologacao, StatusValidacaoAssociacao
+from app.models.enums import OrigemAssociacao, StatusHomologacao, StatusValidacaoAssociacao
 from app.repositories.associacao_repository import AssociacaoRepository, normalize_text
+from app.repositories.base_tcpo_repository import BaseTcpoRepository
 from app.repositories.historico_repository import HistoricoRepository
-from app.repositories.servico_tcpo_repository import ServicoTcpoRepository
+from app.repositories.itens_proprios_repository import ItensPropiosRepository
 from app.schemas.busca import (
     AssociacaoResponse,
     BuscaMetadados,
@@ -56,7 +57,8 @@ class BuscaService:
         texto_norm = normalize_text(request.texto_busca)
 
         assoc_repo = AssociacaoRepository(db)
-        servico_repo = ServicoTcpoRepository(db)
+        base_repo = BaseTcpoRepository(db)
+        proprios_repo = ItensPropiosRepository(db)
 
         # ─────────────────────────────────────────────────────────────────────
         # FASE 0: Itens Próprios do Cliente (PROPRIA + APROVADO)
@@ -68,7 +70,7 @@ class BuscaService:
                 texto_norm=texto_norm,
                 threshold=request.threshold_score,
                 limit=request.limite_resultados,
-                servico_repo=servico_repo,
+                proprios_repo=proprios_repo,
             )
             if resultado:
                 return await self._build_response(
@@ -96,7 +98,7 @@ class BuscaService:
                 cliente_id=request.cliente_id,
                 texto_norm=texto_norm,
                 assoc_repo=assoc_repo,
-                servico_repo=servico_repo,
+                base_repo=base_repo,
             )
             if resultado:
                 if associacao:
@@ -118,13 +120,13 @@ class BuscaService:
             logger.info("busca_sem_cliente_skip_fase1", texto=texto_norm)
 
         # ─────────────────────────────────────────────────────────────────────
-        # FASE 2: Fuzzy Global (pg_trgm — catálogo TCPO APROVADO)
+        # FASE 2: Fuzzy Global (pg_trgm — catálogo TCPO)
         # ─────────────────────────────────────────────────────────────────────
         resultado = await self._fase2_fuzzy(
             texto_busca=texto_norm,
             threshold=request.threshold_score,
             limit=request.limite_resultados,
-            servico_repo=servico_repo,
+            base_repo=base_repo,
         )
         if resultado:
             return await self._build_response(
@@ -144,7 +146,7 @@ class BuscaService:
             threshold=request.threshold_score,
             limit=request.limite_resultados,
             db=db,
-            servico_repo=servico_repo,
+            base_repo=base_repo,
         )
 
         return await self._build_response(
@@ -164,14 +166,13 @@ class BuscaService:
         texto_norm: str,
         threshold: float,
         limit: int,
-        servico_repo: ServicoTcpoRepository,
+        proprios_repo: ItensPropiosRepository,
     ) -> list[ResultadoBusca] | None:
-        rows = await servico_repo.fuzzy_search_scoped(
+        rows = await proprios_repo.fuzzy_search_scoped(
             texto_busca=texto_norm,
             threshold=threshold,
             limit=limit,
             cliente_id=cliente_id,
-            origem=OrigemItem.PROPRIA,
             status_homologacao=StatusHomologacao.APROVADO,
         )
         if not rows:
@@ -200,7 +201,7 @@ class BuscaService:
         cliente_id: UUID,
         texto_norm: str,
         assoc_repo: AssociacaoRepository,
-        servico_repo: ServicoTcpoRepository,
+        base_repo: BaseTcpoRepository,
     ) -> tuple[list[ResultadoBusca] | None, object]:
         assoc = await assoc_repo.find_by_cliente_and_text(
             cliente_id=cliente_id,
@@ -209,7 +210,8 @@ class BuscaService:
         if not assoc:
             return None, None
 
-        servico = await servico_repo.get_active_by_id(assoc.servico_tcpo_id)
+        # Associations always point to referencia.base_tcpo
+        servico = await base_repo.get_by_id(assoc.item_referencia_id)
         if not servico:
             return None, None
 
@@ -229,11 +231,11 @@ class BuscaService:
                 codigo_origem=servico.codigo_origem,
                 descricao=servico.descricao,
                 unidade=servico.unidade_medida,
-                custo_unitario=float(servico.custo_unitario),
+                custo_unitario=float(servico.custo_base),
                 score=1.0,
                 score_confianca=float(assoc.confiabilidade_score or 1.0),
                 origem_match="ASSOCIACAO_DIRETA",
-                status_homologacao=servico.status_homologacao.value,
+                status_homologacao="APROVADO",  # BaseTcpo is always approved
             )
         ], assoc
 
@@ -244,15 +246,12 @@ class BuscaService:
         texto_busca: str,
         threshold: float,
         limit: int,
-        servico_repo: ServicoTcpoRepository,
+        base_repo: BaseTcpoRepository,
     ) -> list[ResultadoBusca] | None:
-        rows = await servico_repo.fuzzy_search_scoped(
+        rows = await base_repo.fuzzy_search(
             texto_busca=texto_busca,
             threshold=threshold,
             limit=limit,
-            cliente_id=None,  # global catalog
-            origem=OrigemItem.TCPO,
-            status_homologacao=StatusHomologacao.APROVADO,
         )
         if not rows:
             return None
@@ -264,11 +263,11 @@ class BuscaService:
                 codigo_origem=s.codigo_origem,
                 descricao=s.descricao,
                 unidade=s.unidade_medida,
-                custo_unitario=float(s.custo_unitario),
+                custo_unitario=float(s.custo_base),
                 score=round(score, 4),
                 score_confianca=round(score, 4),
                 origem_match="FUZZY",
-                status_homologacao=s.status_homologacao.value,
+                status_homologacao="APROVADO",  # BaseTcpo is always approved
             )
             for s, score in rows
         ]
@@ -281,7 +280,7 @@ class BuscaService:
         threshold: float,
         limit: int,
         db: AsyncSession,
-        servico_repo: ServicoTcpoRepository,
+        base_repo: BaseTcpoRepository,
     ) -> list[ResultadoBusca]:
         if not embedder.ready:
             logger.warning("fase3_skipped_embedder_not_ready")
@@ -298,19 +297,15 @@ class BuscaService:
         if not candidates:
             return []
 
-        # P1.7: Batch load — single query for all candidates, eliminates N+1
+        # Batch load — single query for all candidates, eliminates N+1
         candidate_ids = [c[0] for c in candidates]
-        servicos_map = await servico_repo.get_active_by_ids(candidate_ids)
-
-        # Build score lookup from candidates
+        servicos_map = await base_repo.get_by_ids(candidate_ids)
         scores = {c[0]: c[1] for c in candidates}
 
         results = []
         for servico_id in candidate_ids:
             servico = servicos_map.get(servico_id)
             if not servico:
-                continue
-            if servico.status_homologacao != StatusHomologacao.APROVADO:
                 continue
             score = scores[servico_id]
             results.append(
@@ -319,11 +314,11 @@ class BuscaService:
                     codigo_origem=servico.codigo_origem,
                     descricao=servico.descricao,
                     unidade=servico.unidade_medida,
-                    custo_unitario=float(servico.custo_unitario),
+                    custo_unitario=float(servico.custo_base),
                     score=round(score, 4),
                     score_confianca=round(score, 4),
                     origem_match="IA_SEMANTICA",
-                    status_homologacao=servico.status_homologacao.value,
+                    status_homologacao="APROVADO",  # BaseTcpo is always approved
                 )
             )
 
@@ -368,7 +363,7 @@ class BuscaService:
         usuario_id: UUID,
         db: AsyncSession,
     ) -> AssociacaoResponse:
-        servico_repo = ServicoTcpoRepository(db)
+        base_repo = BaseTcpoRepository(db)
         assoc_repo = AssociacaoRepository(db)
         historico_repo = HistoricoRepository(db)
 
@@ -382,26 +377,15 @@ class BuscaService:
                 "Histórico de busca não encontrado ou não pertence ao cliente informado."
             )
 
-        # Validate the selected service is visible to this client
-        servico = await servico_repo.get_active_by_id(request.id_tcpo_selecionado)
+        # Associations point to TCPO reference items only
+        servico = await base_repo.get_by_id(request.id_tcpo_selecionado)
         if not servico:
-            raise NotFoundError("ServicoTcpo", str(request.id_tcpo_selecionado))
-
-        # Visible = global TCPO approved OR client's own PROPRIA approved
-        is_global_tcpo = servico.cliente_id is None and servico.status_homologacao == StatusHomologacao.APROVADO
-        is_own_propria = (
-            servico.cliente_id == request.cliente_id
-            and servico.status_homologacao == StatusHomologacao.APROVADO
-        )
-        if not (is_global_tcpo or is_own_propria):
-            raise ValidationError(
-                "Serviço não está disponível para este cliente."
-            )
+            raise NotFoundError("BaseTcpo", str(request.id_tcpo_selecionado))
 
         associacao = await assoc_repo.upsert_associacao(
             cliente_id=request.cliente_id,
             texto_busca_original=request.texto_busca_original,
-            servico_tcpo_id=request.id_tcpo_selecionado,
+            item_referencia_id=request.id_tcpo_selecionado,
             origem=OrigemAssociacao.MANUAL_USUARIO,
             confiabilidade_score=Decimal("1.00"),
         )

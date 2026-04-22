@@ -76,7 +76,7 @@ class AssociacaoRepository(BaseRepository[AssociacaoInteligente]):
         self,
         cliente_id: UUID,
         texto_busca_original: str,
-        servico_tcpo_id: UUID,
+        item_referencia_id: UUID,
         origem: OrigemAssociacao,
         confiabilidade_score: Decimal | None = None,
     ) -> AssociacaoInteligente:
@@ -87,14 +87,14 @@ class AssociacaoRepository(BaseRepository[AssociacaoInteligente]):
         texto_norm = normalize_text(texto_busca_original)
         existing = await self.find_by_cliente_and_text(cliente_id, texto_norm)
 
-        if existing and existing.servico_tcpo_id == servico_tcpo_id:
+        if existing and existing.item_referencia_id == item_referencia_id:
             return await self.fortalecer(existing)
 
         # New association
         nova = AssociacaoInteligente(
             cliente_id=cliente_id,
             texto_busca_normalizado=texto_norm,
-            servico_tcpo_id=servico_tcpo_id,
+            item_referencia_id=item_referencia_id,
             origem_associacao=origem,
             confiabilidade_score=confiabilidade_score,
             frequencia_uso=1,

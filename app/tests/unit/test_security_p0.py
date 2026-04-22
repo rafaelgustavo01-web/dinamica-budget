@@ -113,31 +113,21 @@ def test_usuario_create_accepts_long_password():
 @pytest.mark.asyncio
 async def test_get_servico_propria_blocks_wrong_tenant():
     """
-    GET /servicos/{id}: A PROPRIA item from client B must not be visible
-    to a user that only has access to client A.
+    GET /servicos/{id}: A PROPRIA item (cliente_id set) from client B must not be
+    visible to a user that only has access to client A.
     """
     import uuid
     from unittest.mock import AsyncMock, MagicMock, patch
 
-    from app.models.enums import OrigemItem, StatusHomologacao
-    from app.core.dependencies import _get_perfis_para_cliente
     from app.core.exceptions import NotFoundError
 
     servico_id = uuid.uuid4()
     client_b_id = uuid.uuid4()
 
-    # PROPRIA item from client B
+    # ItemProprio — has a cliente_id (non-None signals PROPRIA)
     mock_servico = MagicMock()
     mock_servico.id = servico_id
-    mock_servico.origem = OrigemItem.PROPRIA
     mock_servico.cliente_id = client_b_id
-    mock_servico.status_homologacao = StatusHomologacao.APROVADO
-    mock_servico.codigo_origem = "XX.001"
-    mock_servico.descricao = "Item PROPRIA do Cliente B"
-    mock_servico.unidade_medida = "m²"
-    mock_servico.custo_unitario = 100.0
-    mock_servico.categoria_id = None
-    mock_servico.deleted_at = None
 
     # User from client A (has no access to client B)
     user_a = MagicMock()
@@ -146,12 +136,13 @@ async def test_get_servico_propria_blocks_wrong_tenant():
     user_a.is_active = True
 
     mock_db = AsyncMock()
-    mock_repo = AsyncMock()
-    mock_repo.get_active_by_id = AsyncMock(return_value=mock_servico)
 
     # _get_perfis_para_cliente returns [] — user has no access to client B
     with (
-        patch("app.api.v1.endpoints.servicos.ServicoTcpoRepository", return_value=mock_repo),
+        patch(
+            "app.api.v1.endpoints.servicos.servico_catalog_service.get_servico",
+            new=AsyncMock(return_value=mock_servico),
+        ),
         patch(
             "app.api.v1.endpoints.servicos._get_perfis_para_cliente",
             new=AsyncMock(return_value=[]),
@@ -170,23 +161,18 @@ async def test_get_servico_propria_blocks_wrong_tenant():
 @pytest.mark.asyncio
 async def test_get_servico_propria_allows_correct_tenant():
     """
-    GET /servicos/{id}: A PROPRIA item from client A IS visible to a user
-    that has access to client A.
+    GET /servicos/{id}: A PROPRIA item (cliente_id set) from client A IS visible
+    to a user that has access to client A.
     """
     import uuid
     from unittest.mock import AsyncMock, MagicMock, patch
-
-    from app.models.enums import OrigemItem, StatusHomologacao
 
     servico_id = uuid.uuid4()
     client_a_id = uuid.uuid4()
 
     mock_servico = MagicMock()
     mock_servico.id = servico_id
-    mock_servico.origem = OrigemItem.PROPRIA
     mock_servico.cliente_id = client_a_id
-    mock_servico.status_homologacao = StatusHomologacao.APROVADO
-    mock_servico.deleted_at = None
 
     user_a = MagicMock()
     user_a.id = uuid.uuid4()
@@ -194,11 +180,12 @@ async def test_get_servico_propria_allows_correct_tenant():
     user_a.is_active = True
 
     mock_db = AsyncMock()
-    mock_repo = AsyncMock()
-    mock_repo.get_active_by_id = AsyncMock(return_value=mock_servico)
 
     with (
-        patch("app.api.v1.endpoints.servicos.ServicoTcpoRepository", return_value=mock_repo),
+        patch(
+            "app.api.v1.endpoints.servicos.servico_catalog_service.get_servico",
+            new=AsyncMock(return_value=mock_servico),
+        ),
         patch(
             "app.api.v1.endpoints.servicos._get_perfis_para_cliente",
             new=AsyncMock(return_value=["USUARIO"]),
@@ -221,22 +208,17 @@ async def test_get_servico_propria_allows_correct_tenant():
 @pytest.mark.asyncio
 async def test_get_servico_tcpo_global_accessible_to_any_user():
     """
-    GET /servicos/{id}: Global TCPO items (cliente_id=None) are accessible
+    GET /servicos/{id}: Global BaseTcpo items (cliente_id=None) are accessible
     to any authenticated user without tenant check.
     """
     import uuid
     from unittest.mock import AsyncMock, MagicMock, patch
 
-    from app.models.enums import OrigemItem, StatusHomologacao
-
     servico_id = uuid.uuid4()
 
     mock_servico = MagicMock()
     mock_servico.id = servico_id
-    mock_servico.origem = OrigemItem.TCPO
-    mock_servico.cliente_id = None  # global — no tenant
-    mock_servico.status_homologacao = StatusHomologacao.APROVADO
-    mock_servico.deleted_at = None
+    mock_servico.cliente_id = None  # global BaseTcpo — no tenant
 
     user = MagicMock()
     user.id = uuid.uuid4()
@@ -244,11 +226,12 @@ async def test_get_servico_tcpo_global_accessible_to_any_user():
     user.is_active = True
 
     mock_db = AsyncMock()
-    mock_repo = AsyncMock()
-    mock_repo.get_active_by_id = AsyncMock(return_value=mock_servico)
 
     with (
-        patch("app.api.v1.endpoints.servicos.ServicoTcpoRepository", return_value=mock_repo),
+        patch(
+            "app.api.v1.endpoints.servicos.servico_catalog_service.get_servico",
+            new=AsyncMock(return_value=mock_servico),
+        ),
         patch(
             "app.api.v1.endpoints.servicos._get_perfis_para_cliente",
             new=AsyncMock(return_value=[]),  # would fail if called
@@ -264,7 +247,7 @@ async def test_get_servico_tcpo_global_accessible_to_any_user():
             current_user=user,
             db=mock_db,
         )
-        # _get_perfis_para_cliente must NOT be called for global TCPO items
+        # _get_perfis_para_cliente must NOT be called for global BaseTcpo items
         mock_perfis.assert_not_called()
         assert result is not None
 
@@ -277,17 +260,12 @@ async def test_get_servico_admin_bypasses_tenant_check():
     import uuid
     from unittest.mock import AsyncMock, MagicMock, patch
 
-    from app.models.enums import OrigemItem, StatusHomologacao
-
     servico_id = uuid.uuid4()
     client_b_id = uuid.uuid4()
 
     mock_servico = MagicMock()
     mock_servico.id = servico_id
-    mock_servico.origem = OrigemItem.PROPRIA
     mock_servico.cliente_id = client_b_id
-    mock_servico.status_homologacao = StatusHomologacao.APROVADO
-    mock_servico.deleted_at = None
 
     admin_user = MagicMock()
     admin_user.id = uuid.uuid4()
@@ -295,11 +273,12 @@ async def test_get_servico_admin_bypasses_tenant_check():
     admin_user.is_active = True
 
     mock_db = AsyncMock()
-    mock_repo = AsyncMock()
-    mock_repo.get_active_by_id = AsyncMock(return_value=mock_servico)
 
     with (
-        patch("app.api.v1.endpoints.servicos.ServicoTcpoRepository", return_value=mock_repo),
+        patch(
+            "app.api.v1.endpoints.servicos.servico_catalog_service.get_servico",
+            new=AsyncMock(return_value=mock_servico),
+        ),
         patch(
             "app.api.v1.endpoints.servicos._get_perfis_para_cliente",
             new=AsyncMock(return_value=[]),

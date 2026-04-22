@@ -14,8 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_active_user, get_db, require_cliente_perfil
 from app.core.exceptions import AuthorizationError, NotFoundError
-from app.repositories.servico_tcpo_repository import ServicoTcpoRepository
-from app.models.enums import OrigemItem
+from app.repositories.itens_proprios_repository import ItensPropiosRepository
 from app.schemas.composicao import AdicionarComponenteRequest, ClonarComposicaoRequest
 from app.schemas.servico import ExplodeComposicaoResponse
 from app.services.servico_catalog_service import servico_catalog_service
@@ -54,19 +53,20 @@ async def clonar_composicao(
         cliente_id=request.cliente_id,
         codigo_clone=request.codigo_clone,
         descricao=request.descricao,
+        criado_por_id=current_user.id,
         db=db,
     )
 
 
 async def _validate_pai_propria(pai_id: UUID, current_user, db: AsyncSession):
-    """Load pai, assert origem=PROPRIA, and check RBAC on its cliente_id."""
-    repo = ServicoTcpoRepository(db)
+    """Load pai (ItemProprio), assert it exists, and check RBAC on its cliente_id."""
+    repo = ItensPropiosRepository(db)
     pai = await repo.get_active_by_id(pai_id)
     if not pai:
-        raise NotFoundError("ServicoTcpo", str(pai_id))
-    if pai.origem != OrigemItem.PROPRIA or pai.cliente_id is None:
+        raise NotFoundError("ItemProprio", str(pai_id))
+    if pai.cliente_id is None:
         raise AuthorizationError(
-            "Apenas composições de origem PROPRIA podem ser editadas."
+            "Apenas itens próprios do cliente podem ser editados."
         )
     await require_cliente_perfil(
         cliente_id=pai.cliente_id,
@@ -116,8 +116,8 @@ async def remover_componente(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     """
-    Remove a ComposicaoTcpo link from a PROPRIA composition.
-    `componente_id` is the ComposicaoTcpo.id (link record), not the insumo UUID.
+    Remove a ComposicaoCliente link from a PROPRIA composition.
+    `componente_id` is the ComposicaoCliente.id (link record), not the insumo UUID.
     Requires APROVADOR or ADMIN on the client that owns this composition.
     """
     await _validate_pai_propria(pai_id, current_user, db)

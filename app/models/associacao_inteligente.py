@@ -6,6 +6,8 @@ Key changes from V1:
   - status_validacao: ENUM controls auto-return threshold in Phase 1
   - Strengthening rule: after CONSOLIDACAO_THRESHOLD confirmations, status → CONSOLIDADA
     which triggers immediate circuit-break in busca_service
+
+V3 (dual-schema): FK agora aponta para referencia.base_tcpo (item_referencia_id).
 """
 
 import uuid
@@ -26,19 +28,23 @@ CONSOLIDACAO_THRESHOLD = 3
 
 class AssociacaoInteligente(Base):
     __tablename__ = "associacao_inteligente"
+    __table_args__ = {"schema": "operacional"}
 
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     cliente_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("clientes.id"), nullable=False, index=True
+        PGUUID(as_uuid=True),
+        ForeignKey("operacional.clientes.id"),
+        nullable=False,
+        index=True,
     )
     texto_busca_normalizado: Mapped[str] = mapped_column(
         String(255), nullable=False
     )
-    servico_tcpo_id: Mapped[UUID] = mapped_column(
+    item_referencia_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("servico_tcpo.id"),
+        ForeignKey("referencia.base_tcpo.id"),
         nullable=False,
         index=True,
     )
@@ -68,7 +74,7 @@ class AssociacaoInteligente(Base):
     )
 
     cliente: Mapped["Cliente"] = relationship(lazy="noload")
-    servico_tcpo: Mapped["ServicoTcpo"] = relationship(
+    item_referencia: Mapped["BaseTcpo"] = relationship(
         back_populates="associacoes", lazy="noload"
     )
 

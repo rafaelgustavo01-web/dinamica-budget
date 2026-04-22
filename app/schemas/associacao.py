@@ -10,7 +10,7 @@ class AssociacaoListItem(BaseModel):
     id: UUID
     cliente_id: UUID
     texto_busca_normalizado: str
-    servico_tcpo_id: UUID
+    item_referencia_id: UUID
     origem_associacao: str
     frequencia_uso: int
     status_validacao: str

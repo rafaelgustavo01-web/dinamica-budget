@@ -12,9 +12,7 @@ class TipoCusto(str, enum.Enum):
     GLOBAL = "GLOBAL"
 
 
-class OrigemItem(str, enum.Enum):
-    TCPO = "TCPO"           # Item do catálogo oficial TCPO
-    PROPRIA = "PROPRIA"     # Item próprio do cliente
+# OrigemItem REMOVIDO — separação agora é física (referencia.base_tcpo vs operacional.itens_proprios)
 
 
 class StatusHomologacao(str, enum.Enum):

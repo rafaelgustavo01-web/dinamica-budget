@@ -10,11 +10,14 @@ class ServicoTcpoResponse(BaseModel):
     codigo_origem: str
     descricao: str
     unidade_medida: str
-    custo_unitario: Decimal
-    categoria_id: int | None
-    origem: str          # 'TCPO' | 'PROPRIA'
-    cliente_id: UUID | None  # None for global TCPO items
-    tipo_recurso: str | None = None  # 'MO' | 'INSUMO' | 'FERRAMENTA' | 'EQUIPAMENTO' | 'SERVICO'
+    # custo_base comes from BaseTcpo; custo_unitario from ItemProprio
+    custo_base: Decimal | None = None
+    custo_unitario: Decimal | None = None
+    categoria_id: int | None = None
+    # origem only present on ItemProprio; None for BaseTcpo items
+    origem: str | None = None
+    cliente_id: UUID | None = None
+    tipo_recurso: str | None = None
     descricao_tokens: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -35,15 +38,17 @@ class ComposicaoItemResponse(BaseModel):
 class VersaoInfo(BaseModel):
     versao_id: UUID
     numero_versao: int
-    origem: str  # 'TCPO' | 'PROPRIA'
-    cliente_id: UUID | None
+    # origem and cliente_id removed from VersaoComposicao in dual-schema model
+    origem: str | None = None
+    cliente_id: UUID | None = None
 
 
 class VersaoComposicaoResponse(BaseModel):
     id: UUID
     numero_versao: int
-    origem: str
-    cliente_id: UUID | None
+    # origem and cliente_id removed from VersaoComposicao in dual-schema model
+    origem: str | None = None
+    cliente_id: UUID | None = None
     is_ativa: bool
     criado_em: datetime
 

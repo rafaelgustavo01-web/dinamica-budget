@@ -1,6 +1,7 @@
 """
-Keeps tcpo_embeddings in sync with servico_tcpo.
-Called by servico_catalog_service on every CREATE / UPDATE / soft DELETE.
+Keeps referencia.tcpo_embeddings in sync with referencia.base_tcpo.
+Called by servico_catalog_service on every CREATE / UPDATE of a TCPO item.
+PROPRIA items (itens_proprios) are embedded separately post-approval.
 """
 
 from uuid import UUID
@@ -9,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.ml.embedder import embedder
-from app.repositories.servico_tcpo_repository import ServicoTcpoRepository
+from app.repositories.base_tcpo_repository import BaseTcpoRepository
 from app.repositories.tcpo_embeddings_repository import TcpoEmbeddingsRepository
 
 logger = get_logger(__name__)
@@ -21,11 +22,11 @@ class EmbeddingSyncService:
         servico_id: UUID,
         db: AsyncSession,
     ) -> None:
-        """Encode the service description and upsert into tcpo_embeddings."""
-        servico_repo = ServicoTcpoRepository(db)
+        """Encode a BaseTcpo item's description and upsert into tcpo_embeddings."""
+        servico_repo = BaseTcpoRepository(db)
         emb_repo = TcpoEmbeddingsRepository(db)
 
-        servico = await servico_repo.get_active_by_id(servico_id)
+        servico = await servico_repo.get_by_id(servico_id)
         if not servico:
             logger.warning("sync_skipped_service_not_found", servico_id=str(servico_id))
             return
@@ -37,7 +38,7 @@ class EmbeddingSyncService:
         vetor = embedder.encode(servico.descricao)
         metadata = {
             "descricao": servico.descricao,
-            "categoria_id": servico.categoria_id,
+            "categoria_id": str(servico.categoria_id) if servico.categoria_id else None,
         }
 
         await emb_repo.upsert(servico_id, vetor, metadata)
@@ -52,8 +53,8 @@ class EmbeddingSyncService:
     async def compute_all_missing(
         self, db: AsyncSession, batch_size: int = 100
     ) -> int:
-        """Batch-compute embeddings for all services without one."""
-        servico_repo = ServicoTcpoRepository(db)
+        """Batch-compute embeddings for all BaseTcpo items without one."""
+        servico_repo = BaseTcpoRepository(db)
         emb_repo = TcpoEmbeddingsRepository(db)
 
         if not embedder.ready:
@@ -71,7 +72,7 @@ class EmbeddingSyncService:
             for servico, vetor in zip(servicos, vectors):
                 metadata = {
                     "descricao": servico.descricao,
-                    "categoria_id": servico.categoria_id,
+                    "categoria_id": str(servico.categoria_id) if servico.categoria_id else None,
                 }
                 await emb_repo.upsert(servico.id, vetor, metadata)
                 total += 1

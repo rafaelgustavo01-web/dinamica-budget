@@ -2,6 +2,7 @@ import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettin
 import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
 import DatasetLinkedOutlinedIcon from '@mui/icons-material/DatasetLinkedOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import TableViewOutlinedIcon from '@mui/icons-material/TableViewOutlined';
 import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
@@ -82,6 +83,14 @@ export const navigationItems: NavigationItem[] = [
     group: 'Operação',
     icon: <DescriptionOutlinedIcon fontSize="small" />,
     status: 'partial',
+    visible: () => true,
+  },
+  {
+    label: 'Extração PC',
+    path: '/extracao',
+    group: 'Operação',
+    icon: <TableViewOutlinedIcon fontSize="small" />,
+    status: 'active',
     visible: () => true,
   },
   {

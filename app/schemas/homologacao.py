@@ -16,7 +16,6 @@ class ItemPendenteResponse(BaseModel):
     unidade_medida: str
     custo_unitario: Decimal
     cliente_id: UUID
-    origem: str
     status_homologacao: str
     created_at: datetime
 

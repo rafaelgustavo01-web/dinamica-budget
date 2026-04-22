@@ -11,8 +11,6 @@ from app.core.dependencies import (
     require_cliente_access,
 )
 from app.core.exceptions import NotFoundError
-from app.models.enums import OrigemItem
-from app.repositories.servico_tcpo_repository import ServicoTcpoRepository
 from app.schemas.common import PaginatedResponse
 from app.schemas.servico import (
     ExplodeComposicaoResponse,
@@ -50,23 +48,20 @@ async def get_servico(
 ) -> ServicoTcpoResponse:
     """
     Returns a service by ID.
-    P0 — Cross-tenant isolation: PROPRIA items from another client return 404.
-    Global TCPO items are accessible to all authenticated users.
+    P0 — Cross-tenant isolation: PROPRIA items (ItemProprio) from another client return 404.
+    Global BaseTcpo items are accessible to all authenticated users.
     """
-    repo = ServicoTcpoRepository(db)
-    servico = await repo.get_active_by_id(servico_id)
-    if not servico:
-        raise NotFoundError("ServicoTcpo", str(servico_id))
+    servico = await servico_catalog_service.get_servico(servico_id, db)
 
-    # PROPRIA items are scoped to their client — never leak to other tenants
-    if servico.origem == OrigemItem.PROPRIA and servico.cliente_id is not None:
+    # PROPRIA items have a cliente_id — verify the caller has access
+    if servico.cliente_id is not None:
         if not current_user.is_admin:
             perfis = await _get_perfis_para_cliente(current_user.id, servico.cliente_id, db)
             if not perfis:
                 # Return 404 (not 403) to avoid exposing existence of items
                 raise NotFoundError("ServicoTcpo", str(servico_id))
 
-    return ServicoTcpoResponse.model_validate(servico)
+    return servico
 
 
 @router.get("/{servico_id}/composicao", response_model=ExplodeComposicaoResponse)
