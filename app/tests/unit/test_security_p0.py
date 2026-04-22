@@ -163,13 +163,7 @@ async def test_list_servicos_with_cliente_id_no_access_check():
     mock_service = AsyncMock()
     mock_service.list_servicos = AsyncMock(return_value=mock_response)
 
-    with (
-        patch("app.api.v1.endpoints.servicos.servico_catalog_service", mock_service),
-        patch(
-            "app.api.v1.endpoints.servicos.require_cliente_access",
-            new=AsyncMock(side_effect=AssertionError("should not be called")),
-        ),
-    ):
+    with patch("app.api.v1.endpoints.servicos.servico_catalog_service", mock_service):
         result = await list_servicos(
             q=None,
             categoria_id=None,
@@ -182,6 +176,8 @@ async def test_list_servicos_with_cliente_id_no_access_check():
         assert result.total == 0
         mock_service.list_servicos.assert_awaited_once()
         assert mock_service.list_servicos.call_args.kwargs["cliente_id"] == client_id
+        import inspect
+        assert "require_cliente_access" not in inspect.getsource(list_servicos)
 
 
 @pytest.mark.asyncio
@@ -217,10 +213,6 @@ async def test_list_versoes_open_to_any_authenticated_user():
     with (
         patch("app.api.v1.endpoints.versoes.ItensPropiosRepository", return_value=propria_repo),
         patch("app.api.v1.endpoints.versoes.VersaoComposicaoRepository", return_value=versao_repo),
-        patch(
-            "app.api.v1.endpoints.versoes.require_cliente_access",
-            new=AsyncMock(side_effect=AssertionError("should not be called")),
-        ),
     ):
         result = await list_versoes(
             item_id=item_id,
@@ -228,6 +220,8 @@ async def test_list_versoes_open_to_any_authenticated_user():
             db=AsyncMock(),
         )
         assert len(result) == 1
+        import inspect
+        assert "require_cliente_access" not in inspect.getsource(list_versoes)
 
 
 @pytest.mark.asyncio
