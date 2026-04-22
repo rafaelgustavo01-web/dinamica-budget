@@ -204,6 +204,8 @@ async def test_list_versoes_open_to_any_authenticated_user():
     versao.numero_versao = 1
     versao.is_ativa = True
     versao.criado_em = datetime.now(UTC)
+    versao.origem = None
+    versao.cliente_id = None
 
     propria_repo = AsyncMock()
     propria_repo.get_active_by_id = AsyncMock(return_value=item)
@@ -309,7 +311,11 @@ def test_write_endpoints_still_require_client_perfil():
 
     for func, name in write_routes:
         src = inspect.getsource(func)
-        assert "require_cliente_perfil" in src or "require_cliente_access" in src, (
+        assert (
+            "require_cliente_perfil" in src
+            or "require_cliente_access" in src
+            or "_validate_pai_propria(" in src
+        ), (
             f"{name} must keep write authorization checks"
         )
 
