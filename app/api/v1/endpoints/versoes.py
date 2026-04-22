@@ -15,7 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import (
     get_current_active_user,
     get_db,
-    require_cliente_access,
     require_cliente_perfil,
 )
 from app.core.exceptions import NotFoundError
@@ -42,13 +41,12 @@ async def list_versoes(
 ) -> list[VersaoComposicaoResponse]:
     """
     Lists all VersaoComposicao for a PROPRIA item.
-    Requires any access role on the item's client.
+    On-premise model: any authenticated user may read versions.
     """
     propria_repo = ItensPropiosRepository(db)
     item = await propria_repo.get_active_by_id(item_id)
     if not item:
         raise NotFoundError("ItemProprio", str(item_id))
-    await require_cliente_access(item.cliente_id, current_user, db)
 
     versao_repo = VersaoComposicaoRepository(db)
     versoes = await versao_repo.list_versoes(item_id)
