@@ -20,3 +20,15 @@ Explicit user request, OR pipeline anomaly detected (stale pending, worker crash
 
 ## INBOX
 
+### [DONE] 2026-04-22T20:30Z — Sprint S-02 (PLAN)
+- From: supervisor
+- Action: ASSIGN_WORKER
+- Briefing: @docs/briefings/sprint-S-02-briefing.md
+- Plan: @docs/superpowers/plans/2026-04-22-arquitetura-camadas.md
+- Notes: Plano em 6 tasks. Worker disponível para S-02. S-05 já em inbox do worker.
+
+### [PENDING] 2026-04-22T20:30Z — Pipeline Health
+- From: sm (me)
+- Action: MONITOR
+- Notes: WIP 2/2 usado. S-02 em PLAN, S-05 em TODO. Sem anomalias detectadas.
+

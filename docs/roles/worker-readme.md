@@ -32,6 +32,13 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 
 ## INBOX
 
+### [PENDING] 2026-04-22T20:30Z — Sprint S-02
+- From: supervisor
+- Action: BUILD
+- Briefing: @docs/briefings/sprint-S-02-briefing.md
+- Plan: @docs/superpowers/plans/2026-04-22-arquitetura-camadas.md
+- Notes: Refatorar endpoints auth, servicos, verões para service layer
+
 ### [PENDING] 2026-04-22T18:00Z -- Sprint S-05
 - From: supervisor
 - Action: BUILD

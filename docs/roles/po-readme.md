@@ -23,3 +23,13 @@ Your inbox has `[PENDING]` with `Action: INTAKE_NEXT`, OR all active sprints are
 
 ## INBOX
 
+### [DONE] 2026-04-22T20:30Z — Sprint S-02 (INICIADA)
+- From: po (me)
+- Action: INTAKE_NEXT
+- Notes: S-02 movida para INICIADA, depende de S-01 OK. Plano criado pelo supervisor em docs/superpowers/plans/2026-04-22-arquitetura-camadas.md
+
+### [PENDING] 2026-04-22T20:30Z — Status Sprint S-05 (TODO)
+- From: po
+- Action: MONITOR
+- Notes: S-05 em execução pelo Worker. Aguardar TESTED para marcar DONE.
+
