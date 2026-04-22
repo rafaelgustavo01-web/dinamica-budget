@@ -3,7 +3,7 @@
 > Date: 2026-04-22
 > Prepared by: Supervisor (Kimi Code CLI)
 > Assigned role: Worker
-> Assigned worker: TBD (Scrum Master will assign)
+> Assigned worker: codex-5.3
 > Execution mode: BUILD
 > Plan: `docs/superpowers/plans/2026-04-22-optimize-search-and-operational-cost.md`
 
@@ -20,12 +20,12 @@ The Dinamica Budget search engine runs a 4-phase cascade (PROPRIA → Associatio
 
 ## Delegation Envelope
 
-- Sprint status on entry: `PLAN`
+- Sprint status on entry: `TODO`
 - Worker status target on exit: `TESTED`
-- Assigned worker: TBD
-- Provider: TBD
-- Auth status snapshot: UNKNOWN
-- Quota status snapshot: UNKNOWN
+- Assigned worker: codex-5.3
+- Provider: OpenAI
+- Auth status snapshot: PASS
+- Quota status snapshot: PASS
 - Execution mode: BUILD
 
 ## Current Code State

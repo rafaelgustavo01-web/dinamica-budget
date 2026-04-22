@@ -26,6 +26,7 @@ build/
 .venv/
 venv/
 env/
+pytest_cache/
 
 # ─── ML Model Cache (large binaries ~500MB) ──────────────────────
 ml_models/
@@ -97,12 +98,23 @@ playwright-report/
 logs
 tabelas
 reseultado
+resultado/
 
 # ─── AGENTS ──────────────
 .opencode/
+.kilo/
 .kimi/
 .kiro/
 .claude/
 .amazonq/
-.agents
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/context7-mcp/
+!.agents/skills/context7-mcp/**
+!.agents/skills/project-pipeline/
+!.agents/skills/project-pipeline/SKILL.md
+!.agents/skills/semantic-memory/
+!.agents/skills/semantic-memory/**
+.agents/skills/semantic-memory/AGENTS.md
 .codex

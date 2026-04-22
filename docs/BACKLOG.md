@@ -30,8 +30,8 @@ Responsável: Research AI
 6. `S-08`
 
 ## Sprints Ativas (Product Owner — 2026-04-22)
-- `S-01` concluída em `TESTED`; `S-05` permanece em `PLAN`. WIP atual = 1/2.
-- Justificativa: `S-01` entregou o alinhamento de autorização on-premise com evidência de testes unitários e de integração. O próximo foco ativo é `S-05` para performance/custo da busca semântica.
+- `S-01` concluída em `TESTED`; `S-05` permanece em `TODO`. WIP atual = 1/2.
+- Justificativa: `S-01` entregou o alinhamento de autorização on-premise com evidência de testes unitários e de integração. `S-05` já tem plano e briefing preparados, mas ainda não iniciou execução formal.
 
 ## Observações de Pesquisa
 - O repositório atual não possui os artefatos canônicos do pipeline (`docs/JOB-DESCRIPTION.md`, `docs/superpowers/plans/roadmap/ROADMAP.md`, `docs/roles/`, `docs/dispatch/pending/`).
