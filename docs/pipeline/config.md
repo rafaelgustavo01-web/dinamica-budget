@@ -4,13 +4,13 @@
 > Any agent reads this file at the start of every cycle.
 
 ## Polling
-- interval_minutes: 10
+- interval_minutes: 3
 - jitter_seconds: 30
 
 ## Pipeline State
-- status: STOPPED
-- started_at: 2026-04-22T20:13:23Z
-- stopped_at: 2026-04-22T20:13:26Z
+- status: RUNNING
+- started_at: 2026-04-22T20:46:25Z
+- stopped_at: null
 
 ## WIP
 - max_active_sprints: 2

@@ -21,3 +21,10 @@ Your inbox has `[PENDING]` with `Action: MINE_ROADMAP`.
 
 ## INBOX
 
+### [PENDING] 2026-04-22T22:00Z — Sprint S-01 (DONE)
+- From: qa
+- Action: MINE_ROADMAP
+- Briefing: @docs/briefings/sprint-S-01-briefing.md
+- Walkthrough: @docs/walkthrough/reviewed/walkthrough-S-01.md
+- Feedback: @docs/technical-feedback-2026-04-22-v1.md
+- Notes: S-01 aceita pelo QA. Modelo on-premise de autorização validado (leitura aberta, escrita protegida por perfil). Identificar melhorias de RBAC, testes e observabilidade para alimentar S-04, S-06 e S-08.

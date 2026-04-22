@@ -1,6 +1,4 @@
-import asyncio
 import os
-from urllib.parse import unquote
 from logging.config import fileConfig
 
 from alembic import context
@@ -17,11 +15,10 @@ config = context.config
 # asyncpg (the runtime driver) causes DO-block exceptions to propagate past
 # PL/pgSQL EXCEPTION handlers; psycopg2 handles them correctly.
 _parsed = make_url(settings.DATABASE_URL)
-_pwd = _parsed.password
-if _pwd is not None:
-    # Keep plain password on URL object; SQLAlchemy encodes when rendering.
-    _pwd = unquote(_pwd)
-_sync_url = _parsed.set(drivername="postgresql+psycopg2", password=_pwd).render_as_string(
+#
+# Some local deployments keep plain passwords containing '%' or non-ASCII characters.
+# Unquoting here can corrupt already-plain credentials and break migrations.
+_sync_url = _parsed.set(drivername="postgresql+psycopg2").render_as_string(
     hide_password=False
 )
 # Alembic uses ConfigParser interpolation where '%' must be escaped as '%%'.

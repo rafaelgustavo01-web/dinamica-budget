@@ -21,12 +21,12 @@ class Cliente(Base, TimestampMixin):
 
     associacoes: Mapped[list["AssociacaoInteligente"]] = relationship(
         "AssociacaoInteligente", foreign_keys="AssociacaoInteligente.cliente_id",
-        lazy="noload"
+        lazy="noload", overlaps="cliente"
     )
     historicos: Mapped[list["HistoricoBuscaCliente"]] = relationship(
         back_populates="cliente", lazy="noload"
     )
     itens_proprios: Mapped[list["ItemProprio"]] = relationship(
         "ItemProprio", foreign_keys="ItemProprio.cliente_id",
-        lazy="noload"
+        lazy="noload", overlaps="cliente"
     )
