@@ -8,10 +8,11 @@ Objetivo: levar o projeto para um estado de pre-producao robusto em arquitetura,
 
 ## Milestone 1 - Seguranca e Arquitetura Base (P0)
 
-### Fase 1.1 - Isolamento Multi-tenant em Composicoes e Versoes
-- Corrigir autorizacao em endpoints de composicao e versoes.
-- Garantir retorno 404/403 para acesso cross-tenant.
-- Entregavel: testes de integracao cobrindo permissoes por perfil.
+### Fase 1.1 - Alinhamento de Autorizacao ao Modelo On-Premise **[INICIADA]**
+- Revisar autorizacao em endpoints de composicao e versoes conforme regra de negocio.
+- Garantir que orcamentistas tenham acesso aos clientes conforme politica operacional definida.
+- Entregavel: testes de integracao cobrindo a politica nova de acesso.
+- Sprint: `S-01` | Selecionada em: 2026-04-22
 
 ### Fase 1.2 - Consolidacao de Camadas (Endpoint -> Service -> Repository)
 - Remover regra de negocio e SQL direto de endpoints criticos.
@@ -41,10 +42,11 @@ Objetivo: levar o projeto para um estado de pre-producao robusto em arquitetura,
 
 ## Milestone 3 - Performance de Busca e Operacao On-Premise (P1)
 
-### Fase 3.1 - Benchmark de Busca (Fuzzy vs Semantica)
+### Fase 3.1 - Benchmark de Busca (Fuzzy vs Semantica) **[INICIADA]**
 - Medir latencia/precisao com carga realista.
 - Reavaliar thresholds e ranking hibrido.
 - Entregavel: relatorio de benchmark com recomendacoes.
+- Sprint: `S-05` | Selecionada em: 2026-04-22
 
 ### Fase 3.2 - Evolucao do Pipeline de Embeddings
 - Definir estrategia de re-embedding por versao de modelo.

@@ -4,7 +4,7 @@ Data: 2026-04-22
 Escopo: operacao do pipeline multiagente para evolucao do sistema de orcamentos de obras.
 
 ## Objetivo Geral
-Organizar o fluxo de entrega com papeis claros para garantir qualidade tecnica, seguranca multi-tenant, previsibilidade de sprint e governanca de artefatos.
+Organizar o fluxo de entrega com papeis claros para garantir qualidade tecnica, seguranca de acesso on-premise, previsibilidade de sprint e governanca de artefatos.
 
 ## Papeis e Responsabilidades
 
