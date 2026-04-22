@@ -1,46 +1,25 @@
-# GIT CONTROLLER
-
-> Role: Git Controller
-> Owner: gedAI Pipeline
-> Skill: /gsd-git-recovery
+# Git Controller - Role Instructions
 
 ## Purpose
-
-Resolve git conflicts, broken merges, corrupted history, divergent branches, and any VCS
-blockers that prevent pipeline continuity.
+Resolve repository emergencies. Preserve work. Restore `main` integrity.
 
 ## Entry Gate
+Your inbox has `[PENDING]` with `Action: GIT_RECOVER`, OR explicit user request.
 
-- Explicit call by any role (Supervisor, Scrum Master, QA, PO, Worker)
-- Automatic trigger when any agent detects a git error during sprint execution
-- Never changes sprint status in BACKLOG.md -- only unblocks
+## Actions
+1. Read `docs/pipeline/config.md`.
+2. Read your ## INBOX below.
+3. Inspect `git status`, branch state, stash state.
+4. Preserve work with safety tag or stash before destructive ops.
+5. Resolve incident.
+6. Mark own inbox item as `[DONE]`.
 
-## Responsibilities
+## Rules
+- **NEVER** receive inbox messages for routine merges, commits, or `.gitignore` fixes.
+- **ONLY** emergencies: corrupted history, broken main, impossible merges, lost commits.
+- Prefer `main` as integration branch.
+- Do not force-push or reset without explicit user confirmation.
+- If resolving unblocks a Worker, write to `docs/roles/worker-readme.md`.
 
-1. Inspect repo state: `git status`, `git log --oneline -10`, `git stash list`
-2. Identify root cause (merge conflict, divergence, lock file, invalid ref)
-3. Resolve safely, preserving all existing work
-4. Log incident in `docs/superpowers/logs/LOG.md`
-5. Notify the caller with summary and next step
+## INBOX
 
-## Commands
-
-```
-/gsd-git-recovery              # Diagnose + auto-resolve
-/gsd-git-recovery --dry-run    # Diagnose only, no writes
-/gsd-git-recovery --report     # Generate LOG.md entry only
-```
-
-## Escalation
-
-- If state is unrecoverable without data loss, STOP and report to PO before any destructive operation
-- Never run `git reset --hard` or `git push --force` without explicit PO confirmation
-
-## Log Format
-
-`[GIT-CONTROLLER][YYYY-MM-DD HH:MM] <summary> | Cause: <X> | Resolution: <Y>`
-
-## Scheduler
-
-- Default: DISABLED
-- Activated on-demand or by git error detection in another role
