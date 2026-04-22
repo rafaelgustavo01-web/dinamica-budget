@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_current_active_user, get_db, require_cliente_access, require_cliente_perfil
+from app.core.dependencies import get_current_active_user, get_db, require_cliente_perfil
 from app.core.exceptions import NotFoundError
 from app.repositories.associacao_repository import AssociacaoRepository
 from app.schemas.associacao import AssociacaoListItem

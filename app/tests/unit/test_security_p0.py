@@ -245,13 +245,7 @@ async def test_buscar_servicos_no_cliente_access_required():
     mock_service = AsyncMock()
     mock_service.buscar = AsyncMock(return_value=MagicMock())
 
-    with (
-        patch("app.api.v1.endpoints.busca.busca_service", mock_service),
-        patch(
-            "app.api.v1.endpoints.busca.require_cliente_access",
-            new=AsyncMock(side_effect=AssertionError("should not be called")),
-        ),
-    ):
+    with patch("app.api.v1.endpoints.busca.busca_service", mock_service):
         result = await buscar_servicos(
             request=request,
             current_user=user,
@@ -259,6 +253,9 @@ async def test_buscar_servicos_no_cliente_access_required():
         )
         assert result is not None
         mock_service.buscar.assert_awaited_once()
+        # Verify require_cliente_access is not in the module anymore
+        import app.api.v1.endpoints.busca as busca_module
+        assert not hasattr(busca_module, 'require_cliente_access')
 
 
 @pytest.mark.asyncio
@@ -275,13 +272,7 @@ async def test_list_associacoes_no_cliente_access_required():
     repo = AsyncMock()
     repo.list_by_cliente = AsyncMock(return_value=([], 0))
 
-    with (
-        patch("app.api.v1.endpoints.busca.AssociacaoRepository", return_value=repo),
-        patch(
-            "app.api.v1.endpoints.busca.require_cliente_access",
-            new=AsyncMock(side_effect=AssertionError("should not be called")),
-        ),
-    ):
+    with patch("app.api.v1.endpoints.busca.AssociacaoRepository", return_value=repo):
         result = await list_associacoes(
             cliente_id=client_id,
             page=1,
@@ -290,6 +281,8 @@ async def test_list_associacoes_no_cliente_access_required():
             db=AsyncMock(),
         )
         assert result.total == 0
+        import app.api.v1.endpoints.busca as busca_module
+        assert not hasattr(busca_module, 'require_cliente_access')
 
 
 def test_write_endpoints_still_require_client_perfil():
