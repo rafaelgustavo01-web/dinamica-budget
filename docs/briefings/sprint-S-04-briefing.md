@@ -34,6 +34,12 @@ Fechar lacunas de autorização em endpoints sensíveis. Garantir que nenhum end
 - `is_admin` global pode mascarar falhas em testes (bypass total)
 - PcTabelas sem `cliente_id` — fora do escopo desta sprint
 
+## Worker Assignment
+
+- Assigned worker: codex-5.3
+- Provider: OpenAI
+- Mode: BUILD
+
 ## Plano
 
 Ver: `docs/superpowers/plans/2026-04-22-seguranca-rbac.md`

@@ -49,6 +49,7 @@ async def test_criar_versao_success(versao_service, mock_propria_repo, mock_vers
     mock_versao_repo.get_versao_ativa.return_value = None
 
     db = AsyncMock()
+    db.add = MagicMock()  # add is synchronous in SQLAlchemy
     result = await versao_service.criar_versao(item_id, uuid.uuid4(), db)
 
     assert isinstance(result, VersaoComposicao)
@@ -63,6 +64,7 @@ async def test_ativar_versao_success(versao_service, mock_versao_repo):
     mock_versao_repo.get_by_id.return_value = versao
 
     db = AsyncMock()
+    db.add = MagicMock()
     result = await versao_service.ativar_versao(versao.id, uuid.uuid4(), db)
 
     assert result.is_ativa is True

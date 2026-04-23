@@ -30,13 +30,13 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 
 ## INBOX
 
-### [PENDING] 2026-04-22T22:15Z — Sprint S-02
+### [DONE] 2026-04-22T22:45Z — Sprint S-02
 - From: worker (Kimi)
 - Action: REVIEW
-- Walkthrough: @docs/walkthrough/done/walkthrough-S-02.md
+- Walkthrough: @docs/walkthrough/reviewed/walkthrough-S-02.md
 - Technical Review: @docs/technical-review-2026-04-22-s02.md
-- Tests: 74/74 unitarios PASS. Integracao bloqueada por PostgreSQL local indisponivel.
-- Notes: Refatoracao de auth e versoes para service layer. Endpoints enxutos. Sem alteracao de schema. Recomendacao Worker: APROVADO com ressalva de integracao.
+- Feedback: @docs/technical-feedback-2026-04-22-v3.md
+- Notes: ACCEPTED → DONE. 74/74 testes unitários PASS. Mock de db.add corrigido pelo QA. Camada de serviço consolidada para Auth e Versões.
 
 ### [DONE] 2026-04-22T23:00Z — Sprint S-05
 - From: worker (Codex)

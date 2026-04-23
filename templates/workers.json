@@ -19,8 +19,8 @@
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
       "available": false,
       "busy": true,
-      "reserved_for_sprint": "S-05",
-      "last_checked_at": "2026-04-22T14:15:00-03:00"
+      "reserved_for_sprint": "S-04",
+      "last_checked_at": "2026-04-23T08:51:00-03:00"
     },
     {
       "worker_id": "gemini-3.1",
