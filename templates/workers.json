@@ -1,6 +1,6 @@
 {
   "registry_version": "1.0",
-  "last_updated": "2026-04-23T09:00:00-03:00",
+  "last_updated": "2026-04-23T09:05:00-03:00",
   "workers": [
     {
       "worker_id": "kimi-k2.5",
@@ -35,6 +35,40 @@
       "reserved_for_sprint": null,
       "last_checked_at": "2026-04-23T09:00:00-03:00",
       "notes": "Agente multi-role: Supervisor (gera planos e briefings para sprints INICIADAS) + QA (valida entregas de TESTED → DONE). Não disponível para BUILD."
+    },
+    {
+      "worker_id": "opencode-cli",
+      "name": "OpenCode CLI",
+      "provider": "OpenCode",
+      "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript", "git"],
+      "roles": ["po", "git-controller"],
+      "available": false,
+      "busy": true,
+      "reserved_for_sprint": null,
+      "last_checked_at": "2026-04-23T09:05:00-03:00",
+      "notes": "Agente multi-role: Product Owner (priorização, intake de sprints, backlog) + Git Controller (merge, histórico, resolução de conflitos de branch). Não disponível para BUILD."
+    }
+  ],
+  "pos": [
+    {
+      "agent_id": "opencode-cli",
+      "name": "OpenCode CLI",
+      "provider": "OpenCode",
+      "role": "po",
+      "active_sprint": "S-03",
+      "last_intake": "2026-04-23T08:55:00-03:00",
+      "notes": "Autorizou intake de S-03 (Revisão Transacional). WIP atual = 2/2."
+    }
+  ],
+  "git_controllers": [
+    {
+      "agent_id": "opencode-cli",
+      "name": "OpenCode CLI",
+      "provider": "OpenCode",
+      "role": "git-controller",
+      "active_incident": null,
+      "last_action": "2026-04-22T22:00:00-03:00",
+      "notes": "Reservado para merges complexos, histórico corrompido ou quebra de main. Rotina resolvida por agentes ativos."
     }
   ],
   "supervisors": [
