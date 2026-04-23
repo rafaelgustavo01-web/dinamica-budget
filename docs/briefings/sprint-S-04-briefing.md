@@ -36,8 +36,8 @@ Fechar lacunas de autorização em endpoints sensíveis. Garantir que nenhum end
 
 ## Worker Assignment
 
-- Assigned worker: codex-5.3
-- Provider: OpenAI
+- Assigned worker: kimi-k2.5
+- Provider: Kimi CLI
 - Mode: BUILD
 
 ## Plano

@@ -35,20 +35,15 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 ### [PENDING] 2026-04-23T09:15:00Z — Sprint S-03
 - From: supervisor
 - Action: BUILD
+- Assigned Worker: codex-5.3
 - Briefing: @docs/briefings/sprint-S-03-briefing.md
 - Plan: @docs/superpowers/plans/2026-04-23-revisao-transacional.md
 - Notes: Revisão Transacional. 5 tasks: configurar sessão, refatorar services para flush, validar rollback, documentar e regressão.
 
-### [PENDING] 2026-04-23T09:20Z — Sprint S-03
+### [PENDING] 2026-04-23T09:25:00Z — Sprint S-04
 - From: supervisor
 - Action: BUILD
-- Briefing: @docs/briefings/sprint-S-03-briefing.md
-- Plan: @docs/superpowers/plans/2026-04-23-revisao-transacional.md
-- Notes: Revisão Transacional — reduzir commit implícito global, consolidar flush nos services, garantir rollback em erros. 5 tasks.
-
-### [PENDING] 2026-04-22T22:30Z — Sprint S-04
-- From: supervisor
-- Action: BUILD
+- Assigned Worker: kimi-k2.5
 - Briefing: @docs/briefings/sprint-S-04-briefing.md
 - Plan: @docs/superpowers/plans/2026-04-22-seguranca-rbac.md
 - Notes: Endurecer seguranca e RBAC. 7 tasks: proteger 3 endpoints de READ + testes de regressao + checklist OWASP.

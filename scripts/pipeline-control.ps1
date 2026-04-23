@@ -15,6 +15,10 @@
 .PARAMETER Interval
     Polling interval in minutes (only used with time_set). Defaults to current config.
 
+.PARAMETER DispatchMode
+    Agent dispatch mode passed to pipeline-agent.ps1: emit | dry-run | run.
+    Defaults to dry-run so scheduled polling proves the resolved CLI without executing it.
+
 .PARAMETER ProjectRoot
     Absolute or relative path to project root. Defaults to parent of scripts/.
 
@@ -29,6 +33,9 @@ param(
     [string]$Command,
 
     [int]$Interval = 0,
+
+    [ValidateSet("emit", "dry-run", "run")]
+    [string]$DispatchMode = "dry-run",
 
     [string]$ProjectRoot = $null
 )
@@ -201,7 +208,7 @@ if ($Command -eq "time_set") {
     if ($currentStatus -eq "RUNNING") {
         Write-Host "Pipeline is RUNNING. Recreating tasks with new interval..."
         & $MyInvocation.MyCommand.Definition -Command stop -ProjectRoot $ProjectRoot
-        & $MyInvocation.MyCommand.Definition -Command start -ProjectRoot $ProjectRoot
+        & $MyInvocation.MyCommand.Definition -Command start -ProjectRoot $ProjectRoot -DispatchMode $DispatchMode
     } else {
         Write-Host "Pipeline is STOPPED. New interval will take effect on next start."
     }
