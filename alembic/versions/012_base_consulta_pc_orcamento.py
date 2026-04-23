@@ -1,7 +1,7 @@
 """Add consulta/PC/orcamento tables and ETL control
 
-Revision ID: 012
-Revises: 011
+Revision ID: 012a
+Revises: 012
 Create Date: 2026-04-17
 """
 
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 
-revision = "012"
-down_revision = "011"
+revision = "012a"
+down_revision = "012"
 branch_labels = None
 depends_on = None
 
@@ -164,7 +164,12 @@ def upgrade() -> None:
         sa.Column("pc_cabecalho_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("pc_cabecalho.id", ondelete="CASCADE"), nullable=False),
         sa.Column("origem_tabela", sa.String(60), nullable=False),
         sa.Column("origem_registro_ref", sa.String(80), nullable=False),
-        sa.Column("servico_tcpo_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("servico_tcpo.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "servico_tcpo_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("referencia.base_tcpo.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("tipo_vinculo", sa.String(30), nullable=False, server_default="AUTO"),
         sa.Column("confianca", sa.Numeric(5, 4), nullable=False, server_default="1"),
     )
@@ -179,7 +184,12 @@ def upgrade() -> None:
     op.create_table(
         "orcamento",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("cliente_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("clientes.id"), nullable=False),
+        sa.Column(
+            "cliente_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("operacional.clientes.id"),
+            nullable=False,
+        ),
         sa.Column("codigo", sa.String(50), nullable=False),
         sa.Column("descricao", sa.Text(), nullable=False),
         sa.Column("status", sa.String(30), nullable=False, server_default="EM_ELABORACAO"),
@@ -196,7 +206,12 @@ def upgrade() -> None:
         "orcamento_item",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("orcamento_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("orcamento.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("servico_tcpo_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("servico_tcpo.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "servico_tcpo_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("referencia.base_tcpo.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("codigo_origem", sa.String(80), nullable=True),
         sa.Column("descricao", sa.Text(), nullable=False),
         sa.Column("unidade_medida", sa.String(20), nullable=True),
@@ -212,8 +227,18 @@ def upgrade() -> None:
         "orcamento_item_composicao",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("orcamento_item_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("orcamento_item.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("servico_pai_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("servico_tcpo.id", ondelete="SET NULL"), nullable=True),
-        sa.Column("insumo_filho_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("servico_tcpo.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "servico_pai_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("referencia.base_tcpo.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+        sa.Column(
+            "insumo_filho_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("referencia.base_tcpo.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("descricao_insumo", sa.Text(), nullable=False),
         sa.Column("unidade_medida", sa.String(20), nullable=True),
         sa.Column("quantidade_consumo", sa.Numeric(15, 6), nullable=False),

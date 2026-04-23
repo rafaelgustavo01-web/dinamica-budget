@@ -1,7 +1,7 @@
 """Expand numeric ranges for PC ETL fields
 
 Revision ID: 013
-Revises: 012
+Revises: 012a
 Create Date: 2026-04-17
 """
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 revision = "013"
-down_revision = "012"
+down_revision = "012a"
 branch_labels = None
 depends_on = None
 
