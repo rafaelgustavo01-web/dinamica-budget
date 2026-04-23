@@ -31,22 +31,15 @@ BACKLOG has `INICIADA` sprint without plan, OR your inbox has `[PENDING]` messag
 
 ## INBOX
 
-### [DONE] 2026-04-22T22:30Z — Sprint S-04
+### [PENDING] 2026-04-23T10:20:00Z — Sprint S-09
 - From: po
 - Action: PLAN
-- Briefing: @docs/briefings/sprint-S-04-briefing.md
-- Plan: @docs/superpowers/plans/2026-04-22-seguranca-rbac.md
-- Notes: Endurecer seguranca e RBAC. Baseado em auditoria de endpoints. 3 endpoints de READ vulneraveis identificados. Plano com 7 tasks.
-
-### [DONE] 2026-04-22T20:30Z — Sprint S-02
-- From: po
-- Action: PLAN
-- Briefing: @docs/briefings/sprint-S-02-briefing.md
-- Plan: @docs/superpowers/plans/2026-04-22-arquitetura-camadas.md
-- Notes: Arquitetura em camadas, S-02 depende de S-01 (concluída)
+- Notes: S-09 INICIADA. Módulo de Orçamentos — Entidades e CRUD de Propostas. Gerar plano técnico e briefing.
 
 ### [DONE] 2026-04-23T08:55Z — Sprint S-03
 - From: po
 - Action: PLAN
-- Notes: S-03 INICIADA pelo PO. Revisão Transacional — reduzir commit implícito global, estratégia transacional documentada e aplicada. Dependência S-02 (DONE ✅). Gerar briefing e plano aprovado.
+- Notes: S-03 finalizada. Estratégia transacional OK.
+
+### [DONE] 2026-04-22T22:30Z — Sprint S-04
 

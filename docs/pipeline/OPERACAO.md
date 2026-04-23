@@ -152,8 +152,9 @@ powershell -ExecutionPolicy Bypass -File scripts\pipeline-agent.ps1 -Role po -Di
 
 | Modo | O que faz | Quando usar |
 |---|---|---|
-| `emit` | Só loga o comando que *seria* executado (padrão) | Observar o ciclo normal do Task Scheduler |
+| `emit` | Só loga o comando que *seria* executado | Observar o ciclo normal do Task Scheduler |
 | `dry-run` | Testa a resolução do worker sem rodar o CLI | Validar configuração após mudanças |
+| `run` | Resolve o CLI e executa o wake-up real (padrão do pipeline automático) | Acionamento automático pelo Task Scheduler |
 | `run` | Resolve o CLI e executa o wake-up real | Acionamento manual ou CI/CD |
 
 ```powershell

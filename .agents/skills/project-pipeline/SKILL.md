@@ -102,7 +102,7 @@ Each role's Task Scheduler task invokes the wrapper `scripts/pa.ps1`, which ente
 2. Reads the role's `docs/roles/[role]-readme.md` and extracts the `## INBOX` section.
 3. Parses `[PENDING]`, `[DONE]`, and `[BLOCKED]` messages.
 4. For `worker`, resolves the assigned agent from briefing metadata or `templates/workers.json`, builds the CLI wake-up command, and outputs `CLI_TARGET` and `CLI_COMMAND`.
-5. Supports `-DispatchMode emit|dry-run|run` so operators can inspect or execute the wake-up command.
+5. Supports `-DispatchMode emit|dry-run|run` so operators can inspect or execute the wake-up command. The wrapper `pa.ps1` defaults to `run` for automatic execution; use `dry-run` or `emit` for safe testing.
 6. Executes the worker CLI from the project root so the agent always starts inside the repository workspace.
 
 Current built-in worker CLI mappings:
