@@ -1,5 +1,7 @@
 from uuid import UUID
 
+import json
+
 from sqlalchemy import delete, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -63,8 +65,6 @@ class TcpoEmbeddingsRepository(BaseRepository[TcpoEmbedding]):
             LIMIT :limit
             """
         )
-        import json
-
         query_vec_str = "[" + ",".join(str(v) for v in query_vector) + "]"
         result = await self.db.execute(
             stmt,
