@@ -137,15 +137,14 @@ export function DashboardPage() {
 
         <Paper sx={{ flex: 1, p: 3, border: '1px solid', borderColor: 'divider' }}>
           <Typography variant="h6" sx={{ mb: 1.5 }}>
-            Pendências de integração
+            Status da Plataforma
           </Typography>
           <Stack spacing={1}>
             <Typography variant="body2" color="text.secondary">
-              Clientes e usuários já possuem fluxos administrativos reais no frontend.
+              Módulos de Usuários, Clientes, Relatórios e Perfil estão operacionais.
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Perfil, relatórios dedicados e um módulo próprio de permissões continuam
-              dependentes de contratos adicionais do backend.
+              A manutenção de permissões por cliente (RBAC) está centralizada na gestão de usuários.
             </Typography>
           </Stack>
         </Paper>

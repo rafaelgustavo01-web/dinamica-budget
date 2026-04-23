@@ -8,6 +8,7 @@ import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import PublishOutlinedIcon from '@mui/icons-material/PublishOutlined';
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import SourceOutlinedIcon from '@mui/icons-material/SourceOutlined';
 import SpaceDashboardOutlinedIcon from '@mui/icons-material/SpaceDashboardOutlined';
@@ -37,6 +38,14 @@ export const navigationItems: NavigationItem[] = [
     path: '/dashboard',
     group: 'Operação',
     icon: <SpaceDashboardOutlinedIcon fontSize="small" />,
+    status: 'active',
+    visible: () => true,
+  },
+  {
+    label: 'Orçamentos',
+    path: '/propostas',
+    group: 'Operação',
+    icon: <ReceiptLongOutlinedIcon fontSize="small" />,
     status: 'active',
     visible: () => true,
   },
@@ -85,7 +94,7 @@ export const navigationItems: NavigationItem[] = [
     path: '/relatorios',
     group: 'Operação',
     icon: <DescriptionOutlinedIcon fontSize="small" />,
-    status: 'partial',
+    status: 'active',
     visible: () => true,
   },
   {
@@ -150,7 +159,7 @@ export const navigationItems: NavigationItem[] = [
     path: '/perfil',
     group: 'Conta',
     icon: <PersonOutlineOutlinedIcon fontSize="small" />,
-    status: 'partial',
+    status: 'active',
     visible: () => true,
   },
 ];

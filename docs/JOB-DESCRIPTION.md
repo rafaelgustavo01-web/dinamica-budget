@@ -58,7 +58,7 @@ Organizar o fluxo de entrega com papeis claros para garantir qualidade tecnica, 
 
 ## Regras Operacionais
 - Fluxo canonico: `BACKLOG -> INICIADA -> PLAN -> TODO -> TESTED -> DONE`.
-- Limite WIP: no maximo 2 sprints ativas (`INICIADA`, `PLAN`, `TODO`, `TESTED`).
+- Limite WIP: no maximo 4 sprints ativas (`INICIADA`, `PLAN`, `TODO`, `TESTED`).
 - Uma sprint por agente ativo por vez.
 - Mudanca de status somente pelo papel dono da etapa.
 

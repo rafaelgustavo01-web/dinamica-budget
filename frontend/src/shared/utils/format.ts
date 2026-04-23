@@ -84,3 +84,17 @@ export function getHomologacaoLabel(status: string) {
 
   return labels[status] ?? status;
 }
+
+export function getPropostaStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    RASCUNHO: 'Rascunho',
+    EM_ANALISE: 'Em análise',
+    CPU_GERADA: 'CPU gerada',
+    APROVADA: 'Aprovada',
+    REPROVADA: 'Reprovada',
+    ARQUIVADA: 'Arquivada',
+  };
+
+  return labels[status] ?? status;
+}
+

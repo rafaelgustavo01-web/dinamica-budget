@@ -61,8 +61,8 @@ async def list_associacoes(
 ) -> PaginatedResponse[AssociacaoListItem]:
     """
     Returns paginated list of intelligent associations for a client.
-    On-premise model: any authenticated user may read associations.
     """
+    await require_cliente_access(cliente_id, current_user, db)
     repo = AssociacaoRepository(db)
     offset = (page - 1) * page_size
     items, total = await repo.list_by_cliente(cliente_id=cliente_id, offset=offset, limit=page_size)

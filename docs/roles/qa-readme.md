@@ -30,6 +30,68 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 
 ## INBOX
 
+### [PENDING] 2026-04-23T15:30:00Z — Sprint S-12
+- From: worker (gemini-3.1)
+- Action: REVIEW
+- Walkthrough: @docs/walkthrough/done/walkthrough-S-12.md
+- Technical Review: @docs/technical-review-2026-04-23-s12.md
+- Tests: `npm run build` -> Success.
+- Notes: UX Frontend do Módulo de Orçamentos. Telas de Listagem, Detalhe, Criação e Importação integradas. Tela de CPU é um placeholder funcional bloqueado por S-11.
+
+### [PENDING] 2026-04-23T15:20:00Z — Sprint S-11
+- From: worker (codex-5.3)
+- Action: REVIEW
+- Walkthrough: @docs/walkthrough/done/walkthrough-S-11.md
+- Technical Review: @docs/technical-review-2026-04-23-s11.md
+- Tests: `pytest app/tests/unit/test_cpu_geracao_service.py -q` -> 2 passed; `pytest app/tests/unit -q` -> 91 passed.
+- Notes: Geração da CPU com rebuild de `PropostaItem`, explosão reutilizada, cálculo de custos e endpoints `/cpu/gerar` e `/cpu/itens`.
+
+### [PENDING] 2026-04-23T15:00:00Z — Sprint S-07
+- From: worker (gemini-3.1)
+- Action: REVIEW
+- Walkthrough: @docs/walkthrough/done/walkthrough-S-07.md
+- Technical Review: @docs/technical-review-2026-04-23-s07.md
+- Tests: `npm run build` -> Success. Wireframes em @docs/ux-wireframes-governanca-2026-04-23.md.
+- Notes: UX de Governança finalizada. Menu lateral atualizado (Relatórios e Perfil Ativos), gestão de RBAC centralizada em Usuários e resolução de nomes em Perfil.
+
+### [PENDING] 2026-04-23T14:45:00Z — Sprint S-10
+- From: worker (codex-5.3)
+- Action: REVIEW
+- Walkthrough: @docs/walkthrough/done/walkthrough-S-10.md
+- Technical Review: @docs/technical-review-2026-04-23-s10.md
+- Tests: `pytest app/tests/unit/test_pq_import_service.py app/tests/unit/test_pq_match_service.py -q` -> 4 passed; `pytest app/tests/unit -q` -> 89 passed.
+- Notes: Upload PQ `.csv`/`.xlsx`, criação de `PqImportacao`/`PqItem` e match automático via `BuscaService`.
+
+### [PENDING] 2026-04-23T12:10:00Z — Sprint S-09
+- From: worker (codex-5.3)
+- Action: REVIEW
+- Walkthrough: @docs/walkthrough/done/walkthrough-S-09.md
+- Technical Review: @docs/technical-review-2026-04-23-s09.md
+- Tests: `pytest app/tests/unit/test_proposta_service.py -q` -> 5 passed; `pytest app/tests/unit -q` -> 85 passed; `alembic upgrade head` -> success.
+- Notes: Módulo de Orçamentos — entidades operacionais, CRUD de propostas, migration 017 e isolamento por cliente.
+- Status: **ACCEPTED → DONE** (QA Review 2026-04-23)
+
+### [PENDING] 2026-04-23T11:30:00Z — Sprint S-04
+- From: worker (kimi-k2.5 & gemini-3.1)
+- Action: REVIEW
+- Walkthrough: @docs/walkthrough/done/walkthrough-S-04.md
+- Technical Review: @docs/technical-review-2026-04-23-s04.md
+- Tests: `pytest app/tests/unit/ -v` -> 85 passed. Checklist OWASP in @docs/owasp-checklist-2026-04-23-FINAL.md.
+- Notes: Implementação consolidada de Kimi e Gemini. Foco em restabelecer isolamento de dados de clientes em rotas GET sensíveis.
+- Status: **ACCEPTED → DONE** (QA Review 2026-04-23)
+
+### [DONE] 2026-04-23T12:30:00Z — Sprint S-09
+- From: QA (opencode)
+- Action: REVIEW
+- Status: ACCEPTED
+- Feedback: @docs/technical-feedback-2026-04-23-s09-v1.md
+
+### [DONE] 2026-04-23T12:30:00Z — Sprint S-04
+- From: QA (opencode)
+- Action: REVIEW
+- Status: ACCEPTED
+- Feedback: @docs/technical-feedback-2026-04-23-s04-v1.md
+
 ### [DONE] 2026-04-23T10:15:00Z — Sprint S-03
 - From: worker (codex-5.3)
 - Action: REVIEW

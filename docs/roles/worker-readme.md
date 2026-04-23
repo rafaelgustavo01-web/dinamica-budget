@@ -32,13 +32,45 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 
 ## INBOX
 
-### [PENDING] 2026-04-23T10:25:00Z — Sprint S-09
+### [DONE] 2026-04-23T14:45:00Z — Sprint S-10
+- From: supervisor
+- Action: BUILD
+- Assigned Worker: codex-5.3
+- Briefing: @docs/briefings/sprint-S-10-briefing.md
+- Plan: @docs/superpowers/plans/2026-04-23-importacao-pq-match-inteligente.md
+- Notes: Entregue em TESTED. Upload `.csv`/`.xlsx`, persistência de PQ e match inteligente implementados. 89 testes unitários PASS e handoff QA aberto.
+
+### [DONE] 2026-04-23T14:45:00Z — Sprint S-07
+- From: supervisor
+- Action: BUILD
+- Assigned Worker: gemini-3.1
+- Briefing: @docs/briefings/sprint-S-07-briefing.md
+- Plan: @docs/superpowers/plans/2026-04-23-ux-governanca-permissoes.md
+- Notes: Entregue em TESTED. Telas de usuários, perfil e dashboard atualizadas. Build OK. Handoff para OpenCode (QA).
+
+### [DONE] 2026-04-23T14:50:00Z — Sprint S-11
+- From: supervisor
+- Action: BUILD
+- Assigned Worker: codex-5.3
+- Briefing: @docs/briefings/sprint-S-11-briefing.md
+- Plan: @docs/superpowers/plans/2026-04-23-geracao-cpu-composicao-precos.md
+- Notes: Entregue em TESTED. CPU gerada com explosão reutilizando `servico_catalog_service`, lookup PcTabelas adaptado ao schema atual, 91 testes unitários PASS e handoff QA aberto.
+
+### [DONE] 2026-04-23T14:50:00Z — Sprint S-12
+- From: supervisor
+- Action: BUILD
+- Assigned Worker: gemini-3.1
+- Briefing: @docs/briefings/sprint-S-12-briefing.md
+- Plan: @docs/superpowers/plans/2026-04-23-ux-frontend-modulo-orcamentos.md
+- Notes: Entregue em TESTED. Telas de listagem, criação e importação funcionais. Tela de CPU entregue como placeholder aguardando S-11. Build OK. Handoff para OpenCode (QA).
+
+### [DONE] 2026-04-23T10:25:00Z — Sprint S-09
 - From: supervisor
 - Action: BUILD
 - Assigned Worker: codex-5.3
 - Briefing: @docs/briefings/sprint-S-09-briefing.md
 - Plan: @docs/superpowers/plans/2026-04-23-entidades-propostas-crud.md
-- Notes: Módulo de Orçamentos — Entidades e CRUD de Propostas. 6 tasks: enums/modelos, repositories, PropostaService, API endpoints, migração e walkthrough.
+- Notes: Entregue em TESTED. Migration 017 aplicada com sucesso, 85 testes unitários PASS, handoff para QA aberto.
 
 ### [DONE] 2026-04-23T09:15:00Z — Sprint S-03
 - From: supervisor
@@ -48,13 +80,13 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Plan: @docs/superpowers/plans/2026-04-23-revisao-transacional.md
 - Notes: Entregue em TESTED -> Aprovada pelo QA (DONE ✅). Estratégia transacional documentada, 6 testes transacionais adicionados, 80/80 testes unitários PASS.
 
-### [PENDING] 2026-04-23T09:25:00Z — Sprint S-04
+### [DONE] 2026-04-23T11:30:00Z — Sprint S-04
 - From: supervisor
 - Action: BUILD
-- Assigned Worker: kimi-k2.5
+- Assigned Worker: kimi-k2.5 & gemini-3.1
 - Briefing: @docs/briefings/sprint-S-04-briefing.md
 - Plan: @docs/superpowers/plans/2026-04-22-seguranca-rbac.md
-- Notes: Endurecer seguranca e RBAC. 7 tasks: proteger 3 endpoints de READ + testes de regressao + checklist OWASP.
+- Notes: Implementação consolidada. 3 endpoints protegidos, 85 testes PASS, checklist OWASP FINAL gerado. S-04 movida para TESTED e handoff realizado para o QA (OpenCode).
 
 ### [DONE] 2026-04-22T20:30Z — Sprint S-02
 - From: supervisor
@@ -69,3 +101,19 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Briefing: @docs/briefings/sprint-S-05-briefing.md
 - Plan: @docs/superpowers/plans/2026-04-22-optimize-search-and-operational-cost.md
 - Notes: Entregue em TESTED. Handoff para QA realizado em 2026-04-22T21:45Z (SM normalizacao).
+
+### [PENDING] 2026-04-23T15:20:00Z — Sprint S-06
+- From: supervisor
+- Action: BUILD
+- Assigned Worker: gemini-3.1
+- Briefing: @docs/briefings/sprint-S-06-briefing.md
+- Plan: @docs/superpowers/plans/2026-04-23-runbook-observabilidade-onpremise.md
+- Notes: No forno. Runbook, health checks, operação on-premise.
+
+### [PENDING] 2026-04-23T15:20:00Z — Sprint S-08
+- From: supervisor
+- Action: BUILD
+- Assigned Worker: codex-5.3
+- Briefing: @docs/briefings/sprint-S-08-briefing.md
+- Plan: @docs/superpowers/plans/2026-04-23-auditoria-qualidade-final.md
+- Notes: No forno. Auditoria de qualidade final, smoke E2E, go-live gate.

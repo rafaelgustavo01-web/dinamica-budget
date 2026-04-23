@@ -94,6 +94,8 @@ const PcTabelasPage = lazy(() =>
   })),
 );
 
+import { proposalRoutes } from '../features/proposals/routes';
+
 function RouteFallback() {
   return (
     <Box
@@ -155,6 +157,8 @@ export function AppRouter() {
           <Route path="/pc-tabelas" element={<PcTabelasPage />} />
           <Route path="/perfil" element={<ProfilePage />} />
 
+          {proposalRoutes}
+
           <Route element={<AdminOnlyLayout />}>
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/upload" element={<UploadTcpoPage />} />
@@ -170,3 +174,4 @@ export function AppRouter() {
     </Suspense>
   );
 }
+

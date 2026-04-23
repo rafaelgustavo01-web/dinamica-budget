@@ -37,7 +37,7 @@ and communicate progress to the PO or team. Read-only -- never changes sprint st
 - [sprint] -- [description]
 
 ### WIP Cap
-- Active: N/2 (cap: 2)
+- Active: N/4 (cap: 4)
 ```
 
 ## Commands

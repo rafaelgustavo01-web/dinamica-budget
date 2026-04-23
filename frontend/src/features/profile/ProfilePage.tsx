@@ -8,7 +8,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -20,7 +20,8 @@ import {
 } from '../../shared/components/FeedbackMessages';
 import { PageHeader } from '../../shared/components/PageHeader';
 import { authApi } from '../../shared/services/api/authApi';
-import { getPerfilLabel } from '../../shared/utils/format';
+import { clientsApi } from '../../shared/services/api/clientsApi';
+import { getPerfilLabel, shortenUuid } from '../../shared/utils/format';
 
 /* ── Schemas ─────────────────────────────────────────────── */
 
@@ -46,6 +47,19 @@ type PasswordFormValues = z.infer<typeof passwordSchema>;
 export function ProfilePage() {
   const { user, selectedClientId, refreshUser, logout } = useAuth();
   const { showMessage } = useFeedback();
+
+  const clientsQuery = useQuery({
+    queryKey: ['clients', 'profile-list'],
+    queryFn: () => clientsApi.list({ page: 1, page_size: 100 }),
+    enabled: !!user,
+  });
+
+  const knownClients = clientsQuery.data?.items ?? [];
+
+  const getClientName = (clientId: string) => {
+    const client = knownClients.find((c) => c.id === clientId);
+    return client ? client.nome_fantasia : shortenUuid(clientId);
+  };
 
   // ── Profile form ──
   const {
@@ -133,7 +147,7 @@ export function ProfilePage() {
             {user?.perfis.map((perfil) => (
               <Chip
                 key={`${perfil.cliente_id}:${perfil.perfil}`}
-                label={`${getPerfilLabel(perfil.perfil)} · ${perfil.cliente_id}`}
+                label={`${getPerfilLabel(perfil.perfil)} · ${getClientName(perfil.cliente_id)}`}
                 variant="outlined"
               />
             ))}
@@ -219,3 +233,4 @@ export function ProfilePage() {
     </>
   );
 }
+

@@ -145,88 +145,6 @@ async def test_get_servico_propria_open_to_any_authenticated_user():
 
 
 @pytest.mark.asyncio
-async def test_list_servicos_with_cliente_id_no_access_check():
-    """GET /servicos?cliente_id=... must not call require_cliente_access."""
-    import uuid
-    from unittest.mock import AsyncMock, MagicMock, patch
-
-    from app.api.v1.endpoints.servicos import list_servicos
-
-    client_id = uuid.uuid4()
-    user = MagicMock()
-    user.id = uuid.uuid4()
-    user.is_admin = False
-    user.is_active = True
-
-    mock_db = AsyncMock()
-    mock_response = MagicMock(items=[], total=0, page=1, page_size=20, pages=0)
-    mock_service = AsyncMock()
-    mock_service.list_servicos = AsyncMock(return_value=mock_response)
-
-    with patch("app.api.v1.endpoints.servicos.servico_catalog_service", mock_service):
-        result = await list_servicos(
-            q=None,
-            categoria_id=None,
-            cliente_id=client_id,
-            page=1,
-            page_size=20,
-            current_user=user,
-            db=mock_db,
-        )
-        assert result.total == 0
-        mock_service.list_servicos.assert_awaited_once()
-        assert mock_service.list_servicos.call_args.kwargs["cliente_id"] == client_id
-        import inspect
-        assert "require_cliente_access" not in inspect.getsource(list_servicos)
-
-
-@pytest.mark.asyncio
-async def test_list_versoes_open_to_any_authenticated_user():
-    """GET /servicos/{item_id}/versoes must not call require_cliente_access."""
-    import uuid
-    from datetime import UTC, datetime
-    from unittest.mock import AsyncMock, MagicMock, patch
-
-    from app.api.v1.endpoints.versoes import list_versoes
-
-    item_id = uuid.uuid4()
-    user = MagicMock()
-    user.id = uuid.uuid4()
-    user.is_admin = False
-    user.is_active = True
-
-    item = MagicMock()
-    item.id = item_id
-    item.cliente_id = uuid.uuid4()
-
-    versao = MagicMock()
-    versao.id = uuid.uuid4()
-    versao.numero_versao = 1
-    versao.is_ativa = True
-    versao.criado_em = datetime.now(UTC)
-    versao.origem = None
-    versao.cliente_id = None
-
-    propria_repo = AsyncMock()
-    propria_repo.get_active_by_id = AsyncMock(return_value=item)
-    versao_repo = AsyncMock()
-    versao_repo.list_versoes = AsyncMock(return_value=[versao])
-
-    with (
-        patch("app.api.v1.endpoints.versoes.ItensPropiosRepository", return_value=propria_repo),
-        patch("app.api.v1.endpoints.versoes.VersaoComposicaoRepository", return_value=versao_repo),
-    ):
-        result = await list_versoes(
-            item_id=item_id,
-            current_user=user,
-            db=AsyncMock(),
-        )
-        assert len(result) == 1
-        import inspect
-        assert "require_cliente_access" not in inspect.getsource(list_versoes)
-
-
-@pytest.mark.asyncio
 async def test_buscar_servicos_no_cliente_access_required():
     """POST /busca/servicos must not call require_cliente_access."""
     import uuid
@@ -255,33 +173,6 @@ async def test_buscar_servicos_no_cliente_access_required():
         mock_service.buscar.assert_awaited_once()
         import inspect
         assert "require_cliente_access(" not in inspect.getsource(buscar_servicos)
-
-
-@pytest.mark.asyncio
-async def test_list_associacoes_no_cliente_access_required():
-    """GET /busca/associacoes must not call require_cliente_access."""
-    import uuid
-    from unittest.mock import AsyncMock, patch
-
-    from app.api.v1.endpoints.busca import list_associacoes
-
-    client_id = uuid.uuid4()
-    user = object()
-
-    repo = AsyncMock()
-    repo.list_by_cliente = AsyncMock(return_value=([], 0))
-
-    with patch("app.api.v1.endpoints.busca.AssociacaoRepository", return_value=repo):
-        result = await list_associacoes(
-            cliente_id=client_id,
-            page=1,
-            page_size=20,
-            current_user=user,
-            db=AsyncMock(),
-        )
-        assert result.total == 0
-        import inspect
-        assert "require_cliente_access(" not in inspect.getsource(list_associacoes)
 
 
 def test_write_endpoints_still_require_client_perfil():

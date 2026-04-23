@@ -7,6 +7,7 @@ from app.core.dependencies import (
     get_current_active_user,
     get_current_admin_user,
     get_db,
+    require_cliente_access,
 )
 from app.schemas.common import PaginatedResponse
 from app.schemas.servico import (
@@ -30,6 +31,8 @@ async def list_servicos(
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> PaginatedResponse[ServicoTcpoResponse]:
+    if cliente_id:
+        await require_cliente_access(cliente_id, current_user, db)
     params = ServicoListParams(q=q, categoria_id=categoria_id, page=page, page_size=page_size)
     return await servico_catalog_service.list_servicos(params, db, cliente_id=cliente_id)
 

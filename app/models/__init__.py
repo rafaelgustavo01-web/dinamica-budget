@@ -10,11 +10,15 @@ from app.models.composicao_cliente import ComposicaoCliente
 from app.models.enums import (
     OrigemAssociacao,
     PerfilUsuario,
+    StatusImportacao,
     StatusHomologacao,
+    StatusMatch,
+    StatusProposta,
     StatusValidacaoAssociacao,
     TipoCusto,
     TipoOperacaoAuditoria,
     TipoRecurso,
+    TipoServicoMatch,
 )
 from app.models.historico_busca_cliente import HistoricoBuscaCliente
 from app.models.itens_proprios import ItemProprio
@@ -34,6 +38,7 @@ from app.models.pc_tabelas import (
     PcMobilizacaoItem,
     PcMobilizacaoQuantidadeFuncao,
 )
+from app.models.proposta import PqImportacao, PqItem, Proposta, PropostaItem, PropostaItemComposicao
 
 __all__ = [
     "Base",
@@ -51,6 +56,11 @@ __all__ = [
     "HistoricoBuscaCliente",
     "AssociacaoInteligente",
     "AuditoriaLog",
+    "Proposta",
+    "PqImportacao",
+    "PqItem",
+    "PropostaItem",
+    "PropostaItemComposicao",
     # enums
     "TipoCusto",
     "StatusHomologacao",
@@ -59,4 +69,8 @@ __all__ = [
     "PerfilUsuario",
     "TipoOperacaoAuditoria",
     "TipoRecurso",
+    "StatusProposta",
+    "StatusImportacao",
+    "StatusMatch",
+    "TipoServicoMatch",
 ]

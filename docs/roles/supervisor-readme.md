@@ -31,10 +31,30 @@ BACKLOG has `INICIADA` sprint without plan, OR your inbox has `[PENDING]` messag
 
 ## INBOX
 
-### [PENDING] 2026-04-23T10:20:00Z — Sprint S-09
+### [DONE] 2026-04-23T10:20:00Z — Sprint S-09
 - From: po
 - Action: PLAN
-- Notes: S-09 INICIADA. Módulo de Orçamentos — Entidades e CRUD de Propostas. Gerar plano técnico e briefing.
+- Notes: Plano e briefing entregues. Sprint em TODO (Codex BUILD).
+
+### [DONE] 2026-04-23T14:45:00Z — Sprint S-10
+- From: po
+- Action: PLAN
+- Notes: Plano e briefing entregues. Upload PQ + match inteligente. Worker Codex-5.3 notificado.
+
+### [DONE] 2026-04-23T14:45:00Z — Sprint S-07
+- From: po
+- Action: PLAN
+- Notes: Plano e briefing entregues. UX governança e permissões. Worker Gemini-3.1 notificado.
+
+### [DONE] 2026-04-23T14:50:00Z — Sprint S-11
+- From: po
+- Action: PLAN → BUILD
+- Notes: Sprint no forno. CPU — explosão + custos + BDI. Worker Codex-5.3 notificado.
+
+### [DONE] 2026-04-23T14:50:00Z — Sprint S-12
+- From: po
+- Action: PLAN → BUILD
+- Notes: Sprint no forno. UX Frontend Orçamentos. Worker Gemini-3.1 notificado.
 
 ### [DONE] 2026-04-23T08:55Z — Sprint S-03
 - From: po
@@ -43,3 +63,13 @@ BACKLOG has `INICIADA` sprint without plan, OR your inbox has `[PENDING]` messag
 
 ### [DONE] 2026-04-22T22:30Z — Sprint S-04
 
+
+### [DONE] 2026-04-23T15:20:00Z — Sprint S-06
+- From: po
+- Action: PLAN → BUILD
+- Notes: Sprint no forno. Runbook, health checks, operação on-premise. Worker Gemini-3.1 notificado.
+
+### [DONE] 2026-04-23T15:20:00Z — Sprint S-08
+- From: po
+- Action: PLAN → BUILD
+- Notes: Sprint no forno. Auditoria de qualidade final, smoke E2E, go-live gate. Worker Codex-5.3 notificado.

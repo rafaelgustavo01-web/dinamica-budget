@@ -135,7 +135,7 @@ if (Test-Path $backlogPath) {
         $matches = [regex]::Matches($backlog, "\|\s*`?S-\d+`?\s*\|\s*$state")
         $activeCount += $matches.Count
     }
-    $maxWip = 2
+    $maxWip = 4
     if ($backlog -match "max_active_sprints:\s*(\d+)") { $maxWip = [int]$matches[1] }
 
     $wipColor = if ($activeCount -le $maxWip) { "Green" } else { "Red" }

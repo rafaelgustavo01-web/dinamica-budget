@@ -1,14 +1,14 @@
 import { Chip, useTheme } from '@mui/material';
 
 import { statusColors } from '../../app/theme/tokens';
-import { getHomologacaoLabel, getOrigemMatchLabel } from '../utils/format';
+import { getHomologacaoLabel, getOrigemMatchLabel, getPropostaStatusLabel } from '../utils/format';
 
 interface StatusBadgeProps {
   value: string;
-  kind?: 'status' | 'origemMatch';
+  kind?: 'status' | 'origemMatch' | 'proposta';
 }
 
-function normalizeStatusKey(value: string, kind: 'status' | 'origemMatch') {
+function normalizeStatusKey(value: string, kind: 'status' | 'origemMatch' | 'proposta') {
   const normalized = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 
   if (kind === 'origemMatch') {
@@ -19,15 +19,15 @@ function normalizeStatusKey(value: string, kind: 'status' | 'origemMatch') {
     return 'tcpo';
   }
 
-  if (['APROVADO', 'VALIDADA', 'CONSOLIDADA'].includes(normalized)) {
+  if (['APROVADO', 'VALIDADA', 'CONSOLIDADA', 'APROVADA', 'CPU_GERADA'].includes(normalized)) {
     return 'aprovado';
   }
 
-  if (['PENDENTE', 'SUGERIDA'].includes(normalized)) {
+  if (['PENDENTE', 'SUGERIDA', 'EM_ANALISE'].includes(normalized)) {
     return 'pendente';
   }
 
-  if (['REPROVADO', 'REJEITADO'].includes(normalized)) {
+  if (['REPROVADO', 'REJEITADO', 'REPROVADA'].includes(normalized)) {
     return 'rejeitado';
   }
 
@@ -35,7 +35,7 @@ function normalizeStatusKey(value: string, kind: 'status' | 'origemMatch') {
     return 'ativo';
   }
 
-  if (normalized === 'INATIVO') {
+  if (normalized === 'INATIVO' || normalized === 'ARQUIVADA') {
     return 'inativo';
   }
 
@@ -63,15 +63,17 @@ export function StatusBadge({ value, kind = 'status' }: StatusBadgeProps) {
   const paletteByMode = theme.palette.mode === 'light' ? statusColors.light : statusColors.dark;
   const colorKey = normalizeStatusKey(value, kind);
   const colorSet = paletteByMode[colorKey];
-  const label =
-    kind === 'origemMatch'
-      ? getOrigemMatchLabel(value as never)
-      : getHomologacaoLabel(value);
+  
+  const getLabel = () => {
+    if (kind === 'origemMatch') return getOrigemMatchLabel(value as never);
+    if (kind === 'proposta') return getPropostaStatusLabel(value);
+    return getHomologacaoLabel(value);
+  };
 
   return (
     <Chip
       size="small"
-      label={label}
+      label={getLabel()}
       sx={{
         color: colorSet.color,
         backgroundColor: colorSet.bg,
@@ -80,3 +82,4 @@ export function StatusBadge({ value, kind = 'status' }: StatusBadgeProps) {
     />
   );
 }
+

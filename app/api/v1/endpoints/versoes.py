@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_current_active_user, get_db
+from app.core.dependencies import get_current_active_user, get_db, require_cliente_access
 from app.core.exceptions import NotFoundError
 from app.schemas.servico import VersaoComposicaoResponse
 from app.services.versao_service import VersaoService
@@ -34,6 +34,12 @@ async def list_versoes(
     db: AsyncSession = Depends(get_db),
 ) -> list[VersaoComposicaoResponse]:
     svc = _get_service(db)
+    # Validar acesso ao cliente do item antes de listar versões
+    item = await svc.propria_repo.get_active_by_id(item_id)
+    if not item:
+        raise NotFoundError("ItemProprio", str(item_id))
+    await require_cliente_access(item.cliente_id, current_user, db)
+
     versoes = await svc.list_versoes(item_id)
     return [VersaoComposicaoResponse.model_validate(v) for v in versoes]
 

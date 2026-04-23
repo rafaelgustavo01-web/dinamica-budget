@@ -52,3 +52,33 @@ class TipoRecurso(str, enum.Enum):
     FERRAMENTA = "FERRAMENTA"   # Ferramenta
     EQUIPAMENTO = "EQUIPAMENTO" # Equipamento
     SERVICO = "SERVICO"         # Composição de serviços (permite explosão recursiva)
+
+
+class StatusProposta(str, enum.Enum):
+    RASCUNHO = "RASCUNHO"
+    EM_ANALISE = "EM_ANALISE"
+    CPU_GERADA = "CPU_GERADA"
+    APROVADA = "APROVADA"
+    REPROVADA = "REPROVADA"
+    ARQUIVADA = "ARQUIVADA"
+
+
+class StatusImportacao(str, enum.Enum):
+    PROCESSANDO = "PROCESSANDO"
+    VALIDADO = "VALIDADO"
+    COM_ERROS = "COM_ERROS"
+    CONCLUIDO = "CONCLUIDO"
+
+
+class StatusMatch(str, enum.Enum):
+    PENDENTE = "PENDENTE"
+    BUSCANDO = "BUSCANDO"
+    SUGERIDO = "SUGERIDO"
+    CONFIRMADO = "CONFIRMADO"
+    MANUAL = "MANUAL"
+    SEM_MATCH = "SEM_MATCH"
+
+
+class TipoServicoMatch(str, enum.Enum):
+    BASE_TCPO = "BASE_TCPO"
+    ITEM_PROPRIO = "ITEM_PROPRIO"
