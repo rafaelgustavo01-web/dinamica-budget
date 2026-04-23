@@ -15,7 +15,7 @@ Responsável: Research AI
 | `S-01` | DONE | P0 | — | Alinhar autorização ao modelo on-premise (cliente como vínculo de orçamento, não tenant) | Revisão e ajuste das regras RBAC para permitir acesso operacional a todos os clientes conforme política de negócio; remoção de bloqueios indevidos por cliente; testes de integração cobrindo política nova |
 | `S-02` | DONE | P0 | `S-01` | Consolidar arquitetura em camadas (endpoint -> service -> repository) | Endpoints sem regra de negócio/SQL direto em `auth`, `servicos`, `versoes`; regras migradas para services; testes unitários dos services novos/ajustados |
 | `S-04` | TODO | P1 | `S-01` | **REVISADO** RBAC mínimo para intranet | Validar `cliente_id` em endpoints POST/PATCH/DELETE; garantir `is_admin` não bypassa indevidamente; testes de regressão para perfis `USUARIO`, `APROVADOR`, `ADMIN`. Removido: checklist OWASP completo |
-| `S-09` | INICIADA | P0 | `S-02`, `S-05` | Módulo de Orçamentos — Entidades e CRUD de Propostas | Tabelas criadas (propostas, pq_itens, proposta_itens); CRUD funcional; workflow RASCUNHO→CPU_GERADA; testes unitários |
+| `S-09` | TODO | P0 | `S-02`, `S-05` | Módulo de Orçamentos — Entidades e CRUD de Propostas | Tabelas criadas (propostas, pq_itens, proposta_itens); CRUD funcional; workflow RASCUNHO→CPU_GERADA; testes unitários |
 | `S-10` | BACKLOG | P1 | `S-09` | Importação PQ e Match Inteligente | Upload Excel/CSV para PQ; match fuzzy/semântico por item; confirmação manual do orçamentista; testes de integração |
 | `S-11` | BACKLOG | P1 | `S-10` | Geração da CPU — Composição de Preços Unitários | Explosão de composição com cálculo de custos; lookup em PcTabelas (MO, equipamento, encargos); aplicação de BDI; rastreabilidade completa |
 | `S-12` | BACKLOG | P2 | `S-11` | UX Frontend do Módulo de Orçamentos | Telas React: criar proposta, importar PQ, match, visualizar CPU; integração com API; smoke E2E |
@@ -32,7 +32,7 @@ FASE A — Execução Atual (WIP = 2/2)
   2. S-02 (Camadas) → DONE ✅
   3. S-03 (Transações) → DONE ✅
   4. S-04 (RBAC mínimo) → TODO ⬅️ BUILD em andamento (Kimi-k2.5)
-  5. S-09 (Propostas/CRUD) → INICIADA ⬅️ Supervisor planejando
+  5. S-09 (Propostas/CRUD) → TODO ⬅️ BUILD em andamento (Codex-5.3)
 
 FASE B — Próximas (aguardam slot WIP)
   6. S-10 (Importação PQ + Match) → BACKLOG
@@ -48,9 +48,9 @@ FASE C — Estabilização (pós-M5)
 
 ## Sprints Ativas (Product Owner — 2026-04-23)
 
-- `S-01` DONE; `S-02` DONE; `S-05` DONE; `S-03` DONE; `S-04` em `TODO` (Kimi-k2.5 BUILD); `S-09` em `INICIADA` (Supervisor). WIP atual = 2/2.
+- `S-01` DONE; `S-02` DONE; `S-05` DONE; `S-03` DONE; `S-04` em `TODO` (Kimi-k2.5 BUILD); `S-09` em `TODO` (Codex-5.3 BUILD). WIP atual = 2/2.
 - **S-03 concluída:** aprovada pelo QA em 2026-04-23.
-- **S-09 (Orçamentos):** Prioridade P0 movida para INICIADA após conclusão da S-03.
+- **S-09 (Orçamentos):** Plano técnico e briefing gerados. Despachada para Codex-5.3.
 
 ## Histórico de Decisões PO
 

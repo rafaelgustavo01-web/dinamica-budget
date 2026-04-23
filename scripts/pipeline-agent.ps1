@@ -162,8 +162,8 @@ function Get-AgentCommandSpec($WorkerRecord) {
     if ($workerId -match "^kimi\b" -or $provider -match "Kimi") {
         return @{
             Executable = "kimi-cli"
-            PrefixArgs = @("run")
-            Display = "kimi-cli run"
+            PrefixArgs = @()
+            Display = "kimi-cli"
         }
     }
 

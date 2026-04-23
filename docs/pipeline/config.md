@@ -1,4 +1,4 @@
-﻿# Pipeline Config
+# Pipeline Config
 
 > Dynamic configuration for the Role-Inbox Broadcast protocol.
 > Any agent reads this file at the start of every cycle.
@@ -9,7 +9,7 @@
 
 ## Pipeline State
 - status: RUNNING
-- started_at: 2026-04-23T09:45:06Z
+- started_at: 2026-04-23T10:46:50Z
 - stopped_at: null
 
 ## WIP
@@ -17,14 +17,16 @@
 - max_rework_per_sprint: 3
 
 ## Roles Active
-- po: true
-- supervisor: true
-- sm: true
-- worker: true
-- qa: true
-- git_controller: true
-- research: true
-- log_creator: false
+- research: KIMI
+- po: KIMI
+- sm: KIMI
+- supervisor: KIMI
+- worker_codex: CODEX
+- worker_gemini: GEMINI
+- qa: OPENCODE
+- git_controller: OPENCODE
+- assistant: OPENCODE
+- log_creator: OPENCODE
 
 ## Escalation Rules
 - auto_escalate_to_git_controller: false

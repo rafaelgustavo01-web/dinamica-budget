@@ -32,13 +32,21 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 
 ## INBOX
 
+### [PENDING] 2026-04-23T10:25:00Z — Sprint S-09
+- From: supervisor
+- Action: BUILD
+- Assigned Worker: codex-5.3
+- Briefing: @docs/briefings/sprint-S-09-briefing.md
+- Plan: @docs/superpowers/plans/2026-04-23-entidades-propostas-crud.md
+- Notes: Módulo de Orçamentos — Entidades e CRUD de Propostas. 6 tasks: enums/modelos, repositories, PropostaService, API endpoints, migração e walkthrough.
+
 ### [DONE] 2026-04-23T09:15:00Z — Sprint S-03
 - From: supervisor
 - Action: BUILD
 - Assigned Worker: codex-5.3
 - Briefing: @docs/briefings/sprint-S-03-briefing.md
 - Plan: @docs/superpowers/plans/2026-04-23-revisao-transacional.md
-- Notes: Entregue em TESTED. Estratégia transacional documentada, 6 testes transacionais adicionados, 80/80 testes unitários PASS. Handoff para QA realizado em 2026-04-23T09:55Z.
+- Notes: Entregue em TESTED -> Aprovada pelo QA (DONE ✅). Estratégia transacional documentada, 6 testes transacionais adicionados, 80/80 testes unitários PASS.
 
 ### [PENDING] 2026-04-23T09:25:00Z — Sprint S-04
 - From: supervisor

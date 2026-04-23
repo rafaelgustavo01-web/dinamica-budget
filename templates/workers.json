@@ -1,63 +1,65 @@
 {
   "registry_version": "1.0",
-  "last_updated": "2026-04-23T11:50:00-03:00",
+  "last_updated": "2026-04-23T12:00:00-03:00",
   "workers": [
     {
       "worker_id": "kimi-k2.5",
       "name": "Kimi K2.5",
       "provider": "Kimi CLI",
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
-      "roles": ["research", "worker"],
+      "roles": ["research", "po", "sm", "supervisor", "worker"],
       "available": false,
       "busy": true,
       "reserved_for_sprint": "S-04",
-      "last_checked_at": "2026-04-23T09:25:00-03:00",
-      "notes": "Agente multi-role: Research AI + BUILD Worker para S-04 (Segurança e RBAC)."
+      "last_checked_at": "2026-04-23T12:00:00-03:00",
+      "notes": "Agente central: Research + PO (backlog/roadmap) + SM (sync/dispatch/WIP) + Supervisor (plans/briefings) + Worker (BUILD). Acionado pelo usuário via pipeline/dispatch."
     },
     {
       "worker_id": "codex-5.3",
       "name": "Codex 5.3",
       "provider": "OpenAI",
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
+      "roles": ["worker"],
       "available": false,
       "busy": true,
       "reserved_for_sprint": "S-09",
-      "last_checked_at": "2026-04-23T11:50:00-03:00"
+      "last_checked_at": "2026-04-23T12:00:00-03:00",
+      "notes": "Worker de BUILD. Executa planos aprovados e entrega em TESTED."
     },
     {
       "worker_id": "gemini-3.1",
       "name": "Gemini 3.1",
       "provider": "Google",
       "capabilities": ["python", "fastapi", "sqlalchemy"],
-      "roles": ["supervisor", "qa", "sm"],
-      "available": false,
-      "busy": true,
+      "roles": ["worker", "qa"],
+      "available": true,
+      "busy": false,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-23T09:00:00-03:00",
-      "notes": "Agente multi-role: Supervisor (gera planos e briefings) + QA (valida entregas) + SM (sync/dispatch do pipeline). Não disponível para BUILD."
+      "last_checked_at": "2026-04-23T12:00:00-03:00",
+      "notes": "Worker de BUILD + QA. Pode executar BUILD quando delegado pelo SM, ou validar entregas TESTED → DONE."
     },
     {
       "worker_id": "opencode-cli",
       "name": "OpenCode CLI",
       "provider": "OpenCode",
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript", "git"],
-      "roles": ["po", "git-controller"],
+      "roles": ["git-controller"],
       "available": false,
-      "busy": true,
+      "busy": false,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-23T09:05:00-03:00",
-      "notes": "Agente multi-role: Product Owner (priorização, intake de sprints, backlog) + Git Controller (merge, histórico, resolução de conflitos de branch). Não disponível para BUILD."
+      "last_checked_at": "2026-04-23T12:00:00-03:00",
+      "notes": "Git Controller. Reservado para merges complexos, histórico corrompido ou quebra de main."
     }
   ],
   "pos": [
     {
-      "agent_id": "opencode-cli",
-      "name": "OpenCode CLI",
-      "provider": "OpenCode",
+      "agent_id": "kimi-k2.5",
+      "name": "Kimi K2.5",
+      "provider": "Kimi CLI",
       "role": "po",
       "active_sprint": "S-09",
-      "last_intake": "2026-04-23T11:50:00-03:00",
-      "notes": "Autorizou intake de S-09 (Módulo de Orçamentos). WIP atual = 2/2 (S-04 BUILD, S-09 BUILD)."
+      "last_intake": "2026-04-23T12:00:00-03:00",
+      "notes": "PO central: autoriza intake, atualiza BACKLOG e ROADMAP. WIP atual = 2/2 (S-04 BUILD, S-09 BUILD)."
     }
   ],
   "git_controllers": [
@@ -68,18 +70,18 @@
       "role": "git-controller",
       "active_incident": null,
       "last_action": "2026-04-22T22:00:00-03:00",
-      "notes": "Reservado para merges complexos, histórico corrompido ou quebra de main. Rotina resolvida por agentes ativos."
+      "notes": "Reservado para merges complexos, histórico corrompido ou quebra de main."
     }
   ],
   "supervisors": [
     {
-      "agent_id": "gemini-3.1",
-      "name": "Gemini 3.1",
-      "provider": "Google",
+      "agent_id": "kimi-k2.5",
+      "name": "Kimi K2.5",
+      "provider": "Kimi CLI",
       "role": "supervisor",
       "active_sprint": "S-09",
-      "last_planned": "2026-04-23T10:25:00-03:00",
-      "notes": "Gerou planos para S-02, S-04 e S-09. S-09 INICIADA com briefing e plano entregues."
+      "last_planned": "2026-04-23T12:00:00-03:00",
+      "notes": "Supervisor central: gera planos e briefings para sprints INICIADAS. S-09 INICIADA com briefing e plano entregues."
     }
   ],
   "qas": [
@@ -91,6 +93,17 @@
       "active_sprint": null,
       "last_reviewed": "2026-04-22T22:45:00-03:00",
       "notes": "Finalizou review de S-02 (ACCEPTED → DONE). 74/74 testes unitários validados."
+    }
+  ],
+  "sms": [
+    {
+      "agent_id": "kimi-k2.5",
+      "name": "Kimi K2.5",
+      "provider": "Kimi CLI",
+      "role": "sm",
+      "active_sprint": "S-09",
+      "last_dispatch": "2026-04-23T12:00:00-03:00",
+      "notes": "SM central: sincroniza pipeline, delega workers (Codex/Gemini), gerencia WIP e escalonamento."
     }
   ]
 }
