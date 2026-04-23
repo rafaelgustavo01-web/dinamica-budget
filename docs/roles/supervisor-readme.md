@@ -45,3 +45,8 @@ BACKLOG has `INICIADA` sprint without plan, OR your inbox has `[PENDING]` messag
 - Plan: @docs/superpowers/plans/2026-04-22-arquitetura-camadas.md
 - Notes: Arquitetura em camadas, S-02 depende de S-01 (concluída)
 
+### [PENDING] 2026-04-23T08:55Z — Sprint S-03
+- From: po
+- Action: PLAN
+- Notes: S-03 INICIADA pelo PO. Revisão Transacional — reduzir commit implícito global, estratégia transacional documentada e aplicada. Dependência S-02 (DONE ✅). Gerar briefing e plano aprovado.
+

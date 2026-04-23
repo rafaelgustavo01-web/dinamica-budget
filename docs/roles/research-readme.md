@@ -21,6 +21,13 @@ Your inbox has `[PENDING]` with `Action: MINE_ROADMAP`.
 
 ## INBOX
 
+### [PENDING] 2026-04-22T22:45Z — Sprint S-02 (DONE)
+- From: qa
+- Action: MINE_ROADMAP
+- Walkthrough: @docs/walkthrough/reviewed/walkthrough-S-02.md
+- Feedback: @docs/technical-feedback-2026-04-22-v3.md
+- Notes: S-02 aceita. Arquitetura em camadas (Service Layer) consolidada. Removido SQL de endpoints. AuthService unificou perfis (wildcard ADMIN). VersaoService gerencia clonagem de composições. Módulo de Orçamentos (S-09+) agora tem base sólida. Alimentar ROADMAP com padrões de serviço e checklists de refatoração para S-03 (Transações).
+
 ### [PENDING] 2026-04-22T22:00Z — Sprint S-01 (DONE)
 - From: qa
 - Action: MINE_ROADMAP

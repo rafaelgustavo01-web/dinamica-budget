@@ -23,6 +23,16 @@ Your inbox has `[PENDING]` with `Action: INTAKE_NEXT`, OR all active sprints are
 
 ## INBOX
 
+### [DONE] 2026-04-22T22:45Z — Sprint S-02 DONE — WIP slot liberado
+- From: qa
+- Action: INTAKE_NEXT
+- Notes: S-02 fechada pelo QA. Refatoração P0 concluída. 74/74 testes unitários OK. WIP atual = 1/2 (S-04 em PLAN). Slot disponível. Recomendação: Avançar S-04 para TODO ou iniciar S-03 (Revisão Transacional) que depende de S-02. S-09 (Módulo Orçamentos) pronto para intake técnico.
+
+### [DONE] 2026-04-23T08:55Z — Sprint S-03 (INICIADA)
+- From: po (me)
+- Action: INTAKE_NEXT
+- Notes: S-03 movida para INICIADA. Dependência S-02 (DONE ✅). Supervisor notificado para gerar plano de Revisão Transacional. WIP atual = 2/2 (S-04 em PLAN, S-03 em INICIADA).
+
 ### [DONE] 2026-04-22T20:30Z — Sprint S-02 (INICIADA)
 - From: po (me)
 - Action: INTAKE_NEXT

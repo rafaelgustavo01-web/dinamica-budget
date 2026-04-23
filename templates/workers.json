@@ -1,36 +1,47 @@
 {
   "registry_version": "1.0",
-  "last_updated": "2026-04-22T14:07:00-03:00",
+  "last_updated": "2026-04-22T22:50:00-03:00",
   "workers": [
     {
       "worker_id": "kimi-k2.5",
       "name": "Kimi K2.5",
       "provider": "Kimi CLI",
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
-      "available": false,
-      "busy": true,
-      "reserved_for_sprint": "S-01",
-      "last_checked_at": "2026-04-22T14:07:00-03:00"
+      "available": true,
+      "busy": false,
+      "reserved_for_sprint": null,
+      "last_checked_at": "2026-04-22T22:50:00-03:00"
     },
     {
       "worker_id": "codex-5.3",
       "name": "Codex 5.3",
       "provider": "OpenAI",
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
-      "available": false,
-      "busy": true,
-      "reserved_for_sprint": "S-04",
-      "last_checked_at": "2026-04-23T08:51:00-03:00"
+      "available": true,
+      "busy": false,
+      "reserved_for_sprint": null,
+      "last_checked_at": "2026-04-22T22:50:00-03:00"
     },
     {
       "worker_id": "gemini-3.1",
       "name": "Gemini 3.1",
       "provider": "Google",
       "capabilities": ["python", "fastapi", "sqlalchemy"],
-      "available": false,
-      "busy": false,
-      "reserved_for_sprint": null,
-      "last_checked_at": null
+      "available": true,
+      "busy": true,
+      "reserved_for_sprint": "S-04",
+      "last_checked_at": "2026-04-22T22:50:00-03:00"
+    }
+  ],
+  "qas": [
+    {
+      "agent_id": "gemini-3.1",
+      "name": "Gemini 3.1",
+      "provider": "Google",
+      "role": "qa",
+      "active_sprint": null,
+      "last_reviewed": "2026-04-22T22:45:00-03:00",
+      "notes": "Finalizou review de S-02 (ACCEPTED → DONE). 74/74 testes unitários validados."
     }
   ]
 }
