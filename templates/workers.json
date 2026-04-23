@@ -7,22 +7,22 @@
       "name": "Kimi K2.5",
       "provider": "Kimi CLI",
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
-      "roles": ["research", "sm"],
+      "roles": ["research", "sm", "worker"],
       "available": false,
       "busy": true,
-      "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-23T09:00:00-03:00",
-      "notes": "Agente multi-role: Research AI (mine roadmap de S-01, S-02, S-05 pendentes) + Scrum Master (sync/dispatch do pipeline). Não disponível para BUILD."
+      "reserved_for_sprint": "S-03",
+      "last_checked_at": "2026-04-23T09:20:00-03:00",
+      "notes": "Agente multi-role: Research AI + Scrum Master + Worker BUILD. Atuando como worker2 para S-03 (Revisão Transacional). Codex-5.3 atua como worker1 para S-04."
     },
     {
       "worker_id": "codex-5.3",
       "name": "Codex 5.3",
       "provider": "OpenAI",
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
-      "available": true,
+      "available": false,
       "busy": true,
-      "reserved_for_sprint": "S-04",
-      "last_checked_at": "2026-04-23T09:00:00-03:00"
+      "reserved_for_sprint": "S-03",
+      "last_checked_at": "2026-04-23T09:10:00-03:00"
     },
     {
       "worker_id": "gemini-3.1",
