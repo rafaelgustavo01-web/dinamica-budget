@@ -29,10 +29,23 @@
       "name": "Gemini 3.1",
       "provider": "Google",
       "capabilities": ["python", "fastapi", "sqlalchemy"],
-      "available": true,
-      "busy": false,
+      "roles": ["supervisor", "qa"],
+      "available": false,
+      "busy": true,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-23T09:00:00-03:00"
+      "last_checked_at": "2026-04-23T09:00:00-03:00",
+      "notes": "Agente multi-role: Supervisor (gera planos e briefings para sprints INICIADAS) + QA (valida entregas de TESTED → DONE). Não disponível para BUILD."
+    }
+  ],
+  "supervisors": [
+    {
+      "agent_id": "gemini-3.1",
+      "name": "Gemini 3.1",
+      "provider": "Google",
+      "role": "supervisor",
+      "active_sprint": "S-03",
+      "last_planned": "2026-04-22T22:30:00-03:00",
+      "notes": "Gerou planos para S-02 e S-04. S-03 INICIADA aguardando briefing."
     }
   ],
   "qas": [
