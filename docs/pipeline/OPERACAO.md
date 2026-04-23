@@ -102,40 +102,95 @@ Get-Content docs\pipeline\logs\pipeline-worker.log -Wait
 2026-04-22 21:15:00 [ACTION] [worker] CLI_TARGET=codex-5.3 CLI_COMMAND=codex "Voce esta atuando como worker..."
 ```
 
-### Wake-up por CLI
+### Wake-up por CLI (Agent Dispatch)
 
-Para a role `worker`, o script agora resolve o agente em `templates/workers.json` e monta o comando de wake-up correspondente.
+O pipeline resolve automaticamente qual CLI invocar com base no worker atribuído (`templates/workers.json` ou briefing). O operador **não precisa saber o provider** — basta acionar a role desejada.
 
-Mapeamentos atuais:
+#### Comando único por role
 
-| Worker / Provider | Comando emitido |
+```powershell
+# Worker (BUILD)
+powershell -ExecutionPolicy Bypass -File scripts\pipeline-agent.ps1 -Role worker -DispatchMode run
+
+# QA (REVIEW / TEST)
+powershell -ExecutionPolicy Bypass -File scripts\pipeline-agent.ps1 -Role qa -DispatchMode run
+
+# Supervisor (PLAN / AUDIT)
+powershell -ExecutionPolicy Bypass -File scripts\pipeline-agent.ps1 -Role supervisor -DispatchMode run
+
+# SM — Scrum Master (SYNC / DISPATCH)
+powershell -ExecutionPolicy Bypass -File scripts\pipeline-agent.ps1 -Role sm -DispatchMode run
+
+# Research (MODEL / ANALYSE)
+powershell -ExecutionPolicy Bypass -File scripts\pipeline-agent.ps1 -Role research -DispatchMode run
+
+# PO (REQUIREMENTS / PRIORITIZE)
+powershell -ExecutionPolicy Bypass -File scripts\pipeline-agent.ps1 -Role po -DispatchMode run
+```
+
+#### Modos de despacho
+
+| Modo | O que faz | Quando usar |
+|---|---|---|
+| `emit` | Só loga o comando que *seria* executado (padrão) | Observar o ciclo normal do Task Scheduler |
+| `dry-run` | Testa a resolução do worker sem rodar o CLI | Validar configuração após mudanças |
+| `run` | Resolve o CLI e executa o wake-up real | Acionamento manual ou CI/CD |
+
+```powershell
+# Exemplo: testar se o QA está corretamente mapeado antes de rodar
+powershell -ExecutionPolicy Bypass -File scripts\pipeline-agent.ps1 -Role qa -DispatchMode dry-run
+```
+
+#### Resolução do worker
+
+1. Tenta `Assigned worker` / `Worker ID` no briefing da sprint
+2. Senão, tenta `reserved_for_sprint` em `templates/workers.json`
+3. Se nada casar, loga `CLI_TARGET: unresolved` e `CLI_STATUS: no command mapping`
+
+#### Exemplos de prompt gerado (`<prompt>`)
+
+O script monta o prompt automaticamente, mas o operador pode invocar manualmente com o mesmo padrão:
+
+**Worker**
+```
+Você é o Worker de execução deste projeto. Leia sua introdução em docs/roles/worker-readme.md e processe apenas as mensagens [PENDING]. Sprint: S-04. Action: BUILD. Briefing: @docs/briefings/sprint-S-04-briefing.md. Plan: @docs/superpowers/plans/2026-04-22-seguranca-rbac.md. Siga o protocolo da role, execute apenas o escopo aprovado e atualize inbox/artefatos ao concluir.
+```
+
+**QA**
+```
+Você é o QA deste projeto. Leia sua introdução em docs/roles/qa-readme.md e processe apenas as mensagens [PENDING]. Sprint: S-02. Action: REVIEW. Briefing: @docs/briefings/sprint-S-02-briefing.md. Siga o protocolo da role, execute apenas o escopo aprovado e atualize inbox/artefatos ao concluir.
+```
+
+**Supervisor**
+```
+Você é o Supervisor técnico deste projeto. Leia sua introdução em docs/roles/supervisor-readme.md e processe apenas as mensagens [PENDING]. Sprint: S-04. Action: PLAN. Siga o protocolo da role, execute apenas o escopo aprovado e atualize inbox/artefatos ao concluir.
+```
+
+**SM (Scrum Master)**
+```
+Você é o Scrum Master deste projeto. Leia sua introdução em docs/roles/sm-readme.md e processe apenas as mensagens [PENDING]. Action: SYNC. Siga o protocolo da role, execute apenas o escopo aprovado e atualize inbox/artefatos ao concluir.
+```
+
+**Research**
+```
+Você é o Researcher (Analista de Dados/ML) deste projeto. Leia sua introdução em docs/roles/research-readme.md e processe apenas as mensagens [PENDING]. Sprint: S-09. Action: MODEL. Siga o protocolo da role, execute apenas o escopo aprovado e atualize inbox/artefatos ao concluir.
+```
+
+**PO**
+```
+Você é o Product Owner deste projeto. Leia sua introdução em docs/roles/po-readme.md e processe apenas as mensagens [PENDING]. Action: PRIORITIZE. Siga o protocolo da role, execute apenas o escopo aprovado e atualize inbox/artefatos ao concluir.
+```
+
+#### Mapeamento de provider (resolvido automaticamente)
+
+| Worker / Provider | CLI resolvido |
 |---|---|
 | `codex-*` / `OpenAI` | `codex "<prompt>"` |
 | `gemini-*` / `Google` | `gemini "<prompt>"` |
 | `kimi-*` / `Kimi CLI` | `kimi-cli run "<prompt>"` |
 | `opencode-*` / `OpenCode` | `opencode --no-interactive "<prompt>"` |
 
-Modo de despacho:
-
-```powershell
-# Só emite o comando resolvido (default)
-powershell -ExecutionPolicy Bypass -File scripts\pipeline-agent.ps1 -Role worker -DispatchMode emit
-
-# Testa sem executar o CLI
-powershell -ExecutionPolicy Bypass -File scripts\pipeline-agent.ps1 -Role worker -DispatchMode dry-run
-
-# Executa o CLI resolvido
-powershell -ExecutionPolicy Bypass -File scripts\pipeline-agent.ps1 -Role worker -DispatchMode run
-```
-
-Resolução do worker:
-- tenta `Assigned worker` / `Worker ID` no briefing
-- senão tenta `reserved_for_sprint` em `templates/workers.json`
-- se nada casar, registra `CLI_TARGET: unresolved` e `CLI_STATUS: no command mapping for assigned worker`
-
-Diretório de execução:
-- o dispatcher sempre executa o CLI a partir de `C:\Users\rafae\Documents\workspace\github\dinamica-budget`
-- o output/log agora expõe `CLI_WORKDIR`
+Diretório de execução: sempre a partir da raiz do projeto (`CLI_WORKDIR` logado).
 
 ### Health Check Completo
 

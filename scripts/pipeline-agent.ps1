@@ -192,15 +192,26 @@ function New-AgentPrompt([string]$RoleName, $Message, [string]$RoleFilePath) {
     $plan = Get-MessageField $Message.Body "Plan"
     $sprintId = Get-SprintId $Message.FullText $Message.Body
 
+    # Role-specific friendly names for the prompt introduction
+    $roleDisplay = switch ($RoleName) {
+        "worker"        { "Worker de execução" }
+        "qa"            { "QA" }
+        "supervisor"    { "Supervisor técnico" }
+        "sm"            { "Scrum Master" }
+        "research"      { "Researcher (Analista de Dados/ML)" }
+        "po"            { "Product Owner" }
+        "git-controller"{ "Git Controller" }
+        default         { $RoleName }
+    }
+
     $parts = @(
-        "Voce esta atuando como $RoleName no projeto Dinamica Budget.",
-        "Leia sua inbox em $RoleFilePath e processe apenas as mensagens [PENDING]."
+        "Você é o $roleDisplay deste projeto. Leia sua introdução em $RoleFilePath e processe apenas as mensagens [PENDING]."
     )
 
     if ($sprintId) { $parts += "Sprint: $sprintId." }
-    if ($action) { $parts += "Action: $action." }
+    if ($action)   { $parts += "Action: $action." }
     if ($briefing) { $parts += "Briefing: $briefing." }
-    if ($plan) { $parts += "Plan: $plan." }
+    if ($plan)     { $parts += "Plan: $plan." }
 
     $parts += "Siga o protocolo da role, execute apenas o escopo aprovado e atualize inbox/artefatos ao concluir."
 
