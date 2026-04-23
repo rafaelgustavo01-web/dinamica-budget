@@ -111,7 +111,7 @@ O pipeline resolve automaticamente qual CLI invocar com base no worker atribuíd
 Para execução manual sem digitar o caminho completo:
 
 ```powershell
-# Ver inbox do worker (emit por padrão — só loga o comando)
+# Ver inbox do worker (run por padrão — executa o CLI automaticamente)
 .\scripts\pa.ps1 worker
 
 # Ver inbox do supervisor
@@ -121,19 +121,7 @@ Para execução manual sem digitar o caminho completo:
 .\scripts\pa.ps1 qa
 ```
 
-#### Auto-launcher (`pipeline-launch.ps1`)
-
-Lê o log do pipeline e **abre um novo terminal** com o comando já montado:
-
-```powershell
-# Abre terminal para o worker (S-04, S-09, etc.)
-.\scripts\pipeline-launch.ps1
-
-# Abre terminal para outra role
-.\scripts\pipeline-launch.ps1 -Role qa
-```
-
-O launcher resolve o último `CLI_COMMAND` do log, carrega o PATH completo e abre um PowerShell novo no diretório do projeto. Você só precisa apertar **ENTER** no terminal para executar.
+O wrapper `pa.ps1` entra automaticamente no diretório do projeto e chama `pipeline-agent.ps1` com os parâmetros corretos.
 
 #### Comando único por role
 

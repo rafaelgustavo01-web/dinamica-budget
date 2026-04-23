@@ -5,7 +5,7 @@ param(
 
     [Parameter(Position = 1)]
     [ValidateSet("emit", "dry-run", "run")]
-    [string]$DispatchMode = "emit"
+    [string]$DispatchMode = "run"
 )
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
