@@ -33,3 +33,8 @@ Your inbox has `[PENDING]` with `Action: INTAKE_NEXT`, OR all active sprints are
 - Action: INTAKE_NEXT
 - Notes: S-01 fechada com 75/75 testes passando. WIP atual = 1/2 (S-05 em TODO). Slot disponível para próxima sprint. Candidatos por dependência: S-02 (depende S-01 ✅), S-04 (depende S-01 ✅). Recomendado: S-02 como próxima (P0).
 
+### [DONE] 2026-04-22T22:05Z — Sprint S-04 (INICIADA)
+- From: po (me)
+- Action: INTAKE_NEXT
+- Notes: S-04 movida para INICIADA, depende de S-01 (DONE OK). Supervisora notified for plan.
+

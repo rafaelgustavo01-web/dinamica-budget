@@ -55,7 +55,7 @@ class TcpoEmbeddingsRepository(BaseRepository[TcpoEmbedding]):
             """
             SELECT id,
                    1 - (vetor <=> CAST(:query_vec AS vector)) AS cosine_sim,
-                   embedding_metadata
+                   metadata
             FROM referencia.tcpo_embeddings
             WHERE vetor IS NOT NULL
               AND 1 - (vetor <=> CAST(:query_vec AS vector)) >= :threshold

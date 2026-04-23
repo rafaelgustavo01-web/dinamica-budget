@@ -80,6 +80,51 @@ powershell -ExecutionPolicy Bypass -File scripts\pipeline-control.ps1 -Command t
 
 ---
 
+## Observabilidade e Logs
+
+### Log de Execução por Role
+
+Cada execução do `pipeline-agent.ps1` grava em `docs/pipeline/logs/pipeline-{role}.log`:
+
+```powershell
+# Ver últimas 20 linhas do log do worker
+Get-Content docs\pipeline\logs\pipeline-worker.log -Tail 20
+
+# Ver todos os logs em tempo real (se algum agente estiver rodando)
+Get-Content docs\pipeline\logs\pipeline-worker.log -Wait
+```
+
+**Formato do log:**
+```
+2026-04-22 21:15:00 [INFO] [worker] === AGENT CYCLE === Role:worker Interval:3min Pipeline:RUNNING
+2026-04-22 21:15:00 [INFO] [worker] Total messages in inbox: 2 | PENDING: 1 | DONE: 1 | BLOCKED: 0
+2026-04-22 21:15:00 [ACTION] [worker] STATUS=ACTION_REQUIRED | Pending=1
+```
+
+### Health Check Completo
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\pipeline-health.ps1
+```
+
+**O que mostra:**
+- Status das tasks no Task Scheduler (última execução, resultado, próxima execução)
+- Resumo dos arquivos de log por role (tamanho, última escrita, IDLE vs ACTION)
+- Contagem de PENDING em cada inbox
+- WIP check (sprints ativas vs limite)
+
+### Verificar se uma Task Realmente Executou
+
+```powershell
+# Último resultado do worker (0 = sucesso, qualquer outro = erro)
+schtasks /Query /TN "Dinamica-Pipeline-worker" /V /FO LIST | Select-String "Last Run Time|Last Result"
+
+# Todas as tasks do pipeline com detalhes
+schtasks /Query /TN "Dinamica-Pipeline-*" /V /FO LIST
+```
+
+---
+
 ## Troubleshooting
 
 ### "No active roles found in config"
