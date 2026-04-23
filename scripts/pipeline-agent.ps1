@@ -22,10 +22,13 @@
 #>
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("po", "supervisor", "sm", "worker", "qa", "git-controller", "research")]
+    [ValidateSet("po", "supervisor", "sm", "worker", "qa", "git-controller", "git_controller", "research")]
     [string]$Role,
 
-    [string]$ProjectRoot = $null
+    [string]$ProjectRoot = $null,
+
+    [ValidateSet("run", "emit", "dry-run")]
+    [string]$DispatchMode = "emit"
 )
 
 # ── Resolve project root ────────────────────────────────────────────────────
@@ -49,6 +52,179 @@ function Write-Log($Level, $Message) {
     Write-Host $line
 }
 
+function Normalize-RoleName([string]$InputRole) {
+    if (-not $InputRole) { return $InputRole }
+    return ($InputRole -replace "_", "-").ToLowerInvariant()
+}
+
+function Get-MessageField([string]$Body, [string]$FieldName) {
+    $pattern = "(?mi)^- ${FieldName}:\s*(.+)$"
+    $match = [regex]::Match($Body, $pattern)
+    if ($match.Success) {
+        return $match.Groups[1].Value.Trim()
+    }
+    return $null
+}
+
+function Get-SprintId([string]$FullText, [string]$Body) {
+    $sources = @($FullText, $Body)
+    foreach ($source in $sources) {
+        if ($source -match "\bSprint\s+(S-\d+)\b") {
+            return $matches[1]
+        }
+    }
+    return $null
+}
+
+function Resolve-RepoPath([string]$ProjectRoot, [string]$ReferencePath) {
+    if (-not $ReferencePath) { return $null }
+    $cleanPath = $ReferencePath.Trim()
+    if ($cleanPath.StartsWith("@")) {
+        $cleanPath = $cleanPath.Substring(1)
+    }
+    if ([System.IO.Path]::IsPathRooted($cleanPath)) {
+        return $cleanPath
+    }
+    return Join-Path $ProjectRoot $cleanPath
+}
+
+function Get-AssignedWorkerIdFromBriefing([string]$ProjectRoot, [string]$BriefingReference) {
+    $briefingPath = Resolve-RepoPath -ProjectRoot $ProjectRoot -ReferencePath $BriefingReference
+    if (-not $briefingPath -or -not (Test-Path $briefingPath)) {
+        return $null
+    }
+
+    try {
+        $briefingContent = Get-Content $briefingPath -Raw -Encoding UTF8
+    } catch {
+        return $null
+    }
+
+    $patterns = @(
+        '(?mi)^- Assigned worker:\s*(.+)$',
+        '(?mi)^> \*\*Assigned worker:\*\*\s*(.+)$',
+        '(?mi)^- Worker ID:\s*(.+)$',
+        '(?mi)^> \*\*Worker ID:\*\*\s*(.+)$'
+    )
+
+    foreach ($pattern in $patterns) {
+        $match = [regex]::Match($briefingContent, $pattern)
+        if ($match.Success) {
+            return $match.Groups[1].Value.Trim()
+        }
+    }
+
+    return $null
+}
+
+function Get-WorkerRecord([string]$RegistryPath, [string]$SprintId, [string]$AssignedWorkerId) {
+    if (-not (Test-Path $RegistryPath)) { return $null }
+
+    try {
+        $registry = Get-Content $RegistryPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    } catch {
+        return $null
+    }
+
+    if (-not $registry.workers) { return $null }
+
+    if ($AssignedWorkerId) {
+        $assigned = $registry.workers | Where-Object { $_.worker_id -eq $AssignedWorkerId } | Select-Object -First 1
+        if ($assigned) { return $assigned }
+    }
+
+    if ($SprintId) {
+        $reserved = $registry.workers | Where-Object { $_.reserved_for_sprint -eq $SprintId } | Select-Object -First 1
+        if ($reserved) { return $reserved }
+    }
+
+    if (@($registry.workers).Count -eq 1) {
+        return $registry.workers | Select-Object -First 1
+    }
+
+    return $null
+}
+
+function Get-AgentCommandSpec($WorkerRecord) {
+    if (-not $WorkerRecord) { return $null }
+
+    $workerId = [string]$WorkerRecord.worker_id
+    $provider = [string]$WorkerRecord.provider
+
+    if ($workerId -match "^codex\b" -or $provider -match "OpenAI") {
+        return @{
+            Executable = "codex"
+            PrefixArgs = @()
+            Display = "codex"
+        }
+    }
+
+    if ($workerId -match "^kimi\b" -or $provider -match "Kimi") {
+        return @{
+            Executable = "kimi-cli"
+            PrefixArgs = @("run")
+            Display = "kimi-cli run"
+        }
+    }
+
+    if ($workerId -match "^opencode\b" -or $provider -match "OpenCode") {
+        return @{
+            Executable = "opencode"
+            PrefixArgs = @("--no-interactive")
+            Display = "opencode --no-interactive"
+        }
+    }
+
+    if ($workerId -match "^gemini\b" -or $provider -match "Google") {
+        return @{
+            Executable = "gemini"
+            PrefixArgs = @()
+            Display = "gemini"
+        }
+    }
+
+    return $null
+}
+
+function New-AgentPrompt([string]$RoleName, $Message, [string]$RoleFilePath) {
+    $action = Get-MessageField $Message.Body "Action"
+    $briefing = Get-MessageField $Message.Body "Briefing"
+    $plan = Get-MessageField $Message.Body "Plan"
+    $sprintId = Get-SprintId $Message.FullText $Message.Body
+
+    $parts = @(
+        "Voce esta atuando como $RoleName no projeto Dinamica Budget.",
+        "Leia sua inbox em $RoleFilePath e processe apenas as mensagens [PENDING]."
+    )
+
+    if ($sprintId) { $parts += "Sprint: $sprintId." }
+    if ($action) { $parts += "Action: $action." }
+    if ($briefing) { $parts += "Briefing: $briefing." }
+    if ($plan) { $parts += "Plan: $plan." }
+
+    $parts += "Siga o protocolo da role, execute apenas o escopo aprovado e atualize inbox/artefatos ao concluir."
+
+    return ($parts -join " ")
+}
+
+function Format-CommandLine([string]$Executable, [string[]]$Arguments) {
+    $escapedArgs = foreach ($arg in $Arguments) {
+        '"' + ($arg -replace '"', '\"') + '"'
+    }
+    return (($Executable) + " " + ($escapedArgs -join " ")).Trim()
+}
+
+function Invoke-AgentCommand([string]$Executable, [string[]]$Arguments, [string]$WorkingDirectory) {
+    Push-Location $WorkingDirectory
+    try {
+        & $Executable @Arguments
+        if ($null -ne $LASTEXITCODE) { return $LASTEXITCODE }
+        return 0
+    } finally {
+        Pop-Location
+    }
+}
+
 # ── Read config ─────────────────────────────────────────────────────────────
 $configPath = Join-Path $ProjectRoot "docs\pipeline\config.md"
 $intervalMinutes = 10
@@ -70,7 +246,8 @@ if ($pipelineStatus -eq "STOPPED") {
 }
 
 # ── Resolve role file ───────────────────────────────────────────────────────
-$roleFileName = switch ($Role) {
+$normalizedRole = Normalize-RoleName $Role
+$roleFileName = switch ($normalizedRole) {
     "po"            { "po-readme.md" }
     "supervisor"    { "supervisor-readme.md" }
     "sm"            { "sm-readme.md" }
@@ -99,8 +276,9 @@ if ($inboxMatch.Success) {
 # ── Parse [PENDING] messages ────────────────────────────────────────────────
 $pendingMessages = @()
 $allMessages = @()
-$messagePattern = "(?ms)### \[(PENDING|DONE|BLOCKED)\]\s+(\S+)\s+--\s+(.*?)\n(?=### \[(PENDING|DONE|BLOCKED)\]|\z)"
-$matches = [regex]::Matches($inboxSection, $messagePattern)
+$normalizedInboxSection = $inboxSection -replace ([string][char]0x2014), "--"
+$messagePattern = '(?ms)^### \[(PENDING|DONE|BLOCKED)\]\s+([^\r\n]+?)\s+--\s+(.*?)\r?\n(?=^### \[(PENDING|DONE|BLOCKED)\]|\z)'
+$matches = [regex]::Matches($normalizedInboxSection, $messagePattern)
 
 foreach ($m in $matches) {
     $status = $m.Groups[1].Value
@@ -121,7 +299,7 @@ foreach ($m in $matches) {
 
 # ── Log execution summary ───────────────────────────────────────────────────
 Write-Log "INFO" "=== AGENT CYCLE === Role:$Role Interval:${intervalMinutes}min Pipeline:$pipelineStatus"
-Write-Log "INFO" "Total messages in inbox: $($allMessages.Count) | PENDING: $($pendingMessages.Count) | DONE: $(($allMessages | Where-Object { $_.Status -eq 'DONE' }).Count) | BLOCKED: $(($allMessages | Where-Object { $_.Status -eq 'BLOCKED' }).Count)"
+Write-Log "INFO" "Total messages in inbox: $($allMessages.Count) | PENDING: $($pendingMessages.Count) | DONE: $(@($allMessages | Where-Object { $_.Status -eq 'DONE' }).Count) | BLOCKED: $(@($allMessages | Where-Object { $_.Status -eq 'BLOCKED' }).Count)"
 
 # ── Output for agent CLI ────────────────────────────────────────────────────
 Write-Host "========================================"
@@ -146,8 +324,15 @@ Write-Host "STATUS: ACTION REQUIRED"
 Write-Host "Pending messages: $($pendingMessages.Count)"
 Write-Host ""
 
+$registryPath = Join-Path $ProjectRoot "templates\workers.json"
+
 for ($i = 0; $i -lt $pendingMessages.Count; $i++) {
     $msg = $pendingMessages[$i]
+    $action = Get-MessageField $msg.Body "Action"
+    $briefing = Get-MessageField $msg.Body "Briefing"
+    $plan = Get-MessageField $msg.Body "Plan"
+    $sprintId = Get-SprintId $msg.FullText $msg.Body
+
     Write-Host "----------------------------------------"
     Write-Host "[$($i + 1)/$($pendingMessages.Count)] PENDING"
     Write-Host "Timestamp: $($msg.Timestamp)"
@@ -155,6 +340,54 @@ for ($i = 0; $i -lt $pendingMessages.Count; $i++) {
     Write-Host $msg.Body
     Write-Host ""
     Write-Log "ACTION" "PENDING msg [$($i + 1)/$($pendingMessages.Count)] ts=$($msg.Timestamp)"
+
+    if ($action) { Write-Host "ACTION: $action" }
+    if ($sprintId) { Write-Host "SPRINT: $sprintId" }
+    if ($briefing) { Write-Host "BRIEFING: $briefing" }
+    if ($plan) { Write-Host "PLAN: $plan" }
+
+    if ($normalizedRole -eq "worker") {
+        $assignedWorkerId = Get-AssignedWorkerIdFromBriefing -ProjectRoot $ProjectRoot -BriefingReference $briefing
+        $workerRecord = Get-WorkerRecord -RegistryPath $registryPath -SprintId $sprintId -AssignedWorkerId $assignedWorkerId
+        $commandSpec = Get-AgentCommandSpec $workerRecord
+        $agentPrompt = New-AgentPrompt -RoleName $normalizedRole -Message $msg -RoleFilePath $roleFilePath
+
+        if ($workerRecord) {
+            Write-Host "CLI_TARGET: $($workerRecord.worker_id) [$($workerRecord.provider)]"
+        } else {
+            Write-Host "CLI_TARGET: unresolved"
+        }
+
+        if ($commandSpec) {
+            $commandArgs = @($commandSpec.PrefixArgs + @($agentPrompt))
+            $commandLine = Format-CommandLine -Executable $commandSpec.Executable -Arguments $commandArgs
+
+            Write-Host "CLI_WORKDIR: $ProjectRoot"
+            Write-Host "CLI_COMMAND: $commandLine"
+            Write-Log "ACTION" "CLI_TARGET=$($workerRecord.worker_id) CLI_WORKDIR=$ProjectRoot CLI_COMMAND=$commandLine"
+
+            if ($DispatchMode -eq "run") {
+                $commandExists = Get-Command $commandSpec.Executable -ErrorAction SilentlyContinue
+                if ($commandExists) {
+                    $exitCode = Invoke-AgentCommand -Executable $commandSpec.Executable -Arguments $commandArgs -WorkingDirectory $ProjectRoot
+                    Write-Log "ACTION" "CLI_EXIT_CODE=$exitCode"
+                } else {
+                    Write-Host "CLI_STATUS: executable not found"
+                    Write-Log "WARN" "CLI executable not found: $($commandSpec.Executable)"
+                }
+            } elseif ($DispatchMode -eq "dry-run") {
+                Write-Host "CLI_STATUS: dry-run"
+                Write-Log "INFO" "CLI dry-run only"
+            } else {
+                Write-Host "CLI_STATUS: emit-only"
+                Write-Log "INFO" "CLI emit-only"
+            }
+        } else {
+            Write-Host "CLI_STATUS: no command mapping for assigned worker"
+            Write-Log "WARN" "No CLI mapping found for assigned worker"
+        }
+        Write-Host ""
+    }
 }
 
 Write-Host "========================================"

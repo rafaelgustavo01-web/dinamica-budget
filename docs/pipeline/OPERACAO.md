@@ -99,7 +99,43 @@ Get-Content docs\pipeline\logs\pipeline-worker.log -Wait
 2026-04-22 21:15:00 [INFO] [worker] === AGENT CYCLE === Role:worker Interval:3min Pipeline:RUNNING
 2026-04-22 21:15:00 [INFO] [worker] Total messages in inbox: 2 | PENDING: 1 | DONE: 1 | BLOCKED: 0
 2026-04-22 21:15:00 [ACTION] [worker] STATUS=ACTION_REQUIRED | Pending=1
+2026-04-22 21:15:00 [ACTION] [worker] CLI_TARGET=codex-5.3 CLI_COMMAND=codex "Voce esta atuando como worker..."
 ```
+
+### Wake-up por CLI
+
+Para a role `worker`, o script agora resolve o agente em `templates/workers.json` e monta o comando de wake-up correspondente.
+
+Mapeamentos atuais:
+
+| Worker / Provider | Comando emitido |
+|---|---|
+| `codex-*` / `OpenAI` | `codex "<prompt>"` |
+| `gemini-*` / `Google` | `gemini "<prompt>"` |
+| `kimi-*` / `Kimi CLI` | `kimi-cli run "<prompt>"` |
+| `opencode-*` / `OpenCode` | `opencode --no-interactive "<prompt>"` |
+
+Modo de despacho:
+
+```powershell
+# Só emite o comando resolvido (default)
+powershell -ExecutionPolicy Bypass -File scripts\pipeline-agent.ps1 -Role worker -DispatchMode emit
+
+# Testa sem executar o CLI
+powershell -ExecutionPolicy Bypass -File scripts\pipeline-agent.ps1 -Role worker -DispatchMode dry-run
+
+# Executa o CLI resolvido
+powershell -ExecutionPolicy Bypass -File scripts\pipeline-agent.ps1 -Role worker -DispatchMode run
+```
+
+Resolução do worker:
+- tenta `Assigned worker` / `Worker ID` no briefing
+- senão tenta `reserved_for_sprint` em `templates/workers.json`
+- se nada casar, registra `CLI_TARGET: unresolved` e `CLI_STATUS: no command mapping for assigned worker`
+
+Diretório de execução:
+- o dispatcher sempre executa o CLI a partir de `C:\Users\rafae\Documents\workspace\github\dinamica-budget`
+- o output/log agora expõe `CLI_WORKDIR`
 
 ### Health Check Completo
 
@@ -187,7 +223,7 @@ A skill usa regex para atualizar valores. Edições manuais fora do padrão pode
 │  2. Lê docs/roles/[role]-readme.md          │
 │  3. Extrai ## INBOX                         │
 │  4. Parseia [PENDING], [DONE], [BLOCKED]    │
-│  5. Emite handoffs acionáveis               │
+│  5. Resolve CLI do worker e emite/roda wake-up │
 └─────────────────────────────────────────────┘
 ```
 

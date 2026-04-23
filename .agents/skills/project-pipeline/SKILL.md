@@ -101,7 +101,15 @@ Each role's Task Scheduler task invokes this script with `-Role <name>`. It:
 1. Reads `docs/pipeline/config.md` and exits silently if `status: STOPPED`.
 2. Reads the role's `docs/roles/[role]-readme.md` and extracts the `## INBOX` section.
 3. Parses `[PENDING]`, `[DONE]`, and `[BLOCKED]` messages.
-4. Outputs actionable handoffs for the calling role to consume.
+4. For `worker`, resolves the assigned agent from briefing metadata or `templates/workers.json`, builds the CLI wake-up command, and outputs `CLI_TARGET` and `CLI_COMMAND`.
+5. Supports `-DispatchMode emit|dry-run|run` so operators can inspect or execute the wake-up command.
+6. Executes the worker CLI from the project root so the agent always starts inside the repository workspace.
+
+Current built-in worker CLI mappings:
+- `codex-*` / provider `OpenAI` -> `codex "<prompt>"`
+- `gemini-*` / provider `Google` -> `gemini "<prompt>"`
+- `kimi-*` / provider `Kimi CLI` -> `kimi-cli run "<prompt>"`
+- `opencode-*` / provider `OpenCode` -> `opencode --no-interactive "<prompt>"`
 
 ## Completion Checklist
 
