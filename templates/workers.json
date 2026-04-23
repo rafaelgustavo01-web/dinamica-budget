@@ -7,10 +7,12 @@
       "name": "Kimi K2.5",
       "provider": "Kimi CLI",
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
-      "available": true,
-      "busy": false,
+      "roles": ["research", "sm"],
+      "available": false,
+      "busy": true,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-23T09:00:00-03:00"
+      "last_checked_at": "2026-04-23T09:00:00-03:00",
+      "notes": "Agente multi-role: Research AI (mine roadmap de S-01, S-02, S-05 pendentes) + Scrum Master (sync/dispatch do pipeline). Não disponível para BUILD."
     },
     {
       "worker_id": "codex-5.3",
