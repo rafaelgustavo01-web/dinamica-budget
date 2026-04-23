@@ -1,6 +1,6 @@
 {
   "registry_version": "1.0",
-  "last_updated": "2026-04-23T09:05:00-03:00",
+  "last_updated": "2026-04-23T11:50:00-03:00",
   "workers": [
     {
       "worker_id": "kimi-k2.5",
@@ -12,7 +12,7 @@
       "busy": true,
       "reserved_for_sprint": "S-04",
       "last_checked_at": "2026-04-23T09:25:00-03:00",
-      "notes": "Agente multi-role: Research AI + Scrum Master + BUILD Worker para S-04 (Segurança e RBAC)."
+      "notes": "Agente multi-role: Research AI + BUILD Worker para S-04 (Segurança e RBAC)."
     },
     {
       "worker_id": "codex-5.3",
@@ -21,8 +21,8 @@
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
       "available": false,
       "busy": true,
-      "reserved_for_sprint": "S-03",
-      "last_checked_at": "2026-04-23T09:25:00-03:00"
+      "reserved_for_sprint": "S-09",
+      "last_checked_at": "2026-04-23T11:50:00-03:00"
     },
     {
       "worker_id": "gemini-3.1",
@@ -55,9 +55,9 @@
       "name": "OpenCode CLI",
       "provider": "OpenCode",
       "role": "po",
-      "active_sprint": "S-03",
-      "last_intake": "2026-04-23T08:55:00-03:00",
-      "notes": "Autorizou intake de S-03 (Revisão Transacional). WIP atual = 2/2."
+      "active_sprint": "S-09",
+      "last_intake": "2026-04-23T11:50:00-03:00",
+      "notes": "Autorizou intake de S-09 (Módulo de Orçamentos). WIP atual = 2/2 (S-04 BUILD, S-09 BUILD)."
     }
   ],
   "git_controllers": [
@@ -77,9 +77,9 @@
       "name": "Gemini 3.1",
       "provider": "Google",
       "role": "supervisor",
-      "active_sprint": "S-03",
-      "last_planned": "2026-04-22T22:30:00-03:00",
-      "notes": "Gerou planos para S-02 e S-04. S-03 INICIADA aguardando briefing."
+      "active_sprint": "S-09",
+      "last_planned": "2026-04-23T10:25:00-03:00",
+      "notes": "Gerou planos para S-02, S-04 e S-09. S-09 INICIADA com briefing e plano entregues."
     }
   ],
   "qas": [
