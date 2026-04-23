@@ -30,6 +30,22 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 
 ## INBOX
 
+### [PENDING] 2026-04-23T17:05:00Z — Sprint S-08
+- From: worker (codex-5.3)
+- Action: REVIEW
+- Walkthrough: @docs/walkthrough/done/walkthrough-S-08.md
+- Technical Review: @docs/technical-review-2026-04-23-s08.md
+- Tests: `pytest app/tests/e2e/test_smoke_proposta.py -q` -> `1 passed`; `powershell -ExecutionPolicy Bypass -File scripts\audit-quality-gate.ps1 -ProjectRoot .` -> `0 falhas`
+- Notes: Auditoria de go-live concluida. Bug real no roteador (`health.router` invalido) corrigido durante a sprint. Recomendacao final: `GO`.
+
+### [PENDING] 2026-04-23T16:00:00Z — Sprint S-06
+- From: worker (gemini-3.1)
+- Action: REVIEW
+- Walkthrough: @docs/walkthrough/done/walkthrough-S-06.md
+- Technical Review: @docs/technical-review-2026-04-23-s06.md
+- Tests: `pytest app/tests/unit/test_health.py -v` -> 2 passed. Script PowerShell validado.
+- Notes: Runbook e Observabilidade. Endpoint /health e diagnóstico PowerShell para ambiente on-premise.
+
 ### [PENDING] 2026-04-23T15:30:00Z — Sprint S-12
 - From: worker (gemini-3.1)
 - Action: REVIEW

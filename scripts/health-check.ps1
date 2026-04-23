@@ -1,110 +1,60 @@
-# ──────────────────────────────────────────────────────────────────────────────
-# health-check.ps1 — Verificacao de saude da aplicacao
-#
-# Uso:
-#   .\health-check.ps1
-#   .\health-check.ps1 -AutoRestart
-#   .\health-check.ps1 -AutoRestart -MaxRetries 5
-#
-# Recomendacao: Agendar via Task Scheduler a cada 5 minutos
-#   schtasks /create /tn "DinamicaBudget-HealthCheck" /tr "powershell -File C:\apps\dinamica-budget\scripts\health-check.ps1 -AutoRestart" /sc minute /mo 5
-# ──────────────────────────────────────────────────────────────────────────────
-
+# scripts/health-check.ps1
 param(
-    [switch]$AutoRestart,
-    [int]$MaxRetries = 3,
-    [string]$Url = "http://localhost:8000/health",
-    [string]$ServiceName = "DinamicaBudget"
+    [string]$ApiUrl = "http://localhost:8000",
+    [string]$DbHost = "localhost",
+    [int]$DbPort = 5432
 )
 
-$ErrorActionPreference = "Stop"
-$appRoot = "C:\apps\dinamica-budget"
-$logFile = "$appRoot\logs\health-check.log"
+Write-Host "=== Dinamica Budget — Health Check ===" -ForegroundColor Cyan
 
-if (-not (Test-Path "$appRoot\logs")) {
-    New-Item -ItemType Directory -Path "$appRoot\logs" -Force | Out-Null
-}
-
-function Log($msg) {
-    $entry = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg"
-    Write-Host $entry
-    Add-Content -Path $logFile -Value $entry -ErrorAction SilentlyContinue
-}
-
-# ── Health check ──────────────────────────────────────────────────────────────
-$healthy = $false
-$dbConnected = $false
-$statusText = "unreachable"
-
+# 1. Testar API via Endpoint Health
+Write-Host "`n[1/3] API Health..." -ForegroundColor Yellow
 try {
-    $response = Invoke-WebRequest -Uri $Url -TimeoutSec 10 -UseBasicParsing
-    $health = $response.Content | ConvertFrom-Json
-    $statusText = $health.status
-    $dbConnected = $health.database_connected
-
-    if ($statusText -eq "ok" -and $dbConnected -eq $true) {
-        $healthy = $true
+    # Suprime erro de certificado se for HTTPS auto-assinado (comum on-premise)
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $response = Invoke-RestMethod -Uri "$ApiUrl/api/v1/health/" -Method Get -TimeoutSec 5
+    
+    if ($response.status -eq "healthy") {
+        Write-Host "  API: OK (Versão: $($response.version))" -ForegroundColor Green
+    } else {
+        Write-Host "  API: DEGRADADA (Banco: $($response.database))" -ForegroundColor Yellow
     }
 } catch {
-    $statusText = "unreachable ($_)"
+    Write-Host "  API: FALHA — Verifique se o serviço está rodando em $ApiUrl" -ForegroundColor Red
+    Write-Host "  Erro: $($_.Exception.Message)" -ForegroundColor Gray
 }
 
-# ── Resultado ─────────────────────────────────────────────────────────────────
-if ($healthy) {
-    Log "OK — status=$statusText db=$dbConnected"
-    exit 0
-}
-
-Log "FALHA — status=$statusText db=$dbConnected"
-
-# ── Auto-restart se habilitado ────────────────────────────────────────────────
-if (-not $AutoRestart) {
-    Write-Host "Use -AutoRestart para tentar recuperar automaticamente." -ForegroundColor Yellow
-    exit 1
-}
-
-Log "Tentando restart do servico $ServiceName..."
-
-$svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
-if (-not $svc) {
-    Log "ERRO: Servico $ServiceName nao encontrado"
-    exit 1
-}
-
-if ($svc.Status -eq "Running") {
-    Stop-Service -Name $ServiceName -Force
-    Log "Servico parado."
-}
-
-Start-Service -Name $ServiceName
-Log "Servico reiniciado. Aguardando estabilizacao..."
-
-# Aguardar e verificar novamente
-$attempt = 0
-$recovered = $false
-
-while ($attempt -lt $MaxRetries) {
-    $attempt++
-    Start-Sleep -Seconds 5
-
-    try {
-        $response = Invoke-WebRequest -Uri $Url -TimeoutSec 10 -UseBasicParsing
-        $health = $response.Content | ConvertFrom-Json
-        if ($health.status -eq "ok" -and $health.database_connected -eq $true) {
-            $recovered = $true
-            break
-        }
-    } catch {
-        # Ainda nao respondeu
+# 2. Testar PostgreSQL via TCP Port (mais simples que psql on-premise)
+Write-Host "`n[2/3] PostgreSQL Connectivity..." -ForegroundColor Yellow
+$connection = New-Object System.Net.Sockets.TcpClient
+try {
+    $connection.Connect($DbHost, $DbPort)
+    if ($connection.Connected) {
+        Write-Host "  PostgreSQL: OK (Porta $DbPort aberta)" -ForegroundColor Green
     }
-
-    Log "Tentativa $attempt/$MaxRetries — ainda nao respondeu."
+} catch {
+    Write-Host "  PostgreSQL: FALHA — Porta $DbPort inacessível em $DbHost" -ForegroundColor Red
+} finally {
+    $connection.Close()
 }
 
-if ($recovered) {
-    Log "RECUPERADO — servico voltou ao normal apos restart."
-    exit 0
-} else {
-    Log "CRITICO — servico nao recuperou apos $MaxRetries tentativas. Verificar manualmente!"
-    exit 2
+# 3. Testar Espaço em Disco (Partição de Dados)
+Write-Host "`n[3/3] Disk Space (C:)..." -ForegroundColor Yellow
+try {
+    $disk = Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DeviceID -eq "C:" }
+    $freeGB = [math]::Round($disk.FreeSpace / 1GB, 2)
+    $totalGB = [math]::Round($disk.Size / 1GB, 2)
+    $freePercent = [math]::Round(($disk.FreeSpace / $disk.Size) * 100, 1)
+
+    if ($freePercent -gt 15) {
+        Write-Host "  Disk: OK ($freeGB GB livres de $totalGB GB — $freePercent%)" -ForegroundColor Green
+    } elseif ($freePercent -gt 5) {
+        Write-Host "  Disk: ATENÇÃO ($freeGB GB livres — $freePercent%)" -ForegroundColor Yellow
+    } else {
+        Write-Host "  Disk: CRÍTICO ($freeGB GB livres — $freePercent%)" -ForegroundColor Red
+    }
+} catch {
+    Write-Host "  Disk check failed: $($_.Exception.Message)" -ForegroundColor Gray
 }
+
+Write-Host "`n=== Fim do Health Check ===" -ForegroundColor Cyan

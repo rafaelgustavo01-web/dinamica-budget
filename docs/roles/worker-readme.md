@@ -102,18 +102,18 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Plan: @docs/superpowers/plans/2026-04-22-optimize-search-and-operational-cost.md
 - Notes: Entregue em TESTED. Handoff para QA realizado em 2026-04-22T21:45Z (SM normalizacao).
 
-### [PENDING] 2026-04-23T15:20:00Z — Sprint S-06
+### [DONE] 2026-04-23T15:20:00Z — Sprint S-06
 - From: supervisor
 - Action: BUILD
 - Assigned Worker: gemini-3.1
 - Briefing: @docs/briefings/sprint-S-06-briefing.md
 - Plan: @docs/superpowers/plans/2026-04-23-runbook-observabilidade-onpremise.md
-- Notes: No forno. Runbook, health checks, operação on-premise.
+- Notes: Entregue em TESTED. Endpoint /health, script PowerShell e Runbook operacional concluídos. Handoff para OpenCode (QA).
 
-### [PENDING] 2026-04-23T15:20:00Z — Sprint S-08
+### [DONE] 2026-04-23T15:20:00Z — Sprint S-08
 - From: supervisor
 - Action: BUILD
 - Assigned Worker: codex-5.3
 - Briefing: @docs/briefings/sprint-S-08-briefing.md
 - Plan: @docs/superpowers/plans/2026-04-23-auditoria-qualidade-final.md
-- Notes: No forno. Auditoria de qualidade final, smoke E2E, go-live gate.
+- Notes: Entregue em TESTED. Quality gate executavel com `0 falhas`, smoke E2E `1 passed`, relatorio de go-live finalizado e handoff para QA aberto.

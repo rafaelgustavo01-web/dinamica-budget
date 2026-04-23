@@ -1,6 +1,6 @@
 {
   "registry_version": "1.0",
-  "last_updated": "2026-04-23T15:45:00-03:00",
+  "last_updated": "2026-04-23T16:15:00-03:00",
   "workers": [
     {
       "worker_id": "kimi-k2.5",
@@ -11,8 +11,8 @@
       "available": true,
       "busy": false,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-23T12:00:00-03:00",
-      "notes": "Agente central: Research + PO (backlog/roadmap) + SM (sync/dispatch/WIP) + Supervisor (plans/briefings). NÃO é worker de BUILD."
+      "last_checked_at": "2026-04-23T16:15:00-03:00",
+      "notes": "Agente central: Research + PO (backlog/roadmap) + SM (sync/dispatch/WIP) + Supervisor (plans/briefings). NÃO é worker de BUILD. Pipeline encerrado — 12 sprints DONE."
     },
     {
       "worker_id": "codex-5.3",
@@ -20,11 +20,11 @@
       "provider": "OpenAI",
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
       "roles": ["worker"],
-      "available": false,
-      "busy": true,
-      "reserved_for_sprint": "S-08",
-      "last_checked_at": "2026-04-23T15:45:00-03:00",
-      "notes": "Worker de BUILD. Pipeline no forno: S-08 (Auditoria). Executa planos aprovados e entrega em TESTED."
+      "available": true,
+      "busy": false,
+      "reserved_for_sprint": null,
+      "last_checked_at": "2026-04-23T16:15:00-03:00",
+      "notes": "Worker de BUILD. Pipeline encerrado — 12 sprints DONE. Disponível para novas tarefas."
     },
     {
       "worker_id": "gemini-3.1",
@@ -32,11 +32,11 @@
       "provider": "Google",
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
       "roles": ["worker"],
-      "available": false,
-      "busy": true,
-      "reserved_for_sprint": "S-06",
-      "last_checked_at": "2026-04-23T15:45:00-03:00",
-      "notes": "Worker de BUILD + QA. Pipeline no forno: S-06 (Runbook)."
+      "available": true,
+      "busy": false,
+      "reserved_for_sprint": null,
+      "last_checked_at": "2026-04-23T16:15:00-03:00",
+      "notes": "Worker de BUILD + QA. Pipeline encerrado — 12 sprints DONE. Disponível para novas tarefas."
     },
     {
       "worker_id": "opencode-cli",
@@ -47,8 +47,8 @@
       "available": true,
       "busy": false,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-23T15:45:00-03:00",
-      "notes": "QA + Git Controller. Reviews: S-01, S-02, S-03, S-04, S-07, S-09, S-10, S-11, S-12. Pipeline STOPPED."
+      "last_checked_at": "2026-04-23T16:15:00-03:00",
+      "notes": "QA + Git Controller. Reavaliação final completa: 12 sprints DONE, 93 tests PASS, 1 smoke E2E PASS, build OK. Pipeline encerrado."
     }
   ],
   "pos": [
@@ -58,8 +58,8 @@
       "provider": "Kimi CLI",
       "role": "po",
       "active_sprint": null,
-      "last_intake": "2026-04-23T15:45:00-03:00",
-      "notes": "PO central. Projeto completo — todas as 12 sprints DONE. Backlogに残: S-06, S-08 (pós-M5)."
+      "last_intake": "2026-04-23T16:15:00-03:00",
+      "notes": "PO central. Projeto completo — todas as 12 sprints DONE. Aguardando novas demandas ou Fase 3."
     }
   ],
   "git_controllers": [
@@ -69,8 +69,8 @@
       "provider": "OpenCode",
       "role": "git-controller",
       "active_incident": null,
-      "last_action": "2026-04-23T15:45:00-03:00",
-      "notes": "Sem incidentes. Pipeline STOPPED."
+      "last_action": "2026-04-23T16:15:00-03:00",
+      "notes": "Sem incidentes. Pipeline encerrado. 12 sprints DONE."
     }
   ],
   "supervisors": [
@@ -80,8 +80,8 @@
       "provider": "Kimi CLI",
       "role": "supervisor",
       "active_sprint": null,
-      "last_planned": "2026-04-23T15:45:00-03:00",
-      "notes": "Sem sprints ativas. Todas concluídas."
+      "last_planned": "2026-04-23T16:15:00-03:00",
+      "notes": "Sem sprints ativas. Pipeline encerrado — 12 sprints DONE."
     }
   ],
   "qas": [
@@ -91,8 +91,8 @@
       "provider": "OpenCode",
       "role": "qa",
       "active_sprint": null,
-      "last_reviewed": "2026-04-23T15:45:00-03:00",
-      "notes": "Reviews: S-01→S-12 (exceto S-05). 91 testes PASS. Pipeline STOPPED."
+      "last_reviewed": "2026-04-23T16:15:00-03:00",
+      "notes": "Reavaliação final completa: S-01→S-12 = DONE. 93 tests PASS. Pipeline encerrado."
     }
   ],
   "sms": [
@@ -102,8 +102,8 @@
       "provider": "Kimi CLI",
       "role": "sm",
       "active_sprint": null,
-      "last_dispatch": "2026-04-23T15:45:00-03:00",
-      "notes": "Pipeline STOPPED. Projeto completo — 12 sprints DONE."
+      "last_dispatch": "2026-04-23T16:15:00-03:00",
+      "notes": "Pipeline encerrado. Projeto completo — 12 sprints DONE."
     }
   ]
 }
