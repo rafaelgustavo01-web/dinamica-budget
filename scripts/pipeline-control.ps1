@@ -48,7 +48,7 @@ if (-not $ProjectRoot) {
 
 $configPath = Join-Path $ProjectRoot "docs\pipeline\config.md"
 $taskNamePrefix = "Dinamica-Pipeline"
-$agentScript = Join-Path $ProjectRoot "scripts\pipeline-agent.ps1"
+$agentScript = Join-Path $ProjectRoot "scripts\pa.ps1"
 
 # ── Helper: read config value ───────────────────────────────────────────────
 function Get-ConfigValue($content, $key) {
@@ -120,7 +120,7 @@ if ($Command -eq "start") {
     foreach ($role in $roles) {
         $taskName = "${taskNamePrefix}-${role}"
         $action = "powershell.exe"
-        $arguments = "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"${agentScript}`" -Role ${role} -ProjectRoot `"${ProjectRoot}`""
+        $arguments = "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"${agentScript}`" ${role}"
 
         # Remove existing task if present
         $existing = schtasks /Query /TN $taskName 2>$null

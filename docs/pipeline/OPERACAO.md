@@ -24,7 +24,7 @@ powershell -ExecutionPolicy Bypass -File scripts\pipeline-control.ps1 -Command s
 ### O que acontece
 1. Lê `docs/pipeline/config.md`
 2. Extrai roles ativas do bloco `## Roles Active`
-3. Cria tarefas `Dinamica-Pipeline-[role]` que executam `scripts/pipeline-agent.ps1` a cada `interval_minutes`
+3. Cria tarefas `Dinamica-Pipeline-[role]` que chamam o wrapper `scripts/pa.ps1 <role>`, entram no workspace e executam `scripts/pipeline-agent.ps1` a cada `interval_minutes`
 4. Atualiza `status: RUNNING`, `started_at` e `stopped_at: null`
 
 ### Verificar criação
@@ -105,6 +105,26 @@ Get-Content docs\pipeline\logs\pipeline-worker.log -Wait
 ### Wake-up por CLI (Agent Dispatch)
 
 O pipeline resolve automaticamente qual CLI invocar com base no worker atribuído (`templates/workers.json` ou briefing). O operador **não precisa saber o provider** — basta acionar a role desejada.
+
+#### Wrapper rápido (`pa.ps1`)
+
+Para execução manual sem digitar o caminho completo:
+
+```powershell
+# Ver inbox do worker (dry-run por padrão)
+.\scripts\pa.ps1 worker
+
+# Executar wake-up real do worker
+.\scripts\pa.ps1 worker run
+
+# Ver inbox do supervisor
+.\scripts\pa.ps1 supervisor
+
+# Ver inbox do qa
+.\scripts\pa.ps1 qa
+```
+
+O wrapper `pa.ps1` entra automaticamente no diretório do projeto e chama `pipeline-agent.ps1` com os parâmetros corretos.
 
 #### Comando único por role
 

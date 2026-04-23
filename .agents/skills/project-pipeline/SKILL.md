@@ -89,7 +89,7 @@ Script: `scripts/pipeline-control.ps1`
 
 ### Commands
 
-- **`start`** — Reads active roles from `docs/pipeline/config.md`, creates one Task Scheduler task per role running `scripts/pipeline-agent.ps1` at the configured interval, and sets `status: RUNNING`.
+- **`start`** — Reads active roles from `docs/pipeline/config.md`, creates one Task Scheduler task per role running the wrapper `scripts/pa.ps1 <role>` at the configured interval, and sets `status: RUNNING`.
 - **`stop`** — Deletes all `Dinamica-Pipeline-*` tasks and sets `status: STOPPED`.
 - **`time_set -Interval <minutes>`** — Updates `interval_minutes` in config. If pipeline is RUNNING, stops and recreates all tasks with the new interval.
 
@@ -97,7 +97,7 @@ Script: `scripts/pipeline-control.ps1`
 
 Script: `scripts/pipeline-agent.ps1`
 
-Each role's Task Scheduler task invokes this script with `-Role <name>`. It:
+Each role's Task Scheduler task invokes the wrapper `scripts/pa.ps1`, which enters the repository workspace and calls this script with `-Role <name>`. It:
 1. Reads `docs/pipeline/config.md` and exits silently if `status: STOPPED`.
 2. Reads the role's `docs/roles/[role]-readme.md` and extracts the `## INBOX` section.
 3. Parses `[PENDING]`, `[DONE]`, and `[BLOCKED]` messages.
