@@ -13,7 +13,7 @@
 - stopped_at: null
 
 ## WIP
-- max_active_sprints: 2
+- max_active_sprints: 4
 - max_rework_per_sprint: 3
 
 ## Roles Active
