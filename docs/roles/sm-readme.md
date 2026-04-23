@@ -27,8 +27,17 @@ Explicit user request, OR pipeline anomaly detected (stale pending, worker crash
 - Plan: @docs/superpowers/plans/2026-04-22-arquitetura-camadas.md
 - Notes: Plano em 6 tasks. Worker disponível para S-02. S-05 já em inbox do worker.
 
-### [PENDING] 2026-04-22T20:30Z — Pipeline Health
+### [DONE] 2026-04-22T20:30Z — Pipeline Health
 - From: sm (me)
 - Action: MONITOR
 - Notes: WIP 2/2 usado. S-02 em PLAN, S-05 em TODO. Sem anomalias detectadas.
+
+### [DONE] 2026-04-22T21:45Z — Anomalia de sincronia detectada e corrigida
+- From: sm (me)
+- Action: RECOVER
+- Notes: BACKLOG e inboxes desalinhados. Correções aplicadas:
+  1. S-02: BACKLOG PLAN → TODO (Worker já tinha [PENDING] BUILD)
+  2. S-05: Worker [PENDING] BUILD → [DONE]; QA inbox recebeu [PENDING] REVIEW
+  3. WIP normalizado: S-02 (TODO), S-04 (INICIADA), S-05 (TESTED aguardando QA) = 3 ativas
+  4. Recomendação: Supervisor gerar plano para S-04 ou PO arquivar S-04 para focar em S-02
 

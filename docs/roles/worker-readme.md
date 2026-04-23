@@ -39,10 +39,10 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Plan: @docs/superpowers/plans/2026-04-22-arquitetura-camadas.md
 - Notes: Refatorar endpoints auth, servicos, verões para service layer
 
-### [PENDING] 2026-04-22T18:00Z -- Sprint S-05
+### [DONE] 2026-04-22T18:00Z -- Sprint S-05
 - From: supervisor
 - Action: BUILD
 - Briefing: @docs/briefings/sprint-S-05-briefing.md
 - Plan: @docs/superpowers/plans/2026-04-22-optimize-search-and-operational-cost.md
-- Notes: branch main only, no model switch
+- Notes: Entregue em TESTED. Handoff para QA realizado em 2026-04-22T21:45Z (SM normalizacao).
 

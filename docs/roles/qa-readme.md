@@ -30,6 +30,14 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 
 ## INBOX
 
+### [PENDING] 2026-04-22T21:45Z — Sprint S-05
+- From: worker (Codex)
+- Action: REVIEW
+- Walkthrough: @docs/walkthrough/done/walkthrough-S-05.md
+- Technical Review: @docs/technical-review-2026-04-22.md
+- Tests: Benchmark executado sobre banco vazio (valida infraestrutura/caminho)
+- Notes: Sprint entregue em TESTED. Worker finalizou execucao manual. Aguardando decisao QA: ACCEPT para DONE ou REJECT com rework briefing.
+
 ### [DONE] 2026-04-22T22:00Z — Sprint S-01
 - From: worker (OpenCode)
 - Action: REVIEW
