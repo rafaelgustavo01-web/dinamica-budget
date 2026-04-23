@@ -107,19 +107,8 @@ resultado/
 .kiro/
 .claude/
 .amazonq/
-.agents/*
-.agents/skills/
-.agents/skills/*
-.agents/skills/context7-mcp/
-.agents/skills/context7-mcp/**
-.agents/skills/project-pipeline/
-.agents/skills/project-pipeline/SKILL.md
-.agents/skills/project-pipeline/references/
-agents/skills/project-pipeline/templates/
-.agents/skills/semantic-memory/
-.agents/skills/semantic-memory/**
-.agents/skills/semantic-memory/AGENTS.md
-.codex
+.agents/
+.codex/
 
 # ─── ARTEFACTS ──────────────
 .docs/*

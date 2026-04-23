@@ -20,6 +20,10 @@ Responsável: Research AI
 | `S-06` | BACKLOG | P1 | — | Fechar lacunas de observabilidade e operação on-premise | Runbook de incidentes (API, DB, IIS, backup); procedimentos de restore testados; health checks e logs com critérios de alerta definidos |
 | `S-07` | BACKLOG | P2 | `S-04` | Finalizar UX de governança e permissões | Decisão de produto sobre módulo de permissões; backlog UX aprovado (wireframes + critérios); pendências de perfil/permissões sem placeholders críticos |
 | `S-08` | BACKLOG | P2 | `S-01`, `S-02`, `S-04` | Auditoria de qualidade final para pré-produção | Gate de qualidade definido (testes, lint, segurança, smoke E2E); evidências anexadas; checklist de go-live aprovado |
+| `S-09` | BACKLOG | P1 | `S-02`, `S-05` | Módulo de Orçamentos — Entidades e CRUD de Propostas | Tabelas criadas (propostas, pq_itens, proposta_itens); CRUD funcional; workflow RASCUNHO→CPU_GERADA; testes unitários |
+| `S-10` | BACKLOG | P1 | `S-09` | Importação PQ e Match Inteligente | Upload Excel/CSV para PQ; match fuzzy/semântico por item; confirmação manual do orçamentista; testes de integração |
+| `S-11` | BACKLOG | P1 | `S-10` | Geração da CPU — Composição de Preços Unitários | Explosão de composição com cálculo de custos; lookup em PcTabelas (MO, equipamento, encargos); aplicação de BDI; rastreabilidade completa |
+| `S-12` | BACKLOG | P2 | `S-11` | UX Frontend do Módulo de Orçamentos | Telas React: criar proposta, importar PQ, match, visualizar CPU; integração com API; smoke E2E |
 
 ## Ordem Recomendada de Execução
 1. `S-01`
@@ -28,6 +32,8 @@ Responsável: Research AI
 4. `S-05` e `S-06`
 5. `S-07`
 6. `S-08`
+7. `S-09` (depende de S-02 e S-05)
+8. `S-10` → `S-11` → `S-12` (sequencial)
 
 ## Sprints Ativas (Product Owner — 2026-04-22)
 - `S-01` concluída em `TESTED`; `S-02` permanece como sprint ativa; `S-05` segue em `TODO` por bloqueio de banco local. WIP atual = 2/2.
@@ -36,3 +42,4 @@ Responsável: Research AI
 ## Observações de Pesquisa
 - O repositório atual não possui os artefatos canônicos do pipeline (`docs/JOB-DESCRIPTION.md`, `docs/superpowers/plans/roadmap/ROADMAP.md`, `docs/roles/`, `docs/dispatch/pending/`).
 - Este backlog foi derivado dos artefatos existentes: `README.md`, `docs/ANALISE_PENDENCIAS_PROJETO.md`, `docs/CHANGELOG_IMPLEMENTACAO.md` e validação da arquitetura implementada no código.
+- **Nova demanda (2026-04-22):** Módulo de Orçamentos (Fase 2) modelado em `docs/superpowers/plans/roadmap/MODELAGEM_ORCAMENTOS_FASE2.md`. Adicionadas sprints S-09 a S-12 ao backlog e Milestone 5 ao roadmap.

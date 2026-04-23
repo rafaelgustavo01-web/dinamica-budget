@@ -69,10 +69,45 @@ Objetivo: levar o projeto para um estado de pre-producao robusto em arquitetura,
 - Priorizacao de melhorias com impacto operacional.
 - Entregavel: backlog UX com criterios de aceite.
 
+## Milestone 5 - Modulo de Orcamentos (P1)
+
+> **Origem:** Demandada pelo PO em 2026-04-22.  
+> **Documento de modelagem:** `docs/superpowers/plans/roadmap/MODELAGEM_ORCAMENTOS_FASE2.md`
+
+### Fase 5.1 - Entidades e CRUD de Propostas
+- Criar tabelas: `propostas`, `pq_importacoes`, `pq_itens`, `proposta_itens`, `proposta_item_composicoes`.
+- CRUD de proposta com workflow (RASCUNHO → CPU_GERADA → APROVADA).
+- Entregavel: API REST de propostas funcionando.
+- Sprint: `S-09` | Dependencias: `S-02` (camadas), `S-05` (busca otimizada)
+
+### Fase 5.2 - Importacao PQ e Match Inteligente
+- Upload de planilha quantitativa (Excel/CSV) para `pq_itens`.
+- Motor de match: busca fuzzy/semantica por item da PQ em BaseTcpo + ItemProprio.
+- Interface de selecao/confirmacao de match pelo orcamentista.
+- Entregavel: importacao + match automatico + confirmacao manual.
+- Sprint: `S-10` | Dependencias: `S-09`
+
+### Fase 5.3 - Geracao da CPU (Composicao de Precos Unitarios)
+- Explosao de composicao para cada item confirmado (reutilizar logica existente).
+- Custo unitario por insumo: lookup em PcTabelas (MO, equipamento, encargos, EPI).
+- Aplicacao de BDI/indiretos e calculo de preco total.
+- Entregavel: endpoint `/propostas/{id}/gerar-cpu` com rastreabilidade completa.
+- Sprint: `S-11` | Dependencias: `S-10`
+
+### Fase 5.4 - UX de Orcamentos (Frontend)
+- Tela de criacao/edicao de proposta.
+- Upload e visualizacao da PQ importada.
+- Tela de match (sugestoes + selecao manual).
+- Visualizacao da CPU com explosao de custos.
+- Entregavel: modulo completo no React.
+- Sprint: `S-12` | Dependencias: `S-11`
+
 ## Dependencias Entre Milestones
 - M2 depende de M1 para estabilizar base arquitetural.
 - M3 pode rodar em paralelo parcial com M2.
 - M4 depende dos gates de seguranca/qualidade de M1 e M2.
+- **M5 depende de M1 (arquitetura), M3 (busca) e das tabelas PcTabelas populadas.**
 
 ## Historico de Atualizacao
 - 2026-04-22 13:45 (Research AI): roadmap inicial criado com 4 milestones e fases priorizadas.
+- 2026-04-22 21:00 (Research AI): adicionado Milestone 5 — Modulo de Orcamentos (Fase 2) com 4 subfases e documento de modelagem conceitual.

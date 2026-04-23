@@ -5,7 +5,7 @@ from alembic import context
 from sqlalchemy import MetaData, pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.engine import make_url
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy import create_engine
 
 from app.core.config import settings
 
@@ -18,7 +18,8 @@ _parsed = make_url(settings.DATABASE_URL)
 #
 # Some local deployments keep plain passwords containing '%' or non-ASCII characters.
 # Unquoting here can corrupt already-plain credentials and break migrations.
-_sync_url = _parsed.set(drivername="postgresql+psycopg2").render_as_string(
+_sync_url_obj = _parsed.set(drivername="postgresql+psycopg2")
+_sync_url = _sync_url_obj.render_as_string(
     hide_password=False
 )
 # Alembic uses ConfigParser interpolation where '%' must be escaped as '%%'.
@@ -82,12 +83,11 @@ async def run_async_migrations() -> None:
 
 
 def run_migrations_online() -> None:
-    # Use synchronous engine (psycopg2) so PL/pgSQL EXCEPTION blocks work correctly
-    from sqlalchemy import engine_from_config  # noqa: PLC0415
-
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    # Use synchronous engine (psycopg2) so PL/pgSQL EXCEPTION blocks work correctly.
+    # Build the engine from the SQLAlchemy URL object directly to avoid DSN parsing
+    # issues with some local Windows password encodings.
+    connectable = create_engine(
+        _sync_url_obj,
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
