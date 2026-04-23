@@ -307,6 +307,7 @@ def test_write_endpoints_still_require_client_perfil():
             "require_cliente_perfil" in src
             or "require_cliente_access" in src
             or "_validate_pai_propria(" in src
+            or "assert_edit_permission" in src
         ), (
             f"{name} must keep write authorization checks"
         )
