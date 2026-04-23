@@ -22,6 +22,12 @@ async_session_factory = async_sessionmaker(
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    """Yield one request-scoped session and own the transaction boundary.
+
+    Services/repositories may ``flush`` to validate constraints and obtain IDs,
+    but successful request completion commits here. Any exception raised while
+    the dependency is active rolls back the whole unit of work.
+    """
     async with async_session_factory() as session:
         try:
             yield session

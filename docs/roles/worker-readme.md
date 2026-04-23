@@ -32,13 +32,13 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 
 ## INBOX
 
-### [PENDING] 2026-04-23T09:15:00Z — Sprint S-03
+### [DONE] 2026-04-23T09:15:00Z — Sprint S-03
 - From: supervisor
 - Action: BUILD
 - Assigned Worker: codex-5.3
 - Briefing: @docs/briefings/sprint-S-03-briefing.md
 - Plan: @docs/superpowers/plans/2026-04-23-revisao-transacional.md
-- Notes: Revisão Transacional. 5 tasks: configurar sessão, refatorar services para flush, validar rollback, documentar e regressão.
+- Notes: Entregue em TESTED. Estratégia transacional documentada, 6 testes transacionais adicionados, 80/80 testes unitários PASS. Handoff para QA realizado em 2026-04-23T09:55Z.
 
 ### [PENDING] 2026-04-23T09:25:00Z — Sprint S-04
 - From: supervisor
@@ -61,4 +61,3 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Briefing: @docs/briefings/sprint-S-05-briefing.md
 - Plan: @docs/superpowers/plans/2026-04-22-optimize-search-and-operational-cost.md
 - Notes: Entregue em TESTED. Handoff para QA realizado em 2026-04-22T21:45Z (SM normalizacao).
-

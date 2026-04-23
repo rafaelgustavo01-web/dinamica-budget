@@ -19,7 +19,7 @@ Responsável: Research AI
 | `S-10` | BACKLOG | P1 | `S-09` | Importação PQ e Match Inteligente | Upload Excel/CSV para PQ; match fuzzy/semântico por item; confirmação manual do orçamentista; testes de integração |
 | `S-11` | BACKLOG | P1 | `S-10` | Geração da CPU — Composição de Preços Unitários | Explosão de composição com cálculo de custos; lookup em PcTabelas (MO, equipamento, encargos); aplicação de BDI; rastreabilidade completa |
 | `S-12` | BACKLOG | P2 | `S-11` | UX Frontend do Módulo de Orçamentos | Telas React: criar proposta, importar PQ, match, visualizar CPU; integração com API; smoke E2E |
-| `S-03` | TODO | P1 | `S-02` | Revisar fronteira transacional | Estratégia transacional documentada e aplicada; operações de leitura sem efeitos colaterais; regressão de autenticação/busca/homologação validada |
+| `S-03` | TESTED | P1 | `S-02` | Revisar fronteira transacional | Estratégia transacional documentada e aplicada; operações de leitura sem efeitos colaterais; regressão de autenticação/busca/homologação validada |
 | `S-06` | BACKLOG | P3 | — | Observabilidade e operação on-premise | Runbookonly quando operação real começar (pós-M5) |
 | `S-07` | BACKLOG | P2 | `S-04` | Finalizar UX de governança e permissões | Decisão de produto sobre módulo de permissões; backlog UX aprovado (wireframes + critérios); pendências de perfil/permissões sem placeholders críticos |
 | `S-08` | BACKLOG | P3 | `S-01`, `S-02`, `S-04` | Auditoria de qualidade final | Gate manual QA suficiente. Auditoria before go-live formal.
@@ -30,7 +30,7 @@ Responsável: Research AI
 FASE A — Execução Atual (WIP = 2/2)
   1. S-01 (Auth) → DONE ✅
   2. S-02 (Camadas) → DONE ✅
-  3. S-03 (Transações) → TODO ⬅️ BUILD em andamento (Codex-5.3)
+  3. S-03 (Transações) → TESTED ⬅️ QA review pendente
   4. S-04 (RBAC mínimo) → TODO ⬅️ BUILD em andamento (Kimi-k2.5)
 
 FASE B — Próximas (aguardam slot WIP)
@@ -48,8 +48,8 @@ FASE C — Estabilização (pós-M5)
 
 ## Sprints Ativas (Product Owner — 2026-04-23)
 
-- `S-01` DONE; `S-02` DONE; `S-05` DONE; S-03 em `TODO` (Codex-5.3 BUILD); S-04 em `TODO` (Kimi-k2.5 BUILD). WIP atual = 2/2.
-- **S-03 não adiada:** está em BUILD no worker inbox, segue fluxo até DONE.
+- `S-01` DONE; `S-02` DONE; `S-05` DONE; S-03 em `TESTED` (aguardando QA); S-04 em `TODO` (Kimi-k2.5 BUILD). WIP atual = 2/2.
+- **S-03 não adiada:** BUILD concluído pelo Codex-5.3, segue para QA.
 - **S-09 aguarda slot:** P0 (Orçamentos core) ficará em BACKLOG até liberar slot WIP.
 - **S-06 e S-08:** ADIADOS conforme Insight 2026-04-23.
 

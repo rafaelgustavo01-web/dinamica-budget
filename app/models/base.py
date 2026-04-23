@@ -5,7 +5,12 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
-    pass
+    """Declarative base for models persisted by request-scoped transactions.
+
+    Application services should call ``flush`` when they need generated IDs or
+    constraint validation. Final ``commit``/``rollback`` belongs to the request
+    session dependency in ``app.core.database``.
+    """
 
 
 class TimestampMixin:
