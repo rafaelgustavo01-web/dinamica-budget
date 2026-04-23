@@ -16,7 +16,7 @@ Responsável: Research AI
 | `S-02` | TODO | P0 | `S-01` | Consolidar arquitetura em camadas (endpoint -> service -> repository) | Endpoints sem regra de negócio/SQL direto em `auth`, `servicos`, `versoes`; regras migradas para services; testes unitários dos services novos/ajustados |
 | `S-03` | BACKLOG | P1 | `S-02` | Revisar fronteira transacional para reduzir commit implícito global | Estratégia transacional documentada e aplicada; operações de leitura sem efeitos colaterais; regressão de autenticação/busca/homologação validada |
 | `S-04` | INICIADA | P1 | `S-01` | Endurecer suíte de segurança e RBAC | Cobertura de autorização em todos endpoints sensíveis; testes de regressão para perfis `USUARIO`, `APROVADOR`, `ADMIN` e `is_admin`; checklist OWASP API básica executada |
-| `S-05` | TESTED | P1 | — | Otimizar busca semântica e custo operacional no servidor Windows | Plano de benchmark fuzzy vs semântico; decisão de modelo pt-BR/multilíngue; proposta de índice vetorial e tuning com evidência de latência |
+| `S-05` | DONE | P1 | — | Otimizar busca semântica e custo operacional no servidor Windows | Plano de benchmark fuzzy vs semântico; decisão de modelo pt-BR/multilíngue; proposta de índice vetorial e tuning com evidência de latência |
 | `S-06` | BACKLOG | P1 | — | Fechar lacunas de observabilidade e operação on-premise | Runbook de incidentes (API, DB, IIS, backup); procedimentos de restore testados; health checks e logs com critérios de alerta definidos |
 | `S-07` | BACKLOG | P2 | `S-04` | Finalizar UX de governança e permissões | Decisão de produto sobre módulo de permissões; backlog UX aprovado (wireframes + critérios); pendências de perfil/permissões sem placeholders críticos |
 | `S-08` | BACKLOG | P2 | `S-01`, `S-02`, `S-04` | Auditoria de qualidade final para pré-produção | Gate de qualidade definido (testes, lint, segurança, smoke E2E); evidências anexadas; checklist de go-live aprovado |
@@ -36,8 +36,8 @@ Responsável: Research AI
 8. `S-10` → `S-11` → `S-12` (sequencial)
 
 ## Sprints Ativas (Product Owner — 2026-04-22)
-- `S-01` em `DONE`; `S-02` em `TODO` (Worker com BUILD ativo); `S-04` em `INICIADA` (aguardando plano do Supervisor); `S-05` em `TESTED` (aguardando QA review). WIP atual = 3/2 — **ANOMALIA DETECTADA E SENDO TRATADA**.
-- Justificativa: `S-04` depende apenas de `S-01` (OK). `S-05` teve validação técnica concluída; benchmark de busca executado. Normalização de estado aplicada pelo SM em 2026-04-22T21:45Z.
+- `S-01` DONE; `S-05` DONE (QA aceita 2026-04-22); `S-02` em `TODO` (próxima ativa); `S-04` em `INICIADA`. WIP atual = 2/2.
+- Justificativa: `S-05` entregou todos os artefatos de benchmark, índices Alembic (016) e technical review com números reais. Riscos residuais documentados: benchmark em banco vazio, load time do modelo 63s, decisão de troca de modelo pendente até corpus TCPO populado. `S-02` é a próxima dependente crítica.
 
 ## Observações de Pesquisa
 - O repositório atual não possui os artefatos canônicos do pipeline (`docs/JOB-DESCRIPTION.md`, `docs/superpowers/plans/roadmap/ROADMAP.md`, `docs/roles/`, `docs/dispatch/pending/`).

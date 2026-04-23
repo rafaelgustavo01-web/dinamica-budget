@@ -1,17 +1,14 @@
 from fastapi import APIRouter, Depends, Request, Security
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_active_user, get_current_admin_user, get_db
 from app.core.rate_limit import limiter
-from app.models.usuario import UsuarioPerfil
 from app.repositories.usuario_repository import UsuarioRepository
 from app.schemas.auth import (
     LoginRequest,
     MeResponse,
     PasswordChangeRequest,
-    PerfilClienteResponse,
     ProfileUpdateRequest,
     RefreshRequest,
     TokenResponse,
@@ -89,24 +86,9 @@ async def me(
     db: AsyncSession = Depends(get_db),
 ) -> MeResponse:
     """Returns current user with all client/perfil bindings."""
-    result = await db.execute(
-        select(UsuarioPerfil).where(UsuarioPerfil.usuario_id == current_user.id)
-    )
-    perfis_db = result.scalars().all()
-    perfis = [
-        PerfilClienteResponse(cliente_id=str(p.cliente_id), perfil=p.perfil)
-        for p in perfis_db
-    ]
-    if current_user.is_admin:
-        perfis.append(PerfilClienteResponse(cliente_id="*", perfil="ADMIN"))
-    return MeResponse(
-        id=str(current_user.id),
-        nome=current_user.nome,
-        email=current_user.email,
-        is_active=current_user.is_active,
-        is_admin=current_user.is_admin,
-        perfis=perfis,
-    )
+    svc = AuthService(UsuarioRepository(db))
+    perfil_data = await svc.get_user_profile(current_user.id)
+    return MeResponse(**perfil_data)
 
 
 @router.patch("/me", response_model=MeResponse, summary="Atualizar perfil próprio")
@@ -118,26 +100,8 @@ async def update_profile(
 ) -> MeResponse:
     """Atualiza nome do próprio usuário autenticado."""
     await svc.update_profile(current_user.id, data)
-    # Rebuild MeResponse with updated data
-    result = await db.execute(
-        select(UsuarioPerfil).where(UsuarioPerfil.usuario_id == current_user.id)
-    )
-    perfis_db = result.scalars().all()
-    perfis = [
-        PerfilClienteResponse(cliente_id=str(p.cliente_id), perfil=p.perfil)
-        for p in perfis_db
-    ]
-    if current_user.is_admin:
-        perfis.append(PerfilClienteResponse(cliente_id="*", perfil="ADMIN"))
-    updated_user = await svc.repo.get_by_id(current_user.id)
-    return MeResponse(
-        id=str(updated_user.id),
-        nome=updated_user.nome,
-        email=updated_user.email,
-        is_active=updated_user.is_active,
-        is_admin=updated_user.is_admin,
-        perfis=perfis,
-    )
+    perfil_data = await svc.get_user_profile(current_user.id)
+    return MeResponse(**perfil_data)
 
 
 @router.post("/trocar-senha", status_code=204, summary="Trocar senha")
