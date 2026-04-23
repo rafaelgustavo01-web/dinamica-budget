@@ -1,6 +1,6 @@
 {
   "registry_version": "1.0",
-  "last_updated": "2026-04-22T22:50:00-03:00",
+  "last_updated": "2026-04-23T09:00:00-03:00",
   "workers": [
     {
       "worker_id": "kimi-k2.5",
@@ -10,7 +10,7 @@
       "available": true,
       "busy": false,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-22T22:50:00-03:00"
+      "last_checked_at": "2026-04-23T09:00:00-03:00"
     },
     {
       "worker_id": "codex-5.3",
@@ -18,9 +18,9 @@
       "provider": "OpenAI",
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
       "available": true,
-      "busy": false,
-      "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-22T22:50:00-03:00"
+      "busy": true,
+      "reserved_for_sprint": "S-04",
+      "last_checked_at": "2026-04-23T09:00:00-03:00"
     },
     {
       "worker_id": "gemini-3.1",
@@ -28,9 +28,9 @@
       "provider": "Google",
       "capabilities": ["python", "fastapi", "sqlalchemy"],
       "available": true,
-      "busy": true,
-      "reserved_for_sprint": "S-04",
-      "last_checked_at": "2026-04-22T22:50:00-03:00"
+      "busy": false,
+      "reserved_for_sprint": null,
+      "last_checked_at": "2026-04-23T09:00:00-03:00"
     }
   ],
   "qas": [
