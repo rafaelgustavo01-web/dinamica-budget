@@ -14,7 +14,7 @@ from app.core.security import (
 )
 from app.models.usuario import Usuario
 from app.repositories.usuario_repository import UsuarioRepository
-from app.schemas.auth import LoginRequest, PasswordChangeRequest, ProfileUpdateRequest, TokenResponse, UsuarioCreate
+from app.schemas.auth import LoginRequest, PasswordChangeRequest, PerfilClienteResponse, ProfileUpdateRequest, TokenResponse, UsuarioCreate
 
 logger = get_logger(__name__)
 
@@ -91,6 +91,31 @@ class AuthService:
             is_admin=data.is_admin,
         )
         return await self.repo.create(user)
+
+    async def get_user_profile(self, user_id: uuid.UUID) -> dict:
+        """Get user with perfis for /auth/me endpoint.
+        Returns flat dict for unpacking into MeResponse.
+        """
+        user = await self.repo.get_by_id(user_id)
+        if not user:
+            raise AuthenticationError("Usuário não encontrado.")
+
+        perfis_db = await self.repo.get_perfis(user_id)
+        perfis = [
+            PerfilClienteResponse(cliente_id=str(p.cliente_id), perfil=p.perfil)
+            for p in perfis_db
+        ]
+        if user.is_admin:
+            perfis.append(PerfilClienteResponse(cliente_id="*", perfil="ADMIN"))
+
+        return {
+            "id": str(user.id),
+            "nome": user.nome,
+            "email": user.email,
+            "is_active": user.is_active,
+            "is_admin": user.is_admin,
+            "perfis": perfis,
+        }
 
     async def update_profile(self, user_id: uuid.UUID, data: ProfileUpdateRequest) -> Usuario:
         user = await self.repo.update_nome(user_id, data.nome)
