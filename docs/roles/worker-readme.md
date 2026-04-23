@@ -32,6 +32,13 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 
 ## INBOX
 
+### [PENDING] 2026-04-22T22:30Z — Sprint S-04
+- From: supervisor
+- Action: BUILD
+- Briefing: @docs/briefings/sprint-S-04-briefing.md
+- Plan: @docs/superpowers/plans/2026-04-22-seguranca-rbac.md
+- Notes: Endurecer seguranca e RBAC. 7 tasks: proteger 3 endpoints de READ + testes de regressao + checklist OWASP.
+
 ### [DONE] 2026-04-22T20:30Z — Sprint S-02
 - From: supervisor
 - Action: BUILD

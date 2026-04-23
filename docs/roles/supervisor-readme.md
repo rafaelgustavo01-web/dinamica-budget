@@ -31,6 +31,13 @@ BACKLOG has `INICIADA` sprint without plan, OR your inbox has `[PENDING]` messag
 
 ## INBOX
 
+### [DONE] 2026-04-22T22:30Z — Sprint S-04
+- From: po
+- Action: PLAN
+- Briefing: @docs/briefings/sprint-S-04-briefing.md
+- Plan: @docs/superpowers/plans/2026-04-22-seguranca-rbac.md
+- Notes: Endurecer seguranca e RBAC. Baseado em auditoria de endpoints. 3 endpoints de READ vulneraveis identificados. Plano com 7 tasks.
+
 ### [DONE] 2026-04-22T20:30Z — Sprint S-02
 - From: po
 - Action: PLAN
