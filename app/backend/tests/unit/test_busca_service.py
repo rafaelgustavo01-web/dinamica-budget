@@ -159,8 +159,8 @@ async def test_fase3_uses_batch_load_not_n_plus_1():
     mock_db = AsyncMock()
 
     with (
-        patch("app.services.busca_service.embedder") as mock_embedder,
-        patch("app.services.busca_service.vector_searcher") as mock_searcher,
+        patch("backend.services.busca_service.embedder") as mock_embedder,
+        patch("backend.services.busca_service.vector_searcher") as mock_searcher,
     ):
         mock_embedder.ready = True
         mock_embedder.encode = MagicMock(return_value=[0.1] * 384)

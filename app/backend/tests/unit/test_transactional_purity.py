@@ -128,7 +128,7 @@ async def test_servico_catalog_read_path_does_not_flush_or_commit(monkeypatch):
     base_repo = AsyncMock()
     base_repo.get_by_id.return_value = servico
     monkeypatch.setattr(
-        "app.services.servico_catalog_service.BaseTcpoRepository",
+        "backend.services.servico_catalog_service.BaseTcpoRepository",
         MagicMock(return_value=base_repo),
     )
 

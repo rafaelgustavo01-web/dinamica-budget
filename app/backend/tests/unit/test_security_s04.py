@@ -27,8 +27,8 @@ async def test_list_associacoes_requires_cliente_access():
     repo = AsyncMock()
     repo.list_by_cliente = AsyncMock(return_value=([], 0))
 
-    with patch("app.api.v1.endpoints.busca.AssociacaoRepository", return_value=repo):
-        with patch("app.api.v1.endpoints.busca.require_cliente_access", AsyncMock()) as mock_require:
+    with patch("backend.api.v1.endpoints.busca.AssociacaoRepository", return_value=repo):
+        with patch("backend.api.v1.endpoints.busca.require_cliente_access", AsyncMock()) as mock_require:
             result = await list_associacoes(
                 cliente_id=client_id,
                 page=1,
@@ -71,10 +71,10 @@ async def test_list_versoes_requires_cliente_access():
     versao_repo = AsyncMock()
     versao_repo.list_versoes = AsyncMock(return_value=[versao])
 
-    with patch("app.api.v1.endpoints.versoes.ItensPropiosRepository", return_value=propria_repo):
-        with patch("app.api.v1.endpoints.versoes.VersaoComposicaoRepository", return_value=versao_repo):
-            with patch("app.api.v1.endpoints.versoes.require_cliente_access", AsyncMock()) as mock_require:
-                with patch("app.api.v1.endpoints.versoes.VersaoService.list_versoes", AsyncMock(return_value=[versao])):
+    with patch("backend.api.v1.endpoints.versoes.ItensPropiosRepository", return_value=propria_repo):
+        with patch("backend.api.v1.endpoints.versoes.VersaoComposicaoRepository", return_value=versao_repo):
+            with patch("backend.api.v1.endpoints.versoes.require_cliente_access", AsyncMock()) as mock_require:
+                with patch("backend.api.v1.endpoints.versoes.VersaoService.list_versoes", AsyncMock(return_value=[versao])):
                     result = await list_versoes(
                         item_id=item_id,
                         current_user=user,
@@ -100,8 +100,8 @@ async def test_list_servicos_validates_cliente_id_access_when_present():
     mock_service = AsyncMock()
     mock_service.list_servicos = AsyncMock(return_value=mock_response)
 
-    with patch("app.api.v1.endpoints.servicos.servico_catalog_service", mock_service):
-        with patch("app.api.v1.endpoints.servicos.require_cliente_access", AsyncMock()) as mock_require:
+    with patch("backend.api.v1.endpoints.servicos.servico_catalog_service", mock_service):
+        with patch("backend.api.v1.endpoints.servicos.require_cliente_access", AsyncMock()) as mock_require:
             # Scenario 1: cliente_id provided
             await list_servicos(
                 q=None,

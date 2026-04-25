@@ -102,7 +102,7 @@ async def test_clonar_cria_item_proprio_pendente():
     mock_db.refresh = AsyncMock()
 
     with (
-        patch("app.services.servico_catalog_service.BaseTcpoRepository") as MockBaseRepo,
+        patch("backend.services.servico_catalog_service.BaseTcpoRepository") as MockBaseRepo,
         patch.object(svc, "explode_composicao", new=AsyncMock(return_value=MagicMock())),
     ):
         mock_base_repo = AsyncMock()
@@ -139,7 +139,7 @@ async def test_clonar_gera_id_diferente():
     mock_db.refresh = AsyncMock()
 
     with (
-        patch("app.services.servico_catalog_service.BaseTcpoRepository") as MockBaseRepo,
+        patch("backend.services.servico_catalog_service.BaseTcpoRepository") as MockBaseRepo,
         patch.object(svc, "explode_composicao", new=AsyncMock(return_value=MagicMock())),
     ):
         mock_base_repo = AsyncMock()
@@ -176,7 +176,7 @@ async def test_clonar_herda_descricao_quando_nao_informada():
     mock_db.refresh = AsyncMock()
 
     with (
-        patch("app.services.servico_catalog_service.BaseTcpoRepository") as MockBaseRepo,
+        patch("backend.services.servico_catalog_service.BaseTcpoRepository") as MockBaseRepo,
         patch.object(svc, "explode_composicao", new=AsyncMock(return_value=MagicMock())),
     ):
         mock_base_repo = AsyncMock()
@@ -212,7 +212,7 @@ async def test_clonar_usa_descricao_fornecida():
     mock_db.refresh = AsyncMock()
 
     with (
-        patch("app.services.servico_catalog_service.BaseTcpoRepository") as MockBaseRepo,
+        patch("backend.services.servico_catalog_service.BaseTcpoRepository") as MockBaseRepo,
         patch.object(svc, "explode_composicao", new=AsyncMock(return_value=MagicMock())),
     ):
         mock_base_repo = AsyncMock()
@@ -248,7 +248,7 @@ async def test_clonar_cria_versao_composicao():
     mock_db.refresh = AsyncMock()
 
     with (
-        patch("app.services.servico_catalog_service.BaseTcpoRepository") as MockBaseRepo,
+        patch("backend.services.servico_catalog_service.BaseTcpoRepository") as MockBaseRepo,
         patch.object(svc, "explode_composicao", new=AsyncMock(return_value=MagicMock())),
     ):
         mock_base_repo = AsyncMock()
@@ -284,7 +284,7 @@ async def test_clonar_copia_todos_os_filhos():
     mock_db.refresh = AsyncMock()
 
     with (
-        patch("app.services.servico_catalog_service.BaseTcpoRepository") as MockBaseRepo,
+        patch("backend.services.servico_catalog_service.BaseTcpoRepository") as MockBaseRepo,
         patch.object(svc, "explode_composicao", new=AsyncMock(return_value=MagicMock())),
     ):
         mock_base_repo = AsyncMock()
@@ -319,9 +319,9 @@ async def test_adicionar_componente_chama_detectar_ciclo():
     versao_ativa.id = uuid.uuid4()
 
     with (
-        patch("app.services.servico_catalog_service.ItensPropiosRepository") as MockItemRepo,
-        patch("app.services.servico_catalog_service.VersaoComposicaoRepository") as MockVersaoRepo,
-        patch("app.services.servico_catalog_service.BaseTcpoRepository") as MockBaseRepo,
+        patch("backend.services.servico_catalog_service.ItensPropiosRepository") as MockItemRepo,
+        patch("backend.services.servico_catalog_service.VersaoComposicaoRepository") as MockVersaoRepo,
+        patch("backend.services.servico_catalog_service.BaseTcpoRepository") as MockBaseRepo,
         patch.object(svc, "_detectar_ciclo", new=AsyncMock(return_value=False)) as mock_ciclo,
         patch.object(svc, "recalcular_custo_pai", new=AsyncMock()),
     ):
@@ -362,8 +362,8 @@ async def test_adicionar_componente_dispara_recalcular_custo():
     versao_ativa.id = uuid.uuid4()
 
     with (
-        patch("app.services.servico_catalog_service.ItensPropiosRepository") as MockItemRepo,
-        patch("app.services.servico_catalog_service.VersaoComposicaoRepository") as MockVersaoRepo,
+        patch("backend.services.servico_catalog_service.ItensPropiosRepository") as MockItemRepo,
+        patch("backend.services.servico_catalog_service.VersaoComposicaoRepository") as MockVersaoRepo,
         patch.object(svc, "_detectar_ciclo", new=AsyncMock(return_value=False)),
         patch.object(svc, "recalcular_custo_pai", new=AsyncMock()) as mock_recalc,
     ):
@@ -414,8 +414,8 @@ async def test_remover_componente_dispara_recalcular_custo():
     mock_db.flush = AsyncMock()
 
     with (
-        patch("app.services.servico_catalog_service.ItensPropiosRepository") as MockItemRepo,
-        patch("app.services.servico_catalog_service.VersaoComposicaoRepository") as MockVersaoRepo,
+        patch("backend.services.servico_catalog_service.ItensPropiosRepository") as MockItemRepo,
+        patch("backend.services.servico_catalog_service.VersaoComposicaoRepository") as MockVersaoRepo,
         patch.object(svc, "recalcular_custo_pai", new=AsyncMock()) as mock_recalc,
     ):
         mock_item_repo = AsyncMock()

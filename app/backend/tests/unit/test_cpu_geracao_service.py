@@ -81,7 +81,7 @@ async def test_gerar_cpu_com_composicao_aplica_bdi():
                 with patch.object(svc.proposta_item_repo, "create_batch", AsyncMock(side_effect=lambda items: items)):
                     with patch.object(svc.base_repo, "get_by_id", AsyncMock(return_value=snapshot)):
                         with patch.object(svc.explosao_svc, "explodir_proposta_item", AsyncMock(return_value=[comp])):
-                            with patch("app.services.cpu_geracao_service.CpuCustoService.calcular_custos", new=AsyncMock()):
+                            with patch("backend.services.cpu_geracao_service.CpuCustoService.calcular_custos", new=AsyncMock()):
                                 with patch.object(svc.comp_repo, "create_batch", AsyncMock()):
                                     resultado = await svc.gerar_cpu_para_proposta(
                                         proposta_id,

@@ -133,7 +133,7 @@ async def test_get_servico_propria_open_to_any_authenticated_user():
     mock_db = AsyncMock()
 
     with patch(
-        "app.api.v1.endpoints.servicos.servico_catalog_service.get_servico",
+        "backend.api.v1.endpoints.servicos.servico_catalog_service.get_servico",
         new=AsyncMock(return_value=mock_servico),
     ):
         result = await get_servico(
@@ -163,7 +163,7 @@ async def test_buscar_servicos_no_cliente_access_required():
     mock_service = AsyncMock()
     mock_service.buscar = AsyncMock(return_value=MagicMock())
 
-    with patch("app.api.v1.endpoints.busca.busca_service", mock_service):
+    with patch("backend.api.v1.endpoints.busca.busca_service", mock_service):
         result = await buscar_servicos(
             request=request,
             current_user=user,
