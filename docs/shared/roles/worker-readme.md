@@ -110,6 +110,14 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Plan: @docs/sprints/S-07/plans/2026-04-23-runbook-observabilidade-onpremise.md
 - Notes: Entregue em TESTED. Endpoint /health, script PowerShell e Runbook operacional concluídos. Handoff para OpenCode (QA).
 
+### [DONE] 2026-04-25T16:10:00Z — Sprint F2-02
+- From: supervisor
+- Action: BUILD
+- Assigned Worker: kimi-k2.5
+- Briefing: @docs/sprints/F2-02/briefing/sprint-F2-02-briefing.md
+- Plan: @docs/sprints/F2-02/plans/2026-04-25-explosao-recursiva.md
+- Notes: Entregue em TESTED. Migration 019, modelo self-ref, service com guard de profundidade, endpoint explodir-sub e 6 testes novos. Regressao completa: 99 PASS / 0 FAIL (corrigidos imports `app.*` em 6 arquivos de teste existentes). Handoff para QA aberto.
+
 ### [DONE] 2026-04-23T15:20:00Z — Sprint S-08
 - From: supervisor
 - Action: BUILD
