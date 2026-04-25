@@ -16,7 +16,7 @@ $migrations = @(
 )
 foreach ($m in $migrations) {
     try {
-        Copy-Item "$src\alembic\versions\$m" "$dst\alembic\versions\$m" -Force
+        Copy-Item "$src\app\alembic\versions\$m" "$dst\alembic\versions\$m" -Force
         $out += "  OK: $m"
     } catch {
         $out += "  WARN: $m - $_"
@@ -26,12 +26,12 @@ foreach ($m in $migrations) {
 # 2. Copy Python files
 $out += "[2] Copying Python files"
 $files = @(
-    @{ S="$src\app\models\pc_tabelas.py"; D="$dst\app\models\pc_tabelas.py" },
-    @{ S="$src\app\models\__init__.py"; D="$dst\app\models\__init__.py" },
-    @{ S="$src\app\schemas\pc_tabelas.py"; D="$dst\app\schemas\pc_tabelas.py" },
-    @{ S="$src\app\services\pc_tabelas_service.py"; D="$dst\app\services\pc_tabelas_service.py" },
-    @{ S="$src\app\api\v1\endpoints\pc_tabelas.py"; D="$dst\app\api\v1\endpoints\pc_tabelas.py" },
-    @{ S="$src\app\api\v1\router.py"; D="$dst\app\api\v1\router.py" }
+    @{ S="$src\app\backend\models\pc_tabelas.py"; D="$dst\backend\models\pc_tabelas.py" },
+    @{ S="$src\app\backend\models\__init__.py"; D="$dst\backend\models\__init__.py" },
+    @{ S="$src\app\backend\schemas\pc_tabelas.py"; D="$dst\backend\schemas\pc_tabelas.py" },
+    @{ S="$src\app\backend\services\pc_tabelas_service.py"; D="$dst\backend\services\pc_tabelas_service.py" },
+    @{ S="$src\app\backend\api\v1\endpoints\pc_tabelas.py"; D="$dst\backend\api\v1\endpoints\pc_tabelas.py" },
+    @{ S="$src\app\backend\api\v1\router.py"; D="$dst\backend\api\v1\router.py" }
 )
 foreach ($f in $files) {
     try {
@@ -66,7 +66,7 @@ load_dotenv(r'$dst\.env')
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from app.services.pc_tabelas_service import importar_pc_tabelas
+from backend.services.pc_tabelas_service import importar_pc_tabelas
 import asyncio
 
 async def seed():

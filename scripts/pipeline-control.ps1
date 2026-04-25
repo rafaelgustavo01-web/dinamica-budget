@@ -46,7 +46,7 @@ if (-not $ProjectRoot) {
     $ProjectRoot = Resolve-Path (Join-Path $scriptDir "..") | Select-Object -ExpandProperty Path
 }
 
-$configPath = Join-Path $ProjectRoot "docs\pipeline\config.md"
+$configPath = Join-Path $ProjectRoot "docs\shared\pipeline\config.md"
 $taskNamePrefix = "Dinamica-Pipeline"
 $agentScript = Join-Path $ProjectRoot "scripts\pa.ps1"
 

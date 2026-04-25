@@ -17,15 +17,16 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+APP_ROOT = ROOT / "app"
+if str(APP_ROOT) not in sys.path:
+    sys.path.insert(0, str(APP_ROOT))
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import async_session_factory
-from app.ml.embedder import embedder
-from app.repositories.base_tcpo_repository import BaseTcpoRepository
-from app.repositories.tcpo_embeddings_repository import TcpoEmbeddingsRepository
+from backend.core.database import async_session_factory
+from backend.ml.embedder import embedder
+from backend.repositories.base_tcpo_repository import BaseTcpoRepository
+from backend.repositories.tcpo_embeddings_repository import TcpoEmbeddingsRepository
 
 TEST_QUERIES = [
     "escavacao manual em terra",

@@ -14,7 +14,7 @@ $deployDir = 'C:\DinamicaBudget'
 $siteName  = 'DinamicaBudget'
 $svcName   = 'DinamicaBudgetAPI'
 $uvicornExe = "$deployDir\venv\Scripts\python.exe"
-$uvicornArgs = '-m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2'
+$uvicornArgs = '-m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --workers 2'
 $apiPort   = 8000
 $httpPort  = 80
 
@@ -191,3 +191,4 @@ Log "========================================================="
 if (-not $ok) {
     Log " ATENCAO: Verifique $deployDir\logs\uvicorn_err.log para erros da API"
 }
+

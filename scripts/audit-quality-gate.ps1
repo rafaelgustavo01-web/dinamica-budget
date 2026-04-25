@@ -25,7 +25,7 @@ try {
     Write-Host "=== AUDITORIA DE QUALIDADE - Dinamica Budget ===" -ForegroundColor Cyan
 
     Run-Check "[1/5] Unit Tests" {
-        python -m pytest app/tests/unit -q
+        python -m pytest app/backend/tests/unit -q
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  PASS" -ForegroundColor Green
         } else {
@@ -47,7 +47,7 @@ try {
 
     Run-Check "[3/5] Secret Scan" {
         $matches = @()
-        $targets = @("app", "frontend/src")
+        $targets = @("app/backend", "app/frontend/src")
         foreach ($target in $targets) {
             if (Test-Path $target) {
                 $matches += Get-ChildItem -Path $target -Recurse -File | Select-String -Pattern @(
@@ -73,7 +73,7 @@ try {
     }
 
     Run-Check "[4/5] Write Endpoint Protection" {
-        python -m pytest app/tests/unit/test_security_p0.py app/tests/unit/test_security_s04.py -q
+        python -m pytest app/backend/tests/unit/test_security_p0.py app/backend/tests/unit/test_security_s04.py -q
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  PASS" -ForegroundColor Green
         } else {
@@ -106,3 +106,5 @@ try {
 } finally {
     Pop-Location
 }
+
+

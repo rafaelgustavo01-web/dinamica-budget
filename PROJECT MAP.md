@@ -1,81 +1,326 @@
-# Project Map
+# PROJECT MAP
 
-## Root
+## 1. Purpose
 
-- `README.md`: visão geral do produto e operação principal.
-- `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`: contratos operacionais para agentes.
-- `OBJECTIVE.md`, `STACK_PROFILE.md`, `PERSONA_PROFILE.md`, `ORCHESTRATION.md`: contexto de execução e tomada de decisão.
-- `requirements.txt`: dependências Python do backend.
-- `package-lock.json`: lockfile de tooling no root.
-- `alembic.ini`: configuração de migrações.
+This file is the canonical structural map of the repository.
 
-## Backend
+It makes two boundaries explicit:
 
-- `app/main.py`: bootstrap do FastAPI.
-- `app/api/v1/router.py`: roteador principal da API.
-- `app/api/v1/endpoints/`: endpoints HTTP por domínio.
-- `app/core/`: configuração, segurança, DB, dependências e logging.
-- `app/services/`: regras de negócio e serviços de aplicação.
-- `app/repositories/`: acesso a dados.
-- `app/models/`: modelos ORM.
-- `app/schemas/`: contratos Pydantic e DTOs.
-- `app/ml/`: embedding, busca vetorial e fuzzy search.
+- solution artifacts live under `app/`
+- project, governance, agent, and engineering support artifacts live outside `app/`
 
-## Migrations
+The canonical shared skill source remains:
 
-- `alembic/env.py`: ambiente Alembic.
-- `alembic/versions/`: histórico de migrations do banco.
+- `.agents/skills/`
 
-## Tests
+Duplicate `skills` folders in local tooling workspaces were intentionally removed.
 
-- `app/tests/conftest.py`: fixtures e infraestrutura de testes.
-- `app/tests/unit/`: testes unitários.
-- `app/tests/integration/`: testes de integração.
+---
 
-## Frontend
+## 2. Root Layout
 
-- `frontend/package.json`: dependências e scripts do app React.
-- `frontend/src/main.tsx`: entrada da aplicação.
-- `frontend/src/app/`: providers, router e tema.
-- `frontend/src/features/`: páginas e fluxos por domínio funcional.
-- `frontend/src/shared/`: componentes, tipos, serviços de API e utilitários.
-- `frontend/public/`: assets públicos e configuração de deploy web.
+### 2.1 Solution Root
 
-## Docs Canônicos
+- `app/`
+  Canonical root of the product solution.
 
-- `docs/BACKLOG.md`: backlog e status de sprints.
-- `docs/JOB-DESCRIPTION.md`: descrição dos papéis operacionais.
-- `docs/briefings/`: briefings de sprint.
-- `docs/dispatch/pending/`: prompts pendentes para execução.
-- `docs/superpowers/plans/`: planos de implementação e roadmap.
-- `docs/walkthrough/done/`: walkthroughs canônicos de sprint.
-- `docs/technical-review-YYYY-MM-DD.md`: reviews técnicos por data.
-- `PROJECT MAP.md`: mapa estrutural do repositório.
+Everything inside `app/` is part of the application/runtime surface:
 
-## Agentic Foundation
+- backend code
+- frontend code
+- database migrations
+- ML model cache area used by the solution
+- runtime env/config files
+- deployment entrypoints
+- solution-facing READMEs
 
-- `_agentic_foundation/templates/`: templates bootstrap exigidos pelo contrato do repo.
-- `_agentic_foundation/playbooks/`: guias operacionais por tipo de tarefa.
-- `_agentic_foundation/stacks/`: perfis por stack.
-- `_agentic_foundation/personas/`: personas técnicas.
-- `_agentic_foundation/scripts/`: bootstrap para ambientes de agente.
+### 2.2 Repository Operating Contract
 
-## Skills and Automation
+These stay at repository root because they govern agents and repo operation, not product runtime:
 
-- `.agents/skills/`: skills locais versionadas no repositório.
-- `templates/workers.json`: registro de workers/agentes.
-- `scripts/`: automações operacionais, deploy, ETL e manutenção.
+- `AGENTS.md`
+- `CLAUDE.md`
+- `GEMINI.md`
+- `OBJECTIVE.md`
+- `STACK_PROFILE.md`
+- `PERSONA_PROFILE.md`
+- `ORCHESTRATION.md`
 
-## Support Assets
+### 2.3 Project and Engineering Surface
 
-- `configs/`: exemplos e configs auxiliares.
-- `templates/`: arquivos base do pipeline.
-- `dinamica-design-system/`: guia visual e assets de design.
-- `Dinamica Budget/skills-lock.json`: lock de skills do workspace.
+- `docs/`
+  Project documentation workspace.
+- `.agents/`
+  Canonical repository-owned agent assets and skills.
+- `_agentic_foundation/`
+  Bootstrap templates and reusable agentic foundation material.
+- `scripts/`
+  Root engineering/ops helpers that act on the solution under `app/`.
+- `configs/`
+  Support configuration assets.
+- `templates/`
+  Reusable templates and worker metadata.
+- `dinamica-design-system/`
+  Design support/reference material.
 
-## Local-Only / Ignored
+### 2.4 Workspace / Generated / Local Tooling
 
-- `.venv/`, `venv/`, `env/`: ambientes virtuais locais.
-- `__pycache__/`, `*.pyc`: artefatos gerados pelo Python.
-- `.kilo/`, `.claude/`, `.amazonq/`, `.kiro/`, `.kimi/`, `.opencode/`, `.codex/`: diretórios locais de tooling/agentes.
-- `node_modules/`, `frontend/node_modules/`: dependências instaladas localmente.
+- `logs/`
+- `resultado/`
+- `query`
+- `.venv/`
+- `.pytest_cache/`
+- `.amazonq/`
+- `.claude/`
+- `.codex/`
+- `.kilo/`
+- `.kimi/`
+- `.kiro/`
+- `.opencode/`
+- `.playwright-cli/`
+
+These are not the canonical product source.
+
+### 2.5 Loose Root Support Artifacts
+
+- `Composições TCPO - PINI.xlsx`
+- `Converter em Data Center.xlsx`
+- `PC.xlsx`
+- `der.sql`
+- `.gitignore`
+- `.gitignore.backup`
+- `ETAPA`
+
+These are auxiliary repo artifacts, not part of the application runtime tree.
+
+---
+
+## 3. Solution Map: `app/`
+
+## 3.1 Solution Root Files
+
+- [README.md](/C:/Users/rafae/documents/workspace/github/dinamica-budget/app/README.md)
+  Main backend/product documentation from the solution root perspective.
+- [README_FRONT.MD](/C:/Users/rafae/documents/workspace/github/dinamica-budget/app/README_FRONT.MD)
+  Frontend architecture and integration documentation.
+- [requirements.txt](/C:/Users/rafae/documents/workspace/github/dinamica-budget/app/requirements.txt)
+  Python dependencies for the backend/runtime.
+- [alembic.ini](/C:/Users/rafae/documents/workspace/github/dinamica-budget/app/alembic.ini)
+  Alembic config for the moved solution root.
+- [pytest.ini](/C:/Users/rafae/documents/workspace/github/dinamica-budget/app/pytest.ini)
+  Test discovery/config for the backend under `backend/tests`.
+- [deploy-dinamica.bat](/C:/Users/rafae/documents/workspace/github/dinamica-budget/app/deploy-dinamica.bat)
+  Main Windows deployment entrypoint for the application.
+- [deploy.bat](/C:/Users/rafae/documents/workspace/github/dinamica-budget/app/deploy.bat)
+  Additional deploy helper.
+- [fix-deploy.ps1](/C:/Users/rafae/documents/workspace/github/dinamica-budget/app/fix-deploy.ps1)
+  Deployment repair helper.
+- [remove-dinamica.bat](/C:/Users/rafae/documents/workspace/github/dinamica-budget/app/remove-dinamica.bat)
+  Removal/uninstall helper.
+- `app/.env`
+  Local environment file for the moved solution root.
+- `app/.env.example`
+  Environment template.
+- `app/package-lock.json`
+  Root lockfile for solution-level Node tooling.
+
+## 3.2 Backend: `app/backend/`
+
+### Entry and App Composition
+
+- [main.py](/C:/Users/rafae/documents/workspace/github/dinamica-budget/app/backend/main.py)
+  FastAPI entrypoint and SPA serving glue.
+- `backend/__init__.py`
+  Python package marker.
+
+### API Layer
+
+- `app/backend/api/v1/router.py`
+  Main API router composition.
+- `app/backend/api/v1/endpoints/auth.py`
+- `app/backend/api/v1/endpoints/busca.py`
+- `app/backend/api/v1/endpoints/servicos.py`
+- `app/backend/api/v1/endpoints/homologacao.py`
+- `app/backend/api/v1/endpoints/usuarios.py`
+- `app/backend/api/v1/endpoints/clientes.py`
+- `app/backend/api/v1/endpoints/admin.py`
+- `app/backend/api/v1/endpoints/composicoes.py`
+- `app/backend/api/v1/endpoints/versoes.py`
+- `app/backend/api/v1/endpoints/health.py`
+- `app/backend/api/v1/endpoints/propostas.py`
+- `app/backend/api/v1/endpoints/pq_importacao.py`
+- `app/backend/api/v1/endpoints/cpu_geracao.py`
+- `app/backend/api/v1/endpoints/pc_tabelas.py`
+- `app/backend/api/v1/endpoints/extracao.py`
+
+### Core Runtime
+
+- `app/backend/core/config.py`
+- `app/backend/core/database.py`
+- `app/backend/core/security.py`
+- `app/backend/core/dependencies.py`
+- `app/backend/core/logging.py`
+- `app/backend/core/exceptions.py`
+- `app/backend/core/audit_hooks.py`
+- `app/backend/core/rate_limit.py`
+
+### Domain Models
+
+- `app/backend/models/`
+  SQLAlchemy entities, enums, and domain records for users, clients, catalog, compositions, proposals, PQ import, PC tables, history, associations, and audit logs.
+
+### Schemas
+
+- `app/backend/schemas/`
+  Pydantic contracts for API requests/responses and domain DTOs.
+
+### Services
+
+- `app/backend/services/`
+  Business logic for auth, search, homologation, catalog, embeddings, proposals, PQ import/match, CPU generation, ETL, and PC tables.
+
+### Repositories
+
+- `app/backend/repositories/`
+  Data access layer for domain entities and supporting tables.
+
+### ML
+
+- `app/backend/ml/embedder.py`
+- `app/backend/ml/vector_search.py`
+- `app/backend/ml/fuzzy_search.py`
+
+### Tests
+
+- `app/backend/tests/unit/`
+- `app/backend/tests/integration/`
+- `app/backend/tests/e2e/`
+- `app/backend/tests/conftest.py`
+
+## 3.3 Frontend: `app/frontend/`
+
+### Root
+
+- `app/frontend/package.json`
+- `app/frontend/vite.config.ts`
+- `app/frontend/tsconfig.json`
+- `app/frontend/index.html`
+- `app/frontend/.env.example`
+
+### Source
+
+- `app/frontend/src/main.tsx`
+- `app/frontend/src/app/`
+  App bootstrap, providers, router, theme.
+- `app/frontend/src/features/`
+  Feature modules for auth, dashboard, search, services, homologation, compositions, associations, reports, profile, users, clients, admin, permissions.
+- `app/frontend/src/shared/`
+  Shared components, API clients, contracts, and utilities.
+- `app/frontend/src/styles/`
+  Global styles.
+- `app/frontend/public/`
+  Public assets.
+
+### Generated
+
+- `app/frontend/dist/`
+  Build output.
+- `app/frontend/node_modules/`
+  Installed dependencies.
+
+## 3.4 Database and Migrations: `app/alembic/`
+
+- `app/alembic/env.py`
+  Alembic environment using the moved backend package.
+- `app/alembic/versions/`
+  Migration history.
+
+## 3.5 Model Cache: `app/ml_models/`
+
+- `app/ml_models/`
+  Local model cache/storage used by the application in on-prem deployments.
+
+---
+
+## 4. Project Documentation Workspace: `docs/`
+
+Root layout:
+
+- `docs/sprints/`
+  Canonical sprint-by-sprint workspace.
+- `docs/shared/`
+  Canonical shared/project-wide workspace.
+
+## 4.1 Sprint Tree
+
+- `docs/sprints/S-01/` ... `docs/sprints/S-12/`
+- `docs/sprints/S-XX/briefing/`
+- `docs/sprints/S-XX/plans/`
+- `docs/sprints/S-XX/technical-review/`
+- `docs/sprints/S-XX/technical-feedback/`
+- `docs/sprints/S-XX/walkthrough/done/`
+- `docs/sprints/S-XX/walkthrough/reviewed/`
+- `docs/sprints/S-XX/dispatch/`
+- `docs/sprints/S-XX/security/`
+
+## 4.2 Shared Tree
+
+- `docs/shared/analysis/`
+- `docs/shared/governance/`
+- `docs/shared/manuals/`
+- `docs/shared/operations/`
+- `docs/shared/research/`
+- `docs/shared/security/`
+- `docs/shared/dispatch/`
+- `docs/shared/pipeline/`
+- `docs/shared/roles/`
+- `docs/shared/superpowers/`
+- `docs/shared/walkthrough/`
+
+---
+
+## 5. Agent and Automation Map
+
+## 5.1 Canonical Agent Assets: `.agents/`
+
+- `.agents/skills/`
+  Canonical shared skill source.
+- `.agents/skills/Superpowers/`
+- `.agents/skills/context7-mcp/`
+- `.agents/skills/project-pipeline/`
+- `.agents/skills/semantic-memory/`
+
+## 5.2 Agentic Bootstrap: `_agentic_foundation/`
+
+- `_agentic_foundation/templates/`
+- `_agentic_foundation/playbooks/`
+- `_agentic_foundation/stacks/`
+- `_agentic_foundation/personas/`
+- `_agentic_foundation/scripts/`
+
+## 5.3 Root Automation: `scripts/`
+
+These scripts are not product source; they operate on the moved solution in `app/`.
+
+Representative examples:
+
+- [audit-quality-gate.ps1](/C:/Users/rafae/documents/workspace/github/dinamica-budget/scripts/audit-quality-gate.ps1)
+- [benchmark_search.py](/C:/Users/rafae/documents/workspace/github/dinamica-budget/scripts/benchmark_search.py)
+- [benchmark_embeddings.py](/C:/Users/rafae/documents/workspace/github/dinamica-budget/scripts/benchmark_embeddings.py)
+- [test_model_ptbr.py](/C:/Users/rafae/documents/workspace/github/dinamica-budget/scripts/test_model_ptbr.py)
+- [deploy-pc-tabelas.ps1](/C:/Users/rafae/documents/workspace/github/dinamica-budget/scripts/deploy-pc-tabelas.ps1)
+- [fix-auth-login-admin.ps1](/C:/Users/rafae/documents/workspace/github/dinamica-budget/scripts/fix-auth-login-admin.ps1)
+
+---
+
+## 6. Canonical Ownership Summary
+
+- Product solution root: `app/`
+- Product backend: `app/backend/`
+- Product frontend: `app/frontend/`
+- Database evolution: `app/alembic/`
+- Model cache/runtime assets: `app/ml_models/`
+- Project docs: `docs/`
+- Canonical skills: `.agents/skills/`
+- Root engineering automation: `scripts/`
+- Repo structural map: `PROJECT MAP.md`

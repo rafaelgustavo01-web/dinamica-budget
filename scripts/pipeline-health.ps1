@@ -25,7 +25,7 @@ if (-not $ProjectRoot) {
 }
 
 # -- Read config ------------------------------------------------------------
-$configPath = Join-Path $ProjectRoot "docs\pipeline\config.md"
+$configPath = Join-Path $ProjectRoot "docs\shared\pipeline\config.md"
 $pipelineStatus = "UNKNOWN"
 $intervalMinutes = "?"
 if (Test-Path $configPath) {
@@ -75,7 +75,7 @@ Write-Host ""
 
 # -- Check log files --------------------------------------------------------
 Write-Host "--- Recent Agent Logs ---" -ForegroundColor Yellow
-$logDir = Join-Path $ProjectRoot "docs\pipeline\logs"
+$logDir = Join-Path $ProjectRoot "docs\shared\pipeline\logs"
 if (Test-Path $logDir) {
     $logFiles = Get-ChildItem $logDir -Filter "pipeline-*.log" | Sort-Object LastWriteTime -Descending
     if ($logFiles) {
@@ -103,7 +103,7 @@ Write-Host ""
 
 # -- Check inboxes for PENDING ----------------------------------------------
 Write-Host "--- Inbox PENDING Summary ---" -ForegroundColor Yellow
-$rolesDir = Join-Path $ProjectRoot "docs\roles"
+$rolesDir = Join-Path $ProjectRoot "docs\shared\roles"
 $roleFiles = Get-ChildItem $rolesDir -Filter "*-readme.md" -ErrorAction SilentlyContinue
 
 $totalPending = 0
@@ -126,7 +126,7 @@ Write-Host ""
 
 # -- WIP Check --------------------------------------------------------------
 Write-Host "--- WIP Check ---" -ForegroundColor Yellow
-$backlogPath = Join-Path $ProjectRoot "docs\BACKLOG.md"
+$backlogPath = Join-Path $ProjectRoot "docs\shared\governance\BACKLOG.md"
 if (Test-Path $backlogPath) {
     $backlog = Get-Content $backlogPath -Raw
     $activeStates = @("INICIADA", "PLAN", "TODO", "TESTED")
@@ -152,6 +152,6 @@ Write-Host ""
 Write-Host "Commands:"
 Write-Host "  Start pipeline:  .\scripts\pipeline-control.ps1 -Command start"
 Write-Host "  Stop pipeline:   .\scripts\pipeline-control.ps1 -Command stop"
-Write-Host "  View worker log: Get-Content docs\pipeline\logs\pipeline-worker.log -Tail 20"
+Write-Host "  View worker log: Get-Content docs\shared\pipeline\logs\pipeline-worker.log -Tail 20"
 Write-Host "  Task Scheduler:  taskschd.msc"
 Write-Host ""

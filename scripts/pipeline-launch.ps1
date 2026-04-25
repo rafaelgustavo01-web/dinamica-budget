@@ -31,7 +31,7 @@ if (-not $ProjectRoot) {
     $ProjectRoot = Resolve-Path (Join-Path $scriptDir "..") | Select-Object -ExpandProperty Path
 }
 
-$logFile = Join-Path $ProjectRoot "docs\pipeline\logs\pipeline-${Role}.log"
+$logFile = Join-Path $ProjectRoot "docs\shared\pipeline\logs\pipeline-${Role}.log"
 
 if (-not (Test-Path $logFile)) {
     Write-Error "Log not found: $logFile"

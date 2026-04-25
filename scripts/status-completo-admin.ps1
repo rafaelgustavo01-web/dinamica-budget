@@ -53,7 +53,7 @@ try {
     Fail "Falha ao chamar $BaseUrl/health"
 }
 
-Write-Host "`n[4] Frontend/IIS"
+Write-Host "`n[4] app/frontend/IIS"
 try {
     $r = Invoke-WebRequest -Uri "$HostUrl/" -UseBasicParsing -TimeoutSec 8
     if ($r.StatusCode -eq 200) { Ok "Homepage HTTP 200" } else { Warn "Homepage HTTP $($r.StatusCode)" }
@@ -100,3 +100,4 @@ if (Test-Path $apiOut) {
 }
 
 Write-Host "`nStatus completo concluido." -ForegroundColor Cyan
+

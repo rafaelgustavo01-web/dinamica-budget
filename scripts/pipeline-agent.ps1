@@ -8,7 +8,7 @@
     It reads the role file's ## INBOX section, checks for [PENDING] messages,
     and outputs actionable instructions for the agent CLI.
 
-    Logs ALL executions to docs/pipeline/logs/ for observability.
+    Logs ALL executions to docs/shared/pipeline/logs/ for observability.
 
 .PARAMETER Role
     The role name to check: po, supervisor, sm, worker, qa, git-controller, research
@@ -38,7 +38,7 @@ if (-not $ProjectRoot) {
 }
 
 # ── Logging setup ───────────────────────────────────────────────────────────
-$logDir = Join-Path $ProjectRoot "docs\pipeline\logs"
+$logDir = Join-Path $ProjectRoot "docs\shared\pipeline\logs"
 if (-not (Test-Path $logDir)) {
     New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 }
@@ -237,7 +237,7 @@ function Invoke-AgentCommand([string]$Executable, [string[]]$Arguments, [string]
 }
 
 # ── Read config ─────────────────────────────────────────────────────────────
-$configPath = Join-Path $ProjectRoot "docs\pipeline\config.md"
+$configPath = Join-Path $ProjectRoot "docs\shared\pipeline\config.md"
 $intervalMinutes = 10
 $pipelineStatus = "UNKNOWN"
 if (Test-Path $configPath) {
@@ -267,7 +267,7 @@ $roleFileName = switch ($normalizedRole) {
     "git-controller"{ "git-controller.md" }
     "research"      { "research-readme.md" }
 }
-$roleFilePath = Join-Path (Join-Path $ProjectRoot "docs\roles") $roleFileName
+$roleFilePath = Join-Path (Join-Path $ProjectRoot "docs\shared\roles") $roleFileName
 
 if (-not (Test-Path $roleFilePath)) {
     Write-Log "ERROR" "Role file not found: $roleFilePath"

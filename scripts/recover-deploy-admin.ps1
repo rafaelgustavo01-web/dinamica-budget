@@ -139,7 +139,7 @@ $pythonExe = Join-Path $AppDir "venv\Scripts\python.exe"
 if (!(Test-Path $pythonExe)) { Add-Log "FAIL: python in venv missing" }
 sc.exe query $ServiceName | Out-Null
 if ($LASTEXITCODE -ne 0) {
-    & $Nssm install $ServiceName $pythonExe "-m uvicorn app.main:app --host 127.0.0.1 --port $ApiPort --workers 2" | Out-Null
+    & $Nssm install $ServiceName $pythonExe "-m uvicorn backend.main:app --host 127.0.0.1 --port $ApiPort --workers 2" | Out-Null
     & $Nssm set $ServiceName AppDirectory $AppDir | Out-Null
     & $Nssm set $ServiceName Start SERVICE_AUTO_START | Out-Null
     & $Nssm set $ServiceName DisplayName "Dinamica Budget API" | Out-Null
@@ -168,3 +168,4 @@ try { $r = Invoke-RestMethod "http://127.0.0.1/health" -TimeoutSec 8; Add-Log "P
 Add-Log "=== RECOVER DEPLOY END ==="
 $lines | Set-Content $Log -Encoding UTF8
 Write-Output "DONE: $Log"
+

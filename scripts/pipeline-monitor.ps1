@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     Runs continuously, checking pipeline status and project health.
-    Outputs to console and logs to docs/pipeline/logs/pipeline-monitor.log.
+    Outputs to console and logs to docs/shared/pipeline/logs/pipeline-monitor.log.
 
 .PARAMETER Interval
     Seconds between checks. Default: 90
@@ -30,7 +30,7 @@ if (-not $ProjectRoot) {
 }
 
 # Setup
-$logDir = Join-Path $ProjectRoot "docs\pipeline\logs"
+$logDir = Join-Path $ProjectRoot "docs\shared\pipeline\logs"
 if (-not (Test-Path $logDir)) {
     New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 }
@@ -44,8 +44,8 @@ function Write-Monitor($Message) {
 }
 
 function Get-PipelineStatus {
-    $configFile = Join-Path $ProjectRoot "docs\pipeline\config.md"
-    $backlogFile = Join-Path $ProjectRoot "docs\BACKLOG.md"
+    $configFile = Join-Path $ProjectRoot "docs\shared\pipeline\config.md"
+    $backlogFile = Join-Path $ProjectRoot "docs\shared\governance\BACKLOG.md"
 
     $status = @{
         Pipeline = "UNKNOWN"
@@ -73,7 +73,7 @@ function Get-PipelineStatus {
 }
 
 function Get-RoleInboxStatus {
-    $inboxDir = Join-Path $ProjectRoot "docs\roles\inbox"
+    $inboxDir = Join-Path $ProjectRoot "docs\shared\roles\inbox"
     $roles = @("po", "supervisor", "sm", "worker", "qa", "git-controller", "research")
     $result = @{}
 

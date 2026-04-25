@@ -239,7 +239,7 @@ def main() -> int:
     import sys
 
     sys.path.insert(0, str(APP_DIR))
-    from app.core.security import hash_password
+    from backend.core.security import hash_password
 
     async def run() -> int:
         conn = await asyncpg.connect(db_url.replace("+asyncpg", ""))
@@ -339,12 +339,12 @@ if (Test-Path $NssmPath) {
     }
 
     if (-not $serviceExists) {
-        & $NssmPath install $ServiceName $pythonExe "-m uvicorn app.main:app --host 127.0.0.1 --port $ApiPort --workers 1" | Out-Null
+        & $NssmPath install $ServiceName $pythonExe "-m uvicorn backend.main:app --host 127.0.0.1 --port $ApiPort --workers 1" | Out-Null
         Add-Log "FIX: service installed via NSSM"
     }
 
     & $NssmPath set $ServiceName Application $pythonExe | Out-Null
-    & $NssmPath set $ServiceName AppParameters "-m uvicorn app.main:app --host 127.0.0.1 --port $ApiPort --workers 1" | Out-Null
+    & $NssmPath set $ServiceName AppParameters "-m uvicorn backend.main:app --host 127.0.0.1 --port $ApiPort --workers 1" | Out-Null
     & $NssmPath set $ServiceName AppDirectory $AppDir | Out-Null
     & $NssmPath set $ServiceName Start SERVICE_AUTO_START | Out-Null
     & $NssmPath set $ServiceName AppStdout "C:\Dinamica-Budget\logs\api-stdout.log" | Out-Null
@@ -432,3 +432,4 @@ if ($spaOk) {
 
 Add-Log "DONE"
 Save-And-Exit 0
+
