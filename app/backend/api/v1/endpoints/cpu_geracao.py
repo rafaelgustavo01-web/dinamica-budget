@@ -1,7 +1,7 @@
 from decimal import Decimal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import get_current_active_user, get_db, require_cliente_access
@@ -52,4 +52,39 @@ async def listar_cpu_itens(
     svc = CpuGeracaoService(db)
     items = await svc.listar_cpu_itens(proposta_id)
     return [CpuItemResponse.model_validate(item) for item in items]
+
+
+@router.post(
+    "/itens/{composicao_id}/explodir-sub",
+    status_code=201,
+)
+async def explodir_sub_composicao(
+    proposta_id: UUID,
+    composicao_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    proposta = await _get_proposta_or_404(db, proposta_id)
+    await require_cliente_access(proposta.cliente_id, current_user, db)
+
+    from backend.services.cpu_explosao_service import CpuExplosaoService
+    svc = CpuExplosaoService(db)
+    try:
+        filhos = await svc.explodir_sub_composicao(proposta_id, composicao_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    await db.commit()
+    return [
+        {
+            "id": str(f.id),
+            "descricao_insumo": f.descricao_insumo,
+            "unidade_medida": f.unidade_medida,
+            "quantidade_consumo": str(f.quantidade_consumo),
+            "nivel": f.nivel,
+            "e_composicao": f.e_composicao,
+            "pai_composicao_id": str(f.pai_composicao_id),
+        }
+        for f in filhos
+    ]
 
