@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, DateTime, Enum as SAEnum, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Enum as SAEnum, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -216,6 +216,29 @@ class PropostaItemComposicao(Base):
         nullable=True,
     )
     fonte_custo: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    pai_composicao_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("operacional.proposta_item_composicoes.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    nivel: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    e_composicao: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    composicao_explodida: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    sub_composicoes: Mapped[list["PropostaItemComposicao"]] = relationship(
+        back_populates="pai",
+        lazy="noload",
+        cascade="all, delete-orphan",
+        foreign_keys="[PropostaItemComposicao.pai_composicao_id]",
+    )
+    pai: Mapped["PropostaItemComposicao | None"] = relationship(
+        back_populates="sub_composicoes",
+        lazy="noload",
+        foreign_keys="[PropostaItemComposicao.pai_composicao_id]",
+        remote_side="[PropostaItemComposicao.id]",
+    )
 
     proposta_item: Mapped[PropostaItem] = relationship(back_populates="composicoes", lazy="noload")
 
