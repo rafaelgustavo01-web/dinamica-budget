@@ -144,7 +144,7 @@ async def test_endpoint_composicoes_retorna_lista():
     composicao.quantidade_consumo = Decimal("8")
     composicao.custo_unitario_insumo = Decimal("45")
     composicao.custo_total_insumo = Decimal("360")
-    composicao.tipo_recurso = MagicMock(value="MO")
+    composicao.tipo_recurso = "MO"
     composicao.nivel = 1
     composicao.e_composicao = False
     composicao.fonte_custo = "pc_tabela"

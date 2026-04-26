@@ -7,7 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.dependencies import get_current_active_user, get_db, require_cliente_access
 from backend.core.exceptions import NotFoundError
 from backend.repositories.proposta_repository import PropostaRepository
-from backend.schemas.proposta import CpuGeracaoResponse, CpuItemResponse
+from backend.schemas.proposta import (
+    ComposicaoDetalheResponse,
+    CpuGeracaoResponse,
+    CpuItemResponse,
+    RecalcularBdiRequest,
+    RecalcularBdiResponse,
+)
 from backend.services.cpu_geracao_service import CpuGeracaoService
 
 router = APIRouter(prefix="/propostas/{proposta_id}/cpu", tags=["cpu"])
@@ -87,4 +93,35 @@ async def explodir_sub_composicao(
         }
         for f in filhos
     ]
+
+
+@router.get("/itens/{item_id}/composicoes", response_model=list[ComposicaoDetalheResponse])
+async def listar_composicoes_proposta_item(
+    proposta_id: UUID,
+    item_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[ComposicaoDetalheResponse]:
+    proposta = await _get_proposta_or_404(db, proposta_id)
+    await require_cliente_access(proposta.cliente_id, current_user, db)
+
+    svc = CpuGeracaoService(db)
+    composicoes = await svc.listar_composicoes_item(item_id)
+    return [ComposicaoDetalheResponse.model_validate(c) for c in composicoes]
+
+
+@router.post("/recalcular-bdi", response_model=RecalcularBdiResponse)
+async def recalcular_bdi_proposta(
+    proposta_id: UUID,
+    body: RecalcularBdiRequest,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> RecalcularBdiResponse:
+    proposta = await _get_proposta_or_404(db, proposta_id)
+    await require_cliente_access(proposta.cliente_id, current_user, db)
+
+    svc = CpuGeracaoService(db)
+    resultado = await svc.recalcular_bdi(proposta_id, body.percentual_bdi)
+    await db.commit()
+    return RecalcularBdiResponse.model_validate(resultado)
 
