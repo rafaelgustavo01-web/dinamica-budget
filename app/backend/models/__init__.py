@@ -12,6 +12,7 @@ from backend.models.enums import (
     PerfilUsuario,
     StatusImportacao,
     StatusHomologacao,
+    PropostaPapel,
     StatusMatch,
     StatusProposta,
     StatusValidacaoAssociacao,
@@ -38,7 +39,7 @@ from backend.models.pc_tabelas import (
     PcMobilizacaoItem,
     PcMobilizacaoQuantidadeFuncao,
 )
-from backend.models.proposta import PqImportacao, PqItem, Proposta, PropostaItem, PropostaItemComposicao
+from backend.models.proposta import PqImportacao, PqItem, Proposta, PropostaAcl, PropostaItem, PropostaItemComposicao
 from backend.models.pq_layout import PqLayoutCliente, PqImportacaoMapeamento  # noqa: F401
 
 __all__ = [
@@ -62,6 +63,8 @@ __all__ = [
     "PqItem",
     "PropostaItem",
     "PropostaItemComposicao",
+    "PropostaAcl",
+    "PropostaPapel",
     # enums
     "TipoCusto",
     "StatusHomologacao",

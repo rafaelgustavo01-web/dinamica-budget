@@ -3,12 +3,12 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, Enum as SAEnum, ForeignKey, Integer, Numeric, String, Text, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Enum as SAEnum, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.models.base import Base, TimestampMixin
-from backend.models.enums import StatusImportacao, StatusMatch, StatusProposta, TipoRecurso, TipoServicoMatch
+from backend.models.enums import PropostaPapel, StatusImportacao, StatusMatch, StatusProposta, TipoRecurso, TipoServicoMatch
 
 
 class Proposta(Base, TimestampMixin):
@@ -65,6 +65,11 @@ class Proposta(Base, TimestampMixin):
         cascade="all, delete-orphan",
     )
     resumo_recursos: Mapped[list["PropostaResumoRecurso"]] = relationship(
+        back_populates="proposta",
+        lazy="noload",
+        cascade="all, delete-orphan",
+    )
+    acl_entries: Mapped[list["PropostaAcl"]] = relationship(
         back_populates="proposta",
         lazy="noload",
         cascade="all, delete-orphan",
@@ -273,3 +278,32 @@ class PropostaResumoRecurso(Base):
     )
 
     proposta: Mapped[Proposta] = relationship(back_populates="resumo_recursos", lazy="noload")
+
+
+class PropostaAcl(Base, TimestampMixin):
+    __tablename__ = "proposta_acl"
+    __table_args__ = (
+        UniqueConstraint("proposta_id", "usuario_id", "papel", name="uq_proposta_acl"),
+        {"schema": "operacional"},
+    )
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    proposta_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("operacional.propostas.id", ondelete="CASCADE"),
+        nullable=False, index=True,
+    )
+    usuario_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("operacional.usuarios.id", ondelete="CASCADE"),
+        nullable=False, index=True,
+    )
+    papel: Mapped["PropostaPapel"] = mapped_column(
+        SAEnum(PropostaPapel, name="proposta_papel_enum", create_type=False), nullable=False,
+    )
+    created_by: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("operacional.usuarios.id"),
+        nullable=False,
+    )
+
+    proposta: Mapped["Proposta"] = relationship(back_populates="acl_entries", lazy="noload")

@@ -90,3 +90,9 @@ class CampoSistemaPQ(str, enum.Enum):
     UNIDADE = "unidade"
     QUANTIDADE = "quantidade"
     OBSERVACAO = "observacao"
+
+
+class PropostaPapel(str, enum.Enum):
+    OWNER = "OWNER"
+    EDITOR = "EDITOR"
+    APROVADOR = "APROVADOR"
