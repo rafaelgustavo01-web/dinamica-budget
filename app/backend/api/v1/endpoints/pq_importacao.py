@@ -3,7 +3,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import get_current_active_user, get_db, require_cliente_access
+from backend.core.dependencies import get_current_active_user, get_db, require_proposta_role
+from backend.models.enums import PropostaPapel
 from backend.core.exceptions import NotFoundError
 from backend.models.enums import StatusMatch
 from backend.repositories.pq_importacao_repository import PqImportacaoRepository
@@ -37,7 +38,7 @@ async def upload_planilha(
     db: AsyncSession = Depends(get_db),
 ) -> PqImportacaoResponse:
     proposta = await _get_proposta_or_404(db, proposta_id)
-    await require_cliente_access(proposta.cliente_id, current_user, db)
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
 
     svc = PqImportService(
         proposta_repo=PropostaRepository(db),
@@ -62,7 +63,7 @@ async def executar_match(
     db: AsyncSession = Depends(get_db),
 ) -> PqMatchResponse:
     proposta = await _get_proposta_or_404(db, proposta_id)
-    await require_cliente_access(proposta.cliente_id, current_user, db)
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
 
     svc = PqMatchService(
         db=db,
@@ -81,7 +82,7 @@ async def listar_pq_itens(
     db: AsyncSession = Depends(get_db),
 ) -> list[PqItemResponse]:
     proposta = await _get_proposta_or_404(db, proposta_id)
-    await require_cliente_access(proposta.cliente_id, current_user, db)
+    await require_proposta_role(proposta_id, None, current_user, db)
     items = await PqItemRepository(db).list_by_proposta(proposta_id, status_match=status_match)
     return [PqItemResponse.model_validate(item) for item in items]
 
@@ -97,7 +98,7 @@ async def atualizar_match_item(
     from backend.core.exceptions import ValidationError as AppValidationError
 
     proposta = await _get_proposta_or_404(db, proposta_id)
-    await require_cliente_access(proposta.cliente_id, current_user, db)
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
 
     repo = PqItemRepository(db)
     item = await repo.get_by_id(item_id)

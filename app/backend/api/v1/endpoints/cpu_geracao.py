@@ -4,7 +4,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import get_current_active_user, get_db, require_cliente_access
+from backend.core.dependencies import get_current_active_user, get_db, require_proposta_role
+from backend.models.enums import PropostaPapel
 from backend.core.exceptions import NotFoundError
 from backend.repositories.proposta_repository import PropostaRepository
 from backend.schemas.proposta import (
@@ -35,7 +36,7 @@ async def gerar_cpu(
     db: AsyncSession = Depends(get_db),
 ) -> CpuGeracaoResponse:
     proposta = await _get_proposta_or_404(db, proposta_id)
-    await require_cliente_access(proposta.cliente_id, current_user, db)
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
 
     svc = CpuGeracaoService(db)
     resultado = await svc.gerar_cpu_para_proposta(
@@ -53,7 +54,7 @@ async def listar_cpu_itens(
     db: AsyncSession = Depends(get_db),
 ) -> list[CpuItemResponse]:
     proposta = await _get_proposta_or_404(db, proposta_id)
-    await require_cliente_access(proposta.cliente_id, current_user, db)
+    await require_proposta_role(proposta_id, None, current_user, db)
 
     svc = CpuGeracaoService(db)
     items = await svc.listar_cpu_itens(proposta_id)
@@ -71,7 +72,7 @@ async def explodir_sub_composicao(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     proposta = await _get_proposta_or_404(db, proposta_id)
-    await require_cliente_access(proposta.cliente_id, current_user, db)
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
 
     from backend.services.cpu_explosao_service import CpuExplosaoService
     svc = CpuExplosaoService(db)
@@ -103,7 +104,7 @@ async def listar_composicoes_proposta_item(
     db: AsyncSession = Depends(get_db),
 ) -> list[ComposicaoDetalheResponse]:
     proposta = await _get_proposta_or_404(db, proposta_id)
-    await require_cliente_access(proposta.cliente_id, current_user, db)
+    await require_proposta_role(proposta_id, None, current_user, db)
 
     svc = CpuGeracaoService(db)
     composicoes = await svc.listar_composicoes_item(item_id)
@@ -118,7 +119,7 @@ async def recalcular_bdi_proposta(
     db: AsyncSession = Depends(get_db),
 ) -> RecalcularBdiResponse:
     proposta = await _get_proposta_or_404(db, proposta_id)
-    await require_cliente_access(proposta.cliente_id, current_user, db)
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
 
     svc = CpuGeracaoService(db)
     resultado = await svc.recalcular_bdi(proposta_id, body.percentual_bdi)

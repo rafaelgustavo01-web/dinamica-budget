@@ -70,7 +70,7 @@ async def test_listar_pq_itens_retorna_lista():
     with (
         patch("backend.api.v1.endpoints.pq_importacao.PropostaRepository") as MockPR,
         patch("backend.api.v1.endpoints.pq_importacao.PqItemRepository") as MockIR,
-        patch("backend.api.v1.endpoints.pq_importacao.require_cliente_access", new_callable=AsyncMock),
+        patch("backend.api.v1.endpoints.pq_importacao.require_proposta_role", new_callable=AsyncMock),
     ):
         MockPR.return_value.get_by_id = AsyncMock(return_value=proposta)
         MockIR.return_value.list_by_proposta = AsyncMock(return_value=[item])
@@ -95,7 +95,7 @@ async def test_atualizar_match_confirmar():
     with (
         patch("backend.api.v1.endpoints.pq_importacao.PropostaRepository") as MockPR,
         patch("backend.api.v1.endpoints.pq_importacao.PqItemRepository") as MockIR,
-        patch("backend.api.v1.endpoints.pq_importacao.require_cliente_access", new_callable=AsyncMock),
+        patch("backend.api.v1.endpoints.pq_importacao.require_proposta_role", new_callable=AsyncMock),
     ):
         MockPR.return_value.get_by_id = AsyncMock(return_value=proposta)
         MockIR.return_value.get_by_id = AsyncMock(return_value=item)

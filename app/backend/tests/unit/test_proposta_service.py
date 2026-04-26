@@ -1,5 +1,5 @@
 from uuid import uuid4
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -33,7 +33,9 @@ async def test_criar_proposta_defaults_to_rascunho(proposta_service, mock_repo):
 
     mock_repo.create.side_effect = _create
 
-    proposta = await proposta_service.criar_proposta(cliente_id, usuario_id, payload)
+    with patch("backend.services.proposta_service.PropostaAclService") as MockAclSvc:
+        MockAclSvc.return_value.conceder = AsyncMock()
+        proposta = await proposta_service.criar_proposta(cliente_id, usuario_id, payload)
 
     assert proposta.cliente_id == cliente_id
     assert proposta.criado_por_id == usuario_id

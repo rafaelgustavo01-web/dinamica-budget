@@ -2,9 +2,10 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from backend.core.exceptions import ConflictError, NotFoundError, ValidationError
-from backend.models.enums import StatusProposta
+from backend.models.enums import PropostaPapel, StatusProposta
 from backend.models.proposta import Proposta
 from backend.repositories.proposta_repository import PropostaRepository
+from backend.services.proposta_acl_service import PropostaAclService
 
 
 class PropostaService:
@@ -23,11 +24,14 @@ class PropostaService:
             versao_cpu=1,
         )
         try:
-            return await self.proposta_repo.create(proposta)
+            proposta = await self.proposta_repo.create(proposta)
         except Exception as exc:
             if "codigo" in str(exc).lower():
                 raise ConflictError("Proposta", "codigo", codigo) from exc
             raise
+        acl_svc = PropostaAclService(self.proposta_repo.db)
+        await acl_svc.conceder(proposta.id, usuario_id, PropostaPapel.OWNER, usuario_id)
+        return proposta
 
     async def listar_propostas(
         self,

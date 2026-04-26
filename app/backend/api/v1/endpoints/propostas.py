@@ -4,7 +4,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import get_current_active_user, get_db, require_cliente_access
+from backend.core.dependencies import get_current_active_user, get_db, require_proposta_role
+from backend.models.enums import PropostaPapel
+from backend.repositories.proposta_acl_repository import PropostaAclRepository
 from backend.repositories.proposta_repository import PropostaRepository
 from backend.schemas.common import PaginatedResponse
 from backend.schemas.proposta import PropostaCreate, PropostaResponse, PropostaUpdate
@@ -24,25 +26,30 @@ async def criar_proposta(
     db: AsyncSession = Depends(get_db),
     svc: PropostaService = Depends(_get_service),
 ) -> PropostaResponse:
-    await require_cliente_access(data.cliente_id, current_user, db)
     proposta = await svc.criar_proposta(data.cliente_id, current_user.id, data)
     return PropostaResponse.model_validate(proposta)
 
 
 @router.get("/", response_model=PaginatedResponse[PropostaResponse])
 async def listar_propostas(
-    cliente_id: UUID = Query(...),
+    cliente_id: UUID | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
     svc: PropostaService = Depends(_get_service),
 ) -> PaginatedResponse[PropostaResponse]:
-    await require_cliente_access(cliente_id, current_user, db)
     items, total = await svc.listar_propostas(cliente_id, page=page, page_size=page_size)
+    proposta_ids = [p.id for p in items]
+    papeis_map = await PropostaAclRepository(db).get_papeis_bulk(proposta_ids, current_user.id)
     pages = ceil(total / page_size) if total else 0
+    def _to_response(item):
+        resp = PropostaResponse.model_validate(item)
+        resp.meu_papel = papeis_map.get(item.id)
+        return resp
+
     return PaginatedResponse[PropostaResponse](
-        items=[PropostaResponse.model_validate(item) for item in items],
+        items=[_to_response(item) for item in items],
         total=total,
         page=page,
         page_size=page_size,
@@ -58,7 +65,7 @@ async def obter_proposta(
     svc: PropostaService = Depends(_get_service),
 ) -> PropostaResponse:
     proposta = await svc.obter_por_id(proposta_id)
-    await require_cliente_access(proposta.cliente_id, current_user, db)
+    await require_proposta_role(proposta_id, None, current_user, db)
     return PropostaResponse.model_validate(proposta)
 
 
@@ -71,7 +78,7 @@ async def atualizar_proposta(
     svc: PropostaService = Depends(_get_service),
 ) -> PropostaResponse:
     proposta = await svc.obter_por_id(proposta_id)
-    await require_cliente_access(proposta.cliente_id, current_user, db)
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
     proposta = await svc.atualizar_metadados(proposta_id, proposta.cliente_id, data)
     return PropostaResponse.model_validate(proposta)
 
@@ -84,6 +91,6 @@ async def deletar_proposta(
     svc: PropostaService = Depends(_get_service),
 ) -> None:
     proposta = await svc.obter_por_id(proposta_id)
-    await require_cliente_access(proposta.cliente_id, current_user, db)
+    await require_proposta_role(proposta_id, PropostaPapel.OWNER, current_user, db)
     await svc.soft_delete(proposta_id, proposta.cliente_id)
 

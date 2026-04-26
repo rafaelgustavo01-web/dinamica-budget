@@ -157,7 +157,7 @@ async def test_endpoint_composicoes_retorna_lista():
     with (
         patch("backend.api.v1.endpoints.cpu_geracao.PropostaRepository") as MockPR,
         patch("backend.api.v1.endpoints.cpu_geracao.CpuGeracaoService") as MockSvc,
-        patch("backend.api.v1.endpoints.cpu_geracao.require_cliente_access", new_callable=AsyncMock),
+        patch("backend.api.v1.endpoints.cpu_geracao.require_proposta_role", new_callable=AsyncMock),
     ):
         MockPR.return_value.get_by_id = AsyncMock(return_value=proposta)
         MockSvc.return_value.listar_composicoes_item = AsyncMock(return_value=[composicao])
@@ -184,7 +184,7 @@ async def test_endpoint_recalcular_bdi():
     with (
         patch("backend.api.v1.endpoints.cpu_geracao.PropostaRepository") as MockPR,
         patch("backend.api.v1.endpoints.cpu_geracao.CpuGeracaoService") as MockSvc,
-        patch("backend.api.v1.endpoints.cpu_geracao.require_cliente_access", new_callable=AsyncMock),
+        patch("backend.api.v1.endpoints.cpu_geracao.require_proposta_role", new_callable=AsyncMock),
     ):
         MockPR.return_value.get_by_id = AsyncMock(return_value=proposta)
         MockSvc.return_value.recalcular_bdi = AsyncMock(return_value={

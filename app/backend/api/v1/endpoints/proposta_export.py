@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import get_current_active_user, get_db, require_cliente_access
+from backend.core.dependencies import get_current_active_user, get_db, require_proposta_role
 from backend.core.exceptions import NotFoundError
 from backend.repositories.proposta_repository import PropostaRepository
 from backend.services.proposta_export_service import PropostaExportService
@@ -28,7 +28,7 @@ async def export_excel(
     from io import BytesIO
 
     proposta = await _get_proposta_or_404(db, proposta_id)
-    await require_cliente_access(proposta.cliente_id, current_user, db)
+    await require_proposta_role(proposta_id, None, current_user, db)
 
     raw = await PropostaExportService(db).gerar_excel(proposta_id)
     filename = f"proposta-{proposta.codigo}.xlsx"
@@ -48,7 +48,7 @@ async def export_pdf(
     from io import BytesIO
 
     proposta = await _get_proposta_or_404(db, proposta_id)
-    await require_cliente_access(proposta.cliente_id, current_user, db)
+    await require_proposta_role(proposta_id, None, current_user, db)
 
     raw = await PropostaExportService(db).gerar_pdf(proposta_id)
     filename = f"proposta-{proposta.codigo}.pdf"

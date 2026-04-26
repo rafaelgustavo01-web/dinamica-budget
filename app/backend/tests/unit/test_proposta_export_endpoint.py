@@ -16,7 +16,7 @@ async def test_export_excel_endpoint_retorna_stream():
     with (
         patch("backend.api.v1.endpoints.proposta_export.PropostaRepository") as MockPR,
         patch("backend.api.v1.endpoints.proposta_export.PropostaExportService") as MockSvc,
-        patch("backend.api.v1.endpoints.proposta_export.require_cliente_access", new_callable=AsyncMock),
+        patch("backend.api.v1.endpoints.proposta_export.require_proposta_role", new_callable=AsyncMock),
     ):
         MockPR.return_value.get_by_id = AsyncMock(return_value=proposta)
         MockSvc.return_value.gerar_excel = AsyncMock(return_value=b"xlsx-bytes")
@@ -37,7 +37,7 @@ async def test_export_pdf_endpoint_retorna_stream():
     with (
         patch("backend.api.v1.endpoints.proposta_export.PropostaRepository") as MockPR,
         patch("backend.api.v1.endpoints.proposta_export.PropostaExportService") as MockSvc,
-        patch("backend.api.v1.endpoints.proposta_export.require_cliente_access", new_callable=AsyncMock),
+        patch("backend.api.v1.endpoints.proposta_export.require_proposta_role", new_callable=AsyncMock),
     ):
         MockPR.return_value.get_by_id = AsyncMock(return_value=proposta)
         MockSvc.return_value.gerar_pdf = AsyncMock(return_value=b"pdf-bytes")
@@ -54,7 +54,7 @@ async def test_export_excel_endpoint_404_quando_proposta_nao_existe():
 
     with (
         patch("backend.api.v1.endpoints.proposta_export.PropostaRepository") as MockPR,
-        patch("backend.api.v1.endpoints.proposta_export.require_cliente_access", new_callable=AsyncMock),
+        patch("backend.api.v1.endpoints.proposta_export.require_proposta_role", new_callable=AsyncMock),
     ):
         MockPR.return_value.get_by_id = AsyncMock(return_value=None)
         db = MagicMock()
@@ -69,7 +69,7 @@ async def test_export_pdf_endpoint_404_quando_proposta_nao_existe():
 
     with (
         patch("backend.api.v1.endpoints.proposta_export.PropostaRepository") as MockPR,
-        patch("backend.api.v1.endpoints.proposta_export.require_cliente_access", new_callable=AsyncMock),
+        patch("backend.api.v1.endpoints.proposta_export.require_proposta_role", new_callable=AsyncMock),
     ):
         MockPR.return_value.get_by_id = AsyncMock(return_value=None)
         db = MagicMock()

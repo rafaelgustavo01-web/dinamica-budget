@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from backend.models.enums import StatusMatch, StatusProposta, TipoServicoMatch
+from backend.models.enums import PropostaPapel, StatusMatch, StatusProposta, TipoServicoMatch
 
 
 class PropostaCreate(BaseModel):
@@ -39,8 +39,26 @@ class PropostaResponse(BaseModel):
     data_finalizacao: datetime | None
     created_at: datetime
     updated_at: datetime
+    meu_papel: PropostaPapel | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PropostaAclResponse(BaseModel):
+    id: UUID
+    proposta_id: UUID
+    usuario_id: UUID
+    usuario_nome: str
+    usuario_email: str
+    papel: PropostaPapel
+    created_at: datetime
+    created_by: UUID
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PropostaAclCreate(BaseModel):
+    usuario_id: UUID
+    papel: PropostaPapel
 
 
 class PqImportacaoResponse(BaseModel):
