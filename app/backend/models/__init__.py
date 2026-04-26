@@ -39,6 +39,7 @@ from backend.models.pc_tabelas import (
     PcMobilizacaoQuantidadeFuncao,
 )
 from backend.models.proposta import PqImportacao, PqItem, Proposta, PropostaItem, PropostaItemComposicao
+from backend.models.pq_layout import PqLayoutCliente, PqImportacaoMapeamento  # noqa: F401
 
 __all__ = [
     "Base",

@@ -82,3 +82,11 @@ class StatusMatch(str, enum.Enum):
 class TipoServicoMatch(str, enum.Enum):
     BASE_TCPO = "BASE_TCPO"
     ITEM_PROPRIO = "ITEM_PROPRIO"
+
+
+class CampoSistemaPQ(str, enum.Enum):
+    CODIGO = "codigo"
+    DESCRICAO = "descricao"
+    UNIDADE = "unidade"
+    QUANTIDADE = "quantidade"
+    OBSERVACAO = "observacao"
