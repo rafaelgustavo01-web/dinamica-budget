@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Paper, Stack, Typography, Button, Alert, Divider, Box } from '@mui/material';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
 import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
+import ShareIcon from '@mui/icons-material/Share';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { PageHeader } from '../../../shared/components/PageHeader';
 import { proposalsApi } from '../../../shared/services/api/proposalsApi';
@@ -11,10 +14,15 @@ import { StatusBadge } from '../../../shared/components/StatusBadge';
 import { ExportMenu } from '../components/ExportMenu';
 import { formatCurrency, formatDateTime } from '../../../shared/utils/format';
 import { extractApiErrorMessage } from '../../../shared/services/api/apiClient';
+import { useAuth } from '../../auth/AuthProvider';
+import { ProposalShareDialog } from '../components/ProposalShareDialog';
 
 export function ProposalDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  const { user } = useAuth();
+  const [shareOpen, setShareOpen] = useState(false);
 
   const { data: proposta, isLoading, isError, error } = useQuery({
     queryKey: ['proposta', id],
@@ -26,6 +34,9 @@ export function ProposalDetailPage() {
   if (isError) return <Alert severity="error">{extractApiErrorMessage(error)}</Alert>;
   if (!proposta) return <Alert severity="warning">Proposta não encontrada.</Alert>;
 
+  const isOwner = proposta.meu_papel === 'OWNER' || user?.is_admin;
+  const canEdit = proposta.meu_papel === 'OWNER' || proposta.meu_papel === 'EDITOR' || user?.is_admin;
+
   return (
     <>
       <PageHeader
@@ -33,14 +44,25 @@ export function ProposalDetailPage() {
         description={proposta.titulo || 'Sem título'}
         actions={
           <Stack direction="row" spacing={1}>
+            {isOwner && (
+              <Button
+                variant="outlined"
+                startIcon={<ShareIcon />}
+                onClick={() => setShareOpen(true)}
+              >
+                Compartilhar
+              </Button>
+            )}
             <ExportMenu propostaId={id!} propostaCodigo={proposta.codigo} disabled={proposta.status === 'RASCUNHO'} />
-            <Button
-              variant="outlined"
-              startIcon={<FileUploadOutlinedIcon />}
-              onClick={() => navigate(`/propostas/${id}/importar`)}
-            >
-              Importar PQ
-            </Button>
+            {canEdit && (
+              <Button
+                variant="outlined"
+                startIcon={<FileUploadOutlinedIcon />}
+                onClick={() => navigate(`/propostas/${id}/importar`)}
+              >
+                Importar PQ
+              </Button>
+            )}
             <Button
               variant="outlined"
               color="secondary"
@@ -58,6 +80,16 @@ export function ProposalDetailPage() {
             >
               Ver CPU
             </Button>
+            {isOwner && (
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteOutlineIcon />}
+                onClick={() => { /* TODO: implementar delete */ }}
+              >
+                Excluir
+              </Button>
+            )}
           </Stack>
         }
       />
@@ -117,6 +149,7 @@ export function ProposalDetailPage() {
           </Box>
         </Paper>
       </Stack>
+      {isOwner && <ProposalShareDialog propostaId={id!} open={shareOpen} onClose={() => setShareOpen(false)} />}
     </>
   );
 }
