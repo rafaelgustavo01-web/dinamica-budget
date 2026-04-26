@@ -30,6 +30,14 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 
 ## INBOX
 
+### [PENDING] 2026-04-26T12:00:00Z — Sprint F2-07
+- From: worker (Gemini CLI)
+- Action: REVIEW
+- Walkthrough: @docs/sprints/F2-07/walkthrough/done/walkthrough-F2-07.md
+- Technical Review: @docs/sprints/F2-07/technical-review/technical-review-2026-04-26-f2-07.md
+- Tests: `pytest app/backend/tests/unit/ -q` -> `133 passed, 0 failed`
+- Notes: Tabelas de Recursos (agregação por categoria) + Motor de Busca 4 Camadas formalizado (Código Exato, Próprios, Associações, Global). Migration 020 inclusa.
+
 ### [DONE] 2026-04-26T11:45:00Z — Sprint F2-02 (Rework v1)
 - From: worker (kimi-k2.5)
 - Action: REVIEW
