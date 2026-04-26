@@ -30,13 +30,12 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 
 ## INBOX
 
-### [DONE] 2026-04-25T17:30:00Z — Sprint F2-02
+### [DONE] 2026-04-26T11:45:00Z — Sprint F2-02 (Rework v1)
 - From: worker (kimi-k2.5)
 - Action: REVIEW
-- Status: REJECTED
-- Feedback: @docs/technical-feedback-2026-04-25-f2-02-v1.md
-- Rework: @docs/briefings/sprint-f2-02-rework-v1.md
-- Notes: REJEITADA. Problema de duplicação por explosão DFS e falta de metadados em sub-níveis. Rework solicitado ao Worker.
+- Status: ACCEPTED
+- Feedback: @docs/sprints/F2-02/techinical-feedback/technical-feedback-2026-04-26-f2-02-v2.md
+- Notes: Rework validado. Árvore real implementada, sem duplicação. 118 testes PASS.
 
 ### [DONE] 2026-04-26T00:30:00Z — Sprint F2-04
 - From: worker (kimi-k2.5)
@@ -45,23 +44,7 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Feedback: @docs/technical-feedback-2026-04-25-f2-04-v1.md
 - Notes: APROVADA. Breakdown detalhado e BDI dinâmico validados.
 
-### [PENDING] 2026-04-25T23:30:00Z — Sprint F2-04
-- From: worker (kimi-k2.5)
-- Action: REVIEW
-- Walkthrough: @docs/walkthrough/reviewed/walkthrough-F2-04.md
-- Technical Review: @docs/sprints/F2-04/technical-review/technical-review-2026-04-25-f2-04.md
-- Tests: `pytest app/backend/tests/ -q` -> `115 passed, 0 failed`; `cd app/frontend && npx tsc --noEmit` -> `0 erros`
-- Notes: CPU detalhada com breakdown de insumos, BDI dinamico, ProposalCpuPage desbloqueada. 8 testes unitarios novos.
-- Status: **ACCEPTED → DONE** (QA Review 2026-04-26)
-
-### [DONE] 2026-04-26T11:45:00Z — Sprint F2-02 (Rework v1)
-- From: worker (kimi-k2.5)
-- Action: REVIEW
-- Status: ACCEPTED
-- Feedback: @docs/technical-feedback-2026-04-26-f2-02-v2.md
-- Notes: Rework validado. Árvore real implementada, sem duplicação. 118 testes PASS.
-
-### [PENDING] 2026-04-26T00:20:00Z — Sprint F2-02 (Rework v1)
+### [DONE] 2026-04-26T00:20:00Z — Sprint F2-02 (Rework v1)
 - From: worker (kimi-k2.5)
 - Action: REVIEW
 - Walkthrough: @docs/walkthrough/reviewed/walkthrough-F2-02.md
@@ -71,62 +54,68 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Notes: Rework v1 aplicado. Árvore real sem flattening, metadados completos em sub-níveis, suporte a ItemProprio.
 - Status: **ACCEPTED → DONE** (QA Review 2026-04-26)
 
-### [PENDING] 2026-04-25T16:10:00Z — Sprint F2-02
+### [DONE] 2026-04-25T23:30:00Z — Sprint F2-04
 - From: worker (kimi-k2.5)
 - Action: REVIEW
-- Walkthrough: @docs/sprints/F2-02/walkthrough/done/walkthrough-F2-02.md
-- Technical Review: @docs/sprints/F2-02/technical-review/technical-review-2026-04-25-f2-02.md
-- Tests: `pytest app/backend/tests/unit/test_explosao_recursiva.py -v` -> `6 passed`; `pytest app/backend/tests/unit/ -v` -> `99 passed, 0 failed`
-- Notes: Explosao recursiva com guard nivel 5. Endpoint POST explodir-sub retorna 201/422 conforme criterios. Correcoes de imports em testes existentes inclusas.
-- Status: **REJECTED → REWORK** (QA Review 2026-04-25)
+- Walkthrough: @docs/walkthrough/reviewed/walkthrough-F2-04.md
+- Technical Review: @docs/sprints/F2-04/technical-review/technical-review-2026-04-25-f2-04.md
+- Tests: `pytest app/backend/tests/ -q` -> `115 passed, 0 failed`; `cd app/frontend && npx tsc --noEmit` -> `0 erros`
+- Notes: CPU detalhada com breakdown de insumos, BDI dinamico, ProposalCpuPage desbloqueada. 8 testes unitarios novos.
+- Status: **ACCEPTED → DONE** (QA Review 2026-04-26)
 
-### [PENDING] 2026-04-23T17:05:00Z — Sprint S-08
+### [DONE] 2026-04-23T17:05:00Z — Sprint S-08
 - From: worker (codex-5.3)
 - Action: REVIEW
 - Walkthrough: @docs/sprints/S-08/walkthrough/done/walkthrough-S-08.md
 - Technical Review: @docs/sprints/S-08/technical-review/technical-review-2026-04-23-s08.md
 - Tests: `pytest app/backend/tests/e2e/test_smoke_proposta.py -q` -> `1 passed`; `powershell -ExecutionPolicy Bypass -File scripts\audit-quality-gate.ps1 -ProjectRoot .` -> `0 falhas`
 - Notes: Auditoria de go-live concluida. Bug real no roteador (`health.router` invalido) corrigido durante a sprint. Recomendacao final: `GO`.
+- Status: **ACCEPTED → DONE** (Reavaliação 2026-04-23)
 
-### [PENDING] 2026-04-23T16:00:00Z — Sprint S-06
+### [DONE] 2026-04-23T16:00:00Z — Sprint S-06
 - From: worker (gemini-3.1)
 - Action: REVIEW
 - Walkthrough: @docs/sprints/S-06/walkthrough/done/walkthrough-S-06.md
 - Technical Review: @docs/sprints/S-06/technical-review/technical-review-2026-04-23-s06.md
 - Tests: `pytest app/backend/tests/unit/test_health.py -v` -> 2 passed. Script PowerShell validado.
 - Notes: Runbook e Observabilidade. Endpoint /health e diagnóstico PowerShell para ambiente on-premise.
+- Status: **ACCEPTED → DONE** (Reavaliação 2026-04-23)
 
-### [PENDING] 2026-04-23T15:30:00Z — Sprint S-12
+### [DONE] 2026-04-23T15:30:00Z — Sprint S-12
 - From: worker (gemini-3.1)
 - Action: REVIEW
 - Walkthrough: @docs/sprints/S-12/walkthrough/done/walkthrough-S-12.md
 - Technical Review: @docs/sprints/S-12/technical-review/technical-review-2026-04-23-s12.md
 - Tests: `npm run build` -> Success.
 - Notes: UX Frontend do Módulo de Orçamentos. Telas de Listagem, Detalhe, Criação e Importação integradas. Tela de CPU é um placeholder funcional bloqueado por S-11.
+- Status: **ACCEPTED → DONE** (Reavaliação 2026-04-23)
 
-### [PENDING] 2026-04-23T15:20:00Z — Sprint S-11
+### [DONE] 2026-04-23T15:20:00Z — Sprint S-11
 - From: worker (codex-5.3)
 - Action: REVIEW
 - Walkthrough: @docs/sprints/S-11/walkthrough/done/walkthrough-S-11.md
 - Technical Review: @docs/sprints/S-11/technical-review/technical-review-2026-04-23-s11.md
 - Tests: `pytest app/backend/tests/unit/test_cpu_geracao_service.py -q` -> 2 passed; `pytest app/backend/tests/unit -q` -> 91 passed.
 - Notes: Geração da CPU com rebuild de `PropostaItem`, explosão reutilizada, cálculo de custos e endpoints `/cpu/gerar` e `/cpu/itens`.
+- Status: **ACCEPTED → DONE** (Reavaliação 2026-04-23)
 
-### [PENDING] 2026-04-23T15:00:00Z — Sprint S-07
+### [DONE] 2026-04-23T15:00:00Z — Sprint S-07
 - From: worker (gemini-3.1)
 - Action: REVIEW
 - Walkthrough: @docs/sprints/S-07/walkthrough/done/walkthrough-S-07.md
 - Technical Review: @docs/sprints/S-07/technical-review/technical-review-2026-04-23-s07.md
 - Tests: `npm run build` -> Success. Wireframes em @docs/ux-wireframes-governanca-2026-04-23.md.
 - Notes: UX de Governança finalizada. Menu lateral atualizado (Relatórios e Perfil Ativos), gestão de RBAC centralizada em Usuários e resolução de nomes em Perfil.
+- Status: **ACCEPTED → DONE** (Reavaliação 2026-04-23)
 
-### [PENDING] 2026-04-23T14:45:00Z — Sprint S-10
+### [DONE] 2026-04-23T14:45:00Z — Sprint S-10
 - From: worker (codex-5.3)
 - Action: REVIEW
 - Walkthrough: @docs/sprints/S-10/walkthrough/done/walkthrough-S-10.md
 - Technical Review: @docs/sprints/S-10/technical-review/technical-review-2026-04-23-s10.md
 - Tests: `pytest app/backend/tests/unit/test_pq_import_service.py app/backend/tests/unit/test_pq_match_service.py -q` -> 4 passed; `pytest app/backend/tests/unit -q` -> 89 passed.
 - Notes: Upload PQ `.csv`/`.xlsx`, criação de `PqImportacao`/`PqItem` e match automático via `BuscaService`.
+- Status: **ACCEPTED → DONE** (Reavaliação 2026-04-23)
 
 ### [PENDING] 2026-04-23T12:10:00Z — Sprint S-09
 - From: worker (codex-5.3)

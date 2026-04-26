@@ -86,7 +86,9 @@
       "Bash(python3 -m json.tool)",
       "Bash(ACCESS_TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMjdlZTVlNS1hYzY1LTQ5ZWItYmU1Ni1mOGE4NThhMTRjZWMiLCJ0eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0NjcxMzIwfQ.LpqRGSkPLL8Xeuqqx0tnIL_t00tyZjhuPoeQV9KBkCs\" __NEW_LINE_1290666498fc924a__ curl -s \"http://localhost:8000/api/v1/auth/me\" -H \"Authorization: Bearer $ACCESS_TOKEN\")",
       "Bash(.venv/Scripts/alembic.exe upgrade:*)",
-      "Bash(.venv/Scripts/python.exe -c \":*)"
+      "Bash(.venv/Scripts/python.exe -c \":*)",
+      "Bash(python -m pytest backend/tests/unit/test_pq_match_review.py::test_pq_item_response_schema_from_model backend/tests/unit/test_pq_match_review.py::test_pq_match_confirmar_request_confirmar backend/tests/unit/test_pq_match_review.py::test_pq_match_confirmar_request_rejeitar backend/tests/unit/test_pq_match_review.py::test_pq_match_confirmar_request_substituir_requer_servico_id -v)",
+      "Bash(python -m pytest backend/tests/unit/test_pq_match_review.py -v)"
     ]
   },
   "enabledPlugins": {

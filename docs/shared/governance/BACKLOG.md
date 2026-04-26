@@ -26,11 +26,11 @@ Responsável: Research AI / QA Re-avaliação
 | `S-12` | DONE | P2 | `S-11` | UX Frontend do Módulo de Orçamentos | Telas React: criar proposta, importar PQ, match, visualizar CPU; integração com API; smoke E2E |
 | `F2-01` | DONE | P1 | `S-09`, `S-10` | PQ Layout por Cliente — mapeamento de colunas configurável via `PqLayoutCliente` e `PqImportacaoMapeamento` | PUT /clientes/{id}/pq-layout retorna 200; PUT sem descricao retorna 422; GET sem config retorna null; 93+ PASS |
 | `F2-02` | DONE | P1 | `S-11` | Explosão Recursiva de Composições — árvore N níveis com guard de profundidade (max 5) e endpoint `explodir-sub` | POST explodir-sub retorna 201 com lista de filhos; nivel>5 retorna 422; já explodida retorna 422; árvore real sem flattening; 118 PASS |
-| `F2-03` | TODO | P1 | `S-10`, `F2-01` | Tela de Revisão de Match — confirmação manual dos itens PQ antes de gerar CPU; ações por item: confirmar/substituir/rejeitar | GET /pq/itens retorna lista; PATCH /pq/itens/{id}/match aceita acao; MatchReviewPage com progresso; 110+ PASS, 0 tsc errors |
+| `F2-03` | TESTED | P1 | `S-10`, `F2-01` | Tela de Revisão de Match — confirmação manual dos itens PQ antes de gerar CPU; ações por item: confirmar/substituir/rejeitar | GET /pq/itens retorna lista; PATCH /pq/itens/{id}/match aceita acao; MatchReviewPage com progresso; 110+ PASS, 0 tsc errors |
 | `F2-04` | DONE | P1 | `S-11`, `F2-03` | CPU Detalhada — breakdown de insumos por item (material/MO/equipamento) + BDI dinâmico recalculável sem regerar CPU | GET /cpu/itens/{id}/composicoes retorna insumos; POST /cpu/recalcular-bdi atualiza totais; CpuPage desbloqueada com accordion; 115 PASS |
-| `F2-05` | BACKLOG | P1 | `F2-03`, `F2-04` | Exportação — folha de rosto e quadro-resumo em Excel/PDF da proposta completa | Endpoint gera arquivo; frontend tem botao de download; template com dados do cliente e totais |
-| `F2-06` | BACKLOG | P2 | `F2-03` | UX complementar — edição de PQ pós-importação, filtros de proposta, duplicação de proposta | Editar descricao/qtd/unidade de item importado; filtrar propostas por status; duplicar proposta como base |
-| `F2-07` | BACKLOG | P2 | `F2-01`, `F2-02` | Tabelas de Recursos + Motor 4 Camadas — geração de tabelas de equipamentos/ferramentas/EPIs e busca semântica | Tabelas geradas ao salvar proposta; motor retorna resultados em 4 camadas |
+| `F2-05` | TODO | P1 | `F2-03`, `F2-04` | Exportação — folha de rosto e quadro-resumo em Excel/PDF da proposta completa | Endpoint gera arquivo Excel multi-aba; frontend tem botao de download; template com dados do cliente e totais |
+| `F2-06` | TODO | P2 | `F2-03` | UX complementar — edição de PQ pós-importação, filtros de proposta, duplicação de proposta | PATCH /pq/itens edita descricao/qtd/unidade; filtros por status na lista; POST /propostas/{id}/duplicar |
+| `F2-07` | TODO | P2 | `F2-01`, `F2-02` | Tabelas de Recursos + Motor 4 Camadas — agregado por recurso na CPU + busca formalizada em 4 camadas | PropostaResumoRecurso gerado ao chamar gerar-cpu; busca aplica histórico/código/fuzzy/semântico em ordem |
 
 ## Ordem Recomendada de Execução
 
@@ -56,12 +56,21 @@ FASE C — Módulo de Orçamentos
 
 ## Sprints Ativas
 
-**Fase 3 iniciada.** WIP = 2/4.
+**Fase 3 — segunda leva.** WIP = 4/4 (excecao autorizada pelo PO em 2026-04-26 para acelerar fechamento de Fase 2).
 
 - `F2-01` DONE — PQ Layout por Cliente (Worker: claude-sonnet-4-6) — QA aprovado 2026-04-25
 - `F2-02` DONE — Explosão Recursiva de Composições (Worker: kimi-k2.5) — QA aprovado 2026-04-26 (pos-rework)
-- `F2-03` TODO — Tela de Revisão de Match (Worker: claude-sonnet-4-6)
+- `F2-03` TESTED — Tela de Revisão de Match (Worker: claude-sonnet-4-6) — entregue 2026-04-26, aguarda QA
 - `F2-04` DONE — CPU Detalhada + BDI Dinâmico (Worker: kimi-k2.5) — QA aprovado 2026-04-25
+- `F2-05` TODO — Exportação Excel/PDF (Worker: kimi-k2.5) — backend-pesado: openpyxl + endpoints + small frontend hook
+- `F2-06` TODO — UX complementar (Worker: claude-sonnet-4-6) — frontend-pesado: edição PQ, filtros, duplicação
+- `F2-07` TODO — Tabelas Recursos + Motor 4 Camadas (Worker: gemini-3.1) — análise documental densa + algoritmo de busca cascata
+
+### Decisões de alocação (Scrum Master, 2026-04-26)
+
+- **Claude Code (sonnet-4-6)** → F2-06: maior superfície de UI/UX (tabela editável de PQ, filtros, modal de duplicação) com poucos endpoints de apoio.
+- **Kimi-k2.5** → F2-05: domínio backend (openpyxl multi-aba, streaming de bytes, headers HTTP), template Excel determinístico, frontend mínimo.
+- **Gemini-3.1** → F2-07: requer análise documental do RESEARCH/MODELAGEM_FASE2 para formalizar as 4 camadas, agregação por TipoRecurso, e novo modelo `PropostaResumoRecurso`.
 
 ## Sprints Concluídas (Fases 1 e 2)
 
@@ -102,6 +111,7 @@ Todas as 12 sprints concluídas com aprovação do QA:
 
 - 2026-04-23: Aprovada reorganização conforme Insight Research AI. Foco em funcionalidade core (Orçamentos) antes de hardening de infraestrutura.
 - 2026-04-23 16:15: Reavaliação completa por QA (OpenCode) confirmou **todas as 12 sprints em DONE**. Pipeline encerrado. Projeto pronto para go-live.
+- 2026-04-26: F2-03 entregue por claude-sonnet-4-6 (status TESTED, aguarda QA). F2-05/F2-06/F2-07 movidas para INICIADA → PLAN → TODO em batch para fechamento de Fase 2. WIP cap elevado para 4 por decisão excepcional do PO.
 
 ## Observações de Pesquisa
 - O repositório atual possui todos os artefatos canônicos do pipeline (`docs/JOB-DESCRIPTION.md`, `docs/superpowers/plans/`, `docs/roles/`, `docs/dispatch/`).

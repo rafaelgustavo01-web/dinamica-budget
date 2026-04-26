@@ -125,13 +125,26 @@ Objetivo: levar o projeto para um estado de pre-producao robusto em arquitetura,
 - Entregavel: arvore de composicao com N niveis; UI pode exibir hierarquia completa.
 - Sprint: `F2-02` | Dependencias: `S-11` | Worker: kimi-k2.5
 
-### Fase 6.3 - Tabelas de Recursos + Motor 4 Camadas + Export Power Query
+### Fase 6.3 - Exportacao Excel/PDF (folha de rosto + quadro-resumo) **[INICIADA]**
+- Endpoint `GET /propostas/{id}/export/excel`: xlsx com abas Capa, Quadro-Resumo, CPU, Composicoes.
+- Endpoint `GET /propostas/{id}/export/pdf`: folha de rosto com cabecalho do cliente e totais.
+- Frontend: botao "Exportar" em ProposalDetailPage e ProposalCpuPage com download via Blob.
+- Streaming de bytes (StreamingResponse) com headers HTTP corretos.
+- Sprint: `F2-05` | Dependencias: `F2-03`, `F2-04` | Worker: kimi-k2.5
+
+### Fase 6.4 - UX Complementar (edicao PQ, filtros, duplicacao) **[INICIADA]**
+- PATCH `/propostas/{id}/pq/itens/{item_id}`: editar descricao/qtd/unidade pos-importacao.
+- Filtros na lista de propostas: por status, por periodo, por busca textual.
+- POST `/propostas/{id}/duplicar`: cria proposta nova como copia (sem gerar CPU).
+- Frontend: tabela editavel inline em ProposalImportPage, filtros em ProposalsListPage, modal de duplicacao.
+- Sprint: `F2-06` | Dependencias: `F2-03` | Worker: claude-sonnet-4-6
+
+### Fase 6.5 - Tabelas de Recursos + Motor 4 Camadas **[INICIADA]**
 - Nova entidade `PropostaResumoRecurso`: agregado por (tipo_recurso x insumo), gerado ao chamar `gerar-cpu`.
 - Motor de busca 4 camadas formalizadas: (1) historico confirmado do cliente, (2) codigo exato, (3) fuzzy pg_trgm, (4) semantico pgvector.
-- Endpoints de export: `GET /propostas/{id}/export/cpu` (JSON flat), `GET /propostas/{id}/export/excel` (xlsx com abas CPU, Equipamentos, Ferramentas, EPIs, RH).
-- Decisao arquitetural documentada: aplicacao web e fonte da verdade; Power Query consome via REST ou download Excel (sem VBA).
-- Entregavel: CPU e tabelas consumiveis diretamente pelo Power Query.
-- Sprint: `F2-03` | Dependencias: `F2-01`, `F2-02` | Worker: TBD
+- Refatorar `PqMatchService` para aplicar as 4 camadas em ordem com early-exit.
+- Endpoint `GET /propostas/{id}/recursos`: agregado de recursos por tipo (MO, EQUIPAMENTO, INSUMO, FERRAMENTA, EPI).
+- Sprint: `F2-07` | Dependencias: `F2-01`, `F2-02` | Worker: gemini-3.1
 
 ## Dependencias Entre Milestones
 - M2 depende de M1 para estabilizar base arquitetural.
@@ -144,3 +157,4 @@ Objetivo: levar o projeto para um estado de pre-producao robusto em arquitetura,
 - 2026-04-22 13:45 (Research AI): roadmap inicial criado com 4 milestones e fases priorizadas.
 - 2026-04-22 21:00 (Research AI): adicionado Milestone 5 — Modulo de Orcamentos (Fase 2) com 4 subfases e documento de modelagem conceitual.
 - 2026-04-25 10:00 (Research AI): adicionado Milestone 6 — Proposta Completa (Fase 3) com 3 subfases: PQ Layout por Cliente (F2-01/codex), Explosao Recursiva (F2-02/kimi), Tabelas Recursos + Export Power Query (F2-03/TBD). Origem: analise de gaps pos-entrega S-09 a S-12.
+- 2026-04-26 14:30 (PO/Supervisor/Scrum Master): Milestone 6 desmembrado para refletir backlog real. Fase 6.3 (TBD) renomeada para Exportacao Excel/PDF (F2-05/kimi). Adicionadas Fases 6.4 (UX complementar — F2-06/claude-sonnet-4-6) e 6.5 (Tabelas Recursos + Motor 4 Camadas — F2-07/gemini-3.1). Tres sprints INICIADAS em paralelo conforme alocacao por especialidade do worker.
