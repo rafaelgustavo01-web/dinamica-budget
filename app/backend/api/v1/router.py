@@ -12,6 +12,7 @@ from backend.api.v1.endpoints import (
     pc_tabelas,
     pq_importacao,
     pq_layout,
+    proposta_export,
     propostas,
     servicos,
     usuarios,
@@ -33,6 +34,6 @@ router.include_router(clientes.router)
 router.include_router(extracao.router)
 router.include_router(pc_tabelas.router)
 router.include_router(propostas.router)
+router.include_router(proposta_export.router)
 router.include_router(pq_importacao.router)
 router.include_router(pq_layout.router)
-
