@@ -52,6 +52,43 @@ export interface PqMatchResponse {
   sem_match: number;
 }
 
+export type StatusMatch =
+  | 'PENDENTE'
+  | 'BUSCANDO'
+  | 'SUGERIDO'
+  | 'CONFIRMADO'
+  | 'MANUAL'
+  | 'SEM_MATCH';
+
+export type TipoServicoMatch = 'ITEM_PROPRIO' | 'BASE_TCPO';
+
+export type AcaoMatch = 'confirmar' | 'substituir' | 'rejeitar';
+
+export interface PqItemResponse {
+  id: string;
+  proposta_id: string;
+  pq_importacao_id: string | null;
+  codigo_original: string | null;
+  descricao_original: string;
+  unidade_medida_original: string | null;
+  quantidade_original: string | null;
+  match_status: StatusMatch;
+  match_confidence: string | null;
+  servico_match_id: string | null;
+  servico_match_tipo: TipoServicoMatch | null;
+  linha_planilha: number | null;
+  observacao: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PqMatchConfirmarRequest {
+  acao: AcaoMatch;
+  servico_match_id?: string;
+  servico_match_tipo?: TipoServicoMatch;
+  quantidade?: string;
+}
+
 export interface ComposicaoDetalhe {
   id: string;
   proposta_item_id: string;
@@ -148,6 +185,27 @@ export const proposalsApi = {
 
   async executeMatch(propostaId: string) {
     const response = await apiClient.post<PqMatchResponse>(`/propostas/${propostaId}/pq/match`);
+    return response.data;
+  },
+
+  async listPqItens(propostaId: string, statusMatch?: StatusMatch): Promise<PqItemResponse[]> {
+    const params = statusMatch ? { status_match: statusMatch } : undefined;
+    const response = await apiClient.get<PqItemResponse[]>(
+      `/propostas/${propostaId}/pq/itens`,
+      { params },
+    );
+    return response.data;
+  },
+
+  async confirmarMatch(
+    propostaId: string,
+    itemId: string,
+    payload: PqMatchConfirmarRequest,
+  ): Promise<PqItemResponse> {
+    const response = await apiClient.patch<PqItemResponse>(
+      `/propostas/${propostaId}/pq/itens/${itemId}/match`,
+      payload,
+    );
     return response.data;
   },
 
