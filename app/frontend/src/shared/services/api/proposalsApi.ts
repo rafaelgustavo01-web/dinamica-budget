@@ -248,4 +248,18 @@ export const proposalsApi = {
     );
     return response.data;
   },
+
+  async exportExcel(propostaId: string): Promise<Blob> {
+    const response = await apiClient.get(`/propostas/${propostaId}/export/excel`, {
+      responseType: 'blob',
+    });
+    return response.data as Blob;
+  },
+
+  async exportPdf(propostaId: string): Promise<Blob> {
+    const response = await apiClient.get(`/propostas/${propostaId}/export/pdf`, {
+      responseType: 'blob',
+    });
+    return response.data as Blob;
+  },
 };
