@@ -62,7 +62,7 @@ FASE C — Módulo de Orçamentos
 
 ## Sprints Ativas
 
-**Fase 3 — segunda leva fechada (F2-01..F2-07 todas DONE).** Terceira leva preparada com F2-08 + F2-09.
+**Fase 3 — terceira leva fechada (F2-01..F2-08 todas DONE).** Próxima leva: F2-09 desbloqueada.
 
 - `F2-01` DONE — PQ Layout por Cliente (Worker: claude-sonnet-4-6) — QA aprovado 2026-04-25
 - `F2-02` DONE — Explosão Recursiva de Composições (Worker: kimi-k2.5) — QA aprovado 2026-04-26 (pos-rework)
@@ -71,7 +71,7 @@ FASE C — Módulo de Orçamentos
 - `F2-05` DONE — Exportação Excel/PDF (Worker: kimi-k2.5) — QA aprovado 2026-04-26
 - `F2-06` DONE — UX complementar (Worker: claude-sonnet-4-6) — QA aprovado 2026-04-26 (bug debounce corrigido pelo QA)
 - `F2-07` DONE — Tabelas Recursos + Motor 4 Camadas (Worker: kimi-k2.5 rework v1) — QA aprovado 2026-04-26
-- `F2-08` DONE — RBAC por Proposta (Worker: kimi-k2.5) — entregue 2026-04-26; 158 PASS, 0 FAIL; 0 tsc errors; QA aprovado 2026-04-26
+- `F2-08` DONE — RBAC por Proposta (Worker: kimi-k2.5) — QA aprovado 2026-04-26 (Amazon Q); 158 PASS, 0 FAIL; 0 tsc errors
 - `F2-09` BACKLOG — Versionamento + Workflow de Aprovação (Worker: claude-sonnet-4-6) — depende de F2-08
 
 ### Decisões de alocação (Scrum Master, 2026-04-26)
@@ -123,6 +123,7 @@ Todas as 12 sprints concluídas com aprovação do QA:
 - 2026-04-26 (QA Amazon Q): F2-03 → DONE (6 PASS, 0 tsc). F2-06 → DONE (143 PASS, 0 tsc; bug debounce corrigido). F2-07 → DONE após rework v1 (143 PASS, 0 tsc; MOTOR_BUSCA_4_CAMADAS.md + GET /recursos + ProposalResourcesPage entregues).
 - 2026-04-26 (PO pós-revisão "plano gpt"): adicionadas F2-08 (RBAC por Proposta — kimi-k2.5, P0) e F2-09 (Versionamento + Aprovação — claude-sonnet-4-6, P1). RBAC por proposta (OWNER/EDITOR/APROVADOR; VIEWER implícito) substitui gating por cliente em todos endpoints de proposta. Mini módulo de Compras + papel COMPRADOR + custo base/ajustado adiados para Milestone 7. F2-08 entra como prioridade por ser gap de segurança ativo.
 - 2026-04-26 (Scrum Master): F2-08 despachada para kimi-k2.5. Status BACKLOG → INICIADA. Worker prompt em `docs/sprints/F2-08/dispatch/sprint-F2-08-worker-prompt.md`. WIP = 1/4 (apenas F2-08 ativa).
+- 2026-04-26 (QA Amazon Q): F2-08 → DONE. Migration 021 validada (backfill OWNER correto, enum proposta_papel_enum pronto para F2-10). Bulk loader confirmado sem N+1. 25 testes novos (4 arquivos). Regressão dos 5 routers refatorados aprovada. Desbloqueia F2-09, F2-10, F2-11, F2-12, F2-13.
 - 2026-04-26 (PO confirma Opção A para Milestone 7): adicionadas F2-10 a F2-13 cobrindo Compras + Negociação. F2-10 (custo base/ajustado + papel COMPRADOR — kimi); F2-11 (cotações CRUD — kimi); F2-12 (frontend tela Compras — claude-sonnet-4-6); F2-13 (comparativo + recálculo — claude-sonnet-4-6). Todas em BACKLOG aguardando F2-08 e F2-09 saírem de TESTED. Pré-requisito explícito: F2-08 entrega o enum proposta_papel_enum onde COMPRADOR será adicionado em F2-10.
 
 ## Observações de Pesquisa
