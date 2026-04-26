@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Paper, Stack, Typography, Button, Alert, Divider, Box } from '@mui/material';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
+import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
 import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 
 import { PageHeader } from '../../../shared/components/PageHeader';
@@ -37,6 +38,15 @@ export function ProposalDetailPage() {
               onClick={() => navigate(`/propostas/${id}/importar`)}
             >
               Importar PQ
+            </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              startIcon={<RuleOutlinedIcon />}
+              onClick={() => navigate(`/propostas/${id}/match-review`)}
+              disabled={proposta.status === 'RASCUNHO'}
+            >
+              Revisar Match
             </Button>
             <Button
               variant="contained"

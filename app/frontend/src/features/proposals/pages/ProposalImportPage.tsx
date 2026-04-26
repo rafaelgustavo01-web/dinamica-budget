@@ -144,10 +144,19 @@ export function ProposalImportPage() {
           )}
 
           {matchMutation.isSuccess && (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              Match concluído: {matchMutation.data.sugeridos} sugestões encontradas,{' '}
-              {matchMutation.data.sem_match} itens sem correspondência.
-            </Alert>
+            <Stack spacing={1} sx={{ mt: 2 }}>
+              <Alert severity="info">
+                Match concluído: {matchMutation.data.sugeridos} sugestões encontradas,{' '}
+                {matchMutation.data.sem_match} itens sem correspondência.
+              </Alert>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => navigate(`/propostas/${id}/match-review`)}
+              >
+                Revisar e Confirmar Match ({matchMutation.data.sugeridos} sugestões)
+              </Button>
+            </Stack>
           )}
         </Paper>
       </Stack>
