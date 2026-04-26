@@ -152,3 +152,55 @@ class CpuGeracaoService:
 
         return {"material": material, "mao_obra": mao_obra, "equipamento": equipamento}
 
+    async def recalcular_bdi(
+        self,
+        proposta_id: UUID,
+        percentual_bdi: Decimal,
+    ) -> dict:
+        proposta = await self.proposta_repo.get_by_id(proposta_id)
+        if not proposta:
+            raise NotFoundError("Proposta", str(proposta_id))
+
+        itens = await self.proposta_item_repo.list_by_proposta(proposta_id)
+        bdi_frac = percentual_bdi / Decimal("100")
+
+        total_direto = Decimal("0")
+        total_indireto = Decimal("0")
+        itens_recalculados = 0
+
+        for item in itens:
+            if item.custo_direto_unitario is None:
+                continue
+            custo_indireto = item.custo_direto_unitario * bdi_frac
+            preco_unit = item.custo_direto_unitario + custo_indireto
+            preco_total = preco_unit * item.quantidade
+
+            item.percentual_indireto = bdi_frac
+            item.custo_indireto_unitario = custo_indireto
+            item.preco_unitario = preco_unit
+            item.preco_total = preco_total
+
+            total_direto += item.custo_direto_unitario * item.quantidade
+            total_indireto += custo_indireto * item.quantidade
+            itens_recalculados += 1
+
+        proposta.total_direto = total_direto
+        proposta.total_indireto = total_indireto
+        proposta.total_geral = total_direto + total_indireto
+        await self.db.flush()
+
+        return {
+            "proposta_id": str(proposta_id),
+            "percentual_bdi": float(percentual_bdi),
+            "total_direto": float(total_direto),
+            "total_indireto": float(total_indireto),
+            "total_geral": float(total_direto + total_indireto),
+            "itens_recalculados": itens_recalculados,
+        }
+
+    async def listar_composicoes_item(self, proposta_item_id: UUID) -> list:
+        item = await self.proposta_item_repo.get_by_id(proposta_item_id)
+        if not item:
+            raise NotFoundError("PropostaItem", str(proposta_item_id))
+        return await self.comp_repo.list_by_proposta_item(proposta_item_id)
+
