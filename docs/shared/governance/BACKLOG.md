@@ -24,7 +24,7 @@ Responsável: Research AI / QA Re-avaliação
 | `S-10` | DONE | P1 | `S-09` | Importação PQ e Match Inteligente | Upload Excel/CSV para PQ; match fuzzy/semântico por item; confirmação manual do orçamentista; testes de integração |
 | `S-11` | DONE | P1 | `S-10` | Geração da CPU — Composição de Preços Unitários | Explosão de composição com cálculo de custos; lookup em PcTabelas (MO, equipamento, encargos); aplicação de BDI; rastreabilidade completa |
 | `S-12` | DONE | P2 | `S-11` | UX Frontend do Módulo de Orçamentos | Telas React: criar proposta, importar PQ, match, visualizar CPU; integração com API; smoke E2E |
-| `F2-01` | TODO | P1 | `S-09`, `S-10` | PQ Layout por Cliente — mapeamento de colunas configurável via `PqLayoutCliente` e `PqImportacaoMapeamento` | PUT /clientes/{id}/pq-layout retorna 200; PUT sem descricao retorna 422; GET sem config retorna null; 93+ PASS |
+| `F2-01` | TESTED | P1 | `S-09`, `S-10` | PQ Layout por Cliente — mapeamento de colunas configurável via `PqLayoutCliente` e `PqImportacaoMapeamento` | PUT /clientes/{id}/pq-layout retorna 200; PUT sem descricao retorna 422; GET sem config retorna null; 93+ PASS |
 | `F2-02` | TESTED | P1 | `S-11` | Explosão Recursiva de Composições — árvore N níveis com guard de profundidade (max 5) e endpoint `explodir-sub` | POST explodir-sub retorna 201 com lista de filhos; nivel>5 retorna 422; já explodida retorna 422; 99 PASS |
 | `F2-03` | BACKLOG | P1 | `F2-01`, `F2-02` | Tabelas de Recursos + Motor 4 Camadas — geração de tabelas de equipamentos/ferramentas/EPIs e busca semântica pg_trgm/pgvector | Tabelas geradas ao salvar proposta; motor retorna resultados em 4 camadas; consumo via Power Query REST/Excel |
 
@@ -54,8 +54,8 @@ FASE C — Módulo de Orçamentos
 
 **Fase 3 iniciada.** WIP = 2/4.
 
-- `F2-01` TODO — PQ Layout por Cliente (Worker: claude-sonnet-4-6)
-- `F2-02` TODO — Explosão Recursiva de Composições (Worker: kimi-k2.5)
+- `F2-01` TESTED — PQ Layout por Cliente (Worker: claude-sonnet-4-6) — aguardando QA
+- `F2-02` TESTED — Explosão Recursiva de Composições (Worker: kimi-k2.5)
 
 ## Sprints Concluídas (Fases 1 e 2)
 

@@ -1,18 +1,30 @@
 {
   "registry_version": "1.0",
-  "last_updated": "2026-04-23T16:15:00-03:00",
+  "last_updated": "2026-04-25T10:00:00-03:00",
   "workers": [
     {
       "worker_id": "kimi-k2.5",
       "name": "Kimi K2.5",
       "provider": "Kimi CLI",
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
-      "roles": ["research", "po", "sm", "supervisor"],
+      "roles": ["research", "po", "sm", "supervisor", "worker"],
+      "available": false,
+      "busy": true,
+      "reserved_for_sprint": "F2-02",
+      "last_checked_at": "2026-04-25T10:00:00-03:00",
+      "notes": "Worker BUILD F2-02 — Explosao Recursiva de Composicoes. Inbox: docs/shared/dispatch/inbox/kimi-k2.5-F2-02.md"
+    },
+    {
+      "worker_id": "claude-sonnet-4-6",
+      "name": "Claude Sonnet 4.6",
+      "provider": "Anthropic (Claude Code)",
+      "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript", "alembic"],
+      "roles": ["worker"],
       "available": true,
       "busy": false,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-23T16:15:00-03:00",
-      "notes": "Agente central: Research + PO (backlog/roadmap) + SM (sync/dispatch/WIP) + Supervisor (plans/briefings). NÃO é worker de BUILD. Pipeline encerrado — 12 sprints DONE."
+      "last_checked_at": "2026-04-25T22:00:00-03:00",
+      "notes": "F2-01 TESTED — PQ Layout por Cliente entregue. 107 PASS. Disponivel para proximas sprints."
     },
     {
       "worker_id": "codex-5.3",
@@ -23,8 +35,8 @@
       "available": true,
       "busy": false,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-23T16:15:00-03:00",
-      "notes": "Worker de BUILD. Pipeline encerrado — 12 sprints DONE. Disponível para novas tarefas."
+      "last_checked_at": "2026-04-25T10:00:00-03:00",
+      "notes": "Worker de BUILD. Liberado de F2-01 — reassignado para claude-sonnet-4-6. Disponivel para proximas sprints."
     },
     {
       "worker_id": "gemini-3.1",
