@@ -95,3 +95,32 @@ class CpuItemResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+class ComposicaoDetalheResponse(BaseModel):
+    id: UUID
+    proposta_item_id: UUID
+    descricao_insumo: str
+    unidade_medida: str
+    quantidade_consumo: Decimal
+    custo_unitario_insumo: Decimal | None
+    custo_total_insumo: Decimal | None
+    tipo_recurso: str | None
+    nivel: int
+    e_composicao: bool
+    fonte_custo: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RecalcularBdiRequest(BaseModel):
+    percentual_bdi: Decimal = Field(ge=0, le=100)
+
+
+class RecalcularBdiResponse(BaseModel):
+    proposta_id: str
+    percentual_bdi: Decimal
+    total_direto: Decimal
+    total_indireto: Decimal
+    total_geral: Decimal
+    itens_recalculados: int
+
