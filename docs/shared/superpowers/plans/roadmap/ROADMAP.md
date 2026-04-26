@@ -170,12 +170,60 @@ Objetivo: levar o projeto para um estado de pre-producao robusto em arquitetura,
 - Migration 022.
 - Sprint: `F2-09` | Dependencias: `F2-08` | Worker: claude-sonnet-4-6
 
+## Milestone 7 - Compras e Negociacao (P1)
+
+> **Origem:** Plano GPT (`docs/plano gpt.md`, secoes 8 e 9) — itens adiados na revisao do PO em 2026-04-26: mini modulo de Compras + custo base/ajustado + papel COMPRADOR.
+> **Premissa:** suprimentos atua sobre as listas consolidadas da proposta (`PropostaResumoRecurso`) sem alterar a estrutura da CPU. Engenharia define o que e quanto; Compras define por quanto e de quem.
+> **Pre-requisito:** F2-08 DONE (enum `proposta_papel_enum` existe), F2-09 DONE (versionamento — Compras opera sobre uma versao concreta).
+
+### Fase 7.1 - Custo Base/Ajustado + Papel COMPRADOR **[BACKLOG]**
+- Migration 023: alterar `proposta_resumo_recursos` adicionando `custo_unitario_base NUMERIC`, `custo_unitario_ajustado NUMERIC NULL`, `custo_total_base NUMERIC`, `custo_total_ajustado NUMERIC NULL`. Backfill: `custo_unitario_base = custo_unitario_medio`, `ajustado = NULL`.
+- Migration 024: adicionar `COMPRADOR` ao enum `proposta_papel_enum` (`ALTER TYPE ... ADD VALUE 'COMPRADOR'`).
+- Atualizar `PropostaPapel` (Python enum) + `PropostaAclService.HIERARQUIA` (COMPRADOR = nivel 2, abaixo de EDITOR=3 e acima de APROVADOR=2 — definir com PO).
+- Service helper `custo_efetivo(recurso) -> Decimal`: retorna `ajustado ?? base`.
+- Atualizar `gerar_resumo_recursos` para popular `custo_unitario_base` + `custo_total_base` (preservar valores ajustados existentes ao re-gerar — UPSERT por `(tipo_recurso, descricao_insumo, unidade)`).
+- `GET /propostas/{id}/recursos` retorna ambos (base + ajustado + efetivo).
+- Frontend: coluna "Custo ajustado" em `ProposalResourcesPage` (somente leitura por enquanto; edicao vem em 7.3).
+- Sprint: `F2-10` | Dependencias: `F2-07`, `F2-08` | Worker: kimi-k2.5
+
+### Fase 7.2 - Cotacoes (CRUD backend) **[BACKLOG]**
+- Migration 025: tabela `operacional.proposta_compras_cotacoes(id, proposta_id, recurso_id FK proposta_resumo_recursos, fornecedor VARCHAR, valor_unitario NUMERIC, prazo_entrega_dias INT NULL, condicao_pagamento TEXT NULL, observacao TEXT NULL, selecionada BOOL DEFAULT FALSE, created_by FK usuarios, created_at, updated_at)`.
+- Constraint: `UNIQUE(recurso_id) WHERE selecionada = TRUE` (so 1 cotacao selecionada por recurso).
+- `PropostaCotacaoRepository` + `PropostaCotacaoService` com regras: criar (COMPRADOR+), listar por proposta/recurso, atualizar, deletar (so quem criou ou OWNER), selecionar (desmarca anteriores).
+- Endpoints (todos require_proposta_role COMPRADOR ou superior):
+  - `POST /propostas/{id}/cotacoes`
+  - `GET /propostas/{id}/cotacoes` (com filtro opcional `recurso_id`)
+  - `PATCH /propostas/{id}/cotacoes/{cotacao_id}`
+  - `DELETE /propostas/{id}/cotacoes/{cotacao_id}`
+  - `POST /propostas/{id}/cotacoes/{cotacao_id}/selecionar` — propaga `valor_unitario` para `recurso.custo_unitario_ajustado` (recalcula `custo_total_ajustado`)
+- Sprint: `F2-11` | Dependencias: `F2-10` | Worker: kimi-k2.5
+
+### Fase 7.3 - Frontend Tela de Compras **[BACKLOG]**
+- Nova rota `/propostas/:id/compras` + entrada no menu de proposta (visivel para COMPRADOR/EDITOR/OWNER).
+- Pagina `ProposalPurchasingPage`:
+  - Tabela de recursos (reusa estrutura de `ProposalResourcesPage`) com colunas: descricao, qtd, custo base, custo ajustado, fornecedor selecionado, # cotacoes
+  - Edicao inline de `custo_unitario_ajustado` (debounced) — escreve via PATCH no recurso
+  - Botao por linha "Cotacoes" abre Drawer com lista + form de adicionar cotacao
+  - Botao "Selecionar" por cotacao (chama endpoint, recarrega tabela)
+- Componente `CotacaoForm`: fornecedor (text), valor_unitario (decimal), prazo_entrega_dias (int opcional), condicao_pagamento (text opcional), observacao (textarea opcional)
+- Validacao client-side: `valor_unitario > 0`, fornecedor obrigatorio
+- Sprint: `F2-12` | Dependencias: `F2-11` | Worker: claude-sonnet-4-6
+
+### Fase 7.4 - Comparativo + Recalculo de Totais **[BACKLOG]**
+- Endpoint `GET /propostas/{id}/comparativo-base-vs-ajustado` retorna agregado: `{ total_base, total_ajustado, diferenca_absoluta, percentual_economia, breakdown_por_tipo: [{tipo_recurso, total_base, total_ajustado, diferenca}] }`.
+- Recalculo dos totais da `Proposta` (`total_geral`, `total_materiais`, `total_mao_obra`, etc.) considerando `custo_efetivo = ajustado ?? base` quando agregando.
+- Trigger automatico: ao chamar `selecionar_cotacao` ou `PATCH recurso ajustado`, disparar `recalcular_totais_proposta(proposta_id)`.
+- Card "Comparativo Base x Ajustado" em `ProposalDetailPage`: total base, total ajustado, % economia, com link para `/compras`.
+- Coluna "Total Ajustado" em `ProposalsListPage` (ao lado de "Total").
+- Sprint: `F2-13` | Dependencias: `F2-11`, `F2-12` | Worker: claude-sonnet-4-6
+
 ## Dependencias Entre Milestones
 - M2 depende de M1 para estabilizar base arquitetural.
 - M3 pode rodar em paralelo parcial com M2.
 - M4 depende dos gates de seguranca/qualidade de M1 e M2.
 - **M5 depende de M1 (arquitetura), M3 (busca) e das tabelas PcTabelas populadas.**
 - **M6 depende de M5 integralmente concluido (S-09 a S-12 DONE).**
+- **M7 depende de F2-08 (enum proposta_papel para acrescentar COMPRADOR) e F2-09 (versionamento — Compras opera sobre versao concreta da proposta).**
 
 ## Historico de Atualizacao
 - 2026-04-22 13:45 (Research AI): roadmap inicial criado com 4 milestones e fases priorizadas.
@@ -183,3 +231,4 @@ Objetivo: levar o projeto para um estado de pre-producao robusto em arquitetura,
 - 2026-04-25 10:00 (Research AI): adicionado Milestone 6 — Proposta Completa (Fase 3) com 3 subfases: PQ Layout por Cliente (F2-01/codex), Explosao Recursiva (F2-02/kimi), Tabelas Recursos + Export Power Query (F2-03/TBD). Origem: analise de gaps pos-entrega S-09 a S-12.
 - 2026-04-26 14:30 (PO/Supervisor/Scrum Master): Milestone 6 desmembrado para refletir backlog real. Fase 6.3 (TBD) renomeada para Exportacao Excel/PDF (F2-05/kimi). Adicionadas Fases 6.4 (UX complementar — F2-06/claude-sonnet-4-6) e 6.5 (Tabelas Recursos + Motor 4 Camadas — F2-07/gemini-3.1). Tres sprints INICIADAS em paralelo conforme alocacao por especialidade do worker.
 - 2026-04-26 (PO apos analise critica do "plano gpt"): adicionadas Fases 6.6 (RBAC por Proposta — F2-08/kimi-k2.5) e 6.7 (Versionamento + Workflow de Aprovacao — F2-09/claude-sonnet-4-6). RBAC promovido a prioridade por gap de seguranca ativo (gating por cliente em todos os endpoints de proposta). Compras + papel COMPRADOR adiados para Milestone 7 (futuro). Custo base/ajustado tambem adiado por nao ter consumidor (Compras) nesta fase.
+- 2026-04-26 (PO confirma Opcao A pos-despacho F2-08): criado Milestone 7 — Compras e Negociacao (P1) com 4 fases: 7.1 Custo Base/Ajustado + papel COMPRADOR (F2-10/kimi), 7.2 Cotacoes CRUD (F2-11/kimi), 7.3 Frontend Tela de Compras (F2-12/claude-sonnet-4-6), 7.4 Comparativo + Recalculo (F2-13/claude-sonnet-4-6). Premissa: Compras atua sobre listas consolidadas sem alterar CPU. Status BACKLOG aguardando F2-08 e F2-09 saindo de TESTED.
