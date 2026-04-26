@@ -16,6 +16,9 @@ const ProposalImportPage = lazy(() =>
 const ProposalCpuPage = lazy(() =>
   import('./pages/ProposalCpuPage').then((m) => ({ default: m.ProposalCpuPage })),
 );
+const MatchReviewPage = lazy(() =>
+  import('./pages/MatchReviewPage').then((m) => ({ default: m.MatchReviewPage })),
+);
 
 export const proposalRoutes = (
   <Route path="propostas">
@@ -23,6 +26,7 @@ export const proposalRoutes = (
     <Route path="nova" element={<ProposalCreatePage />} />
     <Route path=":id" element={<ProposalDetailPage />} />
     <Route path=":id/importar" element={<ProposalImportPage />} />
+    <Route path=":id/match-review" element={<MatchReviewPage />} />
     <Route path=":id/cpu" element={<ProposalCpuPage />} />
   </Route>
 );
