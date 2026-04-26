@@ -96,6 +96,11 @@ async def test_recalcular_bdi_atualiza_totais():
     svc.proposta_repo.get_by_id = AsyncMock(return_value=proposta)
     svc.proposta_item_repo = MagicMock()
     svc.proposta_item_repo.list_by_proposta = AsyncMock(return_value=[item1])
+    svc.comp_repo = MagicMock()
+    svc.comp_repo.list_by_proposta = AsyncMock(return_value=[])
+    svc.resumo_repo = MagicMock()
+    svc.resumo_repo.delete_by_proposta = AsyncMock()
+    svc.resumo_repo.create_batch = AsyncMock()
 
     result = await svc.recalcular_bdi(proposta.id, Decimal("20"))
 

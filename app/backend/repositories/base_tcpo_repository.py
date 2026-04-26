@@ -34,6 +34,13 @@ class BaseTcpoRepository(BaseRepository[BaseTcpo]):
         )
         return {s.id: s for s in result.scalars().all()}
 
+    async def get_by_codigo(self, codigo: str) -> BaseTcpo | None:
+        """Fetch a single TCPO item by its exact origin code."""
+        result = await self.db.execute(
+            select(BaseTcpo).where(BaseTcpo.codigo_origem == codigo)
+        )
+        return result.scalar_one_or_none()
+
     async def list_paginated(
         self,
         q: str | None,

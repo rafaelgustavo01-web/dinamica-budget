@@ -33,6 +33,11 @@ async def test_gerar_cpu_sem_composicao():
     snapshot.descricao = "Escavacao"
     snapshot.unidade_medida = "m2"
 
+    svc.proposta_item_repo = MagicMock()
+    svc.resumo_repo = MagicMock()
+    svc.resumo_repo.delete_by_proposta = AsyncMock()
+    svc.resumo_repo.create_batch = AsyncMock()
+
     with patch.object(svc.proposta_repo, "get_by_id", AsyncMock(return_value=proposta)):
         with patch.object(svc.pq_item_repo, "list_by_proposta", AsyncMock(return_value=[pq_item])):
             with patch.object(svc.proposta_item_repo, "delete_by_proposta", AsyncMock()):
@@ -74,6 +79,10 @@ async def test_gerar_cpu_com_composicao_aplica_bdi():
     comp.custo_total_insumo = Decimal("100")
     comp.tipo_recurso = None
     comp.fonte_custo = "custo_base"
+
+    svc.resumo_repo = MagicMock()
+    svc.resumo_repo.delete_by_proposta = AsyncMock()
+    svc.resumo_repo.create_batch = AsyncMock()
 
     with patch.object(svc.proposta_repo, "get_by_id", AsyncMock(return_value=proposta)):
         with patch.object(svc.pq_item_repo, "list_by_proposta", AsyncMock(return_value=[pq_item])):

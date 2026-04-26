@@ -61,8 +61,26 @@ class BuscaService:
         proprios_repo = ItensPropiosRepository(db)
 
         # ─────────────────────────────────────────────────────────────────────
-        # FASE 0: Itens Próprios do Cliente (PROPRIA + APROVADO)
-        # Requer cliente_id — skip quando busca genérica
+        # FASE 0.1: Busca por Código Exato (Circuit Break)
+        # ─────────────────────────────────────────────────────────────────────
+        resultado = await self._fase0_codigo_exato(
+            texto_norm=texto_norm,
+            cliente_id=request.cliente_id,
+            base_repo=base_repo,
+            proprios_repo=proprios_repo,
+        )
+        if resultado:
+            return await self._build_response(
+                texto_busca=request.texto_busca,
+                resultados=resultado,
+                t0=t0,
+                cliente_id=request.cliente_id,
+                usuario_id=usuario_id,
+                db=db,
+            )
+
+        # ─────────────────────────────────────────────────────────────────────
+        # FASE 0.2: Itens Próprios do Cliente (PROPRIA + APROVADO)
         # ─────────────────────────────────────────────────────────────────────
         if request.cliente_id is not None:
             resultado = await self._fase0_itens_proprios(
@@ -81,17 +99,9 @@ class BuscaService:
                     usuario_id=usuario_id,
                     db=db,
                 )
-            logger.info(
-                "busca_fase_0_sem_resultados",
-                cliente_id=str(request.cliente_id),
-                texto=texto_norm,
-            )
-        else:
-            logger.info("busca_sem_cliente_skip_fase0", texto=texto_norm)
 
         # ─────────────────────────────────────────────────────────────────────
         # FASE 1: Associação Direta (associacao_inteligente)
-        # Requer cliente_id — skip quando busca genérica
         # ─────────────────────────────────────────────────────────────────────
         if request.cliente_id is not None:
             resultado, associacao = await self._fase1_associacao(
@@ -111,13 +121,6 @@ class BuscaService:
                     usuario_id=usuario_id,
                     db=db,
                 )
-            logger.info(
-                "busca_fase_1_sem_resultados",
-                cliente_id=str(request.cliente_id),
-                texto=texto_norm,
-            )
-        else:
-            logger.info("busca_sem_cliente_skip_fase1", texto=texto_norm)
 
         # ─────────────────────────────────────────────────────────────────────
         # FASE 2: Fuzzy Global (pg_trgm — catálogo TCPO)
@@ -157,6 +160,55 @@ class BuscaService:
             usuario_id=usuario_id,
             db=db,
         )
+
+    # ─── Fase 0.1: Busca por Código Exato ────────────────────────────────────
+
+    async def _fase0_codigo_exato(
+        self,
+        texto_norm: str,
+        cliente_id: UUID | None,
+        base_repo: BaseTcpoRepository,
+        proprios_repo: ItensPropiosRepository,
+    ) -> list[ResultadoBusca] | None:
+        """Checks for an exact code match in PROPRIA then BASE_TCPO."""
+        # Check ItemProprio first (priority)
+        if cliente_id:
+            item_p = await proprios_repo.get_by_codigo_scoped(texto_norm, cliente_id)
+            if item_p:
+                logger.info("fase0_1_codigo_exato_proprio_hit", code=texto_norm)
+                return [
+                    ResultadoBusca(
+                        id_tcpo=item_p.id,
+                        codigo_origem=item_p.codigo_origem,
+                        descricao=item_p.descricao,
+                        unidade=item_p.unidade_medida,
+                        custo_unitario=float(item_p.custo_unitario),
+                        score=1.0,
+                        score_confianca=1.0,
+                        origem_match="CODIGO_EXATO_PROPRIO",
+                        status_homologacao=item_p.status_homologacao.value,
+                    )
+                ]
+
+        # Check BaseTcpo
+        item_b = await base_repo.get_by_codigo(texto_norm)
+        if item_b:
+            logger.info("fase0_1_codigo_exato_tcpo_hit", code=texto_norm)
+            return [
+                ResultadoBusca(
+                    id_tcpo=item_b.id,
+                    codigo_origem=item_b.codigo_origem,
+                    descricao=item_b.descricao,
+                    unidade=item_b.unidade_medida,
+                    custo_unitario=float(item_b.custo_base),
+                    score=1.0,
+                    score_confianca=1.0,
+                    origem_match="CODIGO_EXATO_TCPO",
+                    status_homologacao="APROVADO",
+                )
+            ]
+
+        return None
 
     # ─── Fase 0: Itens Próprios do Cliente ───────────────────────────────────
 

@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, Enum as SAEnum, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Enum as SAEnum, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -60,6 +60,11 @@ class Proposta(Base, TimestampMixin):
         cascade="all, delete-orphan",
     )
     itens: Mapped[list["PropostaItem"]] = relationship(
+        back_populates="proposta",
+        lazy="noload",
+        cascade="all, delete-orphan",
+    )
+    resumo_recursos: Mapped[list["PropostaResumoRecurso"]] = relationship(
         back_populates="proposta",
         lazy="noload",
         cascade="all, delete-orphan",
@@ -242,3 +247,29 @@ class PropostaItemComposicao(Base):
 
     proposta_item: Mapped[PropostaItem] = relationship(back_populates="composicoes", lazy="noload")
 
+
+class PropostaResumoRecurso(Base):
+    __tablename__ = "proposta_resumo_recursos"
+    __table_args__ = (
+        CheckConstraint("total_direto >= 0", name="ck_resumo_direto_positivo"),
+        CheckConstraint("total_indireto >= 0", name="ck_resumo_indireto_positivo"),
+        CheckConstraint("total_geral >= 0", name="ck_resumo_geral_positivo"),
+        {"schema": "operacional"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    proposta_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("operacional.propostas.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    tipo_recurso: Mapped[str] = mapped_column(String(50), nullable=False)
+    total_direto: Mapped[Decimal] = mapped_column(Numeric(15, 4), nullable=False, default=Decimal("0"))
+    total_indireto: Mapped[Decimal] = mapped_column(Numeric(15, 4), nullable=False, default=Decimal("0"))
+    total_geral: Mapped[Decimal] = mapped_column(Numeric(15, 4), nullable=False, default=Decimal("0"))
+    data_atualizacao: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    proposta: Mapped[Proposta] = relationship(back_populates="resumo_recursos", lazy="noload")

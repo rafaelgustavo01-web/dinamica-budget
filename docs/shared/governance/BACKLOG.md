@@ -30,7 +30,7 @@ Responsável: Research AI / QA Re-avaliação
 | `F2-04` | DONE | P1 | `S-11`, `F2-03` | CPU Detalhada — breakdown de insumos por item (material/MO/equipamento) + BDI dinâmico recalculável sem regerar CPU | GET /cpu/itens/{id}/composicoes retorna insumos; POST /cpu/recalcular-bdi atualiza totais; CpuPage desbloqueada com accordion; 115 PASS |
 | `F2-05` | TESTED | P1 | `F2-03`, `F2-04` | Exportação — folha de rosto e quadro-resumo em Excel/PDF da proposta completa | Excel multi-aba (Capa/Resumo/CPU/Composições) e PDF folha de rosto; endpoints autenticados; frontend ExportMenu em ProposalDetailPage e ProposalCpuPage; 130+ PASS; 0 tsc errors |
 | `F2-06` | TODO | P2 | `F2-03` | UX complementar — edição de PQ pós-importação, filtros de proposta, duplicação de proposta | PATCH /pq/itens edita descricao/qtd/unidade; filtros por status na lista; POST /propostas/{id}/duplicar |
-| `F2-07` | TODO | P2 | `F2-01`, `F2-02` | Tabelas de Recursos + Motor 4 Camadas — agregado por recurso na CPU + busca formalizada em 4 camadas | PropostaResumoRecurso gerado ao chamar gerar-cpu; busca aplica histórico/código/fuzzy/semântico em ordem |
+| `F2-07` | TESTED | P2 | `F2-01`, `F2-02` | Tabelas de Recursos + Motor 4 Camadas — agregado por recurso na CPU + busca formalizada em 4 camadas | PropostaResumoRecurso gerado ao chamar gerar-cpu; busca aplica histórico/código/fuzzy/semântico em ordem |
 
 ## Ordem Recomendada de Execução
 

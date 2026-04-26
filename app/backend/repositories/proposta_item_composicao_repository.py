@@ -21,6 +21,15 @@ class PropostaItemComposicaoRepository(BaseRepository[PropostaItemComposicao]):
         )
         return list(result.scalars().all())
 
+    async def list_by_proposta(self, proposta_id: UUID) -> list[PropostaItemComposicao]:
+        from backend.models.proposta import PropostaItem
+        result = await self.db.execute(
+            select(PropostaItemComposicao)
+            .join(PropostaItem, PropostaItem.id == PropostaItemComposicao.proposta_item_id)
+            .where(PropostaItem.proposta_id == proposta_id)
+        )
+        return list(result.scalars().all())
+
     async def create_batch(self, items: list[PropostaItemComposicao]) -> list[PropostaItemComposicao]:
         self.db.add_all(items)
         await self.db.flush()

@@ -44,7 +44,8 @@ class ResultadoBusca(BaseModel):
     score: float
     score_confianca: float
     origem_match: Literal[
-        "ASSOCIACAO_DIRETA", "FUZZY", "IA_SEMANTICA", "PROPRIA_CLIENTE"
+        "ASSOCIACAO_DIRETA", "FUZZY", "IA_SEMANTICA", "PROPRIA_CLIENTE",
+        "CODIGO_EXATO_PROPRIO", "CODIGO_EXATO_TCPO"
     ]
     status_homologacao: str  # StatusHomologacao enum value
 

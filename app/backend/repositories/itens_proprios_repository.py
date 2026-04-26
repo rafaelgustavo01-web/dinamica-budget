@@ -44,6 +44,18 @@ class ItensPropiosRepository(BaseRepository[ItemProprio]):
         )
         return {s.id: s for s in result.scalars().all()}
 
+    async def get_by_codigo_scoped(self, codigo: str, cliente_id: UUID) -> ItemProprio | None:
+        """Fetch a single approved PROPRIA item by its exact code, scoped to a client."""
+        result = await self.db.execute(
+            select(ItemProprio).where(
+                ItemProprio.codigo_origem == codigo,
+                ItemProprio.cliente_id == cliente_id,
+                ItemProprio.status_homologacao == StatusHomologacao.APROVADO,
+                ItemProprio.deleted_at.is_(None),
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def list_paginated(
         self,
         q: str | None,
