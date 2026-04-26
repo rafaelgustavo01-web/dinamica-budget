@@ -3,7 +3,7 @@ from uuid import UUID
 
 from backend.core.exceptions import NotFoundError
 from backend.models.enums import StatusMatch, StatusProposta
-from backend.models.proposta import PropostaItem
+from backend.models.proposta import PropostaItem, PropostaItemComposicao
 from backend.repositories.base_tcpo_repository import BaseTcpoRepository
 from backend.repositories.itens_proprios_repository import ItensPropiosRepository
 from backend.repositories.pq_item_repository import PqItemRepository
@@ -94,6 +94,48 @@ class CpuGeracaoService:
 
     async def listar_cpu_itens(self, proposta_id: UUID) -> list[PropostaItem]:
         return await self.proposta_item_repo.list_by_proposta(proposta_id)
+
+    async def recalcular_bdi(self, proposta_id: UUID, percentual_bdi: Decimal) -> dict:
+        proposta = await self.proposta_repo.get_by_id(proposta_id)
+        if not proposta:
+            raise NotFoundError("Proposta", str(proposta_id))
+
+        proposta_itens = await self.proposta_item_repo.list_by_proposta(proposta_id)
+        
+        total_direto = Decimal("0")
+        total_indireto = Decimal("0")
+        
+        for item in proposta_itens:
+            custo_direto_unitario = item.custo_direto_unitario or Decimal("0")
+            custo_indireto_unitario = custo_direto_unitario * (percentual_bdi / Decimal("100"))
+            preco_unitario = custo_direto_unitario + custo_indireto_unitario
+            preco_total = preco_unitario * item.quantidade
+
+            item.percentual_indireto = percentual_bdi
+            item.custo_indireto_unitario = custo_indireto_unitario
+            item.preco_unitario = preco_unitario
+            item.preco_total = preco_total
+            
+            total_direto += custo_direto_unitario * item.quantidade
+            total_indireto += custo_indireto_unitario * item.quantidade
+
+        proposta.total_direto = total_direto
+        proposta.total_indireto = total_indireto
+        proposta.total_geral = total_direto + total_indireto
+        
+        await self.db.flush()
+        
+        return {
+            "proposta_id": str(proposta_id),
+            "percentual_bdi": percentual_bdi,
+            "total_direto": total_direto,
+            "total_indireto": total_indireto,
+            "total_geral": proposta.total_geral,
+            "itens_recalculados": len(proposta_itens),
+        }
+
+    async def listar_composicoes_item(self, proposta_item_id: UUID) -> list[PropostaItemComposicao]:
+        return await self.comp_repo.list_by_proposta_item(proposta_item_id)
 
     async def _rebuild_proposta_itens(self, proposta_id: UUID, pc_cabecalho_id: UUID | None) -> list[PropostaItem]:
         await self.proposta_item_repo.delete_by_proposta(proposta_id)
