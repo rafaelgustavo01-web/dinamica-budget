@@ -38,6 +38,14 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Rework: @docs/briefings/sprint-f2-02-rework-v1.md
 - Notes: REJEITADA. Problema de duplicação por explosão DFS e falta de metadados em sub-níveis. Rework solicitado ao Worker.
 
+### [PENDING] 2026-04-25T23:30:00Z — Sprint F2-04
+- From: worker (kimi-k2.5)
+- Action: REVIEW
+- Walkthrough: @docs/sprints/F2-04/walkthrough/done/walkthrough-F2-04.md
+- Technical Review: @docs/sprints/F2-04/technical-review/technical-review-2026-04-25-f2-04.md
+- Tests: `pytest app/backend/tests/ -q` -> `115 passed, 0 failed`; `cd app/frontend && npx tsc --noEmit` -> `0 erros`
+- Notes: CPU detalhada com breakdown de insumos, BDI dinamico, ProposalCpuPage desbloqueada. 8 testes unitarios novos.
+
 ### [PENDING] 2026-04-25T16:10:00Z — Sprint F2-02
 - From: worker (kimi-k2.5)
 - Action: REVIEW
