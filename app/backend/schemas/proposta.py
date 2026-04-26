@@ -1,10 +1,11 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from backend.models.enums import StatusProposta, TipoServicoMatch
+from backend.models.enums import StatusMatch, StatusProposta, TipoServicoMatch
 
 
 class PropostaCreate(BaseModel):
@@ -123,4 +124,37 @@ class RecalcularBdiResponse(BaseModel):
     total_indireto: Decimal
     total_geral: Decimal
     itens_recalculados: int
+
+
+class PqItemResponse(BaseModel):
+    id: UUID
+    proposta_id: UUID
+    pq_importacao_id: UUID | None
+    codigo_original: str | None
+    descricao_original: str
+    unidade_medida_original: str | None
+    quantidade_original: Decimal | None
+    match_status: StatusMatch
+    match_confidence: Decimal | None
+    servico_match_id: UUID | None
+    servico_match_tipo: TipoServicoMatch | None
+    linha_planilha: int | None
+    observacao: str | None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PqMatchConfirmarRequest(BaseModel):
+    acao: Literal["confirmar", "substituir", "rejeitar"]
+    servico_match_id: UUID | None = None
+    servico_match_tipo: TipoServicoMatch | None = None
+    quantidade: Decimal | None = None
+
+    @model_validator(mode="after")
+    def substituir_requer_servico(self) -> "PqMatchConfirmarRequest":
+        if self.acao == "substituir" and self.servico_match_id is None:
+            raise ValueError("servico_match_id e obrigatorio para acao=substituir")
+        return self
 
