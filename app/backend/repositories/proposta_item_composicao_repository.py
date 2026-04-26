@@ -17,6 +17,7 @@ class PropostaItemComposicaoRepository(BaseRepository[PropostaItemComposicao]):
         result = await self.db.execute(
             select(PropostaItemComposicao)
             .where(PropostaItemComposicao.proposta_item_id == proposta_item_id)
+            .order_by(PropostaItemComposicao.nivel.asc())
         )
         return list(result.scalars().all())
 
