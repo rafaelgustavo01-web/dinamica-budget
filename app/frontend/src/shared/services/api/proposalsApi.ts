@@ -52,6 +52,54 @@ export interface PqMatchResponse {
   sem_match: number;
 }
 
+export interface ComposicaoDetalhe {
+  id: string;
+  proposta_item_id: string;
+  descricao_insumo: string;
+  unidade_medida: string;
+  quantidade_consumo: string;
+  custo_unitario_insumo: string | null;
+  custo_total_insumo: string | null;
+  tipo_recurso: string | null;
+  nivel: number;
+  e_composicao: boolean;
+  fonte_custo: string | null;
+}
+
+export interface CpuItemDetalhado {
+  id: string;
+  proposta_id: string;
+  pq_item_id: string | null;
+  servico_id: string;
+  codigo: string;
+  descricao: string;
+  unidade_medida: string;
+  quantidade: string;
+  custo_material_unitario: string | null;
+  custo_mao_obra_unitario: string | null;
+  custo_equipamento_unitario: string | null;
+  custo_direto_unitario: string | null;
+  percentual_indireto: string | null;
+  custo_indireto_unitario: string | null;
+  preco_unitario: string | null;
+  preco_total: string | null;
+  composicao_fonte: string | null;
+  ordem: number;
+}
+
+export interface RecalcularBdiRequest {
+  percentual_bdi: number;
+}
+
+export interface RecalcularBdiResponse {
+  proposta_id: string;
+  percentual_bdi: number;
+  total_direto: number;
+  total_indireto: number;
+  total_geral: number;
+  itens_recalculados: number;
+}
+
 export const proposalsApi = {
   async list(clienteId: string, page = 1, pageSize = 20) {
     const response = await apiClient.get<PaginatedResponse<PropostaResponse>>('/propostas/', {
@@ -100,6 +148,46 @@ export const proposalsApi = {
 
   async executeMatch(propostaId: string) {
     const response = await apiClient.post<PqMatchResponse>(`/propostas/${propostaId}/pq/match`);
+    return response.data;
+  },
+
+  async listCpuItens(propostaId: string) {
+    const response = await apiClient.get<CpuItemDetalhado[]>(
+      `/propostas/${propostaId}/cpu/itens`,
+    );
+    return response.data;
+  },
+
+  async getComposicoes(propostaId: string, itemId: string) {
+    const response = await apiClient.get<ComposicaoDetalhe[]>(
+      `/propostas/${propostaId}/cpu/itens/${itemId}/composicoes`,
+    );
+    return response.data;
+  },
+
+  async recalcularBdi(
+    propostaId: string,
+    payload: RecalcularBdiRequest,
+  ) {
+    const response = await apiClient.post<RecalcularBdiResponse>(
+      `/propostas/${propostaId}/cpu/recalcular-bdi`,
+      payload,
+    );
+    return response.data;
+  },
+
+  async gerarCpu(
+    propostaId: string,
+    percentualBdi: number,
+    pcCabecalhoId?: string,
+  ) {
+    const params: Record<string, string | number> = { percentual_bdi: percentualBdi };
+    if (pcCabecalhoId) params.pc_cabecalho_id = pcCabecalhoId;
+    const response = await apiClient.post(
+      `/propostas/${propostaId}/cpu/gerar`,
+      null,
+      { params },
+    );
     return response.data;
   },
 };
