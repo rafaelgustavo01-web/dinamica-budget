@@ -1,15 +1,21 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import get_current_active_user, get_db, require_cliente_access
 from backend.core.exceptions import NotFoundError
+from backend.models.enums import StatusMatch
 from backend.repositories.pq_importacao_repository import PqImportacaoRepository
 from backend.repositories.pq_item_repository import PqItemRepository
 from backend.repositories.pq_layout_repository import PqLayoutRepository
 from backend.repositories.proposta_repository import PropostaRepository
-from backend.schemas.proposta import PqImportacaoResponse, PqMatchResponse
+from backend.schemas.proposta import (
+    PqImportacaoResponse,
+    PqItemResponse,
+    PqMatchConfirmarRequest,
+    PqMatchResponse,
+)
 from backend.services.pq_import_service import PqImportService
 from backend.services.pq_match_service import PqMatchService
 
@@ -65,4 +71,59 @@ async def executar_match(
     )
     resultados = await svc.executar_match_para_proposta(proposta_id, current_user.id)
     return PqMatchResponse(**resultados)
+
+
+@router.get("/itens", response_model=list[PqItemResponse])
+async def listar_pq_itens(
+    proposta_id: UUID,
+    status_match: StatusMatch | None = Query(default=None),
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[PqItemResponse]:
+    proposta = await _get_proposta_or_404(db, proposta_id)
+    await require_cliente_access(proposta.cliente_id, current_user, db)
+    items = await PqItemRepository(db).list_by_proposta(proposta_id, status_match=status_match)
+    return [PqItemResponse.model_validate(item) for item in items]
+
+
+@router.patch("/itens/{item_id}/match", response_model=PqItemResponse)
+async def atualizar_match_item(
+    proposta_id: UUID,
+    item_id: UUID,
+    body: PqMatchConfirmarRequest,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> PqItemResponse:
+    from backend.core.exceptions import ValidationError as AppValidationError
+
+    proposta = await _get_proposta_or_404(db, proposta_id)
+    await require_cliente_access(proposta.cliente_id, current_user, db)
+
+    repo = PqItemRepository(db)
+    item = await repo.get_by_id(item_id)
+    if item is None or item.proposta_id != proposta_id:
+        raise NotFoundError("PqItem", str(item_id))
+
+    if body.acao == "rejeitar":
+        await repo.update_status(item, StatusMatch.SEM_MATCH)
+    elif body.acao == "confirmar":
+        await repo.update_status(item, StatusMatch.CONFIRMADO)
+    elif body.acao == "substituir":
+        if body.servico_match_id is None or body.servico_match_tipo is None:
+            raise AppValidationError("servico_match_id e servico_match_tipo sao obrigatorios para acao=substituir")
+        await repo.update_match(
+            pq_item=item,
+            servico_match_id=body.servico_match_id,
+            servico_match_tipo=body.servico_match_tipo,
+            confidence=1.0,
+        )
+        await repo.update_status(item, StatusMatch.MANUAL)
+
+    if body.quantidade is not None:
+        item.quantidade_original = body.quantidade
+        await db.flush()
+
+    await db.commit()
+    await db.refresh(item)
+    return PqItemResponse.model_validate(item)
 
