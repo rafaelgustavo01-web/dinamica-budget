@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.1",
+  "last_updated": "2026-04-18",
+  "agents": [
+    {
+      "name": "Codex",
+      "available": true,
+      "busy": false,
+      "current_role": null,
+      "current_sprint": null,
+      "capabilities": ["BUILD", "Agent"],
+      "strengths": ["Python", "refactor", "test-writing", "DAG"],
+      "last_checked_at": "2026-04-18T00:00:00"
+    },
+    {
+      "name": "Kimi",
+      "available": true,
+      "busy": false,
+      "current_role": null,
+      "current_sprint": null,
+      "capabilities": ["BUILD", "Agent", "research"],
+      "strengths": ["research", "analysis", "encoding", "unicode"],
+      "last_checked_at": "2026-04-18T00:00:00"
+    },
+    {
+      "name": "OpenCode",
+      "available": true,
+      "busy": false,
+      "current_role": null,
+      "current_sprint": null,
+      "capabilities": ["BUILD", "Always Proceed"],
+      "strengths": ["execution", "file-ops", "encoding", "CI"],
+      "last_checked_at": "2026-04-18T00:00:00"
+    },
+    {
+      "name": "Gemini",
+      "available": true,
+      "busy": false,
+      "current_role": null,
+      "current_sprint": null,
+      "capabilities": ["Agent", "research"],
+      "strengths": ["research", "roadmap", "long-context"],
+      "last_checked_at": "2026-04-18T00:00:00"
+    }
+  ],
+  "role_assignment_rules": {
+    "max_active_roles_per_agent": 1,
+    "roles_any_agent_can_hold": ["Worker", "Tester", "Scrum Master", "Research AI"],
+    "roles_reserved": {
+      "Product Owner": "Rafa (human PO)",
+      "Git Controller": "any agent on-demand",
+      "Assistant": "any agent on-demand",
+      "Log Creator": "any agent when explicitly enabled"
+    }
+  }
+}

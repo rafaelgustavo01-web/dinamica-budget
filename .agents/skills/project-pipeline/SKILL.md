@@ -54,17 +54,32 @@ Communication between roles happens exclusively through **inbox sections inside 
 
 ## Artifact Paths
 
-- Config: `docs/pipeline/config.md`
-- Backlog: `docs/BACKLOG.md`
-- Plans: `docs/superpowers/plans/`
-- Briefings: `docs/briefings/` (original + rework versions)
-- Worker prompts: `docs/dispatch/pending/`
-- Walkthroughs: `docs/walkthrough/done/`
-- Reviewed walkthroughs: `docs/walkthrough/reviewed/`
-- Technical reviews: `docs/technical-review-YYYY-MM-DD.md`
-- Technical feedback: `docs/technical-feedback-YYYY-MM-DD-vN.md`
+### Global (project-wide)
+
+- Config: `docs/shared/pipeline/config.md`
+- Backlog: `docs/shared/governance/BACKLOG.md`
 - Worker registry: `templates/workers.json`
-- Role inboxes: `docs/roles/*.md` (## INBOX section)
+- Role inboxes: `docs/shared/roles/*.md` (## INBOX section)
+
+### Per-Sprint (structured inside each sprint folder)
+
+All sprint artifacts MUST be saved inside the sprint's own directory tree:
+
+```
+docs/sprints/[ID]/
+  briefing/          # sprint-[ID]-briefing.md, sprint-[ID]-rework-v[N].md
+  plans/             # YYYY-MM-DD-[name].md
+  dispatch/          # sprint-[ID]-worker-prompt.md
+  technical-review/  # technical-review-YYYY-MM-DD-[id].md
+  technical-feedback/ # technical-feedback-YYYY-MM-DD-[id]-v[N].md
+  walkthrough/
+    done/            # walkthrough-[ID].md
+    reviewed/        # walkthrough-[ID].md (moved here by QA on DONE)
+```
+
+> **Rule:** Never save sprint-specific artifacts in flat shared directories.
+> Each sprint is self-contained. A sprint folder must contain all evidence
+> needed to understand, review, and audit that sprint independently.
 
 ## Git Controller Rules
 
