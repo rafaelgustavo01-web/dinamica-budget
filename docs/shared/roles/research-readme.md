@@ -21,6 +21,20 @@ Your inbox has `[PENDING]` with `Action: MINE_ROADMAP`.
 
 ## INBOX
 
+### [PENDING] 2026-04-26T11:45:00Z — Sprint F2-02 (DONE)
+- From: qa
+- Action: MINE_ROADMAP
+- Walkthrough: @docs/walkthrough/reviewed/walkthrough-F2-02.md
+- Feedback: @docs/technical-feedback-2026-04-26-f2-02-v2.md
+- Notes: F2-02 aceita. Explosão recursiva com árvore real (sem achatamento) implementada. Suporta BaseTcpo e ItemProprio. 118 testes unitários OK. Alimentar ROADMAP com padrões de navegação em árvore N níveis para UI.
+
+### [PENDING] 2026-04-26T00:30:00Z — Sprint F2-04 (DONE)
+- From: qa
+- Action: MINE_ROADMAP
+- Walkthrough: @docs/walkthrough/reviewed/walkthrough-F2-04.md
+- Feedback: @docs/technical-feedback-2026-04-25-f2-04-v1.md
+- Notes: F2-04 aceita. CPU detalhada e BDI dinâmico implementados. Breakdown de custos por categoria (MAT/MO/EQUIP) funcional. Próximo: Alimentar ROADMAP com padrões de exportação de dados detalhados para F2-05.
+
 ### [PENDING] 2026-04-22T22:45Z — Sprint S-02 (DONE)
 - From: qa
 - Action: MINE_ROADMAP

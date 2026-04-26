@@ -23,6 +23,16 @@ Your inbox has `[PENDING]` with `Action: INTAKE_NEXT`, OR all active sprints are
 
 ## INBOX
 
+### [PENDING] 2026-04-26T11:45:00Z — Sprint F2-02 DONE — WIP slot liberado
+- From: qa
+- Action: INTAKE_NEXT
+- Notes: F2-02 fechada com sucesso após rework. Árvore N níveis real sem duplicação. 118 testes OK. WIP atual diminuiu. Slot disponível.
+
+### [PENDING] 2026-04-26T00:30:00Z — Sprint F2-04 DONE — WIP slot liberado
+- From: qa
+- Action: INTAKE_NEXT
+- Notes: F2-04 fechada pelo QA. CPU detalhada e BDI dinâmico OK. WIP atual diminuiu. Slot disponível. F2-05 (Exportação) está pronta para intake (depende de F2-04 ✅). F2-02 aguarda rework.
+
 ### [DONE] 2026-04-22T22:45Z — Sprint S-02 DONE — WIP slot liberado
 - From: qa
 - Action: INTAKE_NEXT
