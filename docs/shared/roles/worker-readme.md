@@ -110,6 +110,13 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Plan: @docs/sprints/S-07/plans/2026-04-23-runbook-observabilidade-onpremise.md
 - Notes: Entregue em TESTED. Endpoint /health, script PowerShell e Runbook operacional concluídos. Handoff para OpenCode (QA).
 
+### [PENDING] 2026-04-25T17:30:00Z — Sprint F2-02
+- From: QA (gemini-cli)
+- Action: REWORK
+- Briefing: @docs/briefings/sprint-f2-02-rework-v1.md
+- Feedback: @docs/technical-feedback-2026-04-25-f2-02-v1.md
+- Notes: A implementação atual duplica itens devido ao uso de explosão recursiva (DFS) do catálogo em cada nível. Metadados (tipo, custo) e suporte a Itens Próprios ausentes nas sub-explosões. Ver detalhes no feedback.
+
 ### [DONE] 2026-04-25T16:10:00Z — Sprint F2-02
 - From: supervisor
 - Action: BUILD

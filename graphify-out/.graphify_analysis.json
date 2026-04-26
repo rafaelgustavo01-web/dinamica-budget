@@ -1,0 +1,2370 @@
+{
+  "communities": {
+    "0": [
+      "app_backend_api_v1_endpoints_cpu_geracao_py",
+      "app_backend_api_v1_endpoints_pq_importacao_py",
+      "app_backend_models_base_py",
+      "app_backend_models_categoria_recurso_py",
+      "app_backend_models_enums_py",
+      "app_backend_models_proposta_py",
+      "app_backend_repositories_pq_importacao_repository_py",
+      "app_backend_repositories_pq_item_repository_py",
+      "app_backend_repositories_proposta_item_composicao_repository_py",
+      "app_backend_repositories_proposta_item_repository_py",
+      "app_backend_repositories_proposta_repository_py",
+      "app_backend_schemas_proposta_py",
+      "app_backend_services_cpu_custo_service_py",
+      "app_backend_services_cpu_geracao_service_py",
+      "app_backend_services_pq_import_service_py",
+      "app_backend_services_pq_match_service_py",
+      "app_backend_services_proposta_service_py",
+      "app_backend_tests_unit_test_cpu_geracao_service_py",
+      "app_backend_tests_unit_test_pq_import_service_py",
+      "app_backend_tests_unit_test_pq_match_service_py",
+      "app_backend_tests_unit_test_proposta_service_py",
+      "associacao_repository_associacaorepository_list_by_cliente",
+      "base_repository_baserepository_count",
+      "base_repository_baserepository_delete",
+      "base_repository_baserepository_update",
+      "base_timestampmixin",
+      "categoria_recurso_categoriarecurso",
+      "cliente_repository_clienterepository_list_paginated",
+      "cpu_custo_service_cpucustoservice",
+      "cpu_custo_service_cpucustoservice_calcular_custos",
+      "cpu_custo_service_cpucustoservice_init",
+      "cpu_custo_service_cpucustoservice_lookup_equipamento",
+      "cpu_custo_service_cpucustoservice_lookup_mao_obra",
+      "cpu_geracao_gerar_cpu",
+      "cpu_geracao_get_proposta_or_404",
+      "cpu_geracao_listar_cpu_itens",
+      "cpu_geracao_service_cpugeracaoservice",
+      "cpu_geracao_service_cpugeracaoservice_agrupar_custos",
+      "cpu_geracao_service_cpugeracaoservice_gerar_cpu_para_proposta",
+      "cpu_geracao_service_cpugeracaoservice_init",
+      "cpu_geracao_service_cpugeracaoservice_listar_cpu_itens",
+      "cpu_geracao_service_cpugeracaoservice_rebuild_proposta_itens",
+      "enums_rationale_1",
+      "enums_statusimportacao",
+      "enums_statusmatch",
+      "enums_statusproposta",
+      "enums_tipocusto",
+      "enums_tiposervicomatch",
+      "itens_proprios_repository_itenspropiosrepository_list_paginated",
+      "pq_import_service_decode_csv",
+      "pq_import_service_find_column_map",
+      "pq_import_service_normalize_header",
+      "pq_import_service_parse_decimal",
+      "pq_import_service_pqimportservice",
+      "pq_import_service_pqimportservice_build_parsed_row",
+      "pq_import_service_pqimportservice_importar_planilha",
+      "pq_import_service_pqimportservice_init",
+      "pq_import_service_pqimportservice_parse_contents",
+      "pq_import_service_pqimportservice_parse_csv",
+      "pq_import_service_pqimportservice_parse_xlsx",
+      "pq_importacao_executar_match",
+      "pq_importacao_get_proposta_or_404",
+      "pq_importacao_repository_pqimportacaorepository",
+      "pq_importacao_repository_pqimportacaorepository_get_by_id",
+      "pq_importacao_repository_pqimportacaorepository_init",
+      "pq_importacao_upload_planilha",
+      "pq_item_repository_pqitemrepository",
+      "pq_item_repository_pqitemrepository_create_batch",
+      "pq_item_repository_pqitemrepository_get_by_id",
+      "pq_item_repository_pqitemrepository_init",
+      "pq_item_repository_pqitemrepository_list_by_proposta",
+      "pq_item_repository_pqitemrepository_update_match",
+      "pq_item_repository_pqitemrepository_update_status",
+      "pq_match_service_pqmatchservice",
+      "pq_match_service_pqmatchservice_executar_match_para_proposta",
+      "pq_match_service_pqmatchservice_init",
+      "proposta_cpugeracaodetalheresponse",
+      "proposta_cpugeracaoresponse",
+      "proposta_cpuitemresponse",
+      "proposta_item_composicao_repository_propostaitemcomposicaorepository",
+      "proposta_item_composicao_repository_propostaitemcomposicaorepository_create_batch",
+      "proposta_item_composicao_repository_propostaitemcomposicaorepository_delete_by_proposta_item",
+      "proposta_item_composicao_repository_propostaitemcomposicaorepository_init",
+      "proposta_item_composicao_repository_propostaitemcomposicaorepository_list_by_proposta_item",
+      "proposta_item_repository_propostaitemrepository",
+      "proposta_item_repository_propostaitemrepository_create_batch",
+      "proposta_item_repository_propostaitemrepository_delete_by_proposta",
+      "proposta_item_repository_propostaitemrepository_get_by_id",
+      "proposta_item_repository_propostaitemrepository_init",
+      "proposta_item_repository_propostaitemrepository_list_by_proposta",
+      "proposta_pqimportacao",
+      "proposta_pqimportacaoresponse",
+      "proposta_pqitem",
+      "proposta_pqmatchresponse",
+      "proposta_proposta",
+      "proposta_propostacreate",
+      "proposta_propostaitem",
+      "proposta_propostaitemcomposicao",
+      "proposta_propostaresponse",
+      "proposta_propostastatusupdate",
+      "proposta_propostaupdate",
+      "proposta_repository_propostarepository",
+      "proposta_repository_propostarepository_count_by_code_prefix",
+      "proposta_repository_propostarepository_get_by_id",
+      "proposta_repository_propostarepository_init",
+      "proposta_repository_propostarepository_list_by_cliente",
+      "proposta_repository_propostarepository_soft_delete",
+      "proposta_service_propostaservice",
+      "proposta_service_propostaservice_atualizar_metadados",
+      "proposta_service_propostaservice_atualizar_status",
+      "proposta_service_propostaservice_criar_proposta",
+      "proposta_service_propostaservice_gerar_codigo",
+      "proposta_service_propostaservice_init",
+      "proposta_service_propostaservice_listar_propostas",
+      "proposta_service_propostaservice_obter_detalhe",
+      "proposta_service_propostaservice_soft_delete",
+      "propostas_get_service",
+      "test_cpu_geracao_service_test_gerar_cpu_com_composicao_aplica_bdi",
+      "test_cpu_geracao_service_test_gerar_cpu_sem_composicao",
+      "test_pq_import_service_build_upload",
+      "test_pq_import_service_test_importar_planilha_csv_cria_itens_e_normaliza_tokens",
+      "test_pq_import_service_test_importar_planilha_rejeita_extensao_nao_suportada",
+      "test_pq_import_service_test_importar_planilha_xlsx_reconhece_aliases_de_coluna",
+      "test_pq_match_service_test_executar_match_para_proposta_atualiza_sugestao_e_sem_match",
+      "test_proposta_service_mock_repo",
+      "test_proposta_service_proposta_service",
+      "test_proposta_service_test_atualizar_metadados_rejects_approved",
+      "test_proposta_service_test_atualizar_metadados_updates_fields",
+      "test_proposta_service_test_criar_proposta_defaults_to_rascunho",
+      "test_proposta_service_test_listar_propostas_uses_pagination",
+      "test_proposta_service_test_obter_detalhe_blocks_cross_cliente",
+      "timestampmixin"
+    ],
+    "1": [
+      "app_backend_models_base_tcpo_py",
+      "app_backend_models_cliente_py",
+      "app_backend_models_itens_proprios_py",
+      "app_backend_models_tcpo_embeddings_py",
+      "app_backend_repositories_base_repository_py",
+      "app_backend_repositories_base_tcpo_repository_py",
+      "app_backend_repositories_versao_composicao_repository_py",
+      "app_backend_schemas_etl_py",
+      "app_backend_schemas_servico_py",
+      "app_backend_services_etl_service_py",
+      "app_backend_tests_integration_test_auth_access_control_py",
+      "base_repository_baserepository",
+      "base_repository_baserepository_get_all",
+      "base_repository_baserepository_get_by_id",
+      "base_repository_baserepository_init",
+      "base_tcpo_basetcpo",
+      "base_tcpo_rationale_1",
+      "base_tcpo_repository_basetcporepository",
+      "base_tcpo_repository_basetcporepository_fuzzy_search",
+      "base_tcpo_repository_basetcporepository_get_by_ids",
+      "base_tcpo_repository_basetcporepository_get_with_composicao_base",
+      "base_tcpo_repository_basetcporepository_get_without_embeddings",
+      "base_tcpo_repository_basetcporepository_init",
+      "base_tcpo_repository_basetcporepository_list_paginated",
+      "base_tcpo_repository_rationale_1",
+      "base_tcpo_repository_rationale_102",
+      "base_tcpo_repository_rationale_118",
+      "base_tcpo_repository_rationale_26",
+      "base_tcpo_repository_rationale_44",
+      "base_tcpo_repository_rationale_71",
+      "cliente_cliente",
+      "cliente_repository_clienterepository_create_cliente",
+      "composicao_base_composicaobase",
+      "composicao_cliente_composicaocliente",
+      "enums_statushomologacao",
+      "enums_tiporecurso",
+      "etl_etlexecuterequest",
+      "etl_etlexecuteresponse",
+      "etl_etlitempreview",
+      "etl_etlmode",
+      "etl_etlparsepreview",
+      "etl_etlrelacaopreview",
+      "etl_etlstatusresponse",
+      "etl_etluploadresponse",
+      "etl_rationale_1",
+      "etl_rationale_37",
+      "etl_rationale_46",
+      "etl_service_etlparseresult",
+      "etl_service_etlservice",
+      "etl_service_etlservice_execute_load",
+      "etl_service_etlservice_get_status",
+      "etl_service_etlservice_init",
+      "etl_service_etlservice_parse_converter_datacenter",
+      "etl_service_etlservice_parse_tcpo_pini",
+      "etl_service_etlservice_store_and_build_response",
+      "etl_service_parseditem",
+      "etl_service_parsedrelacao",
+      "etl_service_rationale_1",
+      "etl_service_rationale_105",
+      "etl_service_rationale_190",
+      "etl_service_rationale_236",
+      "etl_service_rationale_94",
+      "exceptions_validationerror",
+      "itens_proprios_itemproprio",
+      "itens_proprios_rationale_1",
+      "itens_proprios_repository_rationale_1",
+      "itens_proprios_repository_rationale_130",
+      "itens_proprios_repository_rationale_151",
+      "itens_proprios_repository_rationale_179",
+      "itens_proprios_repository_rationale_208",
+      "itens_proprios_repository_rationale_26",
+      "itens_proprios_repository_rationale_36",
+      "itens_proprios_repository_rationale_56",
+      "itens_proprios_repository_rationale_89",
+      "servico_catalog_service_rationale_100",
+      "servico_catalog_service_rationale_147",
+      "servico_catalog_service_rationale_206",
+      "servico_catalog_service_rationale_292",
+      "servico_catalog_service_rationale_340",
+      "servico_catalog_service_rationale_396",
+      "servico_catalog_service_rationale_44",
+      "servico_catalog_service_rationale_443",
+      "servico_catalog_service_rationale_459",
+      "servico_catalog_service_rationale_480",
+      "servico_catalog_service_rationale_538",
+      "servico_catalog_service_rationale_85",
+      "servico_catalog_service_servicocatalogservice_explode_recursivo_tcpo",
+      "servico_composicaoitemresponse",
+      "servico_explodecomposicaoresponse",
+      "servico_servicocreate",
+      "servico_servicolistparams",
+      "servico_servicotcporesponse",
+      "servico_versaoinfo",
+      "servicos_rationale_46",
+      "servicos_rationale_69",
+      "tcpo_embeddings_repository_rationale_52",
+      "tcpo_embeddings_tcpoembedding",
+      "test_auth_access_control_rationale_1",
+      "test_auth_access_control_rationale_102",
+      "test_auth_access_control_rationale_123",
+      "test_auth_access_control_rationale_23",
+      "test_auth_access_control_rationale_39",
+      "test_auth_access_control_rationale_62",
+      "test_auth_access_control_rationale_72",
+      "test_auth_access_control_rationale_85",
+      "test_auth_access_control_test_app_state_has_rate_limiter",
+      "test_auth_access_control_test_busca_requires_auth",
+      "test_auth_access_control_test_cors_headers_not_wildcard",
+      "test_auth_access_control_test_create_usuario_short_password_returns_422",
+      "test_auth_access_control_test_create_usuario_unauthenticated_returns_401",
+      "test_auth_access_control_test_health_check_still_works",
+      "test_auth_access_control_test_servico_propria_readable_without_client_link",
+      "test_composicao_clone_new_rationale_1",
+      "versao_composicao_repository_rationale_1",
+      "versao_composicao_repository_rationale_25",
+      "versao_composicao_repository_rationale_48",
+      "versao_composicao_repository_rationale_57",
+      "versao_composicao_repository_rationale_76",
+      "versao_composicao_repository_versaocomposicaorepository",
+      "versao_composicao_repository_versaocomposicaorepository_deactivate_all",
+      "versao_composicao_repository_versaocomposicaorepository_get_with_itens",
+      "versao_composicao_repository_versaocomposicaorepository_init",
+      "versao_composicao_repository_versaocomposicaorepository_list_versoes",
+      "versao_composicao_versaocomposicao"
+    ],
+    "2": [
+      "app_backend_api_v1_endpoints_auth_py",
+      "app_backend_core_audit_hooks_py",
+      "app_backend_core_config_py",
+      "app_backend_core_rate_limit_py",
+      "app_backend_core_security_py",
+      "app_backend_ml_embedder_py",
+      "app_backend_models_usuario_py",
+      "app_backend_repositories_usuario_repository_py",
+      "app_backend_schemas_auth_py",
+      "app_backend_services_auth_service_py",
+      "app_backend_tests_unit_test_auth_service_py",
+      "app_backend_tests_unit_test_security_p0_py",
+      "audit_hooks_rationale_1",
+      "audit_hooks_rationale_22",
+      "audit_hooks_register_audit_hooks",
+      "auth_change_password",
+      "auth_create_usuario",
+      "auth_get_auth_service",
+      "auth_login",
+      "auth_login_form",
+      "auth_logout",
+      "auth_me",
+      "auth_meresponse",
+      "auth_normalize_login_identifier",
+      "auth_passwordchangerequest",
+      "auth_perfilclienteresponse",
+      "auth_profileupdaterequest",
+      "auth_rationale_101",
+      "auth_rationale_113",
+      "auth_rationale_131",
+      "auth_rationale_35",
+      "auth_rationale_55",
+      "auth_rationale_62",
+      "auth_rationale_67",
+      "auth_rationale_88",
+      "auth_refresh_token",
+      "auth_refreshrequest",
+      "auth_service_authservice",
+      "auth_service_authservice_change_password",
+      "auth_service_authservice_create_user",
+      "auth_service_authservice_get_user_profile",
+      "auth_service_authservice_init",
+      "auth_service_authservice_login",
+      "auth_service_authservice_logout",
+      "auth_service_authservice_refresh_token",
+      "auth_service_authservice_update_profile",
+      "auth_service_rationale_96",
+      "auth_tokenresponse",
+      "auth_update_profile",
+      "auth_usuariocreate",
+      "auth_usuarioresponse",
+      "base_repository_baserepository_create",
+      "basesettings",
+      "config_rationale_17",
+      "config_settings",
+      "config_validate_startup_config",
+      "embedder_embedder",
+      "embedder_embedder_encode",
+      "embedder_embedder_encode_batch",
+      "embedder_embedder_init",
+      "embedder_embedder_load",
+      "embedder_rationale_12",
+      "embedder_ready",
+      "main_lifespan",
+      "rate_limit_get_client_ip",
+      "rate_limit_rationale_1",
+      "rate_limit_rationale_16",
+      "security_create_access_token",
+      "security_create_refresh_token",
+      "security_decode_token",
+      "security_hash_password",
+      "security_verify_password",
+      "test_auth_service_auth_service",
+      "test_auth_service_mock_repo",
+      "test_auth_service_test_get_user_profile_admin_adds_wildcard",
+      "test_auth_service_test_get_user_profile_not_found",
+      "test_auth_service_test_get_user_profile_success",
+      "test_security_p0_rationale_1",
+      "test_security_p0_rationale_115",
+      "test_security_p0_rationale_179",
+      "test_security_p0_rationale_210",
+      "test_security_p0_rationale_245",
+      "test_security_p0_rationale_271",
+      "test_security_p0_rationale_281",
+      "test_security_p0_rationale_293",
+      "test_security_p0_rationale_305",
+      "test_security_p0_rationale_52",
+      "test_security_p0_test_create_usuario_endpoint_has_admin_dependency",
+      "test_security_p0_test_get_client_ip_fallback_to_remote_address",
+      "test_security_p0_test_get_client_ip_handles_no_client",
+      "test_security_p0_test_get_client_ip_uses_forwarded_for",
+      "test_security_p0_test_get_servico_propria_open_to_any_authenticated_user",
+      "test_security_p0_test_login_endpoint_has_rate_limit_decorator",
+      "test_security_p0_test_rate_limiter_module_exists",
+      "test_security_p0_test_refresh_endpoint_has_rate_limit_decorator",
+      "test_security_p0_test_settings_allowed_origins_is_not_wildcard",
+      "test_security_p0_test_usuario_create_accepts_8_char_password",
+      "test_security_p0_test_usuario_create_accepts_long_password",
+      "test_security_p0_test_usuario_create_rejects_7_char_password",
+      "test_security_p0_test_usuario_create_rejects_short_password",
+      "test_security_p0_test_validate_startup_config_accepts_strong_key",
+      "test_security_p0_test_validate_startup_config_rejects_default_key",
+      "test_security_p0_test_validate_startup_config_rejects_empty_key",
+      "test_security_p0_test_validate_startup_config_rejects_short_key",
+      "test_security_p0_test_write_endpoints_still_require_client_perfil",
+      "usuario_rationale_12",
+      "usuario_repository_rationale_77",
+      "usuario_repository_usuariorepository",
+      "usuario_repository_usuariorepository_get_by_email",
+      "usuario_repository_usuariorepository_get_perfis",
+      "usuario_repository_usuariorepository_init",
+      "usuario_repository_usuariorepository_set_perfis_cliente",
+      "usuario_repository_usuariorepository_update_hashed_password",
+      "usuario_repository_usuariorepository_update_nome",
+      "usuario_repository_usuariorepository_update_refresh_token",
+      "usuario_usuario",
+      "usuario_usuarioperfil",
+      "usuarios_get_repo"
+    ],
+    "3": [
+      "app_backend_api_v1_endpoints_versoes_py",
+      "app_backend_core_database_py",
+      "app_backend_repositories_itens_proprios_repository_py",
+      "app_backend_services_cpu_explosao_service_py",
+      "app_backend_services_servico_catalog_service_py",
+      "app_backend_services_versao_service_py",
+      "app_backend_tests_unit_test_composicao_clone_new_py",
+      "app_backend_tests_unit_test_security_s04_py",
+      "app_backend_tests_unit_test_transactional_purity_py",
+      "app_backend_tests_unit_test_versao_service_py",
+      "busca_delete_associacao",
+      "cpu_explosao_service_cpuexplosaoservice",
+      "cpu_explosao_service_cpuexplosaoservice_build_composicao",
+      "cpu_explosao_service_cpuexplosaoservice_explodir_proposta_item",
+      "cpu_explosao_service_cpuexplosaoservice_init",
+      "cpu_explosao_service_cpuexplosaoservice_resolve_root_snapshot",
+      "cpu_explosao_service_cpuexplosaoservice_resolve_snapshot",
+      "database_get_db_session",
+      "database_rationale_25",
+      "dependencies_get_db",
+      "exceptions_notfounderror",
+      "homologacao_service_homologacaoservice_listar_pendentes",
+      "itens_proprios_repository_itenspropiosrepository",
+      "itens_proprios_repository_itenspropiosrepository_get_active_by_id",
+      "itens_proprios_repository_itenspropiosrepository_get_active_by_ids",
+      "itens_proprios_repository_itenspropiosrepository_get_with_composicao",
+      "itens_proprios_repository_itenspropiosrepository_init",
+      "itens_proprios_repository_itenspropiosrepository_list_catalogo_visivel",
+      "itens_proprios_repository_itenspropiosrepository_list_pendentes_homologacao",
+      "itens_proprios_repository_itenspropiosrepository_soft_delete",
+      "servico_catalog_service_servicocatalogservice",
+      "servico_catalog_service_servicocatalogservice_adicionar_composicao",
+      "servico_catalog_service_servicocatalogservice_clonar_composicao",
+      "servico_catalog_service_servicocatalogservice_detectar_ciclo",
+      "servico_catalog_service_servicocatalogservice_explode_composicao",
+      "servico_catalog_service_servicocatalogservice_explode_recursivo_propria",
+      "servico_catalog_service_servicocatalogservice_get_servico",
+      "servico_catalog_service_servicocatalogservice_list_servicos",
+      "servico_catalog_service_servicocatalogservice_recalcular_custo_pai",
+      "servico_catalog_service_servicocatalogservice_remover_componente",
+      "servico_catalog_service_servicocatalogservice_soft_delete_servico",
+      "test_composicao_clone_new_make_base_tcpo",
+      "test_composicao_clone_new_make_item_proprio",
+      "test_composicao_clone_new_make_versao_ativa",
+      "test_composicao_clone_new_test_adicionar_componente_chama_detectar_ciclo",
+      "test_composicao_clone_new_test_adicionar_componente_dispara_recalcular_custo",
+      "test_composicao_clone_new_test_adicionar_componente_endpoint_is_async",
+      "test_composicao_clone_new_test_adicionar_componente_schema_rejects_zero_quantidade",
+      "test_composicao_clone_new_test_clonar_copia_todos_os_filhos",
+      "test_composicao_clone_new_test_clonar_cria_item_proprio_pendente",
+      "test_composicao_clone_new_test_clonar_cria_versao_composicao",
+      "test_composicao_clone_new_test_clonar_endpoint_is_async",
+      "test_composicao_clone_new_test_clonar_gera_id_diferente",
+      "test_composicao_clone_new_test_clonar_herda_descricao_quando_nao_informada",
+      "test_composicao_clone_new_test_clonar_usa_descricao_fornecida",
+      "test_composicao_clone_new_test_composicoes_router_prefix",
+      "test_composicao_clone_new_test_remover_componente_dispara_recalcular_custo",
+      "test_composicao_clone_new_test_remover_componente_endpoint_is_async",
+      "test_security_s04_rationale_1",
+      "test_security_s04_rationale_45",
+      "test_security_s04_rationale_89",
+      "test_security_s04_test_list_servicos_validates_cliente_id_access_when_present",
+      "test_security_s04_test_list_versoes_requires_cliente_access",
+      "test_transactional_purity_fakesession",
+      "test_transactional_purity_fakesession_init",
+      "test_transactional_purity_fakesessioncontext",
+      "test_transactional_purity_fakesessioncontext_aenter",
+      "test_transactional_purity_fakesessioncontext_aexit",
+      "test_transactional_purity_fakesessioncontext_init",
+      "test_transactional_purity_test_request_session_commits_once_on_success",
+      "test_transactional_purity_test_request_session_rolls_back_on_exception",
+      "test_transactional_purity_test_servico_catalog_read_path_does_not_flush_or_commit",
+      "test_transactional_purity_test_session_factory_disables_autocommit_and_autoflush",
+      "test_transactional_purity_test_versao_service_flushes_without_commit_when_creating_version",
+      "test_transactional_purity_test_versao_service_read_path_does_not_flush_or_commit",
+      "test_versao_service_mock_propria_repo",
+      "test_versao_service_mock_versao_repo",
+      "test_versao_service_test_ativar_versao_not_found",
+      "test_versao_service_test_ativar_versao_success",
+      "test_versao_service_test_criar_versao_success",
+      "test_versao_service_test_list_versoes_item_not_found",
+      "test_versao_service_test_list_versoes_success",
+      "test_versao_service_versao_service",
+      "usuario_repository_usuariorepository_get_by_id",
+      "versao_composicao_repository_versaocomposicaorepository_get_versao_ativa",
+      "versao_service_rationale_28",
+      "versao_service_rationale_37",
+      "versao_service_rationale_46",
+      "versao_service_rationale_87",
+      "versao_service_versaoservice",
+      "versao_service_versaoservice_assert_edit_permission",
+      "versao_service_versaoservice_ativar_versao",
+      "versao_service_versaoservice_criar_versao",
+      "versao_service_versaoservice_init",
+      "versao_service_versaoservice_list_versoes",
+      "versoes_ativar_versao",
+      "versoes_criar_versao",
+      "versoes_get_service",
+      "versoes_list_versoes",
+      "versoes_rationale_1"
+    ],
+    "4": [
+      "app_backend_api_v1_endpoints_clientes_py",
+      "app_backend_api_v1_endpoints_usuarios_py",
+      "app_backend_repositories_cliente_repository_py",
+      "app_backend_schemas_cliente_py",
+      "app_backend_schemas_usuario_py",
+      "app_backend_tests_unit_test_governance_routes_py",
+      "auth_loginrequest",
+      "busca_buscametadados",
+      "busca_buscaservicoresponse",
+      "busca_rationale_53",
+      "cliente_clientecreate",
+      "cliente_clientepatch",
+      "cliente_clienteresponse",
+      "cliente_rationale_1",
+      "cliente_repository_clienterepository",
+      "cliente_repository_clienterepository_get_by_cnpj",
+      "cliente_repository_clienterepository_get_by_id",
+      "cliente_repository_clienterepository_init",
+      "cliente_repository_clienterepository_update_cliente",
+      "clientes_create_cliente",
+      "clientes_get_repo",
+      "clientes_list_clientes",
+      "clientes_patch_cliente",
+      "clientes_rationale_1",
+      "clientes_rationale_40",
+      "clientes_rationale_64",
+      "clientes_rationale_87",
+      "common_paginatedresponse",
+      "exceptions_conflicterror",
+      "test_governance_routes_rationale_1",
+      "test_governance_routes_rationale_166",
+      "test_governance_routes_rationale_188",
+      "test_governance_routes_rationale_200",
+      "test_governance_routes_rationale_211",
+      "test_governance_routes_rationale_30",
+      "test_governance_routes_rationale_41",
+      "test_governance_routes_rationale_48",
+      "test_governance_routes_rationale_58",
+      "test_governance_routes_rationale_66",
+      "test_governance_routes_rationale_73",
+      "test_governance_routes_rationale_83",
+      "test_governance_routes_rationale_97",
+      "test_governance_routes_route_has_admin_dep",
+      "test_governance_routes_test_busca_metadados_fields",
+      "test_governance_routes_test_busca_metadados_is_typed_model",
+      "test_governance_routes_test_busca_servico_response_uses_metadados_model",
+      "test_governance_routes_test_cliente_create_accepts_valid_cnpj",
+      "test_governance_routes_test_cliente_create_rejects_invalid_cnpj",
+      "test_governance_routes_test_create_cliente_requires_admin",
+      "test_governance_routes_test_delete_associacao_endpoint_exists",
+      "test_governance_routes_test_get_perfis_cliente_exists_and_is_async",
+      "test_governance_routes_test_item_proprio_model_defaults_to_pendente",
+      "test_governance_routes_test_list_associacoes_endpoint_exists",
+      "test_governance_routes_test_list_clientes_requires_admin",
+      "test_governance_routes_test_list_usuarios_requires_admin",
+      "test_governance_routes_test_login_endpoint_accepts_json_body",
+      "test_governance_routes_test_oauth2_scheme_tokenurl_points_to_token",
+      "test_governance_routes_test_patch_cliente_requires_admin",
+      "test_governance_routes_test_patch_usuario_requires_admin",
+      "test_governance_routes_test_set_perfis_cliente_request_allows_empty",
+      "test_governance_routes_test_set_perfis_cliente_request_structure",
+      "test_governance_routes_test_set_perfis_cliente_requires_admin",
+      "test_governance_routes_test_token_endpoint_exists",
+      "test_governance_routes_test_token_endpoint_uses_oauth2_form",
+      "usuario_perfilclienteitem",
+      "usuario_rationale_1",
+      "usuario_rationale_11",
+      "usuario_rationale_23",
+      "usuario_rationale_31",
+      "usuario_rationale_39",
+      "usuario_rationale_45",
+      "usuario_repository_usuariorepository_list_paginated",
+      "usuario_setperfisclienterequest",
+      "usuario_usuarioadminresponse",
+      "usuario_usuariopatch",
+      "usuario_usuarioperfisresponse",
+      "usuarios_get_perfis_cliente",
+      "usuarios_list_usuarios",
+      "usuarios_patch_usuario",
+      "usuarios_rationale_1",
+      "usuarios_rationale_109",
+      "usuarios_rationale_141",
+      "usuarios_rationale_52",
+      "usuarios_rationale_78",
+      "usuarios_set_perfis_cliente"
+    ],
+    "5": [
+      "app_backend_api_v1_endpoints_busca_py",
+      "app_backend_models_associacao_inteligente_py",
+      "app_backend_models_historico_busca_cliente_py",
+      "app_backend_repositories_associacao_repository_py",
+      "app_backend_repositories_historico_repository_py",
+      "app_backend_schemas_associacao_py",
+      "app_backend_schemas_busca_py",
+      "app_backend_services_busca_service_py",
+      "app_backend_tests_unit_test_busca_service_py",
+      "associacao_associacaolistitem",
+      "associacao_inteligente_associacaointeligente",
+      "associacao_inteligente_associacaointeligente_fortalecer",
+      "associacao_inteligente_rationale_1",
+      "associacao_inteligente_rationale_82",
+      "associacao_rationale_1",
+      "associacao_repository_associacaorepository",
+      "associacao_repository_associacaorepository_find_by_cliente_and_text",
+      "associacao_repository_associacaorepository_fortalecer",
+      "associacao_repository_associacaorepository_init",
+      "associacao_repository_associacaorepository_upsert_associacao",
+      "associacao_repository_normalize_text",
+      "associacao_repository_rationale_22",
+      "associacao_repository_rationale_50",
+      "associacao_repository_rationale_66",
+      "associacao_repository_rationale_83",
+      "busca_associacaoresponse",
+      "busca_buscar_servicos",
+      "busca_buscaservicorequest",
+      "busca_criar_associacao",
+      "busca_criarassociacaorequest",
+      "busca_list_associacoes",
+      "busca_normalize_cliente_id",
+      "busca_normalize_limite_resultados",
+      "busca_normalize_threshold_score",
+      "busca_rationale_62",
+      "busca_rationale_89",
+      "busca_resultadobusca",
+      "busca_service_buscaservice",
+      "busca_service_buscaservice_build_response",
+      "busca_service_buscaservice_buscar",
+      "busca_service_buscaservice_criar_associacao",
+      "busca_service_buscaservice_fase0_itens_proprios",
+      "busca_service_buscaservice_fase1_associacao",
+      "busca_service_buscaservice_fase2_fuzzy",
+      "busca_service_buscaservice_fase3_semantica",
+      "busca_service_rationale_1",
+      "enums_origemassociacao",
+      "enums_statusvalidacaoassociacao",
+      "historico_busca_cliente_historicobuscacliente",
+      "historico_repository_historicorepository",
+      "historico_repository_historicorepository_create_registro",
+      "historico_repository_historicorepository_get_by_id",
+      "historico_repository_historicorepository_get_by_id_and_cliente",
+      "historico_repository_historicorepository_init",
+      "historico_repository_rationale_43",
+      "itens_proprios_repository_itenspropiosrepository_fuzzy_search_scoped",
+      "servico_catalog_service_servicocatalogservice_create_servico",
+      "test_busca_service_rationale_1",
+      "test_busca_service_rationale_101",
+      "test_busca_service_rationale_129",
+      "test_busca_service_rationale_41",
+      "test_busca_service_rationale_81",
+      "test_busca_service_test_fase1_returns_none_when_no_association",
+      "test_busca_service_test_fase1_returns_none_when_servico_inactive",
+      "test_busca_service_test_fase1_returns_result_and_assoc_when_association_found",
+      "test_busca_service_test_fase3_uses_batch_load_not_n_plus_1",
+      "test_busca_service_test_normalize_already_clean",
+      "test_busca_service_test_normalize_collapses_whitespace",
+      "test_busca_service_test_normalize_removes_accents",
+      "test_busca_service_test_normalize_strips_and_lowercases",
+      "test_security_p0_rationale_149",
+      "test_security_p0_test_buscar_servicos_no_cliente_access_required",
+      "test_security_s04_rationale_17",
+      "test_security_s04_test_list_associacoes_requires_cliente_access"
+    ],
+    "6": [
+      "001_create_base_tables_downgrade",
+      "001_create_base_tables_rationale_1",
+      "001_create_base_tables_upgrade",
+      "005_v2_governance_rbac_audit_downgrade",
+      "005_v2_governance_rbac_audit_rationale_1",
+      "005_v2_governance_rbac_audit_upgrade",
+      "009_versao_composicao_downgrade",
+      "009_versao_composicao_rationale_1",
+      "009_versao_composicao_upgrade",
+      "012_dual_schema_migration_downgrade",
+      "012_dual_schema_migration_rationale_1",
+      "012_dual_schema_migration_upgrade",
+      "admin_compute_embeddings",
+      "admin_computeembeddingsresponse",
+      "admin_etl_execute",
+      "admin_etl_status",
+      "admin_etl_upload_converter",
+      "admin_etl_upload_tcpo",
+      "admin_execute_import",
+      "admin_fieldmappingpreview",
+      "admin_importexecuteresponse",
+      "admin_importpreviewresponse",
+      "admin_importsourcetype",
+      "admin_preview_import",
+      "admin_sheetpreview",
+      "app_alembic_versions_001_create_base_tables_py",
+      "app_alembic_versions_005_v2_governance_rbac_audit_py",
+      "app_alembic_versions_009_versao_composicao_py",
+      "app_alembic_versions_012_dual_schema_migration_py",
+      "app_backend_api_v1_endpoints_admin_py",
+      "app_backend_api_v1_endpoints_pc_tabelas_py",
+      "app_backend_schemas_admin_py",
+      "app_backend_schemas_common_py",
+      "app_backend_schemas_pc_tabelas_py",
+      "app_backend_services_import_preview_service_py",
+      "basemodel",
+      "common_errordetail",
+      "common_errorresponse",
+      "enum",
+      "import_preview_service_expected_headers_for",
+      "import_preview_service_find_header_row",
+      "import_preview_service_generate_import_preview",
+      "import_preview_service_map_headers",
+      "import_preview_service_normalize",
+      "import_preview_service_similarity",
+      "import_preview_service_target_fields_for",
+      "pc_tabelas_get_cabecalho",
+      "pc_tabelas_importar_planilha",
+      "pc_tabelas_listar_cabecalhos",
+      "pc_tabelas_listar_encargos",
+      "pc_tabelas_listar_epi",
+      "pc_tabelas_listar_equipamentos",
+      "pc_tabelas_listar_ferramentas",
+      "pc_tabelas_listar_mao_obra",
+      "pc_tabelas_listar_mobilizacao",
+      "pc_tabelas_pccabecalhoout",
+      "pc_tabelas_pcencargoitemout",
+      "pc_tabelas_pcepiitemout",
+      "pc_tabelas_pcequipamentoitemout",
+      "pc_tabelas_pcequipamentopremissaout",
+      "pc_tabelas_pcequipamentosout",
+      "pc_tabelas_pcferramentaitemout",
+      "pc_tabelas_pcmaoobraitemout",
+      "pc_tabelas_pcmobilizacaoitemout",
+      "pc_tabelas_pcmobilizacaoquantidadefuncaoout",
+      "pc_tabelas_rationale_1",
+      "servico_catalog_service_servicocatalogservice_compute_all_embeddings",
+      "servico_versaocomposicaoresponse"
+    ],
+    "7": [
+      "app_backend_api_v1_endpoints_composicoes_py",
+      "app_backend_api_v1_endpoints_extracao_py",
+      "app_backend_api_v1_endpoints_homologacao_py",
+      "app_backend_api_v1_endpoints_propostas_py",
+      "app_backend_api_v1_endpoints_servicos_py",
+      "app_backend_core_dependencies_py",
+      "app_backend_core_exceptions_py",
+      "app_backend_schemas_composicao_py",
+      "app_backend_schemas_extracao_py",
+      "composicao_adicionarcomponenterequest",
+      "composicao_clonarcomposicaorequest",
+      "composicao_rationale_1",
+      "composicoes_adicionar_componente",
+      "composicoes_clonar_composicao",
+      "composicoes_rationale_1",
+      "composicoes_rationale_118",
+      "composicoes_rationale_38",
+      "composicoes_rationale_62",
+      "composicoes_rationale_91",
+      "composicoes_remover_componente",
+      "composicoes_validate_pai_propria",
+      "dependencies_get_current_active_user",
+      "dependencies_get_current_admin_user",
+      "dependencies_get_current_catalog_import_user",
+      "dependencies_get_current_user",
+      "dependencies_get_perfis_para_cliente",
+      "dependencies_rationale_111",
+      "dependencies_rationale_133",
+      "dependencies_rationale_64",
+      "dependencies_rationale_94",
+      "dependencies_require_cliente_access",
+      "dependencies_require_cliente_perfil",
+      "exceptions_authenticationerror",
+      "exceptions_authenticationerror_init",
+      "exceptions_authorizationerror",
+      "exceptions_authorizationerror_init",
+      "exceptions_conflicterror_init",
+      "exceptions_dinamica_exception_handler",
+      "exceptions_dinamicaexception",
+      "exceptions_dinamicaexception_init",
+      "exceptions_notfounderror_init",
+      "exceptions_validationerror_init",
+      "extracao_dados_brutos",
+      "extracao_download_xlsx",
+      "extracao_listar_servicos_cliente",
+      "extracao_rationale_1",
+      "extracao_rationale_11",
+      "extracao_servicoclienteassociado",
+      "homologacao_aprovar_item",
+      "homologacao_criar_item_proprio",
+      "homologacao_listar_pendentes",
+      "proposta_service_propostaservice_obter_por_id",
+      "propostas_atualizar_proposta",
+      "propostas_criar_proposta",
+      "propostas_deletar_proposta",
+      "propostas_listar_propostas",
+      "propostas_obter_proposta",
+      "servicos_create_servico",
+      "servicos_explode_composicao",
+      "servicos_get_servico",
+      "servicos_list_servicos",
+      "test_composicao_clone_new_test_composicoes_schema_request"
+    ],
+    "8": [
+      "app_backend_main_py",
+      "app_backend_models_composicao_base_py",
+      "app_backend_models_composicao_cliente_py",
+      "app_backend_models_pc_tabelas_py",
+      "app_backend_models_versao_composicao_py",
+      "app_backend_services_pc_tabelas_service_py",
+      "app_backend_tests_conftest_py",
+      "app_backend_tests_e2e_test_smoke_proposta_py",
+      "base",
+      "base_base",
+      "base_rationale_8",
+      "composicao_base_rationale_1",
+      "composicao_cliente_rationale_1",
+      "conftest_client",
+      "conftest_db_session",
+      "declarativebase",
+      "enums_perfilusuario",
+      "main_create_app",
+      "pc_tabelas_etlcarga",
+      "pc_tabelas_pccabecalho",
+      "pc_tabelas_pcencargoitem",
+      "pc_tabelas_pcepidistribuicaofuncao",
+      "pc_tabelas_pcepiitem",
+      "pc_tabelas_pcequipamentoitem",
+      "pc_tabelas_pcequipamentopremissa",
+      "pc_tabelas_pcferramentaitem",
+      "pc_tabelas_pcmaoobraitem",
+      "pc_tabelas_pcmobilizacaoitem",
+      "pc_tabelas_pcmobilizacaoquantidadefuncao",
+      "pc_tabelas_service_importar_pc_tabelas",
+      "pc_tabelas_service_parse_encargos",
+      "pc_tabelas_service_parse_epi",
+      "pc_tabelas_service_parse_equipamentos",
+      "pc_tabelas_service_parse_ferramentas",
+      "pc_tabelas_service_parse_mao_obra",
+      "pc_tabelas_service_parse_mobilizacao",
+      "pc_tabelas_service_rationale_1",
+      "pc_tabelas_service_rationale_141",
+      "pc_tabelas_service_rationale_193",
+      "pc_tabelas_service_rationale_243",
+      "pc_tabelas_service_rationale_269",
+      "pc_tabelas_service_rationale_30",
+      "pc_tabelas_service_rationale_323",
+      "pc_tabelas_service_rationale_40",
+      "pc_tabelas_service_rationale_82",
+      "pc_tabelas_service_to_decimal",
+      "str",
+      "test_smoke_proposta_test_criar_proposta_importar_pq_match_e_gerar_cpu",
+      "versao_composicao_rationale_1"
+    ],
+    "9": [
+      "apiclient_extractapierrormessage",
+      "apiclient_extractfastapivalidationmessage",
+      "apiclient_isapierrorpayload",
+      "apiclient_refreshaccesstoken",
+      "app_frontend_src_features_auth_authprovider_tsx",
+      "app_frontend_src_features_extraction_extractionpage_tsx",
+      "app_frontend_src_features_proposals_pages_proposaldetailpage_tsx",
+      "app_frontend_src_shared_services_api_apiclient_ts",
+      "app_frontend_src_shared_utils_permissions_ts",
+      "app_frontend_src_shared_utils_storage_ts",
+      "authprovider_authprovider",
+      "authprovider_isuuid",
+      "authprovider_syncselectedclient",
+      "extractionpage_handledownload",
+      "extractionpage_tipochip",
+      "permissions_getavailableclientids",
+      "permissions_getclientprofiles",
+      "permissions_hasadminpanelaccess",
+      "permissions_hasanyoperationalaccess",
+      "permissions_hasclienteaccess",
+      "permissions_hasclienteperfil",
+      "proposaldetailpage_proposaldetailpage",
+      "storage_clearsessiontokens",
+      "storage_persistselectedclientid",
+      "storage_persistsessiontokens",
+      "storage_readselectedclientid",
+      "storage_readsessiontokens"
+    ],
+    "10": [
+      "app_backend_ml_vector_search_py",
+      "app_backend_repositories_tcpo_embeddings_repository_py",
+      "app_backend_services_embedding_sync_service_py",
+      "embedding_sync_service_embeddingsyncservice",
+      "embedding_sync_service_embeddingsyncservice_compute_all_missing",
+      "embedding_sync_service_embeddingsyncservice_sync_create_or_update",
+      "embedding_sync_service_embeddingsyncservice_sync_delete",
+      "embedding_sync_service_rationale_1",
+      "embedding_sync_service_rationale_25",
+      "embedding_sync_service_rationale_48",
+      "embedding_sync_service_rationale_56",
+      "tcpo_embeddings_repository_tcpoembeddingsrepository",
+      "tcpo_embeddings_repository_tcpoembeddingsrepository_delete_by_servico_id",
+      "tcpo_embeddings_repository_tcpoembeddingsrepository_init",
+      "tcpo_embeddings_repository_tcpoembeddingsrepository_upsert",
+      "tcpo_embeddings_repository_tcpoembeddingsrepository_vector_search",
+      "vector_search_rationale_1",
+      "vector_search_rationale_18",
+      "vector_search_rationale_30",
+      "vector_search_vectorsearcher",
+      "vector_search_vectorsearcher_search"
+    ],
+    "11": [
+      "app_backend_models_auditoria_log_py",
+      "app_backend_schemas_homologacao_py",
+      "app_backend_services_homologacao_service_py",
+      "auditoria_log_auditorialog",
+      "auditoria_log_rationale_1",
+      "enums_tipooperacaoauditoria",
+      "homologacao_aprovarhomologacaorequest",
+      "homologacao_aprovarhomologacaoresponse",
+      "homologacao_criaritempropriorequest",
+      "homologacao_itempendenteresponse",
+      "homologacao_rationale_11",
+      "homologacao_rationale_41",
+      "homologacao_service_homologacaoservice",
+      "homologacao_service_homologacaoservice_aprovar",
+      "homologacao_service_homologacaoservice_criar_item_proprio",
+      "homologacao_service_rationale_1",
+      "homologacao_service_rationale_157",
+      "homologacao_service_registrar_auditoria"
+    ],
+    "12": [
+      "app_frontend_src_features_profile_profilepage_tsx",
+      "app_frontend_src_features_users_userspage_tsx",
+      "app_frontend_src_shared_utils_format_ts",
+      "format_formatcurrency",
+      "format_formatdatetime",
+      "format_formatnumber",
+      "format_gethomologacaolabel",
+      "format_getorigemmatchlabel",
+      "format_getperfillabel",
+      "format_getpropostastatuslabel",
+      "format_shortenuuid",
+      "format_tonumber",
+      "profilepage_getclientname",
+      "userspage_findclientname",
+      "userspage_getuserstatuslabel"
+    ],
+    "13": [
+      "app_backend_api_v1_endpoints_health_py",
+      "app_backend_tests_unit_test_health_py",
+      "exception",
+      "health_health_check",
+      "health_rationale_11",
+      "test_health_rationale_22",
+      "test_health_rationale_7",
+      "test_health_test_health_check_healthy",
+      "test_health_test_health_check_unhealthy"
+    ],
+    "14": [
+      "app_fix_deploy_ps1",
+      "fix_deploy_write_fail",
+      "fix_deploy_write_info",
+      "fix_deploy_write_ok",
+      "fix_deploy_write_step",
+      "fix_deploy_write_warn"
+    ],
+    "15": [
+      "app_alembic_env_py",
+      "env_do_run_migrations",
+      "env_run_async_migrations",
+      "env_run_migrations_offline",
+      "env_run_migrations_online"
+    ],
+    "16": [
+      "app_frontend_src_shared_components_layout_navigationconfig_tsx",
+      "navigationconfig_getnavigationstatuslabel",
+      "navigationconfig_getroutestatus",
+      "navigationconfig_getroutetitle",
+      "navigationconfig_getstatuslabel"
+    ],
+    "17": [
+      "002_pgvector_extension_downgrade",
+      "002_pgvector_extension_rationale_1",
+      "002_pgvector_extension_upgrade",
+      "app_alembic_versions_002_pgvector_extension_py"
+    ],
+    "18": [
+      "003_tcpo_embeddings_table_downgrade",
+      "003_tcpo_embeddings_table_rationale_1",
+      "003_tcpo_embeddings_table_upgrade",
+      "app_alembic_versions_003_tcpo_embeddings_table_py"
+    ],
+    "19": [
+      "004_pgtrgm_and_gin_index_downgrade",
+      "004_pgtrgm_and_gin_index_rationale_1",
+      "004_pgtrgm_and_gin_index_upgrade",
+      "app_alembic_versions_004_pgtrgm_and_gin_index_py"
+    ],
+    "20": [
+      "006_consolidation_fixes_downgrade",
+      "006_consolidation_fixes_rationale_1",
+      "006_consolidation_fixes_upgrade",
+      "app_alembic_versions_006_consolidation_fixes_py"
+    ],
+    "21": [
+      "007_fix_defaults_and_cliente_updated_at_downgrade",
+      "007_fix_defaults_and_cliente_updated_at_rationale_1",
+      "007_fix_defaults_and_cliente_updated_at_upgrade",
+      "app_alembic_versions_007_fix_defaults_and_cliente_updated_at_py"
+    ],
+    "22": [
+      "010_rename_usuario_perfil_downgrade",
+      "010_rename_usuario_perfil_rationale_1",
+      "010_rename_usuario_perfil_upgrade",
+      "app_alembic_versions_010_rename_usuario_perfil_py"
+    ],
+    "23": [
+      "011_nullable_cliente_historico_downgrade",
+      "011_nullable_cliente_historico_rationale_1",
+      "011_nullable_cliente_historico_upgrade",
+      "app_alembic_versions_011_nullable_cliente_historico_py"
+    ],
+    "24": [
+      "012_base_consulta_pc_orcamento_downgrade",
+      "012_base_consulta_pc_orcamento_rationale_1",
+      "012_base_consulta_pc_orcamento_upgrade",
+      "app_alembic_versions_012_base_consulta_pc_orcamento_py"
+    ],
+    "25": [
+      "013_expand_pc_numeric_ranges_downgrade",
+      "013_expand_pc_numeric_ranges_rationale_1",
+      "013_expand_pc_numeric_ranges_upgrade",
+      "app_alembic_versions_013_expand_pc_numeric_ranges_py"
+    ],
+    "26": [
+      "014_expand_pc_encargo_text_lengths_downgrade",
+      "014_expand_pc_encargo_text_lengths_rationale_1",
+      "014_expand_pc_encargo_text_lengths_upgrade",
+      "app_alembic_versions_014_expand_pc_encargo_text_lengths_py"
+    ],
+    "27": [
+      "015_expand_pc_mao_obra_beneficios_downgrade",
+      "015_expand_pc_mao_obra_beneficios_rationale_1",
+      "015_expand_pc_mao_obra_beneficios_upgrade",
+      "app_alembic_versions_015_expand_pc_mao_obra_beneficios_py"
+    ],
+    "28": [
+      "016_add_search_indexes_downgrade",
+      "016_add_search_indexes_rationale_1",
+      "016_add_search_indexes_upgrade",
+      "app_alembic_versions_016_add_search_indexes_py"
+    ],
+    "29": [
+      "017_create_proposta_entities_downgrade",
+      "017_create_proposta_entities_rationale_1",
+      "017_create_proposta_entities_upgrade",
+      "app_alembic_versions_017_create_proposta_entities_py"
+    ],
+    "30": [
+      "app_backend_tests_integration_test_busca_endpoint_py",
+      "test_busca_endpoint_rationale_1",
+      "test_busca_endpoint_test_busca_requires_auth",
+      "test_busca_endpoint_test_health_endpoint"
+    ],
+    "31": [
+      "app_backend_core_logging_py",
+      "logging_configure_logging",
+      "logging_get_logger"
+    ],
+    "32": [
+      "app_frontend_src_app_providers_tsx",
+      "providers_appproviders",
+      "providers_themedproviders"
+    ],
+    "33": [
+      "app_frontend_src_app_theme_theme_ts",
+      "theme_createdinamicatheme",
+      "theme_getcomponentoverrides"
+    ],
+    "34": [
+      "adminpage_handleexecute",
+      "adminpage_handlepreview",
+      "app_frontend_src_features_admin_adminpage_tsx"
+    ],
+    "35": [
+      "app_frontend_src_features_pc_tabelas_pctabelaspage_tsx",
+      "pctabelaspage_fmt",
+      "pctabelaspage_fmtpct"
+    ],
+    "36": [
+      "app_frontend_src_shared_components_statusbadge_tsx",
+      "statusbadge_normalizestatuskey",
+      "statusbadge_statusbadge"
+    ],
+    "37": [
+      "app_backend_ml_fuzzy_search_py",
+      "fuzzy_search_rationale_1"
+    ],
+    "38": [
+      "app_app",
+      "app_frontend_src_app_app_tsx"
+    ],
+    "39": [
+      "app_frontend_src_app_router_tsx",
+      "router_routefallback"
+    ],
+    "40": [
+      "app_frontend_src_app_theme_colormodecontext_tsx",
+      "colormodecontext_colormodeprovider"
+    ],
+    "41": [
+      "app_frontend_src_features_associations_associationspage_tsx",
+      "associationspage_formatassociationorigin"
+    ],
+    "42": [
+      "app_frontend_src_features_clients_clientspage_tsx",
+      "clientspage_getclientstatuslabel"
+    ],
+    "43": [
+      "app_frontend_src_features_permissions_permissionspage_tsx",
+      "permissionspage_permissionspage"
+    ],
+    "44": [
+      "app_frontend_src_features_proposals_components_cputable_tsx",
+      "cputable_cputable"
+    ],
+    "45": [
+      "app_frontend_src_features_proposals_components_proposalform_tsx",
+      "proposalform_proposalform"
+    ],
+    "46": [
+      "app_frontend_src_features_search_searchpage_tsx",
+      "searchpage_formatnumber"
+    ],
+    "47": [
+      "app_frontend_src_shared_components_emptystate_tsx",
+      "emptystate_emptystate"
+    ],
+    "48": [
+      "app_frontend_src_shared_components_layout_appshell_tsx",
+      "appshell_appshell"
+    ],
+    "49": [
+      "app_frontend_src_shared_components_layout_topbar_tsx",
+      "topbar_getinitials"
+    ],
+    "50": [
+      "app_frontend_src_shared_components_navigation_protectedroute_tsx",
+      "protectedroute_fullscreenloader"
+    ],
+    "51": [
+      "app_frontend_src_shared_utils_csv_ts",
+      "csv_downloadcsv"
+    ],
+    "52": [
+      "app_alembic_init_py"
+    ],
+    "53": [
+      "app_backend_init_py"
+    ],
+    "54": [
+      "app_backend_api_init_py"
+    ],
+    "55": [
+      "app_backend_api_v1_router_py"
+    ],
+    "56": [
+      "app_backend_api_v1_init_py"
+    ],
+    "57": [
+      "app_backend_api_v1_endpoints_init_py"
+    ],
+    "58": [
+      "app_backend_core_init_py"
+    ],
+    "59": [
+      "app_backend_ml_init_py"
+    ],
+    "60": [
+      "app_backend_models_init_py"
+    ],
+    "61": [
+      "app_backend_repositories_init_py"
+    ],
+    "62": [
+      "app_backend_schemas_init_py"
+    ],
+    "63": [
+      "app_backend_services_init_py"
+    ],
+    "64": [
+      "app_backend_tests_init_py"
+    ],
+    "65": [
+      "app_backend_tests_integration_init_py"
+    ],
+    "66": [
+      "app_backend_tests_unit_init_py"
+    ],
+    "67": [
+      "app_frontend_eslint_config_js"
+    ],
+    "68": [
+      "app_frontend_vite_config_ts"
+    ],
+    "69": [
+      "app_frontend_src_main_tsx"
+    ],
+    "70": [
+      "app_frontend_src_app_theme_ts"
+    ],
+    "71": [
+      "app_frontend_src_features_admin_uploadtcpopage_tsx"
+    ],
+    "72": [
+      "app_frontend_src_features_auth_loginpage_tsx"
+    ],
+    "73": [
+      "app_frontend_src_features_compositions_compositionspage_tsx"
+    ],
+    "74": [
+      "app_frontend_src_features_dashboard_dashboardpage_tsx"
+    ],
+    "75": [
+      "app_frontend_src_features_homologation_homologationpage_tsx"
+    ],
+    "76": [
+      "app_frontend_src_features_proposals_routes_tsx"
+    ],
+    "77": [
+      "app_frontend_src_features_proposals_types_ts"
+    ],
+    "78": [
+      "app_frontend_src_features_proposals_components_proposalstable_tsx"
+    ],
+    "79": [
+      "app_frontend_src_features_proposals_pages_proposalcpupage_tsx"
+    ],
+    "80": [
+      "app_frontend_src_features_proposals_pages_proposalcreatepage_tsx"
+    ],
+    "81": [
+      "app_frontend_src_features_proposals_pages_proposalimportpage_tsx"
+    ],
+    "82": [
+      "app_frontend_src_features_proposals_pages_proposalslistpage_tsx"
+    ],
+    "83": [
+      "app_frontend_src_features_reports_reportspage_tsx"
+    ],
+    "84": [
+      "app_frontend_src_features_services_servicespage_tsx"
+    ],
+    "85": [
+      "app_frontend_src_shared_components_confirmationdialog_tsx"
+    ],
+    "86": [
+      "app_frontend_src_shared_components_contractnotice_tsx"
+    ],
+    "87": [
+      "app_frontend_src_shared_components_datatable_tsx"
+    ],
+    "88": [
+      "app_frontend_src_shared_components_feedbackmessages_ts"
+    ],
+    "89": [
+      "app_frontend_src_shared_components_pageheader_tsx"
+    ],
+    "90": [
+      "app_frontend_src_shared_components_feedback_feedbackprovider_tsx"
+    ],
+    "91": [
+      "app_frontend_src_shared_components_layout_clientselector_tsx"
+    ],
+    "92": [
+      "app_frontend_src_shared_components_layout_sidebar_tsx"
+    ],
+    "93": [
+      "app_frontend_src_shared_services_api_adminapi_ts"
+    ],
+    "94": [
+      "app_frontend_src_shared_services_api_associationsapi_ts"
+    ],
+    "95": [
+      "app_frontend_src_shared_services_api_authapi_ts"
+    ],
+    "96": [
+      "app_frontend_src_shared_services_api_clientsapi_ts"
+    ],
+    "97": [
+      "app_frontend_src_shared_services_api_composicoesapi_ts"
+    ],
+    "98": [
+      "app_frontend_src_shared_services_api_extractionapi_ts"
+    ],
+    "99": [
+      "app_frontend_src_shared_services_api_homologationapi_ts"
+    ],
+    "100": [
+      "app_frontend_src_shared_services_api_pctabelasapi_ts"
+    ],
+    "101": [
+      "app_frontend_src_shared_services_api_proposalsapi_ts"
+    ],
+    "102": [
+      "app_frontend_src_shared_services_api_searchapi_ts"
+    ],
+    "103": [
+      "app_frontend_src_shared_services_api_servicesapi_ts"
+    ],
+    "104": [
+      "app_frontend_src_shared_services_api_userapi_ts"
+    ],
+    "105": [
+      "app_frontend_src_shared_types_contracts_admin_ts"
+    ],
+    "106": [
+      "app_frontend_src_shared_types_contracts_associacoes_ts"
+    ],
+    "107": [
+      "app_frontend_src_shared_types_contracts_auth_ts"
+    ],
+    "108": [
+      "app_frontend_src_shared_types_contracts_busca_ts"
+    ],
+    "109": [
+      "app_frontend_src_shared_types_contracts_clientes_ts"
+    ],
+    "110": [
+      "app_frontend_src_shared_types_contracts_common_ts"
+    ],
+    "111": [
+      "app_frontend_src_shared_types_contracts_composicoes_ts"
+    ],
+    "112": [
+      "app_frontend_src_shared_types_contracts_extraction_ts"
+    ],
+    "113": [
+      "app_frontend_src_shared_types_contracts_homologacao_ts"
+    ],
+    "114": [
+      "app_frontend_src_shared_types_contracts_servicos_ts"
+    ],
+    "115": [
+      "app_frontend_src_shared_types_contracts_usuarios_ts"
+    ],
+    "116": [
+      "app_frontend_src_shared_types_contracts_versoes_ts"
+    ],
+    "117": [
+      "README_dinamica_budget___backend_api"
+    ],
+    "118": [
+      "README_sum\u00e1rio"
+    ],
+    "119": [
+      "README_vis\u00e3o_geral"
+    ],
+    "120": [
+      "README_buscar_servi\u00e7os_tcpo_a_partir_de_texto_l"
+    ],
+    "121": [
+      "README_explodir_composi\u00e7\u00f5es_tcpo__estrutura_pai"
+    ],
+    "122": [
+      "README_auditar_altera\u00e7\u00f5es_de_pre\u00e7o_e_status_com"
+    ],
+    "123": [
+      "README_stack_tecnol\u00f3gica"
+    ],
+    "124": [
+      "README_arquitetura"
+    ],
+    "125": [
+      "README_estrutura_de_pastas"
+    ],
+    "126": [
+      "README_modelo_de_dados"
+    ],
+    "127": [
+      "README__usuarios_"
+    ],
+    "128": [
+      "README__usuario_perfil___rbac_por_cliente_"
+    ],
+    "129": [
+      "README__clientes_"
+    ],
+    "130": [
+      "README__categoria_recurso_"
+    ],
+    "131": [
+      "README__servico_tcpo___cat\u00e1logo_h\u00edbrido_central"
+    ],
+    "132": [
+      "README__composicao_tcpo___explos\u00e3o_pai_filho_"
+    ],
+    "133": [
+      "README__historico_busca_cliente_"
+    ],
+    "134": [
+      "README__associacao_inteligente_"
+    ],
+    "135": [
+      "README__tcpo_embeddings___pgvector_"
+    ],
+    "136": [
+      "README__auditoria_log_"
+    ],
+    "137": [
+      "README_motor_de_busca_em_cascata__4_fases_"
+    ],
+    "138": [
+      "README_dtos_oficiais"
+    ],
+    "139": [
+      "README_usado_em_post__busca_associar_como_chave"
+    ],
+    "140": [
+      "README_endpoints_da_api"
+    ],
+    "141": [
+      "README_auth"
+    ],
+    "142": [
+      "README_busca"
+    ],
+    "143": [
+      "README_cat\u00e1logo_de_servi\u00e7os"
+    ],
+    "144": [
+      "README_homologa\u00e7\u00e3o"
+    ],
+    "145": [
+      "README_gest\u00e3o_de_usu\u00e1rios__admin_"
+    ],
+    "146": [
+      "README_gest\u00e3o_de_clientes__admin_"
+    ],
+    "147": [
+      "README_composi\u00e7\u00e3o_por_c\u00f3pia"
+    ],
+    "148": [
+      "README_admin___infra"
+    ],
+    "149": [
+      "README_autentica\u00e7\u00e3o_e_rbac"
+    ],
+    "150": [
+      "README_access_token"
+    ],
+    "151": [
+      "README_refresh_token"
+    ],
+    "152": [
+      "README_perfis_por_cliente___usuario_perfil__"
+    ],
+    "153": [
+      "README_fun\u00e7\u00f5es_de_autoriza\u00e7\u00e3o___app_core_depend"
+    ],
+    "154": [
+      "README_valida_que_o_usu\u00e1rio_tem_qualquer_v\u00edncul"
+    ],
+    "155": [
+      "README_valida_que_o_usu\u00e1rio_tem_um_dos_perfis_e"
+    ],
+    "156": [
+      "README__get__auth_me____resposta_com_perfis"
+    ],
+    "157": [
+      "README_fluxo_de_homologa\u00e7\u00e3o"
+    ],
+    "158": [
+      "README_sistema_de_auditoria"
+    ],
+    "159": [
+      "README_eventos_auditados"
+    ],
+    "160": [
+      "README_m\u00f3dulos_ml__on_premise_"
+    ],
+    "161": [
+      "README__app_ml_embedder_py_"
+    ],
+    "162": [
+      "README__app_ml_fuzzy_search_py_"
+    ],
+    "163": [
+      "README__app_ml_vector_search_py_"
+    ],
+    "164": [
+      "README_sincronia_de_embeddings___embedding_sync"
+    ],
+    "165": [
+      "README_migrations_alembic"
+    ],
+    "166": [
+      "README_aplicar_todas_as_migrations"
+    ],
+    "167": [
+      "README_ver_status_atual"
+    ],
+    "168": [
+      "README_reverter_uma_migration"
+    ],
+    "169": [
+      "README_ferramentas_de_banco_de_dados"
+    ],
+    "170": [
+      "README_pgcli__cli_"
+    ],
+    "171": [
+      "README_conectar_ao_banco"
+    ],
+    "172": [
+      "README_windows___usa_database_url_do__env_autom"
+    ],
+    "173": [
+      "README_linux___mac"
+    ],
+    "174": [
+      "README_conex\u00e3o_direta__sem_script_"
+    ],
+    "175": [
+      "README_comandos_essenciais_dentro_do_pgcli"
+    ],
+    "176": [
+      "README_configura\u00e7\u00e3o_pessoal__opcional_"
+    ],
+    "177": [
+      "README_windows"
+    ],
+    "178": [
+      "README_heidisql__gui_"
+    ],
+    "179": [
+      "README_instala\u00e7\u00e3o"
+    ],
+    "180": [
+      "README_installer___heidisql_xx_setup_exe_____in"
+    ],
+    "181": [
+      "README_configura\u00e7\u00e3o_da_conex\u00e3o"
+    ],
+    "182": [
+      "README_queries_salvas_recomendadas"
+    ],
+    "183": [
+      "README_setup_e_instala\u00e7\u00e3o"
+    ],
+    "184": [
+      "README_pr\u00e9_requisitos"
+    ],
+    "185": [
+      "README_1__clone_e_ambiente_virtual"
+    ],
+    "186": [
+      "README_pgcli_\u00e9_instalado_automaticamente_junto_"
+    ],
+    "187": [
+      "README_2__banco_de_dados__nativo_"
+    ],
+    "188": [
+      "README_postgresql_16___pgvector"
+    ],
+    "189": [
+      "README_o_servi\u00e7o_windows_j\u00e1_sobe_automaticament"
+    ],
+    "190": [
+      "README_3__vari\u00e1veis_de_ambiente"
+    ],
+    "191": [
+      "README_editar__env_com_as_credenciais"
+    ],
+    "192": [
+      "README_4__migrations"
+    ],
+    "193": [
+      "README_5__conectar_ao_banco__verifica\u00e7\u00e3o_"
+    ],
+    "194": [
+      "README_6__download_do_modelo_ml__\u00fanica_vez_"
+    ],
+    "195": [
+      "README_definir_sentence_transformers_home_no__e"
+    ],
+    "196": [
+      "README_7__iniciar_api"
+    ],
+    "197": [
+      "README_8__seed___pr\u00e9_computar_embeddings"
+    ],
+    "198": [
+      "README_ap\u00f3s_popular_servico_tcpo_com_dados_tcpo"
+    ],
+    "199": [
+      "README_deploy_automatizado___windows_server"
+    ],
+    "200": [
+      "README_pr\u00e9_requisitos_do_servidor"
+    ],
+    "201": [
+      "README_executar_o_deploy"
+    ],
+    "202": [
+      "README_autorrecupera\u00e7\u00e3o_no_final_do_deploy"
+    ],
+    "203": [
+      "README_gate_obrigat\u00f3rio_de_finaliza\u00e7\u00e3o"
+    ],
+    "204": [
+      "README_pgvector_em_windows_server"
+    ],
+    "205": [
+      "README_modos_de_execu\u00e7\u00e3o"
+    ],
+    "206": [
+      "README_nova_instala\u00e7\u00e3o"
+    ],
+    "207": [
+      "README_atualiza\u00e7\u00e3o"
+    ],
+    "208": [
+      "README_resultado_esperado_ap\u00f3s_deploy_bem_suced"
+    ],
+    "209": [
+      "README_scripts_de_opera\u00e7\u00e3o"
+    ],
+    "210": [
+      "README__scripts_status_ps1____painel_de_sa\u00fade_d"
+    ],
+    "211": [
+      "README__scripts_status_completo_admin_ps1____st"
+    ],
+    "212": [
+      "README__scripts_validate_all_routes_admin_ps1__"
+    ],
+    "213": [
+      "README__scripts_observability_audit_admin_ps1__"
+    ],
+    "214": [
+      "README__scripts_etl_popular_base_consulta_admin"
+    ],
+    "215": [
+      "README__scripts_install_pgvector_ps1____instala"
+    ],
+    "216": [
+      "README_requer_administrador"
+    ],
+    "217": [
+      "README__scripts_backup_db_ps1____backup_do_banc"
+    ],
+    "218": [
+      "README__scripts_db_bat_____scripts_db_sh____cli"
+    ],
+    "219": [
+      "README_vari\u00e1veis_de_ambiente"
+    ],
+    "220": [
+      "README_banco_de_dados"
+    ],
+    "221": [
+      "README_modelo_ml"
+    ],
+    "222": [
+      "README_logging"
+    ],
+    "223": [
+      "README_regras_de_seguran\u00e7a_e_governan\u00e7a"
+    ],
+    "224": [
+      "README_nenhum_endpoint_de_neg\u00f3cio_confia_s\u00f3_na_"
+    ],
+    "225": [
+      "README_cria\u00e7\u00e3o_de_cat\u00e1logo_tcpo_global_\u00e9_restri"
+    ],
+    "226": [
+      "README_item_propria_n\u00e3o_aparece_na_busca_antes_"
+    ],
+    "227": [
+      "README_rastreabilidade_busca___associa\u00e7\u00e3o"
+    ],
+    "228": [
+      "README_isolamento_por_cliente"
+    ],
+    "229": [
+      "README_auditoria_com_contexto_completo"
+    ],
+    "230": [
+      "README_riscos_t\u00e9cnicos_e_mitiga\u00e7\u00f5es"
+    ],
+    "231": [
+      "README_corre\u00e7\u00f5es_sprint_1__p0_p1_"
+    ],
+    "232": [
+      "README_p0___cr\u00edtico"
+    ],
+    "233": [
+      "README_p1___importante"
+    ],
+    "234": [
+      "README_bug_colateral_corrigido"
+    ],
+    "235": [
+      "README_suite_de_testes"
+    ],
+    "236": [
+      "README_FRONT_dinamica_budget___frontend_oficial"
+    ],
+    "237": [
+      "README_FRONT_1__visao_geral"
+    ],
+    "238": [
+      "README_FRONT_2__stack_adotada"
+    ],
+    "239": [
+      "README_FRONT_base"
+    ],
+    "240": [
+      "README_FRONT_objetivo_da_stack"
+    ],
+    "241": [
+      "README_FRONT_3__estrutura_do_frontend"
+    ],
+    "242": [
+      "README_FRONT_4__arquitetura_implementada"
+    ],
+    "243": [
+      "README_FRONT_4_1_camadas"
+    ],
+    "244": [
+      "README_FRONT__app__"
+    ],
+    "245": [
+      "README_FRONT__features__"
+    ],
+    "246": [
+      "README_FRONT__shared_services_api__"
+    ],
+    "247": [
+      "README_FRONT__shared_types_contracts__"
+    ],
+    "248": [
+      "README_FRONT__shared_components__"
+    ],
+    "249": [
+      "README_FRONT__shared_utils__"
+    ],
+    "250": [
+      "README_FRONT_5__shell_da_aplicacao"
+    ],
+    "251": [
+      "README_FRONT_recursos_do_shell"
+    ],
+    "252": [
+      "README_FRONT_6__sessao_e_autenticacao"
+    ],
+    "253": [
+      "README_FRONT_fluxo_implementado"
+    ],
+    "254": [
+      "README_FRONT_arquivos_principais"
+    ],
+    "255": [
+      "README_FRONT_chaves_persistidas_no_navegador"
+    ],
+    "256": [
+      "README_FRONT_7__rotas_implementadas"
+    ],
+    "257": [
+      "README_FRONT_publica"
+    ],
+    "258": [
+      "README_FRONT_autenticadas"
+    ],
+    "259": [
+      "README_FRONT_restritas_a_administrador"
+    ],
+    "260": [
+      "README_FRONT_8__modulos_implementados"
+    ],
+    "261": [
+      "README_FRONT_8_1_login"
+    ],
+    "262": [
+      "README_FRONT_8_2_dashboard"
+    ],
+    "263": [
+      "README_FRONT_8_3_servicos___catalogo"
+    ],
+    "264": [
+      "README_FRONT_8_4_busca_inteligente"
+    ],
+    "265": [
+      "README_FRONT_8_5_homologacao"
+    ],
+    "266": [
+      "README_FRONT_8_6_composicoes"
+    ],
+    "267": [
+      "README_FRONT_8_7_relatorios"
+    ],
+    "268": [
+      "README_FRONT_8_8_administracao"
+    ],
+    "269": [
+      "README_FRONT_8_9_perfil"
+    ],
+    "270": [
+      "README_FRONT_8_10_usuarios"
+    ],
+    "271": [
+      "README_FRONT_8_11_clientes"
+    ],
+    "272": [
+      "README_FRONT_8_12_permissoes"
+    ],
+    "273": [
+      "README_FRONT_8_13_associacoes"
+    ],
+    "274": [
+      "README_FRONT_9__contratos_tipados_consumidos"
+    ],
+    "275": [
+      "README_FRONT_10__fluxo_de_vinculo_entre_frontend_e_ba"
+    ],
+    "276": [
+      "README_FRONT_10_1_fluxo_geral"
+    ],
+    "277": [
+      "README_FRONT_10_2_fluxo_de_autenticacao"
+    ],
+    "278": [
+      "README_FRONT_10_3_fluxo_principal_de_busca_e_vinculo"
+    ],
+    "279": [
+      "README_FRONT_11__mapa_funcao_frontend____endpoint_bac"
+    ],
+    "280": [
+      "README_FRONT_12__mapa_pagina____funcao____backend"
+    ],
+    "281": [
+      "README_FRONT_login"
+    ],
+    "282": [
+      "README_FRONT_dashboard"
+    ],
+    "283": [
+      "README_FRONT_servicos"
+    ],
+    "284": [
+      "README_FRONT_busca"
+    ],
+    "285": [
+      "README_FRONT_homologacao"
+    ],
+    "286": [
+      "README_FRONT_composicoes"
+    ],
+    "287": [
+      "README_FRONT_relatorios"
+    ],
+    "288": [
+      "README_FRONT_administracao"
+    ],
+    "289": [
+      "README_FRONT_perfil"
+    ],
+    "290": [
+      "README_FRONT_usuarios"
+    ],
+    "291": [
+      "README_FRONT_clientes"
+    ],
+    "292": [
+      "README_FRONT_associacoes"
+    ],
+    "293": [
+      "README_FRONT_13__fluxo_de_refresh_automatico"
+    ],
+    "294": [
+      "README_FRONT_14__regras_de_visibilidade_e_permissao_n"
+    ],
+    "295": [
+      "README_FRONT_15__modulos_preparados__mas_dependentes_"
+    ],
+    "296": [
+      "README_FRONT_16__gaps_reais_identificados_no_backend_"
+    ],
+    "297": [
+      "README_FRONT_16_1_clientes"
+    ],
+    "298": [
+      "README_FRONT_16_2_perfil"
+    ],
+    "299": [
+      "README_FRONT_16_3_relatorios"
+    ],
+    "300": [
+      "README_FRONT_17__como_executar_o_frontend"
+    ],
+    "301": [
+      "README_FRONT_desenvolvimento"
+    ],
+    "302": [
+      "README_FRONT_build_de_producao"
+    ],
+    "303": [
+      "README_FRONT_lint"
+    ],
+    "304": [
+      "README_FRONT_18__variaveis_de_ambiente"
+    ],
+    "305": [
+      "README_FRONT_19__arquivos_principais_para_leitura_rap"
+    ],
+    "306": [
+      "README_FRONT_bootstrap"
+    ],
+    "307": [
+      "README_FRONT_sessao"
+    ],
+    "308": [
+      "README_FRONT_shell"
+    ],
+    "309": [
+      "README_FRONT_modulos_operacionais"
+    ],
+    "310": [
+      "README_FRONT_tipos_e_contratos"
+    ],
+    "311": [
+      "README_FRONT_20__resumo_final"
+    ]
+  },
+  "cohesion": {
+    "0": 0.03,
+    "1": 0.07,
+    "2": 0.04,
+    "3": 0.04,
+    "4": 0.06,
+    "5": 0.06,
+    "6": 0.05,
+    "7": 0.06,
+    "8": 0.17,
+    "9": 0.1,
+    "10": 0.17,
+    "11": 0.25,
+    "12": 0.15,
+    "13": 0.25,
+    "14": 0.33,
+    "15": 0.5,
+    "16": 0.5,
+    "17": 0.5,
+    "18": 0.5,
+    "19": 0.5,
+    "20": 0.5,
+    "21": 0.5,
+    "22": 0.5,
+    "23": 0.5,
+    "24": 0.5,
+    "25": 0.5,
+    "26": 0.5,
+    "27": 0.5,
+    "28": 0.5,
+    "29": 0.5,
+    "30": 0.5,
+    "31": 0.67,
+    "32": 0.67,
+    "33": 1.0,
+    "34": 0.67,
+    "35": 0.67,
+    "36": 1.0,
+    "37": 1.0,
+    "38": 1.0,
+    "39": 1.0,
+    "40": 1.0,
+    "41": 1.0,
+    "42": 1.0,
+    "43": 1.0,
+    "44": 1.0,
+    "45": 1.0,
+    "46": 1.0,
+    "47": 1.0,
+    "48": 1.0,
+    "49": 1.0,
+    "50": 1.0,
+    "51": 1.0,
+    "52": 1.0,
+    "53": 1.0,
+    "54": 1.0,
+    "55": 1.0,
+    "56": 1.0,
+    "57": 1.0,
+    "58": 1.0,
+    "59": 1.0,
+    "60": 1.0,
+    "61": 1.0,
+    "62": 1.0,
+    "63": 1.0,
+    "64": 1.0,
+    "65": 1.0,
+    "66": 1.0,
+    "67": 1.0,
+    "68": 1.0,
+    "69": 1.0,
+    "70": 1.0,
+    "71": 1.0,
+    "72": 1.0,
+    "73": 1.0,
+    "74": 1.0,
+    "75": 1.0,
+    "76": 1.0,
+    "77": 1.0,
+    "78": 1.0,
+    "79": 1.0,
+    "80": 1.0,
+    "81": 1.0,
+    "82": 1.0,
+    "83": 1.0,
+    "84": 1.0,
+    "85": 1.0,
+    "86": 1.0,
+    "87": 1.0,
+    "88": 1.0,
+    "89": 1.0,
+    "90": 1.0,
+    "91": 1.0,
+    "92": 1.0,
+    "93": 1.0,
+    "94": 1.0,
+    "95": 1.0,
+    "96": 1.0,
+    "97": 1.0,
+    "98": 1.0,
+    "99": 1.0,
+    "100": 1.0,
+    "101": 1.0,
+    "102": 1.0,
+    "103": 1.0,
+    "104": 1.0,
+    "105": 1.0,
+    "106": 1.0,
+    "107": 1.0,
+    "108": 1.0,
+    "109": 1.0,
+    "110": 1.0,
+    "111": 1.0,
+    "112": 1.0,
+    "113": 1.0,
+    "114": 1.0,
+    "115": 1.0,
+    "116": 1.0,
+    "117": 1.0,
+    "118": 1.0,
+    "119": 1.0,
+    "120": 1.0,
+    "121": 1.0,
+    "122": 1.0,
+    "123": 1.0,
+    "124": 1.0,
+    "125": 1.0,
+    "126": 1.0,
+    "127": 1.0,
+    "128": 1.0,
+    "129": 1.0,
+    "130": 1.0,
+    "131": 1.0,
+    "132": 1.0,
+    "133": 1.0,
+    "134": 1.0,
+    "135": 1.0,
+    "136": 1.0,
+    "137": 1.0,
+    "138": 1.0,
+    "139": 1.0,
+    "140": 1.0,
+    "141": 1.0,
+    "142": 1.0,
+    "143": 1.0,
+    "144": 1.0,
+    "145": 1.0,
+    "146": 1.0,
+    "147": 1.0,
+    "148": 1.0,
+    "149": 1.0,
+    "150": 1.0,
+    "151": 1.0,
+    "152": 1.0,
+    "153": 1.0,
+    "154": 1.0,
+    "155": 1.0,
+    "156": 1.0,
+    "157": 1.0,
+    "158": 1.0,
+    "159": 1.0,
+    "160": 1.0,
+    "161": 1.0,
+    "162": 1.0,
+    "163": 1.0,
+    "164": 1.0,
+    "165": 1.0,
+    "166": 1.0,
+    "167": 1.0,
+    "168": 1.0,
+    "169": 1.0,
+    "170": 1.0,
+    "171": 1.0,
+    "172": 1.0,
+    "173": 1.0,
+    "174": 1.0,
+    "175": 1.0,
+    "176": 1.0,
+    "177": 1.0,
+    "178": 1.0,
+    "179": 1.0,
+    "180": 1.0,
+    "181": 1.0,
+    "182": 1.0,
+    "183": 1.0,
+    "184": 1.0,
+    "185": 1.0,
+    "186": 1.0,
+    "187": 1.0,
+    "188": 1.0,
+    "189": 1.0,
+    "190": 1.0,
+    "191": 1.0,
+    "192": 1.0,
+    "193": 1.0,
+    "194": 1.0,
+    "195": 1.0,
+    "196": 1.0,
+    "197": 1.0,
+    "198": 1.0,
+    "199": 1.0,
+    "200": 1.0,
+    "201": 1.0,
+    "202": 1.0,
+    "203": 1.0,
+    "204": 1.0,
+    "205": 1.0,
+    "206": 1.0,
+    "207": 1.0,
+    "208": 1.0,
+    "209": 1.0,
+    "210": 1.0,
+    "211": 1.0,
+    "212": 1.0,
+    "213": 1.0,
+    "214": 1.0,
+    "215": 1.0,
+    "216": 1.0,
+    "217": 1.0,
+    "218": 1.0,
+    "219": 1.0,
+    "220": 1.0,
+    "221": 1.0,
+    "222": 1.0,
+    "223": 1.0,
+    "224": 1.0,
+    "225": 1.0,
+    "226": 1.0,
+    "227": 1.0,
+    "228": 1.0,
+    "229": 1.0,
+    "230": 1.0,
+    "231": 1.0,
+    "232": 1.0,
+    "233": 1.0,
+    "234": 1.0,
+    "235": 1.0,
+    "236": 1.0,
+    "237": 1.0,
+    "238": 1.0,
+    "239": 1.0,
+    "240": 1.0,
+    "241": 1.0,
+    "242": 1.0,
+    "243": 1.0,
+    "244": 1.0,
+    "245": 1.0,
+    "246": 1.0,
+    "247": 1.0,
+    "248": 1.0,
+    "249": 1.0,
+    "250": 1.0,
+    "251": 1.0,
+    "252": 1.0,
+    "253": 1.0,
+    "254": 1.0,
+    "255": 1.0,
+    "256": 1.0,
+    "257": 1.0,
+    "258": 1.0,
+    "259": 1.0,
+    "260": 1.0,
+    "261": 1.0,
+    "262": 1.0,
+    "263": 1.0,
+    "264": 1.0,
+    "265": 1.0,
+    "266": 1.0,
+    "267": 1.0,
+    "268": 1.0,
+    "269": 1.0,
+    "270": 1.0,
+    "271": 1.0,
+    "272": 1.0,
+    "273": 1.0,
+    "274": 1.0,
+    "275": 1.0,
+    "276": 1.0,
+    "277": 1.0,
+    "278": 1.0,
+    "279": 1.0,
+    "280": 1.0,
+    "281": 1.0,
+    "282": 1.0,
+    "283": 1.0,
+    "284": 1.0,
+    "285": 1.0,
+    "286": 1.0,
+    "287": 1.0,
+    "288": 1.0,
+    "289": 1.0,
+    "290": 1.0,
+    "291": 1.0,
+    "292": 1.0,
+    "293": 1.0,
+    "294": 1.0,
+    "295": 1.0,
+    "296": 1.0,
+    "297": 1.0,
+    "298": 1.0,
+    "299": 1.0,
+    "300": 1.0,
+    "301": 1.0,
+    "302": 1.0,
+    "303": 1.0,
+    "304": 1.0,
+    "305": 1.0,
+    "306": 1.0,
+    "307": 1.0,
+    "308": 1.0,
+    "309": 1.0,
+    "310": 1.0,
+    "311": 1.0
+  },
+  "gods": [
+    {
+      "id": "exceptions_notfounderror",
+      "label": "NotFoundError",
+      "degree": 77
+    },
+    {
+      "id": "itens_proprios_repository_itenspropiosrepository",
+      "label": "ItensPropiosRepository",
+      "degree": 62
+    },
+    {
+      "id": "enums_statushomologacao",
+      "label": "StatusHomologacao",
+      "degree": 59
+    },
+    {
+      "id": "itens_proprios_itemproprio",
+      "label": "ItemProprio",
+      "degree": 59
+    },
+    {
+      "id": "base_repository_baserepository",
+      "label": "BaseRepository",
+      "degree": 49
+    },
+    {
+      "id": "base_tcpo_repository_basetcporepository",
+      "label": "BaseTcpoRepository",
+      "degree": 47
+    },
+    {
+      "id": "servico_catalog_service_servicocatalogservice",
+      "label": "ServicoCatalogService",
+      "degree": 46
+    },
+    {
+      "id": "exceptions_validationerror",
+      "label": "ValidationError",
+      "degree": 44
+    },
+    {
+      "id": "base_base",
+      "label": "Base",
+      "degree": 43
+    },
+    {
+      "id": "versao_composicao_versaocomposicao",
+      "label": "VersaoComposicao",
+      "degree": 43
+    }
+  ],
+  "surprises": [
+    {
+      "source": "criar_associacao()",
+      "target": "require_cliente_access()",
+      "source_files": [
+        "app\\backend\\api\\v1\\endpoints\\busca.py",
+        "app\\backend\\core\\dependencies.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities; peripheral node `criar_associacao()` unexpectedly reaches hub `require_cliente_access()`"
+    },
+    {
+      "source": "test_adicionar_componente_schema_rejects_zero_quantidade()",
+      "target": "AdicionarComponenteRequest",
+      "source_files": [
+        "app\\backend\\tests\\unit\\test_composicao_clone_new.py",
+        "app\\backend\\schemas\\composicao.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities; peripheral node `test_adicionar_componente_schema_rejects_zero_quantidade()` unexpectedly reaches hub `AdicionarComponenteRequest`"
+    },
+    {
+      "source": "A service item awaiting homologation approval.",
+      "target": "ServicoTcpoResponse",
+      "source_files": [
+        "app\\backend\\schemas\\homologacao.py",
+        "app\\backend\\schemas\\servico.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "uses",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities; peripheral node `A service item awaiting homologation approval.` unexpectedly reaches hub `ServicoTcpoResponse`"
+    },
+    {
+      "source": "Create a PROPRIA item for a specific client (starts as PENDENTE).",
+      "target": "ServicoTcpoResponse",
+      "source_files": [
+        "app\\backend\\schemas\\homologacao.py",
+        "app\\backend\\schemas\\servico.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "uses",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities; peripheral node `Create a PROPRIA item for a specific client (starts as PENDENTE).` unexpectedly reaches hub `ServicoTcpoResponse`"
+    },
+    {
+      "source": "preview_import()",
+      "target": "ValidationError",
+      "source_files": [
+        "app\\backend\\api\\v1\\endpoints\\admin.py",
+        "app\\backend\\core\\exceptions.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `NotFoundError` connect `Community 3` to `Community 0`, `Community 1`, `Community 4`, `Community 5`, `Community 6`, `Community 7`, `Community 11`?",
+      "why": "High betweenness centrality (0.057) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `BaseRepository` connect `Community 1` to `Community 0`, `Community 2`, `Community 3`, `Community 4`, `Community 5`, `Community 8`, `Community 10`?",
+      "why": "High betweenness centrality (0.051) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `BaseTcpoRepository` connect `Community 1` to `Community 0`, `Community 10`, `Community 3`, `Community 5`?",
+      "why": "High betweenness centrality (0.031) - this node is a cross-community bridge."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 75 inferred relationships involving `str` (e.g. with `lifespan()` and `create_app()`) actually correct?",
+      "why": "`str` has 75 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 74 inferred relationships involving `NotFoundError` (e.g. with `Returns paginated list of intelligent associations for a client.` and `Permanently delete an intelligent association.     Requires APROVADOR or ADMIN`) actually correct?",
+      "why": "`NotFoundError` has 74 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 52 inferred relationships involving `ItensPropiosRepository` (e.g. with `REST endpoints for composition-by-copy (cloning TCPO compositions).  Endpoints` and `Clone a servico_tcpo (with all its composicao_tcpo children) into a new     ind`) actually correct?",
+      "why": "`ItensPropiosRepository` has 52 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 57 inferred relationships involving `StatusHomologacao` (e.g. with `ItemProprio` and `Itens criados pelo cliente. Schema: operacional. Passam por workflow de homolog`) actually correct?",
+      "why": "`StatusHomologacao` has 57 INFERRED edges - model-reasoned connections that need verification."
+    }
+  ]
+}

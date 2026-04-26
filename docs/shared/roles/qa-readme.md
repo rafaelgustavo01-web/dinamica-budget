@@ -30,6 +30,14 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 
 ## INBOX
 
+### [DONE] 2026-04-25T17:30:00Z — Sprint F2-02
+- From: worker (kimi-k2.5)
+- Action: REVIEW
+- Status: REJECTED
+- Feedback: @docs/technical-feedback-2026-04-25-f2-02-v1.md
+- Rework: @docs/briefings/sprint-f2-02-rework-v1.md
+- Notes: REJEITADA. Problema de duplicação por explosão DFS e falta de metadados em sub-níveis. Rework solicitado ao Worker.
+
 ### [PENDING] 2026-04-25T16:10:00Z — Sprint F2-02
 - From: worker (kimi-k2.5)
 - Action: REVIEW
@@ -37,6 +45,7 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Technical Review: @docs/sprints/F2-02/technical-review/technical-review-2026-04-25-f2-02.md
 - Tests: `pytest app/backend/tests/unit/test_explosao_recursiva.py -v` -> `6 passed`; `pytest app/backend/tests/unit/ -v` -> `99 passed, 0 failed`
 - Notes: Explosao recursiva com guard nivel 5. Endpoint POST explodir-sub retorna 201/422 conforme criterios. Correcoes de imports em testes existentes inclusas.
+- Status: **REJECTED → REWORK** (QA Review 2026-04-25)
 
 ### [PENDING] 2026-04-23T17:05:00Z — Sprint S-08
 - From: worker (codex-5.3)

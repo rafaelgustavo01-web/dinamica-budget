@@ -102,12 +102,45 @@ Objetivo: levar o projeto para um estado de pre-producao robusto em arquitetura,
 - Entregavel: modulo completo no React.
 - Sprint: `S-12` | Dependencias: `S-11`
 
+## Milestone 6 - Proposta Completa: Fase 3 (P1)
+
+> **Origem:** Demandada pelo PO em 2026-04-25 apos analise de gaps do modulo de proposta entregue em S-09 a S-12.
+> **Documento de referencia:** `docs/resumo_sugestoes.md` + analise de gaps Fase 3 (2026-04-25).
+
+### Fase 6.1 - PQ Layout por Cliente **[INICIADA]**
+- Entidade `PqLayoutCliente` (1:1 com cliente): configura aba, linha de inicio e mapeamento de colunas do Excel.
+- Entidade `PqImportacaoMapeamento`: armazena mapeamento campo_sistema -> coluna_planilha.
+- Endpoint `PUT /clientes/{id}/pq-layout` (admin) + `GET` (consulta).
+- `pq_import_service.py` le layout do cliente antes de processar o arquivo; retorna `cols_detectadas` quando layout nao configurado.
+- Migration Alembic `018_pq_layout_cliente.py`.
+- Entregavel: importacao PQ flexivel por cliente, sem colunas fixas hardcoded.
+- Sprint: `F2-01` | Dependencias: `S-09`, `S-10` | Worker: codex-5.3
+
+### Fase 6.2 - Explosao Recursiva de Composicoes **[INICIADA]**
+- Adicionar `pai_composicao_id` (self-ref FK), `nivel` (int), `e_composicao` (bool), `composicao_explodida` (bool) em `proposta_item_composicoes`.
+- `cpu_explosao_service.py`: ao explodir, sinalizar insumos que tambem possuem composicao propria (`e_composicao=True`).
+- Endpoint `POST /propostas/{id}/cpu/itens/{item_id}/explodir-sub`: dispara sub-explosao de insumo.
+- Guard de profundidade: `nivel > 5` retorna erro 422 com mensagem clara.
+- Migration Alembic `019_recursao_composicao.py`.
+- Entregavel: arvore de composicao com N niveis; UI pode exibir hierarquia completa.
+- Sprint: `F2-02` | Dependencias: `S-11` | Worker: kimi-k2.5
+
+### Fase 6.3 - Tabelas de Recursos + Motor 4 Camadas + Export Power Query
+- Nova entidade `PropostaResumoRecurso`: agregado por (tipo_recurso x insumo), gerado ao chamar `gerar-cpu`.
+- Motor de busca 4 camadas formalizadas: (1) historico confirmado do cliente, (2) codigo exato, (3) fuzzy pg_trgm, (4) semantico pgvector.
+- Endpoints de export: `GET /propostas/{id}/export/cpu` (JSON flat), `GET /propostas/{id}/export/excel` (xlsx com abas CPU, Equipamentos, Ferramentas, EPIs, RH).
+- Decisao arquitetural documentada: aplicacao web e fonte da verdade; Power Query consome via REST ou download Excel (sem VBA).
+- Entregavel: CPU e tabelas consumiveis diretamente pelo Power Query.
+- Sprint: `F2-03` | Dependencias: `F2-01`, `F2-02` | Worker: TBD
+
 ## Dependencias Entre Milestones
 - M2 depende de M1 para estabilizar base arquitetural.
 - M3 pode rodar em paralelo parcial com M2.
 - M4 depende dos gates de seguranca/qualidade de M1 e M2.
 - **M5 depende de M1 (arquitetura), M3 (busca) e das tabelas PcTabelas populadas.**
+- **M6 depende de M5 integralmente concluido (S-09 a S-12 DONE).**
 
 ## Historico de Atualizacao
 - 2026-04-22 13:45 (Research AI): roadmap inicial criado com 4 milestones e fases priorizadas.
 - 2026-04-22 21:00 (Research AI): adicionado Milestone 5 — Modulo de Orcamentos (Fase 2) com 4 subfases e documento de modelagem conceitual.
+- 2026-04-25 10:00 (Research AI): adicionado Milestone 6 — Proposta Completa (Fase 3) com 3 subfases: PQ Layout por Cliente (F2-01/codex), Explosao Recursiva (F2-02/kimi), Tabelas Recursos + Export Power Query (F2-03/TBD). Origem: analise de gaps pos-entrega S-09 a S-12.
