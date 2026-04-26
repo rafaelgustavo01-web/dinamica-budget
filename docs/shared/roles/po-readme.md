@@ -23,6 +23,11 @@ Your inbox has `[PENDING]` with `Action: INTAKE_NEXT`, OR all active sprints are
 
 ## INBOX
 
+### [PENDING] 2026-04-26T23:11:00Z — Sprint F2-08 DONE — WIP slot liberado
+- From: qa (Gemini 3.1 Pro)
+- Action: INTAKE_NEXT
+- Notes: F2-08 fechada. RBAC por proposta validado e integrado. 158 testes OK. WIP slot disponivel.
+
 ### [PENDING] 2026-04-26T19:00:00Z — Sprint F2-07 DONE — Fase 2 encerrada
 - From: qa (Amazon Q)
 - Action: INTAKE_NEXT

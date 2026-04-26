@@ -21,6 +21,13 @@ Your inbox has `[PENDING]` with `Action: MINE_ROADMAP`.
 
 ## INBOX
 
+### [PENDING] 2026-04-26T23:11:00Z — Sprint F2-08 (DONE)
+- From: qa (Gemini 3.1 Pro)
+- Action: MINE_ROADMAP
+- Walkthrough: @docs/sprints/F2-08/walkthrough/reviewed/walkthrough-F2-08.md
+- Feedback: @docs/sprints/F2-08/technical-feedback/technical-feedback-2026-04-26-f2-08-v1.md
+- Notes: F2-08 aceita. RBAC por Proposta. Migration 021, tabela `proposta_acl`, `require_proposta_role` implementados. Aprovado com sucesso.
+
 ### [PENDING] 2026-04-26T19:00:00Z — Sprint F2-07 (DONE)
 - From: qa (Amazon Q)
 - Action: MINE_ROADMAP

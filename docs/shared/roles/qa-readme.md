@@ -30,6 +30,16 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 
 ## INBOX
 
+### [DONE] 2026-04-26T23:11:00Z — Sprint F2-08
+- From: worker (kimi-k2.5)
+- Action: REVIEW
+- Walkthrough: @docs/sprints/F2-08/walkthrough/reviewed/walkthrough-F2-08.md
+- Technical Review: @docs/sprints/F2-08/technical-review/technical-review-2026-04-26-f2-08.md
+- Feedback: @docs/sprints/F2-08/technical-feedback/technical-feedback-2026-04-26-f2-08-v1.md
+- Tests: 158/158 PASS, 0 tsc errors
+- Notes: RBAC por Proposta. Migration 021, tabela `proposta_acl`, `require_proposta_role` implementados. Aprovado com sucesso.
+- Status: **ACCEPTED → DONE** (QA Gemini 3.1 Pro 2026-04-26)
+
 ### [DONE] 2026-04-26T12:00:00Z — Sprint F2-07
 - From: worker (kimi-k2.5 rework v1)
 - Action: REVIEW
