@@ -1,7 +1,7 @@
 """Add recursive columns to proposta_item_composicoes
 
 Revision ID: 019
-Revises: 017
+Revises: 018
 Create Date: 2026-04-25
 """
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = "019"
-down_revision = "017"
+down_revision = "018"
 branch_labels = None
 depends_on = None
 
