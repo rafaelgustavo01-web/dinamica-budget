@@ -20,6 +20,7 @@ import { proposalsApi } from '../../../shared/services/api/proposalsApi';
 import { extractApiErrorMessage } from '../../../shared/services/api/apiClient';
 import { formatCurrency } from '../../../shared/utils/format';
 import { CpuTable } from '../components/CpuTable';
+import { ExportMenu } from '../components/ExportMenu';
 
 export function ProposalCpuPage() {
   const { id } = useParams<{ id: string }>();
@@ -65,13 +66,16 @@ export function ProposalCpuPage() {
         title="Visualização de CPU"
         description={`Proposta ${proposta?.codigo ?? ''} — ${itens.length} itens`}
         actions={
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBackOutlinedIcon />}
-            onClick={() => navigate(`/propostas/${id}`)}
-          >
-            Voltar
-          </Button>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackOutlinedIcon />}
+              onClick={() => navigate(`/propostas/${id}`)}
+            >
+              Voltar
+            </Button>
+            <ExportMenu propostaId={id!} propostaCodigo={proposta?.codigo ?? ''} />
+          </Stack>
         }
       />
 

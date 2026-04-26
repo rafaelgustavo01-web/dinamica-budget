@@ -8,6 +8,7 @@ import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import { PageHeader } from '../../../shared/components/PageHeader';
 import { proposalsApi } from '../../../shared/services/api/proposalsApi';
 import { StatusBadge } from '../../../shared/components/StatusBadge';
+import { ExportMenu } from '../components/ExportMenu';
 import { formatCurrency, formatDateTime } from '../../../shared/utils/format';
 import { extractApiErrorMessage } from '../../../shared/services/api/apiClient';
 
@@ -32,6 +33,7 @@ export function ProposalDetailPage() {
         description={proposta.titulo || 'Sem título'}
         actions={
           <Stack direction="row" spacing={1}>
+            <ExportMenu propostaId={id!} propostaCodigo={proposta.codigo} disabled={proposta.status === 'RASCUNHO'} />
             <Button
               variant="outlined"
               startIcon={<FileUploadOutlinedIcon />}
