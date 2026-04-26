@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import AsyncGenerator
 from uuid import UUID
 
@@ -145,4 +147,31 @@ async def require_cliente_perfil(
             f"Requerido: {perfis_permitidos}."
         )
     return perfis
+
+
+async def require_proposta_role(
+    proposta_id: UUID,
+    papel_minimo: PropostaPapel | None,
+    current_user,
+    db: AsyncSession,
+) -> PropostaPapel | None:
+    from backend.models.enums import PropostaPapel
+    from backend.services.proposta_acl_service import PropostaAclService
+
+    if current_user.is_admin:
+        return PropostaPapel.OWNER
+
+    svc = PropostaAclService(db)
+    papel = await svc.papel_efetivo(proposta_id, current_user.id)
+
+    if papel_minimo is None:
+        return papel
+
+    nivel_user = PropostaAclService.HIERARQUIA.get(papel, 1)
+    nivel_minimo = PropostaAclService.HIERARQUIA[papel_minimo]
+    if nivel_user < nivel_minimo:
+        raise AuthorizationError(
+            f"Papel insuficiente nesta proposta. Requerido: {papel_minimo.value}."
+        )
+    return papel
 
