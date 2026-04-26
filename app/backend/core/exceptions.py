@@ -52,6 +52,13 @@ class ValidationError(DinamicaException):
         )
 
 
+class UnprocessableEntityError(DinamicaException):
+    def __init__(self, message: str, details: dict | None = None) -> None:
+        super().__init__(
+            code="UNPROCESSABLE_ENTITY", message=message, status_code=422, details=details
+        )
+
+
 async def dinamica_exception_handler(request: Request, exc: DinamicaException) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,
