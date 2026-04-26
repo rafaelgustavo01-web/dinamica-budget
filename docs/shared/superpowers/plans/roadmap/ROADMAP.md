@@ -146,6 +146,30 @@ Objetivo: levar o projeto para um estado de pre-producao robusto em arquitetura,
 - Endpoint `GET /propostas/{id}/recursos`: agregado de recursos por tipo (MO, EQUIPAMENTO, INSUMO, FERRAMENTA, EPI).
 - Sprint: `F2-07` | Dependencias: `F2-01`, `F2-02` | Worker: gemini-3.1
 
+### Fase 6.6 - RBAC por Proposta (descoplar de cliente) **[BACKLOG]**
+- Nova tabela `proposta_acl(id, proposta_id, usuario_id, papel ENUM('OWNER','EDITOR','APROVADOR'), created_at, created_by)` com `UNIQUE(proposta_id, usuario_id, papel)`.
+- Papel `VIEWER` é **default implicito** de qualquer usuario autenticado (nao mora em `proposta_acl`); `proposta_acl` so guarda elevacoes.
+- Hierarquia: `ADMIN (global, via users.is_admin) > OWNER > EDITOR > APROVADOR > VIEWER`.
+- Substituir `require_cliente_access(proposta.cliente_id, ...)` por `require_proposta_role(proposta_id, papel_minimo)` em `propostas.py`, `pq_importacao.py`, `cpu_geracao.py`, `proposta_export.py`, `proposta_recursos.py`.
+- Regra de criacao: criador vira `OWNER` automaticamente.
+- Regra de delete: somente `OWNER` (ou `ADMIN`).
+- Migration 021: criar tabela + backfill (`OWNER` para `criado_por_id` de toda proposta existente).
+- `GET /propostas` deixa de exigir `cliente_id` e retorna todas as propostas com `meu_papel` calculado.
+- Endpoints de gestao de ACL: `GET /propostas/{id}/acl`, `POST /propostas/{id}/acl`, `DELETE /propostas/{id}/acl/{usuario_id}` (somente OWNER).
+- Frontend: modal "Compartilhar proposta" em `ProposalDetailPage` (somente OWNER); esconder botoes de edit/delete conforme `meu_papel`.
+- Sprint: `F2-08` | Dependencias: `F2-03`, `F2-04` | Worker: kimi-k2.5
+
+### Fase 6.7 - Versionamento de Propostas + Workflow de Aprovacao **[BACKLOG]**
+- Tabela `propostas` ganha: `proposta_root_id UUID`, `numero_versao INT`, `versao_anterior_id UUID NULL`, `is_versao_atual BOOL`, `is_fechada BOOL`, `requer_aprovacao BOOL DEFAULT FALSE`, `aprovado_por_id UUID NULL`, `aprovado_em TIMESTAMP NULL`.
+- Backfill: `proposta_root_id = id`, `numero_versao = 1`, `is_versao_atual = true`.
+- Constraint: `UNIQUE(proposta_root_id, numero_versao)`.
+- Novo status `AGUARDANDO_APROVACAO` no enum de status da proposta.
+- ACL **herdada por root**: `require_proposta_role` resolve via `proposta.proposta_root_id`, nao via `proposta.id`.
+- Endpoints: `POST /propostas/{id}/nova-versao` (clona snapshot, marca anterior como `is_versao_atual=false`), `POST /propostas/{id}/enviar-aprovacao` (so se `requer_aprovacao=true`, requer EDITOR), `POST /propostas/{id}/aprovar` + `POST /propostas/{id}/rejeitar` (requer APROVADOR), `GET /propostas/root/{root_id}/versoes`.
+- Frontend: aba "Historico" em `ProposalDetailPage` listando versoes; botao "Nova versao" (EDITOR+); toggle "Esta versao precisa de aprovacao"; tela de fila de pendencias para APROVADOR.
+- Migration 022.
+- Sprint: `F2-09` | Dependencias: `F2-08` | Worker: claude-sonnet-4-6
+
 ## Dependencias Entre Milestones
 - M2 depende de M1 para estabilizar base arquitetural.
 - M3 pode rodar em paralelo parcial com M2.
@@ -158,3 +182,4 @@ Objetivo: levar o projeto para um estado de pre-producao robusto em arquitetura,
 - 2026-04-22 21:00 (Research AI): adicionado Milestone 5 — Modulo de Orcamentos (Fase 2) com 4 subfases e documento de modelagem conceitual.
 - 2026-04-25 10:00 (Research AI): adicionado Milestone 6 — Proposta Completa (Fase 3) com 3 subfases: PQ Layout por Cliente (F2-01/codex), Explosao Recursiva (F2-02/kimi), Tabelas Recursos + Export Power Query (F2-03/TBD). Origem: analise de gaps pos-entrega S-09 a S-12.
 - 2026-04-26 14:30 (PO/Supervisor/Scrum Master): Milestone 6 desmembrado para refletir backlog real. Fase 6.3 (TBD) renomeada para Exportacao Excel/PDF (F2-05/kimi). Adicionadas Fases 6.4 (UX complementar — F2-06/claude-sonnet-4-6) e 6.5 (Tabelas Recursos + Motor 4 Camadas — F2-07/gemini-3.1). Tres sprints INICIADAS em paralelo conforme alocacao por especialidade do worker.
+- 2026-04-26 (PO apos analise critica do "plano gpt"): adicionadas Fases 6.6 (RBAC por Proposta — F2-08/kimi-k2.5) e 6.7 (Versionamento + Workflow de Aprovacao — F2-09/claude-sonnet-4-6). RBAC promovido a prioridade por gap de seguranca ativo (gating por cliente em todos os endpoints de proposta). Compras + papel COMPRADOR adiados para Milestone 7 (futuro). Custo base/ajustado tambem adiado por nao ter consumidor (Compras) nesta fase.

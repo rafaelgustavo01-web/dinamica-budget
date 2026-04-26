@@ -26,11 +26,13 @@ Responsável: Research AI / QA Re-avaliação
 | `S-12` | DONE | P2 | `S-11` | UX Frontend do Módulo de Orçamentos | Telas React: criar proposta, importar PQ, match, visualizar CPU; integração com API; smoke E2E |
 | `F2-01` | DONE | P1 | `S-09`, `S-10` | PQ Layout por Cliente — mapeamento de colunas configurável via `PqLayoutCliente` e `PqImportacaoMapeamento` | PUT /clientes/{id}/pq-layout retorna 200; PUT sem descricao retorna 422; GET sem config retorna null; 93+ PASS |
 | `F2-02` | DONE | P1 | `S-11` | Explosão Recursiva de Composições — árvore N níveis com guard de profundidade (max 5) e endpoint `explodir-sub` | POST explodir-sub retorna 201 com lista de filhos; nivel>5 retorna 422; já explodida retorna 422; árvore real sem flattening; 118 PASS |
-| `F2-03` | TESTED | P1 | `S-10`, `F2-01` | Tela de Revisão de Match — confirmação manual dos itens PQ antes de gerar CPU; ações por item: confirmar/substituir/rejeitar | GET /pq/itens retorna lista; PATCH /pq/itens/{id}/match aceita acao; MatchReviewPage com progresso; 110+ PASS, 0 tsc errors |
+| `F2-03` | DONE | P1 | `S-10`, `F2-01` | Tela de Revisão de Match — confirmação manual dos itens PQ antes de gerar CPU; ações por item: confirmar/substituir/rejeitar | GET /pq/itens retorna lista; PATCH /pq/itens/{id}/match aceita acao; MatchReviewPage com progresso; 110+ PASS, 0 tsc errors |
 | `F2-04` | DONE | P1 | `S-11`, `F2-03` | CPU Detalhada — breakdown de insumos por item (material/MO/equipamento) + BDI dinâmico recalculável sem regerar CPU | GET /cpu/itens/{id}/composicoes retorna insumos; POST /cpu/recalcular-bdi atualiza totais; CpuPage desbloqueada com accordion; 115 PASS |
-| `F2-05` | TESTED | P1 | `F2-03`, `F2-04` | Exportação — folha de rosto e quadro-resumo em Excel/PDF da proposta completa | Excel multi-aba (Capa/Resumo/CPU/Composições) e PDF folha de rosto; endpoints autenticados; frontend ExportMenu em ProposalDetailPage e ProposalCpuPage; 130+ PASS; 0 tsc errors |
-| `F2-06` | TODO | P2 | `F2-03` | UX complementar — edição de PQ pós-importação, filtros de proposta, duplicação de proposta | PATCH /pq/itens edita descricao/qtd/unidade; filtros por status na lista; POST /propostas/{id}/duplicar |
-| `F2-07` | TESTED | P2 | `F2-01`, `F2-02` | Tabelas de Recursos + Motor 4 Camadas — agregado por recurso na CPU + busca formalizada em 4 camadas | PropostaResumoRecurso gerado ao chamar gerar-cpu; busca aplica histórico/código/fuzzy/semântico em ordem |
+| `F2-05` | DONE | P1 | `F2-03`, `F2-04` | Exportação — folha de rosto e quadro-resumo em Excel/PDF da proposta completa | Excel multi-aba (Capa/Resumo/CPU/Composições) e PDF folha de rosto; endpoints autenticados; frontend ExportMenu em ProposalDetailPage e ProposalCpuPage; 130+ PASS; 0 tsc errors |
+| `F2-06` | DONE | P2 | `F2-03` | UX complementar — edição de PQ pós-importação, filtros de proposta, duplicação de proposta | PATCH /pq/itens edita descricao/qtd/unidade; filtros por status na lista; POST /propostas/{id}/duplicar |
+| `F2-07` | DONE | P2 | `F2-01`, `F2-02` | Tabelas de Recursos + Motor 4 Camadas — agregado por recurso na CPU + busca formalizada em 4 camadas | PropostaResumoRecurso gerado ao chamar gerar-cpu; busca aplica histórico/código/fuzzy/semântico em ordem |
+| `F2-08` | INICIADA | P0 | `F2-03`, `F2-04` | RBAC por Proposta — desacoplar autorização de cliente; ACL por usuário com papéis OWNER/EDITOR/APROVADOR (VIEWER implícito) e bypass via is_admin | Tabela proposta_acl + migration 021; require_proposta_role substitui require_cliente_access em 5 routers; criador vira OWNER; somente OWNER deleta; GET /propostas retorna meu_papel; modal de compartilhamento no front; 145+ PASS; 0 tsc |
+| `F2-09` | BACKLOG | P1 | `F2-08` | Versionamento de Propostas + Workflow de Aprovação — proposta_root_id como agrupador, nova_versao clona snapshot, fluxo opcional aprovador/aprovado | Migration 022 com campos de versão + aprovação; POST /propostas/{id}/nova-versao; ACL herdada por root; aba Histórico no front; tela fila do APROVADOR |
 
 ## Ordem Recomendada de Execução
 
@@ -56,15 +58,17 @@ FASE C — Módulo de Orçamentos
 
 ## Sprints Ativas
 
-**Fase 3 — segunda leva.** WIP = 4/4 (excecao autorizada pelo PO em 2026-04-26 para acelerar fechamento de Fase 2).
+**Fase 3 — segunda leva fechada (F2-01..F2-07 todas DONE).** Terceira leva preparada com F2-08 + F2-09.
 
 - `F2-01` DONE — PQ Layout por Cliente (Worker: claude-sonnet-4-6) — QA aprovado 2026-04-25
 - `F2-02` DONE — Explosão Recursiva de Composições (Worker: kimi-k2.5) — QA aprovado 2026-04-26 (pos-rework)
-- `F2-03` TESTED — Tela de Revisão de Match (Worker: claude-sonnet-4-6) — entregue 2026-04-26, aguarda QA
+- `F2-03` DONE — Tela de Revisão de Match (Worker: claude-sonnet-4-6) — QA aprovado 2026-04-26
 - `F2-04` DONE — CPU Detalhada + BDI Dinâmico (Worker: kimi-k2.5) — QA aprovado 2026-04-25
-- `F2-05` TODO — Exportação Excel/PDF (Worker: kimi-k2.5) — backend-pesado: openpyxl + endpoints + small frontend hook
-- `F2-06` TODO — UX complementar (Worker: claude-sonnet-4-6) — frontend-pesado: edição PQ, filtros, duplicação
-- `F2-07` TODO — Tabelas Recursos + Motor 4 Camadas (Worker: gemini-3.1) — análise documental densa + algoritmo de busca cascata
+- `F2-05` DONE — Exportação Excel/PDF (Worker: kimi-k2.5) — QA aprovado 2026-04-26
+- `F2-06` DONE — UX complementar (Worker: claude-sonnet-4-6) — QA aprovado 2026-04-26 (bug debounce corrigido pelo QA)
+- `F2-07` DONE — Tabelas Recursos + Motor 4 Camadas (Worker: kimi-k2.5 rework v1) — QA aprovado 2026-04-26
+- `F2-08` INICIADA — RBAC por Proposta (Worker: kimi-k2.5) — despachada 2026-04-26; origem: revisão crítica do "plano gpt", gap de gating por cliente
+- `F2-09` BACKLOG — Versionamento + Workflow de Aprovação (Worker: claude-sonnet-4-6) — depende de F2-08
 
 ### Decisões de alocação (Scrum Master, 2026-04-26)
 
@@ -112,6 +116,9 @@ Todas as 12 sprints concluídas com aprovação do QA:
 - 2026-04-23: Aprovada reorganização conforme Insight Research AI. Foco em funcionalidade core (Orçamentos) antes de hardening de infraestrutura.
 - 2026-04-23 16:15: Reavaliação completa por QA (OpenCode) confirmou **todas as 12 sprints em DONE**. Pipeline encerrado. Projeto pronto para go-live.
 - 2026-04-26: F2-03 entregue por claude-sonnet-4-6 (status TESTED, aguarda QA). F2-05/F2-06/F2-07 movidas para INICIADA → PLAN → TODO em batch para fechamento de Fase 2. WIP cap elevado para 4 por decisão excepcional do PO.
+- 2026-04-26 (QA Amazon Q): F2-03 → DONE (6 PASS, 0 tsc). F2-06 → DONE (143 PASS, 0 tsc; bug debounce corrigido). F2-07 → DONE após rework v1 (143 PASS, 0 tsc; MOTOR_BUSCA_4_CAMADAS.md + GET /recursos + ProposalResourcesPage entregues).
+- 2026-04-26 (PO pós-revisão "plano gpt"): adicionadas F2-08 (RBAC por Proposta — kimi-k2.5, P0) e F2-09 (Versionamento + Aprovação — claude-sonnet-4-6, P1). RBAC por proposta (OWNER/EDITOR/APROVADOR; VIEWER implícito) substitui gating por cliente em todos endpoints de proposta. Mini módulo de Compras + papel COMPRADOR + custo base/ajustado adiados para Milestone 7. F2-08 entra como prioridade por ser gap de segurança ativo.
+- 2026-04-26 (Scrum Master): F2-08 despachada para kimi-k2.5. Status BACKLOG → INICIADA. Worker prompt em `docs/sprints/F2-08/dispatch/sprint-F2-08-worker-prompt.md`. WIP = 1/4 (apenas F2-08 ativa).
 
 ## Observações de Pesquisa
 - O repositório atual possui todos os artefatos canônicos do pipeline (`docs/JOB-DESCRIPTION.md`, `docs/superpowers/plans/`, `docs/roles/`, `docs/dispatch/`).
