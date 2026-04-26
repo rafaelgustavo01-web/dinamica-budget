@@ -28,4 +28,3 @@
 
 - Focus review on the executable gate, the smoke flow (`criar proposta -> importar PQ -> match -> gerar CPU`), and the router fix found during the audit.
 - The smoke test uses the real FastAPI app with controlled overrides to keep the release gate deterministic despite instability in the local PostgreSQL test database.
-

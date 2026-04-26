@@ -39,4 +39,3 @@
 
 - Focus review on CPU rebuild from matched PQ items, BDI application, and fallback behavior when PcTabelas does not have a matching row.
 - The explicit manual confirmation endpoint for PQ match selection is still outside this sprint, so the CPU builder accepts items already tagged with a selected match.
-

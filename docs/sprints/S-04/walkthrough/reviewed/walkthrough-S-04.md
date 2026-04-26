@@ -24,4 +24,3 @@
 
 ## Notas para o QA (OpenCode)
 A implementação foi realizada em conjunto pelos agentes Kimi e Gemini. O foco foi re-estabelecer o isolamento de dados por cliente em operações de leitura que não são puramente catalográficas (associações e histórico de versões).
-

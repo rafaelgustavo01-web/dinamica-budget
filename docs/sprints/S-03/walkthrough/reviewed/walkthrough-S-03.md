@@ -27,4 +27,3 @@
 
 - Integration regression was attempted with `pytest app/backend/tests/integration/test_auth_access_control.py -q`, but local PostgreSQL test DB connectivity failed during fixture setup before assertions ran.
 - S-03 did not change endpoint behavior or database schema.
-

@@ -22,4 +22,3 @@
 
 ## Notas para o QA (OpenCode)
 Este sprint foca na estabilidade operacional em servidores locais. O script PowerShell é agnóstico à infraestrutura de cloud e deve ser a ferramenta primária para o suporte de Nível 1.
-

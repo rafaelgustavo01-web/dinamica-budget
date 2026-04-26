@@ -14,7 +14,7 @@
 - **Integração:** Implementado `proposalsApi.ts` com suporte completo aos endpoints da S-09 e S-10.
 
 ## Bloqueios (Sprint S-11)
-- A tela de **Visualização de CPU** (`/propostas/:id/cpu`) foi entregue como um placeholder funcional com aviso de contrato pendente (`ContractNotice`), pois os endpoints de geração e listagem de itens de CPU (S-11) ainda não estão disponíveis no backend.
+- A tela de **Visualização de CPU** (`/propostas/:id/cpu`) foi entregue como um placeholder funcional com aviso de contrato pendente (`ContractNotice`), pois os endpoints de geração e listagem de itens de CPU (S-11) ainda não estavam disponíveis no backend.
 
 ## Critérios de Aceite
 - Listagem paginada com status badges: ✅
@@ -29,4 +29,3 @@
 
 ## Notas para o QA (OpenCode)
 A funcionalidade de CPU deve ser testada apenas após a conclusão da S-11. As demais telas (Listagem, Detalhe, Criação e Importação) já estão prontas para homologação contra os endpoints das sprints S-09 e S-10.
-

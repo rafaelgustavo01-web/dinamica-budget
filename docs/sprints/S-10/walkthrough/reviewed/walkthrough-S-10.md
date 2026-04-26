@@ -32,4 +32,3 @@
 
 - Review tenant validation on both endpoints and verify import behavior with representative CSV/XLSX samples.
 - This sprint stops at suggestion generation; manual confirmation and CPU generation remain for later sprints.
-

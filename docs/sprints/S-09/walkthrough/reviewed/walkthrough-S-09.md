@@ -32,4 +32,3 @@
 
 - Focus review on tenant isolation, proposal soft delete behavior, and migration shape.
 - This sprint does not yet cover PQ import flow or CPU generation behavior; those remain backlog items in S-10 and S-11.
-
