@@ -3,6 +3,7 @@ import io
 import uuid
 from decimal import Decimal, InvalidOperation
 from typing import Any
+from uuid import UUID
 
 import openpyxl
 from fastapi import UploadFile
@@ -53,6 +54,20 @@ def _find_column_map(headers: list[object]) -> dict[str, int]:
     return column_map
 
 
+def _find_column_map_from_layout(headers: list[object], layout_map: dict[str, str]) -> dict[str, int]:
+    normalized = [_normalize_header(value) for value in headers]
+    column_map: dict[str, int] = {}
+    for campo, coluna_planilha in layout_map.items():
+        coluna_norm = _normalize_header(coluna_planilha)
+        for idx, header in enumerate(normalized):
+            if header == coluna_norm:
+                column_map[campo] = idx
+                break
+    if "descricao" not in column_map:
+        raise ValidationError("A planilha deve conter uma coluna de descrição.")
+    return column_map
+
+
 def _parse_decimal(value: object, default: Decimal) -> Decimal:
     if value in (None, ""):
         return default
@@ -73,10 +88,20 @@ class PqImportService:
         proposta_repo: PropostaRepository,
         importacao_repo: PqImportacaoRepository,
         item_repo: PqItemRepository,
+        pq_layout_repo=None,
     ) -> None:
         self.proposta_repo = proposta_repo
         self.importacao_repo = importacao_repo
         self.item_repo = item_repo
+        self._pq_layout_repo = pq_layout_repo
+
+    async def _resolver_mapa_colunas(self, cliente_id: UUID) -> dict[str, str] | None:
+        if self._pq_layout_repo is None:
+            return None
+        layout = await self._pq_layout_repo.get_by_cliente_id(cliente_id)
+        if layout is None:
+            return None
+        return {m.campo_sistema.value: m.coluna_planilha for m in layout.mapeamentos}
 
     async def importar_planilha(self, proposta_id: uuid.UUID, arquivo: UploadFile) -> PqImportacao:
         proposta = await self.proposta_repo.get_by_id(proposta_id)
@@ -93,7 +118,8 @@ class PqImportService:
         if not contents:
             raise ValidationError("Arquivo vazio.")
 
-        parsed_rows = self._parse_contents(contents, ext)
+        layout_map = await self._resolver_mapa_colunas(proposta.cliente_id)
+        parsed_rows = self._parse_contents(contents, ext, layout_map=layout_map)
         importacao = PqImportacao(
             id=uuid.uuid4(),
             proposta_id=proposta_id,
@@ -145,19 +171,22 @@ class PqImportService:
         await self.importacao_repo.update(importacao)
         return importacao
 
-    def _parse_contents(self, contents: bytes, ext: str) -> list[dict[str, Any]]:
+    def _parse_contents(self, contents: bytes, ext: str, layout_map: dict[str, str] | None = None) -> list[dict[str, Any]]:
         if ext == "csv":
-            return self._parse_csv(contents)
-        return self._parse_xlsx(contents)
+            return self._parse_csv(contents, layout_map=layout_map)
+        return self._parse_xlsx(contents, layout_map=layout_map)
 
-    def _parse_csv(self, contents: bytes) -> list[dict[str, Any]]:
+    def _parse_csv(self, contents: bytes, layout_map: dict[str, str] | None = None) -> list[dict[str, Any]]:
         text = _decode_csv(contents)
         reader = csv.reader(io.StringIO(text))
         rows = list(reader)
         if not rows:
             return []
 
-        column_map = _find_column_map(rows[0])
+        if layout_map:
+            column_map = _find_column_map_from_layout(rows[0], layout_map)
+        else:
+            column_map = _find_column_map(rows[0])
         parsed_rows: list[dict[str, Any]] = []
         for line_number, row in enumerate(rows[1:], start=2):
             if not any(str(cell).strip() for cell in row if cell is not None):
@@ -165,7 +194,7 @@ class PqImportService:
             parsed_rows.append(self._build_parsed_row(row, column_map, line_number))
         return parsed_rows
 
-    def _parse_xlsx(self, contents: bytes) -> list[dict[str, Any]]:
+    def _parse_xlsx(self, contents: bytes, layout_map: dict[str, str] | None = None) -> list[dict[str, Any]]:
         workbook = openpyxl.load_workbook(io.BytesIO(contents), read_only=True, data_only=True)
         worksheet = workbook.active
 
@@ -174,7 +203,10 @@ class PqImportService:
         for row_number, row in enumerate(worksheet.iter_rows(values_only=True), start=1):
             values = list(row)
             try:
-                _find_column_map(values)
+                if layout_map:
+                    _find_column_map_from_layout(values, layout_map)
+                else:
+                    _find_column_map(values)
                 header_row_number = row_number
                 header_values = values
                 break
@@ -184,7 +216,10 @@ class PqImportService:
         if header_row_number is None:
             raise ValidationError("Não foi possível identificar o cabeçalho da planilha.")
 
-        column_map = _find_column_map(header_values)
+        if layout_map:
+            column_map = _find_column_map_from_layout(header_values, layout_map)
+        else:
+            column_map = _find_column_map(header_values)
         parsed_rows: list[dict[str, Any]] = []
         for row_number, row in enumerate(
             worksheet.iter_rows(min_row=header_row_number + 1, values_only=True),

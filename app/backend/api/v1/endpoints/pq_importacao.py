@@ -7,6 +7,7 @@ from backend.core.dependencies import get_current_active_user, get_db, require_c
 from backend.core.exceptions import NotFoundError
 from backend.repositories.pq_importacao_repository import PqImportacaoRepository
 from backend.repositories.pq_item_repository import PqItemRepository
+from backend.repositories.pq_layout_repository import PqLayoutRepository
 from backend.repositories.proposta_repository import PropostaRepository
 from backend.schemas.proposta import PqImportacaoResponse, PqMatchResponse
 from backend.services.pq_import_service import PqImportService
@@ -36,6 +37,7 @@ async def upload_planilha(
         proposta_repo=PropostaRepository(db),
         importacao_repo=PqImportacaoRepository(db),
         item_repo=PqItemRepository(db),
+        pq_layout_repo=PqLayoutRepository(db),
     )
     importacao = await svc.importar_planilha(proposta_id, arquivo)
     return PqImportacaoResponse(
