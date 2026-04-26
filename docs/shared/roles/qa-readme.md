@@ -30,13 +30,15 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 
 ## INBOX
 
-### [PENDING] 2026-04-26T12:00:00Z — Sprint F2-07
-- From: worker (Gemini CLI)
+### [DONE] 2026-04-26T12:00:00Z — Sprint F2-07
+- From: worker (kimi-k2.5 rework v1)
 - Action: REVIEW
-- Walkthrough: @docs/sprints/F2-07/walkthrough/done/walkthrough-F2-07.md
-- Technical Review: @docs/sprints/F2-07/technical-review/technical-review-2026-04-26-f2-07.md
-- Tests: `pytest app/backend/tests/unit/ -q` -> `133 passed, 0 failed`
-- Notes: Tabelas de Recursos (agregação por categoria) + Motor de Busca 4 Camadas formalizado (Código Exato, Próprios, Associações, Global). Migration 020 inclusa.
+- Walkthrough: @docs/sprints/F2-07/walkthrough/reviewed/walkthrough-F2-07-rework-v1.md
+- Technical Review: @docs/sprints/F2-07/technical-review/technical-review-2026-04-26-f2-07-rework-v1.md
+- Feedback: @docs/sprints/F2-07/technical-feedback/technical-feedback-2026-04-26-f2-07-v2.md
+- Tests: 143/143 PASS, 0 tsc errors
+- Notes: Rework v1 completo. MOTOR_BUSCA_4_CAMADAS.md criado, endpoint GET /recursos implementado e testado (2 testes), ProposalResourcesPage com Accordion, rota /recursos e botão Ver Recursos em ProposalDetailPage.
+- Status: **ACCEPTED → DONE** (QA Amazon Q 2026-04-26)
 
 ### [DONE] 2026-04-26T11:45:00Z — Sprint F2-02 (Rework v1)
 - From: worker (kimi-k2.5)
