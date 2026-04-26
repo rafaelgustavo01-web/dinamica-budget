@@ -9,6 +9,8 @@ export type StatusProposta =
   | 'REPROVADA'
   | 'ARQUIVADA';
 
+export type PropostaPapel = 'OWNER' | 'EDITOR' | 'APROVADOR';
+
 export interface PropostaResponse {
   id: string;
   cliente_id: string;
@@ -25,6 +27,7 @@ export interface PropostaResponse {
   data_finalizacao: string | null;
   created_at: string;
   updated_at: string;
+  meu_papel: PropostaPapel | null;
 }
 
 export interface PropostaCreateRequest {
@@ -36,6 +39,22 @@ export interface PropostaCreateRequest {
 export interface PropostaUpdateRequest {
   titulo?: string;
   descricao?: string;
+}
+
+export interface PropostaAclResponse {
+  id: string;
+  proposta_id: string;
+  usuario_id: string;
+  usuario_nome: string;
+  usuario_email: string;
+  papel: PropostaPapel;
+  created_at: string;
+  created_by: string;
+}
+
+export interface PropostaAclCreate {
+  usuario_id: string;
+  papel: PropostaPapel;
 }
 
 export interface PqImportacaoResponse {
@@ -138,13 +157,11 @@ export interface RecalcularBdiResponse {
 }
 
 export const proposalsApi = {
-  async list(clienteId: string, page = 1, pageSize = 20) {
+  async list(clienteId?: string, page = 1, pageSize = 20) {
+    const params: Record<string, string | number> = { page, page_size: pageSize };
+    if (clienteId) params.cliente_id = clienteId;
     const response = await apiClient.get<PaginatedResponse<PropostaResponse>>('/propostas/', {
-      params: {
-        cliente_id: clienteId,
-        page,
-        page_size: pageSize,
-      },
+      params,
     });
     return response.data;
   },
@@ -261,5 +278,19 @@ export const proposalsApi = {
       responseType: 'blob',
     });
     return response.data as Blob;
+  },
+
+  async listAcl(propostaId: string) {
+    const response = await apiClient.get<PropostaAclResponse[]>(`/propostas/${propostaId}/acl`);
+    return response.data;
+  },
+
+  async addAcl(propostaId: string, payload: PropostaAclCreate) {
+    const response = await apiClient.post<PropostaAclResponse>(`/propostas/${propostaId}/acl`, payload);
+    return response.data;
+  },
+
+  async removeAcl(propostaId: string, usuarioId: string, papel: PropostaPapel) {
+    await apiClient.delete(`/propostas/${propostaId}/acl/${usuarioId}/${papel}`);
   },
 };
