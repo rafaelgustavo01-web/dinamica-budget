@@ -26,7 +26,11 @@ Responsável: Research AI / QA Re-avaliação
 | `S-12` | DONE | P2 | `S-11` | UX Frontend do Módulo de Orçamentos | Telas React: criar proposta, importar PQ, match, visualizar CPU; integração com API; smoke E2E |
 | `F2-01` | DONE | P1 | `S-09`, `S-10` | PQ Layout por Cliente — mapeamento de colunas configurável via `PqLayoutCliente` e `PqImportacaoMapeamento` | PUT /clientes/{id}/pq-layout retorna 200; PUT sem descricao retorna 422; GET sem config retorna null; 93+ PASS |
 | `F2-02` | TODO | P1 | `S-11` | Explosão Recursiva de Composições — árvore N níveis com guard de profundidade (max 5) e endpoint `explodir-sub` | POST explodir-sub retorna 201 com lista de filhos; nivel>5 retorna 422; já explodida retorna 422; 99 PASS |
-| `F2-03` | BACKLOG | P1 | `F2-01`, `F2-02` | Tabelas de Recursos + Motor 4 Camadas — geração de tabelas de equipamentos/ferramentas/EPIs e busca semântica pg_trgm/pgvector | Tabelas geradas ao salvar proposta; motor retorna resultados em 4 camadas; consumo via Power Query REST/Excel |
+| `F2-03` | TODO | P1 | `S-10`, `F2-01` | Tela de Revisão de Match — confirmação manual dos itens PQ antes de gerar CPU; ações por item: confirmar/substituir/rejeitar | GET /pq/itens retorna lista; PATCH /pq/itens/{id}/match aceita acao; MatchReviewPage com progresso; 110+ PASS, 0 tsc errors |
+| `F2-04` | TODO | P1 | `S-11`, `F2-03` | CPU Detalhada — breakdown de insumos por item (material/MO/equipamento) + BDI dinâmico recalculável sem regerar CPU | GET /cpu/itens/{id}/composicoes retorna insumos; POST /cpu/recalcular-bdi atualiza totais; CpuPage desbloqueada com accordion; 115+ PASS |
+| `F2-05` | BACKLOG | P1 | `F2-03`, `F2-04` | Exportação — folha de rosto e quadro-resumo em Excel/PDF da proposta completa | Endpoint gera arquivo; frontend tem botao de download; template com dados do cliente e totais |
+| `F2-06` | BACKLOG | P2 | `F2-03` | UX complementar — edição de PQ pós-importação, filtros de proposta, duplicação de proposta | Editar descricao/qtd/unidade de item importado; filtrar propostas por status; duplicar proposta como base |
+| `F2-07` | BACKLOG | P2 | `F2-01`, `F2-02` | Tabelas de Recursos + Motor 4 Camadas — geração de tabelas de equipamentos/ferramentas/EPIs e busca semântica | Tabelas geradas ao salvar proposta; motor retorna resultados em 4 camadas |
 
 ## Ordem Recomendada de Execução
 
@@ -55,7 +59,9 @@ FASE C — Módulo de Orçamentos
 **Fase 3 iniciada.** WIP = 2/4.
 
 - `F2-01` DONE — PQ Layout por Cliente (Worker: claude-sonnet-4-6) — QA aprovado 2026-04-25
-- `F2-02` TODO — Explosão Recursiva de Composições (Worker: kimi-k2.5) — REJEITADA pelo QA (v1), aguardando rework
+- `F2-02` TODO — Explosão Recursiva de Composições (Worker: kimi-k2.5) — aguardando QA
+- `F2-03` TODO — Tela de Revisão de Match (Worker: claude-sonnet-4-6)
+- `F2-04` TODO — CPU Detalhada + BDI Dinâmico (Worker: kimi-k2.5)
 
 ## Sprints Concluídas (Fases 1 e 2)
 

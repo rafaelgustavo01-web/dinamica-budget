@@ -10,9 +10,9 @@
       "roles": ["research", "po", "sm", "supervisor", "worker"],
       "available": false,
       "busy": true,
-      "reserved_for_sprint": "F2-02",
-      "last_checked_at": "2026-04-25T10:00:00-03:00",
-      "notes": "Worker BUILD F2-02 — Explosao Recursiva de Composicoes. Inbox: docs/shared/dispatch/inbox/kimi-k2.5-F2-02.md"
+      "reserved_for_sprint": "F2-04",
+      "last_checked_at": "2026-04-25T23:00:00-03:00",
+      "notes": "F2-02 TESTED (aguardando QA). Alocado para F2-04 — CPU Detalhada + BDI Dinamico. Inbox: docs/sprints/F2-04/dispatch/sprint-F2-04-worker-prompt.md"
     },
     {
       "worker_id": "claude-sonnet-4-6",
@@ -20,11 +20,11 @@
       "provider": "Anthropic (Claude Code)",
       "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript", "alembic"],
       "roles": ["worker"],
-      "available": true,
-      "busy": false,
-      "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-25T22:00:00-03:00",
-      "notes": "F2-01 TESTED — PQ Layout por Cliente entregue. 107 PASS. Disponivel para proximas sprints."
+      "available": false,
+      "busy": true,
+      "reserved_for_sprint": "F2-03",
+      "last_checked_at": "2026-04-25T23:00:00-03:00",
+      "notes": "F2-01 DONE. Alocado para F2-03 — Tela de Revisao de Match (frontend-heavy). Inbox: docs/sprints/F2-03/dispatch/sprint-F2-03-worker-prompt.md"
     },
     {
       "worker_id": "codex-5.3",
