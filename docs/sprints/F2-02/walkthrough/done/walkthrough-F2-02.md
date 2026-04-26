@@ -1,50 +1,45 @@
-# Walkthrough — Sprint F2-02
+# Walkthrough — Sprint F2-02 (Rework v1)
 
-> **Data:** 2026-04-25
-> **Sprint:** F2-02 — Explosão Recursiva de Composições
+> **Data:** 2026-04-26
+> **Sprint:** F2-02 — Explosão Recursiva de Composições (Rework v1)
 > **Worker:** kimi-k2.5
 
 ---
 
-## O que foi entregue
+## O que foi entregue (Rework)
 
-Permitir que composições de proposta explodam em sub-níveis (composição dentro de composição), registrando a árvore completa de insumos com rastreabilidade de nível e origem.
+Refatoração da explosão recursiva para construir uma árvore real sem duplicidade e com metadados completos.
 
-## Arquivos alterados/criados
+## Correções aplicadas
 
-1. `app/alembic/versions/019_recursao_composicao.py` — Migration com 4 colunas e FK self-ref.
-2. `app/backend/models/proposta.py` — 4 colunas + relationships `sub_composicoes`/`pai`.
-3. `app/backend/services/cpu_explosao_service.py` — Guard de profundidade, marcação de sub-composição, método `explodir_sub_composicao`.
-4. `app/backend/api/v1/endpoints/cpu_geracao.py` — Endpoint `POST .../explodir-sub`.
-5. `app/backend/tests/unit/test_explosao_recursiva.py` — 6 testes unitários.
-6. Correções em testes existentes (imports `app.*` → `backend.*`):
-   - `test_busca_service.py`
-   - `test_cpu_geracao_service.py`
-   - `test_composicao_clone_new.py`
-   - `test_security_p0.py`
-   - `test_security_s04.py`
-   - `test_transactional_purity.py`
+1. **Fim do achatamento (flattening)** — `CpuExplosaoService` agora usa `_listar_filhos_diretos` que consulta apenas `referencia.composicao_base` (filhos diretos do TCPO) ou `operacional.composicao_cliente` via versão ativa (filhos diretos do ItemProprio). Não usa mais `servico_catalog_service.explode_composicao` que retornava DFS achatada.
+2. **Integridade de dados** — Sub-composições criadas via `_build_composicao` que resolve snapshot (BaseTcpo ou ItemProprio) e popula `tipo_recurso`, `custo_unitario_insumo`, `unidade_medida`, `descricao_insumo`.
+3. **Polimorfismo** — `_listar_filhos_diretos` e `_resolve_snapshot` suportam ambos os tipos. `explodir_sub_composicao` verifica `insumo_base_id` ou `insumo_proprio_id`.
+4. **Testes de árvore** — 3 novos testes validam:
+   - Nível 0 cria apenas filhos diretos
+   - Sub-explosão cria netos sem duplicar
+   - Suporte a ItemProprio na sub-explosão
+
+## Arquivos alterados
+
+- `app/backend/services/cpu_explosao_service.py` — reescrito com `_listar_filhos_diretos`, refatorados `explodir_proposta_item`, `explodir_sub_composicao`, `_build_composicao`.
+- `app/backend/tests/unit/test_explosao_recursiva.py` — 3 testes novos de árvore.
+- `app/backend/services/cpu_geracao_service.py` — import fix `PropostaItemComposicao`.
 
 ## Como validar
 
 ```bash
 cd app
-# Testes da sprint
 python -m pytest backend/tests/unit/test_explosao_recursiva.py -v
-# Regressão completa
-python -m pytest backend/tests/unit/ -v
+# Esperado: 9 passed
+
+python -m pytest backend/tests/ -q
+# Esperado: 118 passed, 0 failed
 ```
-
-Resultado esperado: 99 passed, 0 failed.
-
-## Decisões de implementação
-
-- `ComposicaoBaseRepository` não existe no codebase. Substituído por `servico_catalog_service.explode_composicao` para obter a BOM do insumo.
-- `_verificar_e_marcar_sub_composicao` usa `explode_composicao` e verifica se `resultado.itens` é não-vazio.
-- Migration 019 encadeada em 017 porque 018 (F2-01) ainda não existe. Será reencadeada quando F2-01 entregar.
 
 ## Handoff para QA
 
 - Walkthrough: `docs/sprints/F2-02/walkthrough/done/walkthrough-F2-02.md`
 - Technical Review: `docs/sprints/F2-02/technical-review/technical-review-2026-04-25-f2-02.md`
-- Tests: 99 PASS / 0 FAIL
+- Rework briefing: `docs/briefings/sprint-f2-02-rework-v1.md`
+- Tests: 118 PASS / 0 FAIL

@@ -117,6 +117,14 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Feedback: @docs/technical-feedback-2026-04-25-f2-02-v1.md
 - Notes: A implementação atual duplica itens devido ao uso de explosão recursiva (DFS) do catálogo em cada nível. Metadados (tipo, custo) e suporte a Itens Próprios ausentes nas sub-explosões. Ver detalhes no feedback.
 
+### [DONE] 2026-04-26T00:20:00Z — Sprint F2-02 (Rework v1)
+- From: qa
+- Action: REWORK
+- Assigned Worker: kimi-k2.5
+- Briefing: @docs/briefings/sprint-f2-02-rework-v1.md
+- Plan: @docs/sprints/F2-02/plans/2026-04-25-explosao-recursiva.md
+- Notes: Rework aplicado. _listar_filhos_diretos substitui explode_composicao DFS. Sub-composicoes com snapshot e metadados completos. Suporte a ItemProprio. 9 testes unitarios de explosao recursiva (3 novos). Regressao: 118 PASS / 0 FAIL. Handoff para QA aberto.
+
 ### [DONE] 2026-04-25T23:30:00Z — Sprint F2-04
 - From: supervisor
 - Action: BUILD

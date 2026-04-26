@@ -38,13 +38,30 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Rework: @docs/briefings/sprint-f2-02-rework-v1.md
 - Notes: REJEITADA. Problema de duplicação por explosão DFS e falta de metadados em sub-níveis. Rework solicitado ao Worker.
 
+### [DONE] 2026-04-26T00:30:00Z — Sprint F2-04
+- From: worker (kimi-k2.5)
+- Action: REVIEW
+- Status: ACCEPTED
+- Feedback: @docs/technical-feedback-2026-04-25-f2-04-v1.md
+- Notes: APROVADA. Breakdown detalhado e BDI dinâmico validados.
+
 ### [PENDING] 2026-04-25T23:30:00Z — Sprint F2-04
 - From: worker (kimi-k2.5)
 - Action: REVIEW
-- Walkthrough: @docs/sprints/F2-04/walkthrough/done/walkthrough-F2-04.md
+- Walkthrough: @docs/walkthrough/reviewed/walkthrough-F2-04.md
 - Technical Review: @docs/sprints/F2-04/technical-review/technical-review-2026-04-25-f2-04.md
 - Tests: `pytest app/backend/tests/ -q` -> `115 passed, 0 failed`; `cd app/frontend && npx tsc --noEmit` -> `0 erros`
 - Notes: CPU detalhada com breakdown de insumos, BDI dinamico, ProposalCpuPage desbloqueada. 8 testes unitarios novos.
+- Status: **ACCEPTED → DONE** (QA Review 2026-04-26)
+
+### [PENDING] 2026-04-26T00:20:00Z — Sprint F2-02 (Rework v1)
+- From: worker (kimi-k2.5)
+- Action: REVIEW
+- Walkthrough: @docs/sprints/F2-02/walkthrough/done/walkthrough-F2-02.md
+- Technical Review: @docs/sprints/F2-02/technical-review/technical-review-2026-04-25-f2-02.md
+- Rework Briefing: @docs/briefings/sprint-f2-02-rework-v1.md
+- Tests: `pytest app/backend/tests/unit/test_explosao_recursiva.py -v` -> `9 passed`; `pytest app/backend/tests/ -q` -> `118 passed, 0 failed`
+- Notes: Rework v1 aplicado. Árvore real sem flattening, metadados completos em sub-níveis, suporte a ItemProprio.
 
 ### [PENDING] 2026-04-25T16:10:00Z — Sprint F2-02
 - From: worker (kimi-k2.5)
