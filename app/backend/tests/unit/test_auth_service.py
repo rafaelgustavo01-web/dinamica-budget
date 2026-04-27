@@ -32,7 +32,7 @@ async def test_get_user_profile_success(auth_service, mock_repo):
     perfil = UsuarioPerfil(usuario_id=user_id, cliente_id=cliente_id, perfil="USUARIO")
 
     mock_repo.get_by_id.return_value = user
-    mock_repo.get_perfis.return_value = [perfil]
+    mock_repo.get_perfis_with_nomes.return_value = [(perfil, "Test Cliente")]
 
     result = await auth_service.get_user_profile(user_id)
 
@@ -42,6 +42,7 @@ async def test_get_user_profile_success(auth_service, mock_repo):
     assert len(result["perfis"]) == 1
     assert result["perfis"][0].perfil == "USUARIO"
     assert result["perfis"][0].cliente_id == str(cliente_id)
+    assert result["perfis"][0].cliente_nome == "Test Cliente"
 
 
 @pytest.mark.asyncio
@@ -57,7 +58,7 @@ async def test_get_user_profile_admin_adds_wildcard(auth_service, mock_repo):
         is_active=True,
     )
     mock_repo.get_by_id.return_value = user
-    mock_repo.get_perfis.return_value = []
+    mock_repo.get_perfis_with_nomes.return_value = []
 
     result = await auth_service.get_user_profile(user_id)
 

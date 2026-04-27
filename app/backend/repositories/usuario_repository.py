@@ -68,6 +68,15 @@ class UsuarioRepository(BaseRepository[Usuario]):
         )
         return list(result.scalars().all())
 
+    async def get_perfis_with_nomes(self, usuario_id: UUID) -> list[tuple[UsuarioPerfil, str]]:
+        from backend.models.cliente import Cliente
+        result = await self.db.execute(
+            select(UsuarioPerfil, Cliente.nome_fantasia)
+            .join(Cliente, UsuarioPerfil.cliente_id == Cliente.id)
+            .where(UsuarioPerfil.usuario_id == usuario_id)
+        )
+        return [(row[0], row[1] or "") for row in result.all()]
+
     async def set_perfis_cliente(
         self,
         usuario_id: UUID,

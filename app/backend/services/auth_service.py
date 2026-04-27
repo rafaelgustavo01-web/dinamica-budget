@@ -100,13 +100,13 @@ class AuthService:
         if not user:
             raise AuthenticationError("Usuário não encontrado.")
 
-        perfis_db = await self.repo.get_perfis(user_id)
+        perfis_with_names = await self.repo.get_perfis_with_nomes(user_id)
         perfis = [
-            PerfilClienteResponse(cliente_id=str(p.cliente_id), perfil=p.perfil)
-            for p in perfis_db
+            PerfilClienteResponse(cliente_id=str(p.cliente_id), perfil=p.perfil, cliente_nome=nome)
+            for p, nome in perfis_with_names
         ]
         if user.is_admin:
-            perfis.append(PerfilClienteResponse(cliente_id="*", perfil="ADMIN"))
+            perfis.append(PerfilClienteResponse(cliente_id="*", perfil="ADMIN", cliente_nome=""))
 
         return {
             "id": str(user.id),

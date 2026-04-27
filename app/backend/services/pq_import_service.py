@@ -18,9 +18,13 @@ from backend.repositories.proposta_repository import PropostaRepository
 
 _HEADER_ALIASES = {
     "codigo": {"codigo", "código", "cod", "item", "item codigo"},
-    "descricao": {"descricao", "descrição", "servico", "serviço", "item descricao", "item descrição"},
-    "unidade": {"unidade", "unid", "und", "unidade_medida", "unidade medida"},
-    "quantidade": {"quantidade", "qtde", "qtd", "quant", "coeficiente", "coef"},
+    "descricao": {
+        "descricao", "descrição", "servico", "serviço",
+        "item descricao", "item descrição",
+        "descricao das atividades", "descrição das atividades",
+    },
+    "unidade": {"unidade", "unid", "unid.", "und", "und.", "unidade_medida", "unidade medida"},
+    "quantidade": {"quantidade", "qtde", "qtd", "quant", "quant.", "coeficiente", "coef", "coef."},
 }
 _SUPPORTED_EXTENSIONS = {"csv", "xlsx"}
 

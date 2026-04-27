@@ -36,19 +36,57 @@ def _to_decimal(value: Any):
         return None
 
 
+def _find_col(col_map: dict[str, int], *keywords: str) -> int | None:
+    """Finds first column index matching any of the keywords (case-insensitive)."""
+    for kw in keywords:
+        kw_up = kw.upper()
+        for hk, idx in col_map.items():
+            if kw_up in hk:
+                return idx
+    return None
+
+
 def _parse_mao_obra(ws, cabecalho_id: uuid.UUID) -> list[PcMaoObraItem]:
     """
     ABA 'MÃO DE OBRA'
-    Row 3  = header: DESCRIÇÃO | QUANTIDADE | SALARIO | PREVISÃO DE REAJUSTE |
-              ENCARGOS - % | PERICULOSIDADE/INSALUBRIDADE | REFEIÇÃO | ÁGUA POTÁVEL |
-              VALE ALIMENTAÇÃO | PLANO DE SAUDE | FERRAMENTAS | SEGURO DE VIDA |
-              ABONO DE FÉRIAS | UNIFORME | EPI | CUSTO UNITARIO (H) | CUSTO MENSAL |
-              (empty) | MOBILIZAÇÃO
-    Data starts row 4.
+    Header detection: looks for row with 'DESCRI' in it.
     """
+    header_row_idx = 3  # default fallback
+    for row_num, row in enumerate(ws.iter_rows(min_row=1, max_row=10, values_only=True), start=1):
+        if any(cell and "DESCRI" in str(cell).upper() for cell in row):
+            header_row_idx = row_num
+            break
+
+    header_vals = next(ws.iter_rows(min_row=header_row_idx, max_row=header_row_idx, values_only=True))
+    col_map = {str(c).strip().upper(): i for i, c in enumerate(header_vals) if c}
+
+    c_desc = _find_col(col_map, "DESCRI") if col_map else None
+    if c_desc is None:
+        c_desc = 0
+    c_qtd = _find_col(col_map, "QUANT") or 1
+    c_sal = _find_col(col_map, "SALARIO", "SALÁRIO") or 2
+    c_reaj = _find_col(col_map, "REAJUSTE") or 3
+    c_enc = _find_col(col_map, "ENCARGO") or 4
+    c_peric = _find_col(col_map, "PERICULOSIDADE", "INSALUBRIDADE") or 5
+    c_refei = _find_col(col_map, "REFEIÇÃO", "REFEICAO") or 6
+    c_agua = _find_col(col_map, "ÁGUA", "AGUA") or 7
+    c_vale = _find_col(col_map, "VALE ALIMENTAÇÃO", "VALE ALIMENTACAO") or 8
+    c_saude = _find_col(col_map, "SAÚDE", "SAUDE") or 9
+    c_ferr = _find_col(col_map, "FERRAMENTA") or 10
+    c_seg = _find_col(col_map, "SEGURO") or 11
+    c_ferias = _find_col(col_map, "FÉRIAS", "FERIAS") or 12
+    c_unif = _find_col(col_map, "UNIFORME") or 13
+    c_epi = _find_col(col_map, "EPI") or 14
+    c_cunit = _find_col(col_map, "CUSTO UNITARIO", "UNITÁRIO") or 15
+    c_cmensal = _find_col(col_map, "CUSTO MENSAL") or 16
+    c_mob = _find_col(col_map, "MOBILIZAÇÃO", "MOBILIZACAO") or 18
+
+    def _v(row: tuple, c: int | None) -> float | None:
+        return _to_decimal(row[c]) if c is not None and c < len(row) else None
+
     items: list[PcMaoObraItem] = []
-    for row in ws.iter_rows(min_row=4, values_only=True):
-        desc = row[0]
+    for row in ws.iter_rows(min_row=header_row_idx + 1, values_only=True):
+        desc = row[c_desc] if c_desc < len(row) else None
         if not desc:
             continue
         items.append(
@@ -56,23 +94,23 @@ def _parse_mao_obra(ws, cabecalho_id: uuid.UUID) -> list[PcMaoObraItem]:
                 id=uuid.uuid4(),
                 pc_cabecalho_id=cabecalho_id,
                 descricao_funcao=str(desc).strip(),
-                quantidade=_to_decimal(row[1]),
-                salario=_to_decimal(row[2]),
-                previsao_reajuste=_to_decimal(row[3]),
-                encargos_percent=_to_decimal(row[4]),
-                periculosidade_insalubridade=_to_decimal(row[5]),
-                refeicao=_to_decimal(row[6]),
-                agua_potavel=_to_decimal(row[7]),
-                vale_alimentacao=_to_decimal(row[8]),
-                plano_saude=_to_decimal(row[9]),
-                ferramentas_val=_to_decimal(row[10]),
-                seguro_vida=_to_decimal(row[11]),
-                abono_ferias=_to_decimal(row[12]),
-                uniforme_val=_to_decimal(row[13]),
-                epi_val=_to_decimal(row[14]),
-                custo_unitario_h=_to_decimal(row[15]),
-                custo_mensal=_to_decimal(row[16]),
-                mobilizacao=_to_decimal(row[18]) if len(row) > 18 else None,
+                quantidade=_v(row, c_qtd),
+                salario=_v(row, c_sal),
+                previsao_reajuste=_v(row, c_reaj),
+                encargos_percent=_v(row, c_enc),
+                periculosidade_insalubridade=_v(row, c_peric),
+                refeicao=_v(row, c_refei),
+                agua_potavel=_v(row, c_agua),
+                vale_alimentacao=_v(row, c_vale),
+                plano_saude=_v(row, c_saude),
+                ferramentas_val=_v(row, c_ferr),
+                seguro_vida=_v(row, c_seg),
+                abono_ferias=_v(row, c_ferias),
+                uniforme_val=_v(row, c_unif),
+                epi_val=_v(row, c_epi),
+                custo_unitario_h=_v(row, c_cunit),
+                custo_mensal=_v(row, c_cmensal),
+                mobilizacao=_v(row, c_mob),
             )
         )
     return items
@@ -378,22 +416,37 @@ async def importar_pc_tabelas(
             break
 
     # ── Encargos Horista ─────────────────────────────────────────────────────
+    horista_done = False
     for sheet_name in wb.sheetnames:
         if "HORISTA" in sheet_name.upper():
             ws = wb[sheet_name]
             for item in _parse_encargos(ws, cab.id, "HORISTA"):
                 db.add(item)
                 total_rows += 1
+            horista_done = True
             break
 
     # ── Encargos Mensalista ──────────────────────────────────────────────────
+    mensalista_done = False
     for sheet_name in wb.sheetnames:
         if "MENSALISTA" in sheet_name.upper():
             ws = wb[sheet_name]
             for item in _parse_encargos(ws, cab.id, "MENSALISTA"):
                 db.add(item)
                 total_rows += 1
+            mensalista_done = True
             break
+
+    # ── ENCARGOS FALLBACK (if no HORISTA/MENSALISTA sheets found) ───────────
+    if not horista_done and not mensalista_done:
+        for sheet_name in wb.sheetnames:
+            if "ENCARGO" in sheet_name.upper():
+                ws = wb[sheet_name]
+                # Try parsing as HORISTA by default if just one sheet exists
+                for item in _parse_encargos(ws, cab.id, "HORISTA"):
+                    db.add(item)
+                    total_rows += 1
+                break
 
     # ── EPI / Uniforme ───────────────────────────────────────────────────────
     for sheet_name in wb.sheetnames:

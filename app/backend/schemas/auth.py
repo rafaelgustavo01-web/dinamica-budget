@@ -47,6 +47,7 @@ class UsuarioResponse(BaseModel):
 class PerfilClienteResponse(BaseModel):
     cliente_id: str
     perfil: str
+    cliente_nome: str = ""
 
 
 class MeResponse(BaseModel):
