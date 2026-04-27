@@ -41,7 +41,34 @@ class PropostaResponse(BaseModel):
     updated_at: datetime
     meu_papel: PropostaPapel | None = None
 
+    # Versionamento (Optional for backwards compatibility with F2-01..F2-08 tests)
+    proposta_root_id: UUID | None = None
+    numero_versao: int | None = None
+    versao_anterior_id: UUID | None = None
+    is_versao_atual: bool | None = None
+    is_fechada: bool | None = None
+
+    # Aprovação
+    requer_aprovacao: bool = False
+    aprovado_por_id: UUID | None = None
+    aprovado_em: datetime | None = None
+    motivo_revisao: str | None = None
+
     model_config = ConfigDict(from_attributes=True)
+
+
+# ── Versionamento / Aprovação Request schemas ──────────────────────────────────
+
+class PropostaNovaVersaoRequest(BaseModel):
+    motivo_revisao: str | None = None
+
+
+class PropostaAprovarRequest(BaseModel):
+    pass  # aprovador_id comes from current_user
+
+
+class PropostaRejeitarRequest(BaseModel):
+    motivo: str | None = None
 
 
 class PropostaAclResponse(BaseModel):
