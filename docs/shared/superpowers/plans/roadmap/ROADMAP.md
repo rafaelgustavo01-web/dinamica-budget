@@ -159,7 +159,7 @@ Objetivo: levar o projeto para um estado de pre-producao robusto em arquitetura,
 - Frontend: modal "Compartilhar proposta" em `ProposalDetailPage` (somente OWNER); esconder botoes de edit/delete conforme `meu_papel`.
 - Sprint: `F2-08` | Dependencias: `F2-03`, `F2-04` | Worker: kimi-k2.5
 
-### Fase 6.7 - Versionamento de Propostas + Workflow de Aprovacao **[BACKLOG]**
+### Fase 6.7 - Versionamento de Propostas + Workflow de Aprovacao **[INICIADA]**
 - Tabela `propostas` ganha: `proposta_root_id UUID`, `numero_versao INT`, `versao_anterior_id UUID NULL`, `is_versao_atual BOOL`, `is_fechada BOOL`, `requer_aprovacao BOOL DEFAULT FALSE`, `aprovado_por_id UUID NULL`, `aprovado_em TIMESTAMP NULL`.
 - Backfill: `proposta_root_id = id`, `numero_versao = 1`, `is_versao_atual = true`.
 - Constraint: `UNIQUE(proposta_root_id, numero_versao)`.
