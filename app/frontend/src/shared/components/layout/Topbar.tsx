@@ -41,7 +41,7 @@ function getInitials(name: string | undefined, fallback: string) {
 
 export function Topbar({ onMenuClick }: TopbarProps) {
   const { mode, toggleColorMode } = useColorMode();
-  const { user, logout, selectedClientId, setSelectedClientId, availableClientIds } = useAuth();
+  const { user, logout, selectedClientId, setSelectedClientId, availableClients } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -140,7 +140,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <ClientSelector
             isAdmin={Boolean(user?.is_admin)}
             selectedClientId={selectedClientId}
-            availableClientIds={availableClientIds}
+            availableClients={availableClients}
             onChange={setSelectedClientId}
           />
 

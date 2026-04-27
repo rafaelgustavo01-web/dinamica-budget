@@ -14,6 +14,19 @@ export function getAvailableClientIds(user: MeResponse | null) {
   return [...ids];
 }
 
+export function getAvailableClients(user: MeResponse | null): { id: string; nome: string }[] {
+  if (!user) return [];
+  const seen = new Set<string>();
+  const clients: { id: string; nome: string }[] = [];
+  for (const perfil of user.perfis) {
+    if (perfil.cliente_id !== '*' && !seen.has(perfil.cliente_id)) {
+      seen.add(perfil.cliente_id);
+      clients.push({ id: perfil.cliente_id, nome: perfil.cliente_nome ?? perfil.cliente_id });
+    }
+  }
+  return clients;
+}
+
 export function getClientProfiles(user: MeResponse | null, clienteId: string) {
   if (!user || !clienteId) {
     return [] as PerfilUsuario[];

@@ -1,5 +1,6 @@
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import PreviewOutlinedIcon from '@mui/icons-material/PreviewOutlined';
+import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined';
 import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import {
   Alert,
@@ -30,29 +31,66 @@ import type { ImportPreviewResponse } from '../../shared/types/contracts/admin';
 export function UploadTcpoPage() {
   const { showMessage } = useFeedback();
   const queryClient = useQueryClient();
+
+  // ── TCPO state ────────────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ImportPreviewResponse | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  // PC Tabelas import state
+  // ── Converter state ───────────────────────────────────────────────────────
+  const [converterFile, setConverterFile] = useState<File | null>(null);
+  const [converterConfirmOpen, setConverterConfirmOpen] = useState(false);
+
+  // ── PC Tabelas state ──────────────────────────────────────────────────────
   const [pcFile, setPcFile] = useState<File | null>(null);
 
+  // ── TCPO: semantic preview (display only) ────────────────────────────────
   const previewMutation = useMutation({
     mutationFn: (file: File) => adminApi.previewImport(file, 'TCPO'),
     onSuccess: (data) => {
       setPreview(data);
-      showMessage('Preview TCPO gerado com sucesso. Revise os mapeamentos antes de executar.');
+      showMessage('Preview TCPO gerado. Revise os mapeamentos antes de executar.');
     },
   });
 
+  // ── TCPO: proper ETL execute (upload → execute) ──────────────────────────
   const executeMutation = useMutation({
-    mutationFn: (file: File) => adminApi.executeImport(file, 'TCPO', true),
+    mutationFn: async (file: File) => {
+      const upload = await adminApi.uploadTcpo(file);
+      return adminApi.executeEtl({
+        parse_token_tcpo: upload.parse_token,
+        mode: 'upsert',
+        recomputar_embeddings: false,
+      });
+    },
     onSuccess: (data) => {
       setConfirmOpen(false);
-      showMessage(data.message);
+      showMessage(
+        `Carga TCPO concluída: ${data.itens_inseridos} inseridos, ${data.itens_atualizados} atualizados, ${data.relacoes_inseridas} relações.`,
+      );
     },
   });
 
+  // ── Converter: ETL execute ────────────────────────────────────────────────
+  const converterMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const upload = await adminApi.uploadConverter(file);
+      return adminApi.executeEtl({
+        parse_token_converter: upload.parse_token,
+        mode: 'upsert',
+        recomputar_embeddings: false,
+      });
+    },
+    onSuccess: (data) => {
+      setConverterConfirmOpen(false);
+      setConverterFile(null);
+      showMessage(
+        `Converter carregado: ${data.itens_inseridos} inseridos, ${data.itens_atualizados} atualizados.`,
+      );
+    },
+  });
+
+  // ── PC Tabelas ────────────────────────────────────────────────────────────
   const pcImportMutation = useMutation({
     mutationFn: (file: File) => pcTabelasApi.importarPlanilha(file),
     onSuccess: (data) => {
@@ -63,23 +101,20 @@ export function UploadTcpoPage() {
   });
 
   const confidenceAvg = useMemo(() => {
-    if (!preview) {
-      return 0;
-    }
+    if (!preview) return 0;
     const all = preview.sheets.flatMap((sheet) => sheet.mapped_fields);
-    if (!all.length) {
-      return 0;
-    }
+    if (!all.length) return 0;
     return all.reduce((acc, item) => acc + item.confidence, 0) / all.length;
   }, [preview]);
 
   return (
     <>
       <PageHeader
-        title="Upload"
-        description="Tela dedicada para carga da planilha TCPO com análise semântica de colunas e confirmação explícita."
+        title="Upload de Tabelas"
+        description="Carregue as planilhas de referência: TCPO, Converter (EPI/Equipamentos) e PC Tabelas."
       />
 
+      {/* ── TCPO ─────────────────────────────────────────────────────────── */}
       <Paper
         sx={{
           p: 3,
@@ -91,7 +126,7 @@ export function UploadTcpoPage() {
         <Stack spacing={2.5}>
           <Stack direction="row" spacing={1.5} alignItems="center">
             <CloudUploadOutlinedIcon color="primary" />
-            <Typography variant="h6">Carga inteligente da planilha TCPO</Typography>
+            <Typography variant="h6">Carga da planilha TCPO (Composições PINI)</Typography>
           </Stack>
 
           <Typography variant="body2" color="text.secondary">
@@ -99,7 +134,7 @@ export function UploadTcpoPage() {
           </Typography>
 
           <Button component="label" variant="outlined" sx={{ width: { xs: '100%', md: 360 } }}>
-            {selectedFile ? selectedFile.name : 'Selecionar arquivo .xlsx'}
+            {selectedFile ? selectedFile.name : 'Selecionar Composições TCPO - PINI.xlsx'}
             <input
               hidden
               type="file"
@@ -125,26 +160,26 @@ export function UploadTcpoPage() {
             <Button
               color="warning"
               variant="contained"
-              disabled={!preview || executeMutation.isPending || !selectedFile}
+              disabled={executeMutation.isPending || !selectedFile}
               onClick={() => setConfirmOpen(true)}
             >
               {executeMutation.isPending ? 'Executando carga...' : 'Executar carga no banco'}
             </Button>
           </Stack>
 
-          {previewMutation.isError ? (
+          {previewMutation.isError && (
             <Alert severity="error">
               {extractApiErrorMessage(previewMutation.error, 'Falha ao gerar preview da planilha TCPO.')}
             </Alert>
-          ) : null}
+          )}
 
-          {executeMutation.isError ? (
+          {executeMutation.isError && (
             <Alert severity="error">
-              {extractApiErrorMessage(executeMutation.error, 'Falha na execução da carga ETL da TCPO.')}
+              {extractApiErrorMessage(executeMutation.error, 'Falha na execução da carga TCPO.')}
             </Alert>
-          ) : null}
+          )}
 
-          {preview ? (
+          {preview && (
             <Stack spacing={1.5}>
               <Alert severity="success">
                 Preview pronto para {preview.file_name}. Estimativa: {preview.estimated_records} registros.
@@ -161,9 +196,9 @@ export function UploadTcpoPage() {
                 />
               </Box>
 
-              {preview.warnings.length ? (
+              {preview.warnings.length > 0 && (
                 <Alert severity="warning">{preview.warnings.join(' | ')}</Alert>
-              ) : null}
+              )}
 
               <Table size="small" sx={{ border: '1px solid', borderColor: 'divider' }}>
                 <TableHead>
@@ -182,7 +217,11 @@ export function UploadTcpoPage() {
                       <TableCell>{sheet.estimated_records}</TableCell>
                       <TableCell>
                         {sheet.mapped_fields.slice(0, 4).map((field) => (
-                          <Typography key={`${sheet.sheet_name}-${field.source_header}`} variant="caption" display="block">
+                          <Typography
+                            key={`${sheet.sheet_name}-${field.source_header}`}
+                            variant="caption"
+                            display="block"
+                          >
                             {field.source_header} → {field.target_field} ({Math.round(field.confidence * 100)}%)
                           </Typography>
                         ))}
@@ -192,7 +231,7 @@ export function UploadTcpoPage() {
                 </TableBody>
               </Table>
             </Stack>
-          ) : null}
+          )}
         </Stack>
       </Paper>
 
@@ -212,15 +251,96 @@ export function UploadTcpoPage() {
           <Typography variant="body2" color="text.secondary">
             Fonte: TCPO | Arquivo: {selectedFile?.name ?? 'não selecionado'}
           </Typography>
-          {preview ? (
+          {preview && (
             <Typography variant="body2" color="text.secondary">
               Estimativa do preview: {preview.estimated_records} registros.
             </Typography>
-          ) : null}
+          )}
         </Stack>
       </ConfirmationDialog>
 
-      {/* PC Tabelas import card */}
+      {/* ── Converter em Data Center ──────────────────────────────────────── */}
+      <Paper
+        sx={{
+          p: 3,
+          border: '1px solid',
+          borderColor: 'divider',
+          background: 'linear-gradient(145deg, rgba(100,60,185,0.06), rgba(100,60,185,0.03))',
+        }}
+      >
+        <Stack spacing={2.5}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <SwapHorizOutlinedIcon color="secondary" />
+            <Typography variant="h6">Carga da planilha Converter (EPI, Equipamentos, MO)</Typography>
+            <Chip label="Converter em Data Center.xlsx" size="small" color="secondary" variant="outlined" />
+          </Stack>
+
+          <Typography variant="body2" color="text.secondary">
+            Carrega dados de referência auxiliares: EPI/Uniforme, Equipamentos, Ferramentas, Mão de Obra e Exames.
+            Use este seção para a planilha <strong>Converter em Data Center.xlsx</strong>.
+          </Typography>
+
+          <Button
+            component="label"
+            variant="outlined"
+            color="secondary"
+            sx={{ width: { xs: '100%', md: 360 } }}
+          >
+            {converterFile ? converterFile.name : 'Selecionar Converter em Data Center.xlsx'}
+            <input
+              hidden
+              type="file"
+              accept=".xlsx"
+              onChange={(event) => {
+                const file = event.target.files?.[0] ?? null;
+                setConverterFile(file);
+              }}
+            />
+          </Button>
+
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<CloudUploadOutlinedIcon />}
+            disabled={!converterFile || converterMutation.isPending}
+            sx={{ width: { xs: '100%', md: 280 } }}
+            onClick={() => setConverterConfirmOpen(true)}
+          >
+            {converterMutation.isPending ? 'Carregando...' : 'Executar carga Converter'}
+          </Button>
+
+          {converterMutation.isError && (
+            <Alert severity="error">
+              {extractApiErrorMessage(converterMutation.error, 'Falha ao carregar planilha Converter.')}
+            </Alert>
+          )}
+
+          {converterMutation.isSuccess && (
+            <Alert severity="success">Planilha Converter carregada com sucesso!</Alert>
+          )}
+        </Stack>
+      </Paper>
+
+      <ConfirmationDialog
+        open={converterConfirmOpen}
+        title="Confirmar carga Converter"
+        confirmLabel="Sim, executar carga"
+        confirmColor="warning"
+        isLoading={converterMutation.isPending}
+        onCancel={() => setConverterConfirmOpen(false)}
+        onConfirm={() => converterFile && converterMutation.mutate(converterFile)}
+      >
+        <Stack spacing={1.25}>
+          <Typography variant="body2">
+            Carrega dados de referência auxiliares (EPI, Equipamentos, Ferramentas, MO).
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Arquivo: {converterFile?.name ?? 'não selecionado'}
+          </Typography>
+        </Stack>
+      </ConfirmationDialog>
+
+      {/* ── PC Tabelas ────────────────────────────────────────────────────── */}
       <Paper
         sx={{
           p: 3,
@@ -237,11 +357,16 @@ export function UploadTcpoPage() {
           </Stack>
 
           <Typography variant="body2" color="text.secondary">
-            Importa todas as abas da planilha PC Tabelas: Mão de Obra, Equipamentos, Encargos, EPI/Uniforme, Ferramentas e Mobilização.
-            Dados existentes com o mesmo nome de arquivo são substituídos.
+            Importa todas as abas da planilha PC Tabelas: Mão de Obra, Equipamentos, Encargos, EPI/Uniforme,
+            Ferramentas e Mobilização. Dados existentes com o mesmo nome de arquivo são substituídos.
           </Typography>
 
-          <Button component="label" variant="outlined" color="success" sx={{ width: { xs: '100%', md: 360 } }}>
+          <Button
+            component="label"
+            variant="outlined"
+            color="success"
+            sx={{ width: { xs: '100%', md: 360 } }}
+          >
             {pcFile ? pcFile.name : 'Selecionar PC tabelas.xlsx'}
             <input
               hidden
@@ -265,15 +390,15 @@ export function UploadTcpoPage() {
             {pcImportMutation.isPending ? 'Importando...' : 'Importar PC Tabelas'}
           </Button>
 
-          {pcImportMutation.isError ? (
+          {pcImportMutation.isError && (
             <Alert severity="error">
               {extractApiErrorMessage(pcImportMutation.error, 'Falha ao importar PC Tabelas.')}
             </Alert>
-          ) : null}
+          )}
 
-          {pcImportMutation.isSuccess ? (
+          {pcImportMutation.isSuccess && (
             <Alert severity="success">PC Tabelas importada com sucesso!</Alert>
-          ) : null}
+          )}
         </Stack>
       </Paper>
     </>

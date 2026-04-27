@@ -34,6 +34,7 @@ export interface UsuarioResponse {
 export interface PerfilClienteResponse {
   cliente_id: string;
   perfil: PerfilUsuario;
+  cliente_nome: string;
 }
 
 export interface MeResponse extends UsuarioResponse {

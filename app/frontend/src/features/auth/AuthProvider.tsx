@@ -19,7 +19,7 @@ import {
   readSelectedClientId,
   readSessionTokens,
 } from '../../shared/utils/storage';
-import { getAvailableClientIds } from '../../shared/utils/permissions';
+import { getAvailableClientIds, getAvailableClients } from '../../shared/utils/permissions';
 
 interface AuthContextValue {
   user: MeResponse | null;
@@ -27,6 +27,7 @@ interface AuthContextValue {
   isLoading: boolean;
   selectedClientId: string;
   availableClientIds: string[];
+  availableClients: { id: string; nome: string }[];
   login: (payload: LoginRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -65,6 +66,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const navigate = useNavigate();
 
   const availableClientIds = useMemo(() => getAvailableClientIds(user), [user]);
+  const availableClients = useMemo(() => getAvailableClients(user), [user]);
 
   const resetSession = useCallback(() => {
     clearSessionTokens();
@@ -179,6 +181,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isLoading,
       selectedClientId: selectedClientIdState,
       availableClientIds,
+      availableClients,
       login,
       logout,
       refreshUser,
@@ -186,6 +189,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }),
     [
       availableClientIds,
+      availableClients,
       isLoading,
       login,
       logout,

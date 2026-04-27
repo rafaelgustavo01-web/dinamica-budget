@@ -8,17 +8,22 @@ import {
   Typography,
 } from '@mui/material';
 
+interface ClientOption {
+  id: string;
+  nome: string;
+}
+
 interface ClientSelectorProps {
   isAdmin: boolean;
   selectedClientId: string;
-  availableClientIds: string[];
+  availableClients: ClientOption[];
   onChange: (clienteId: string) => void;
 }
 
 export function ClientSelector({
   isAdmin,
   selectedClientId,
-  availableClientIds,
+  availableClients,
   onChange,
 }: ClientSelectorProps) {
   if (isAdmin) {
@@ -35,7 +40,7 @@ export function ClientSelector({
           fullWidth
           value={selectedClientId}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="Cole o UUID quando o fluxo exigir cliente"
+          placeholder="Cole o UUID do cliente"
           sx={{
             width: { xs: '100%', sm: 260, lg: 340 },
           }}
@@ -56,7 +61,7 @@ export function ClientSelector({
     );
   }
 
-  if (!availableClientIds.length) {
+  if (!availableClients.length) {
     return (
       <Typography variant="body2" color="text.secondary">
         Sem vínculo de cliente carregado.
@@ -64,7 +69,8 @@ export function ClientSelector({
     );
   }
 
-  const safeValue = availableClientIds.includes(selectedClientId) ? selectedClientId : '';
+  const availableIds = availableClients.map((c) => c.id);
+  const safeValue = availableIds.includes(selectedClientId) ? selectedClientId : '';
 
   return (
     <TextField
@@ -79,9 +85,9 @@ export function ClientSelector({
       }}
     >
       <MenuItem value="">Selecione</MenuItem>
-      {availableClientIds.map((clienteId) => (
-        <MenuItem key={clienteId} value={clienteId}>
-          {clienteId}
+      {availableClients.map((client) => (
+        <MenuItem key={client.id} value={client.id}>
+          {client.nome || client.id}
         </MenuItem>
       ))}
     </TextField>
