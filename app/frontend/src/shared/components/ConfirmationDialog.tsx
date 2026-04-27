@@ -14,7 +14,7 @@ interface ConfirmationDialogProps extends PropsWithChildren {
   title: string;
   confirmLabel: string;
   cancelLabel?: string;
-  confirmColor?: 'primary' | 'error' | 'secondary';
+  confirmColor?: 'primary' | 'error' | 'secondary' | 'warning';
   isLoading?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
