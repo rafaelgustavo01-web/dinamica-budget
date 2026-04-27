@@ -21,7 +21,7 @@ export interface PropostaResponse {
   descricao: string | null;
   status: StatusProposta;
   versao_cpu: number;
-  pc_cabecalho_id: string | null;
+  bcu_cabecalho_id: string | null;
   total_direto: number | null;
   total_indireto: number | null;
   total_geral: number | null;
@@ -266,10 +266,10 @@ export const proposalsApi = {
   async gerarCpu(
     propostaId: string,
     percentualBdi: number,
-    pcCabecalhoId?: string,
+    bcuCabecalhoId?: string,
   ) {
     const params: Record<string, string | number> = { percentual_bdi: percentualBdi };
-    if (pcCabecalhoId) params.pc_cabecalho_id = pcCabecalhoId;
+    if (bcuCabecalhoId) params.bcu_cabecalho_id = bcuCabecalhoId;
     const response = await apiClient.post(
       `/propostas/${propostaId}/cpu/gerar`,
       null,

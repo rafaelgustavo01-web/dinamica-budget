@@ -32,7 +32,7 @@ class PropostaResponse(BaseModel):
     descricao: str | None
     status: StatusProposta
     versao_cpu: int
-    pc_cabecalho_id: UUID | None
+    bcu_cabecalho_id: UUID | None
     total_direto: Decimal | None
     total_indireto: Decimal | None
     total_geral: Decimal | None
@@ -134,7 +134,7 @@ class CpuItemResponse(BaseModel):
     preco_unitario: Decimal | None
     preco_total: Decimal | None
     composicao_fonte: str | None
-    pc_cabecalho_id: UUID | None
+    bcu_cabecalho_id: UUID | None
     ordem: int
     created_at: datetime
     updated_at: datetime

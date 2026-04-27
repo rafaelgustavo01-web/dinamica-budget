@@ -3,13 +3,13 @@ from fastapi import APIRouter
 from backend.api.v1.endpoints import (
     admin,
     auth,
+    bcu,
     busca,
     clientes,
     composicoes,
     cpu_geracao,
     extracao,
     homologacao,
-    pc_tabelas,
     pq_importacao,
     pq_layout,
     proposta_acl,
@@ -33,7 +33,7 @@ router.include_router(admin.router)
 router.include_router(usuarios.router)
 router.include_router(clientes.router)
 router.include_router(extracao.router)
-router.include_router(pc_tabelas.router)
+router.include_router(bcu.router)
 router.include_router(propostas.router)
 router.include_router(proposta_export.router)
 router.include_router(pq_importacao.router)

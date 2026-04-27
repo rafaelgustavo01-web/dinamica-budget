@@ -39,9 +39,9 @@ class Proposta(Base, TimestampMixin):
         default=StatusProposta.RASCUNHO,
     )
     versao_cpu: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-    pc_cabecalho_id: Mapped[UUID | None] = mapped_column(
+    bcu_cabecalho_id: Mapped[UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("pc_cabecalho.id"),
+        ForeignKey("bcu.cabecalho.id"),
         nullable=True,
     )
     total_direto: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
@@ -202,7 +202,7 @@ class PropostaItem(Base, TimestampMixin):
     preco_unitario: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
     preco_total: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
     composicao_fonte: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    pc_cabecalho_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("pc_cabecalho.id"), nullable=True)
+    bcu_cabecalho_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("bcu.cabecalho.id"), nullable=True)
     ordem: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     proposta: Mapped[Proposta] = relationship(back_populates="itens", lazy="noload")

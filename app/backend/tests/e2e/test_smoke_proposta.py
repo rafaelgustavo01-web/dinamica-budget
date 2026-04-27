@@ -47,7 +47,7 @@ async def test_criar_proposta_importar_pq_match_e_gerar_cpu():
                 descricao=data.descricao,
                 status="RASCUNHO",
                 versao_cpu=1,
-                pc_cabecalho_id=None,
+                bcu_cabecalho_id=None,
                 total_direto=None,
                 total_indireto=None,
                 total_geral=None,
@@ -113,9 +113,9 @@ async def test_criar_proposta_importar_pq_match_e_gerar_cpu():
         def __init__(self, *args, **kwargs):
             pass
 
-        async def gerar_cpu_para_proposta(self, proposta_id=None, pc_cabecalho_id=None, percentual_bdi=0, **kwargs):
+        async def gerar_cpu_para_proposta(self, proposta_id=None, bcu_cabecalho_id=None, percentual_bdi=0, **kwargs):
             store["proposta"].status = "CPU_GERADA"
-            store["proposta"].pc_cabecalho_id = pc_cabecalho_id
+            store["proposta"].bcu_cabecalho_id = bcu_cabecalho_id
             store["proposta"].total_direto = 75.0
             store["proposta"].total_indireto = 0.0
             store["proposta"].total_geral = 75.0
@@ -139,7 +139,7 @@ async def test_criar_proposta_importar_pq_match_e_gerar_cpu():
                     preco_unitario=25,
                     preco_total=75,
                     composicao_fonte="custo_base",
-                    pc_cabecalho_id=pc_cabecalho_id,
+                    bcu_cabecalho_id=bcu_cabecalho_id,
                     ordem=0,
                     created_at=now,
                     updated_at=now,

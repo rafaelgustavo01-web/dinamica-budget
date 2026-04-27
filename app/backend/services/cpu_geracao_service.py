@@ -40,15 +40,15 @@ class CpuGeracaoService:
     async def gerar_cpu_para_proposta(
         self,
         proposta_id: UUID,
-        pc_cabecalho_id: UUID | None = None,
+        bcu_cabecalho_id: UUID | None = None,
         percentual_bdi: Decimal = Decimal("0"),
     ) -> dict:
         proposta = await self.proposta_repo.get_by_id(proposta_id)
         if not proposta:
             raise NotFoundError("Proposta", str(proposta_id))
 
-        proposta_itens = await self._rebuild_proposta_itens(proposta_id, pc_cabecalho_id)
-        custo_svc = CpuCustoService(self.db, pc_cabecalho_id)
+        proposta_itens = await self._rebuild_proposta_itens(proposta_id, bcu_cabecalho_id)
+        custo_svc = CpuCustoService(self.db, bcu_cabecalho_id)
 
         # Se o BDI for passado como valor decimal (ex: 0.1 para 10%), tratamos como fração.
         # Se for > 1, tratamos como porcentagem literal (ex: 25.0 -> 0.25).
@@ -100,7 +100,7 @@ class CpuGeracaoService:
         proposta.total_direto = total_direto
         proposta.total_indireto = total_indireto
         proposta.total_geral = total_direto + total_indireto
-        proposta.pc_cabecalho_id = pc_cabecalho_id
+        proposta.bcu_cabecalho_id = bcu_cabecalho_id
         proposta.status = StatusProposta.CPU_GERADA
         
         # Atualizar Resumo por Recurso
@@ -241,7 +241,7 @@ class CpuGeracaoService:
     async def get_resumo_recursos(self, proposta_id: UUID) -> list[PropostaResumoRecurso]:
         return await self.resumo_repo.list_by_proposta(proposta_id)
 
-    async def _rebuild_proposta_itens(self, proposta_id: UUID, pc_cabecalho_id: UUID | None) -> list[PropostaItem]:
+    async def _rebuild_proposta_itens(self, proposta_id: UUID, bcu_cabecalho_id: UUID | None) -> list[PropostaItem]:
         await self.proposta_item_repo.delete_by_proposta(proposta_id)
         pq_items = await self.pq_item_repo.list_by_proposta(proposta_id)
 
@@ -272,7 +272,7 @@ class CpuGeracaoService:
                     unidade_medida=snapshot.unidade_medida,
                     quantidade=pq_item.quantidade_original or Decimal("1"),
                     composicao_fonte="match_inteligente",
-                    pc_cabecalho_id=pc_cabecalho_id,
+                    bcu_cabecalho_id=bcu_cabecalho_id,
                     ordem=ordem,
                 )
             )

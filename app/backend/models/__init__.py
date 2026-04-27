@@ -26,18 +26,19 @@ from backend.models.itens_proprios import ItemProprio
 from backend.models.tcpo_embeddings import TcpoEmbedding
 from backend.models.usuario import Usuario, UsuarioPerfil
 from backend.models.versao_composicao import VersaoComposicao
-from backend.models.pc_tabelas import (
-    EtlCarga,
-    PcCabecalho,
-    PcMaoObraItem,
-    PcEquipamentoPremissa,
-    PcEquipamentoItem,
-    PcEncargoItem,
-    PcEpiItem,
-    PcEpiDistribuicaoFuncao,
-    PcFerramentaItem,
-    PcMobilizacaoItem,
-    PcMobilizacaoQuantidadeFuncao,
+from backend.models.bcu import (
+    BcuCabecalho,
+    BcuMaoObraItem,
+    BcuEquipamentoPremissa,
+    BcuEquipamentoItem,
+    BcuEncargoItem,
+    BcuEpiItem,
+    BcuEpiDistribuicaoFuncao,
+    BcuFerramentaItem,
+    BcuMobilizacaoItem,
+    BcuMobilizacaoQuantidadeFuncao,
+    DeParaTcpoBcu,
+    BcuTableType,
 )
 from backend.models.proposta import PqImportacao, PqItem, Proposta, PropostaAcl, PropostaItem, PropostaItemComposicao
 from backend.models.pq_layout import PqLayoutCliente, PqImportacaoMapeamento  # noqa: F401

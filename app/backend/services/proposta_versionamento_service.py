@@ -66,7 +66,7 @@ class PropostaVersionamentoService:
             is_versao_atual=True,
             is_fechada=False,
             requer_aprovacao=atual.requer_aprovacao,
-            pc_cabecalho_id=atual.pc_cabecalho_id,
+            bcu_cabecalho_id=atual.bcu_cabecalho_id,
             motivo_revisao=motivo_revisao,
         )
         self.db.add(nova)

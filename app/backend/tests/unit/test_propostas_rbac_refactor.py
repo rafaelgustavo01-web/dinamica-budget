@@ -45,7 +45,7 @@ def mock_proposta():
         descricao=None,
         status="RASCUNHO",
         versao_cpu=1,
-        pc_cabecalho_id=None,
+        bcu_cabecalho_id=None,
         total_direto=None,
         total_indireto=None,
         total_geral=None,

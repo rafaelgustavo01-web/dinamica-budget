@@ -28,7 +28,7 @@ def _make_proposta_mock(**kwargs):
     p.descricao = kwargs.get("descricao", None)
     p.status = kwargs.get("status", StatusProposta.RASCUNHO)
     p.versao_cpu = kwargs.get("versao_cpu", 1)
-    p.pc_cabecalho_id = kwargs.get("pc_cabecalho_id", None)
+    p.bcu_cabecalho_id = kwargs.get("bcu_cabecalho_id", None)
     p.total_direto = kwargs.get("total_direto", None)
     p.total_indireto = kwargs.get("total_indireto", None)
     p.total_geral = kwargs.get("total_geral", None)
