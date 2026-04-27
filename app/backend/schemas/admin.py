@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 
 class ImportSourceType(str, Enum):
     TCPO = "TCPO"
-    PC = "PC"
 
 
 class FieldMappingPreview(BaseModel):

@@ -169,7 +169,6 @@ export function AdminPage() {
                   }}
                 >
                   <MenuItem value="TCPO">TCPO (composições oficiais)</MenuItem>
-                  <MenuItem value="PC">PC (premissas e tabelas de custo)</MenuItem>
                 </Select>
               </FormControl>
 
