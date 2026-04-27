@@ -90,6 +90,7 @@ export function getPropostaStatusLabel(status: string) {
     RASCUNHO: 'Rascunho',
     EM_ANALISE: 'Em análise',
     CPU_GERADA: 'CPU gerada',
+    AGUARDANDO_APROVACAO: 'Aguardando aprovação',
     APROVADA: 'Aprovada',
     REPROVADA: 'Reprovada',
     ARQUIVADA: 'Arquivada',

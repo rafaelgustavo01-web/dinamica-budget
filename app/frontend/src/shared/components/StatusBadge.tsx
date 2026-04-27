@@ -23,7 +23,7 @@ function normalizeStatusKey(value: string, kind: 'status' | 'origemMatch' | 'pro
     return 'aprovado';
   }
 
-  if (['PENDENTE', 'SUGERIDA', 'EM_ANALISE'].includes(normalized)) {
+  if (['PENDENTE', 'SUGERIDA', 'EM_ANALISE', 'AGUARDANDO_APROVACAO'].includes(normalized)) {
     return 'pendente';
   }
 

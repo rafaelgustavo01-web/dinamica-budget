@@ -5,6 +5,7 @@ export type StatusProposta =
   | 'RASCUNHO'
   | 'EM_ANALISE'
   | 'CPU_GERADA'
+  | 'AGUARDANDO_APROVACAO'
   | 'APROVADA'
   | 'REPROVADA'
   | 'ARQUIVADA';
@@ -28,6 +29,17 @@ export interface PropostaResponse {
   created_at: string;
   updated_at: string;
   meu_papel: PropostaPapel | null;
+  // F2-09: Versionamento
+  proposta_root_id: string | null;
+  numero_versao: number | null;
+  versao_anterior_id: string | null;
+  is_versao_atual: boolean | null;
+  is_fechada: boolean | null;
+  // F2-09: Aprovação
+  requer_aprovacao: boolean;
+  aprovado_por_id: string | null;
+  aprovado_em: string | null;
+  motivo_revisao: string | null;
 }
 
 export interface PropostaCreateRequest {
@@ -292,5 +304,51 @@ export const proposalsApi = {
 
   async removeAcl(propostaId: string, usuarioId: string, papel: PropostaPapel) {
     await apiClient.delete(`/propostas/${propostaId}/acl/${usuarioId}/${papel}`);
+  },
+
+  // ── F2-09: Versionamento ────────────────────────────────────────────────────
+
+  async novaVersao(propostaId: string, motivoRevisao?: string) {
+    const response = await apiClient.post<PropostaResponse>(
+      `/propostas/${propostaId}/nova-versao`,
+      { motivo_revisao: motivoRevisao ?? null },
+    );
+    return response.data;
+  },
+
+  async listarVersoes(rootId: string) {
+    const response = await apiClient.get<PropostaResponse[]>(
+      `/propostas/root/${rootId}/versoes`,
+    );
+    return response.data;
+  },
+
+  // ── F2-09: Aprovação ────────────────────────────────────────────────────────
+
+  async enviarAprovacao(propostaId: string) {
+    const response = await apiClient.post<PropostaResponse>(
+      `/propostas/${propostaId}/enviar-aprovacao`,
+    );
+    return response.data;
+  },
+
+  async aprovar(propostaId: string) {
+    const response = await apiClient.post<PropostaResponse>(
+      `/propostas/${propostaId}/aprovar`,
+    );
+    return response.data;
+  },
+
+  async rejeitar(propostaId: string, motivo?: string) {
+    const response = await apiClient.post<PropostaResponse>(
+      `/propostas/${propostaId}/rejeitar`,
+      { motivo: motivo ?? null },
+    );
+    return response.data;
+  },
+
+  async filaAprovacoes() {
+    const response = await apiClient.get<PropostaResponse[]>('/propostas/aprovacoes');
+    return response.data;
   },
 };

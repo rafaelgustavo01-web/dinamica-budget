@@ -19,11 +19,17 @@ const ProposalCpuPage = lazy(() =>
 const MatchReviewPage = lazy(() =>
   import('./pages/MatchReviewPage').then((m) => ({ default: m.MatchReviewPage })),
 );
+// F2-09: Approval queue — must be declared BEFORE :id to avoid React Router confusion
+const ApprovalQueuePage = lazy(() =>
+  import('./pages/ApprovalQueuePage').then((m) => ({ default: m.ApprovalQueuePage })),
+);
 
 export const proposalRoutes = (
   <Route path="propostas">
     <Route index element={<ProposalsListPage />} />
     <Route path="nova" element={<ProposalCreatePage />} />
+    {/* Static routes before parameterized :id */}
+    <Route path="aprovacoes" element={<ApprovalQueuePage />} />
     <Route path=":id" element={<ProposalDetailPage />} />
     <Route path=":id/importar" element={<ProposalImportPage />} />
     <Route path=":id/match-review" element={<MatchReviewPage />} />
