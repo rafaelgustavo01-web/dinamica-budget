@@ -325,7 +325,7 @@ export function UploadTcpoPage() {
         open={converterConfirmOpen}
         title="Confirmar carga Converter"
         confirmLabel="Sim, executar carga"
-        confirmColor="warning"
+        confirmColor="primary"
         isLoading={converterMutation.isPending}
         onCancel={() => setConverterConfirmOpen(false)}
         onConfirm={() => converterFile && converterMutation.mutate(converterFile)}
