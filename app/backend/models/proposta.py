@@ -13,7 +13,10 @@ from backend.models.enums import PropostaPapel, StatusImportacao, StatusMatch, S
 
 class Proposta(Base, TimestampMixin):
     __tablename__ = "propostas"
-    __table_args__ = {"schema": "operacional"}
+    __table_args__ = (
+        UniqueConstraint("proposta_root_id", "numero_versao", name="uq_proposta_versao"),
+        {"schema": "operacional"},
+    )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     cliente_id: Mapped[UUID] = mapped_column(
@@ -47,8 +50,31 @@ class Proposta(Base, TimestampMixin):
     data_finalizacao: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
 
+    # Versionamento
+    proposta_root_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), nullable=True, index=True
+    )
+    numero_versao: Mapped[int | None] = mapped_column(Integer, nullable=True, default=1)
+    versao_anterior_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("operacional.propostas.id"),
+        nullable=True,
+    )
+    is_versao_atual: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=True)
+    is_fechada: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=False)
+
+    # Aprovação
+    requer_aprovacao: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=False)
+    aprovado_por_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("operacional.usuarios.id"),
+        nullable=True,
+    )
+    aprovado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_revisao: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     cliente: Mapped["Cliente"] = relationship("Cliente", lazy="noload")
-    criado_por: Mapped["Usuario"] = relationship("Usuario", lazy="noload")
+    criado_por: Mapped["Usuario"] = relationship("Usuario", foreign_keys="[Proposta.criado_por_id]", lazy="noload")
     pq_importacoes: Mapped[list["PqImportacao"]] = relationship(
         back_populates="proposta",
         lazy="noload",
