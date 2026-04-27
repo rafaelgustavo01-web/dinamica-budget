@@ -59,27 +59,6 @@ async def etl_upload_tcpo(
 
 
 @router.post(
-    "/etl/upload-converter",
-    response_model=EtlUploadResponse,
-    summary="Fazer upload de Converter em Data Center.xlsx e obter pre-visualizacao",
-)
-async def etl_upload_converter(
-    file: UploadFile,
-    _=Depends(get_current_admin_user),
-) -> EtlUploadResponse:
-    if not file.filename or not file.filename.lower().endswith((".xlsx", ".xls")):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Arquivo deve ser .xlsx ou .xls",
-        )
-    try:
-        file_bytes = await file.read()
-        return etl_service.parse_converter_datacenter(file_bytes)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
-
-
-@router.post(
     "/etl/execute",
     response_model=EtlExecuteResponse,
     summary="Executar carga ETL usando tokens de upload ja processados",
@@ -192,7 +171,10 @@ async def execute_import(
         if source_type == ImportSourceType.TCPO:
             cmd += ["--only-tcpo", "--tcpo-file", str(temp_path)]
         else:
-            cmd += ["--only-pc", "--pc-file", str(temp_path)]
+            raise HTTPException(
+                status_code=status.HTTP_410_GONE,
+                detail="Use POST /bcu/importar para importar a BCU",
+            )
 
         completed = subprocess.run(
             cmd,

@@ -1,33 +1,46 @@
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 
+from backend.core.logging import get_logger
+from backend.models.base_tcpo import BaseTcpo
+from backend.models.bcu import BcuEquipamentoItem, BcuMaoObraItem
 from backend.models.enums import TipoRecurso
-from backend.models.pc_tabelas import PcEquipamentoItem, PcMaoObraItem
 from backend.models.proposta import PropostaItemComposicao
+from backend.services.bcu_de_para_service import BcuDeParaService
+
+logger = get_logger(__name__)
 
 
 class CpuCustoService:
-    def __init__(self, db, pc_cabecalho_id: UUID | None = None) -> None:
+    def __init__(self, db, bcu_cabecalho_id: UUID | None = None) -> None:
         self.db = db
-        self.pc_cabecalho_id = pc_cabecalho_id
+        self.bcu_cabecalho_id = bcu_cabecalho_id
+        self.de_para_svc = BcuDeParaService(db)
 
     async def calcular_custos(self, composicoes: list[PropostaItemComposicao]) -> None:
         for comp in composicoes:
             custo = comp.custo_unitario_insumo
             fonte = comp.fonte_custo or "custo_base"
 
-            if self.pc_cabecalho_id and comp.tipo_recurso == TipoRecurso.MO:
-                lookup = await self._lookup_mao_obra(comp.descricao_insumo)
+            if self.bcu_cabecalho_id and comp.insumo_base_id:
+                lookup = await self._lookup_via_de_para(comp.insumo_base_id)
                 if lookup is not None:
                     custo = lookup
-                    fonte = "pc_mao_obra"
-            elif self.pc_cabecalho_id and comp.tipo_recurso == TipoRecurso.EQUIPAMENTO:
-                lookup = await self._lookup_equipamento(comp.descricao_insumo)
-                if lookup is not None:
-                    custo = lookup
-                    fonte = "pc_equipamento"
+                    fonte = "bcu_de_para"
+                else:
+                    # Fallback para BaseTcpo.custo_base
+                    fallback = await self._fallback_base_tcpo(comp.insumo_base_id)
+                    if fallback is not None:
+                        custo = fallback
+                        fonte = "base_tcpo_fallback"
+                        logger.warning(
+                            "cpu_custo.fallback",
+                            insumo_id=str(comp.insumo_base_id),
+                            descricao=comp.descricao_insumo,
+                            custo_base=float(fallback),
+                        )
 
             comp.custo_unitario_insumo = custo
             comp.fonte_custo = fonte
@@ -36,56 +49,41 @@ class CpuCustoService:
             else:
                 comp.custo_total_insumo = None
 
-    async def _lookup_mao_obra(self, descricao: str) -> Decimal | None:
-        normalized = descricao.strip().lower()
-        result = await self.db.execute(
-            select(PcMaoObraItem.custo_unitario_h)
-            .where(
-                PcMaoObraItem.pc_cabecalho_id == self.pc_cabecalho_id,
-                func.lower(PcMaoObraItem.descricao_funcao) == normalized,
-            )
-            .limit(1)
-        )
-        value = result.scalar_one_or_none()
-        if value is not None:
-            return value
+    async def _lookup_via_de_para(self, insumo_base_id: UUID) -> Decimal | None:
+        mapping = await self.de_para_svc.lookup_bcu_para_base_tcpo(insumo_base_id)
+        if not mapping:
+            return None
 
-        fallback = await self.db.execute(
-            select(PcMaoObraItem.custo_unitario_h)
-            .where(
-                PcMaoObraItem.pc_cabecalho_id == self.pc_cabecalho_id,
-                PcMaoObraItem.descricao_funcao.ilike(f"%{descricao.strip()}%"),
-            )
-            .limit(1)
-        )
-        return fallback.scalar_one_or_none()
+        bcu_type, bcu_item_id = mapping
 
-    async def _lookup_equipamento(self, descricao: str) -> Decimal | None:
-        normalized = descricao.strip().lower()
-        cost_expr = (
-            func.coalesce(PcEquipamentoItem.aluguel_r_h, 0)
-            + func.coalesce(PcEquipamentoItem.combustivel_r_h, 0)
-            + func.coalesce(PcEquipamentoItem.mao_obra_r_h, 0)
-        )
-        result = await self.db.execute(
-            select(cost_expr)
-            .where(
-                PcEquipamentoItem.pc_cabecalho_id == self.pc_cabecalho_id,
-                func.lower(PcEquipamentoItem.equipamento) == normalized,
+        if bcu_type.value == "MO":
+            result = await self.db.execute(
+                select(BcuMaoObraItem.custo_unitario_h)
+                .where(BcuMaoObraItem.id == bcu_item_id, BcuMaoObraItem.cabecalho_id == self.bcu_cabecalho_id)
             )
-            .limit(1)
-        )
-        value = result.scalar_one_or_none()
-        if value is not None:
-            return value
-
-        fallback = await self.db.execute(
-            select(cost_expr)
-            .where(
-                PcEquipamentoItem.pc_cabecalho_id == self.pc_cabecalho_id,
-                PcEquipamentoItem.equipamento.ilike(f"%{descricao.strip()}%"),
+            return result.scalar_one_or_none()
+        elif bcu_type.value == "EQP":
+            result = await self.db.execute(
+                select(BcuEquipamentoItem.aluguel_r_h)
+                .where(BcuEquipamentoItem.id == bcu_item_id, BcuEquipamentoItem.cabecalho_id == self.bcu_cabecalho_id)
             )
-            .limit(1)
-        )
-        return fallback.scalar_one_or_none()
+            return result.scalar_one_or_none()
+        elif bcu_type.value == "EPI":
+            from backend.models.bcu import BcuEpiItem
+            result = await self.db.execute(
+                select(BcuEpiItem.custo_unitario)
+                .where(BcuEpiItem.id == bcu_item_id, BcuEpiItem.cabecalho_id == self.bcu_cabecalho_id)
+            )
+            return result.scalar_one_or_none()
+        elif bcu_type.value == "FER":
+            from backend.models.bcu import BcuFerramentaItem
+            result = await self.db.execute(
+                select(BcuFerramentaItem.preco)
+                .where(BcuFerramentaItem.id == bcu_item_id, BcuFerramentaItem.cabecalho_id == self.bcu_cabecalho_id)
+            )
+            return result.scalar_one_or_none()
+        return None
 
+    async def _fallback_base_tcpo(self, insumo_base_id: UUID) -> Decimal | None:
+        result = await self.db.execute(select(BaseTcpo.custo_base).where(BaseTcpo.id == insumo_base_id))
+        return result.scalar_one_or_none()

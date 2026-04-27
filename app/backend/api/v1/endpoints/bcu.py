@@ -18,6 +18,7 @@ from backend.models.bcu import (
     BcuFerramentaItem,
     BcuMaoObraItem,
     BcuMobilizacaoItem,
+    BcuTableType,
     DeParaTcpoBcu,
 )
 from backend.schemas.bcu import (
@@ -34,6 +35,8 @@ from backend.schemas.bcu import (
     DeParaOut,
     DeParaListItemOut,
 )
+from backend.services.bcu_service import BcuService
+from backend.services.bcu_de_para_service import BcuDeParaService
 
 router = APIRouter(prefix="/bcu", tags=["bcu"])
 
@@ -70,7 +73,7 @@ async def get_cabecalho_ativo(
 @router.post("/importar", response_model=BcuCabecalhoOut)
 async def importar_bcu(
     file: UploadFile = File(...),
-    _=Depends(get_current_admin_user),
+    current_user=Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ) -> BcuCabecalhoOut:
     if not file.filename:
@@ -82,8 +85,9 @@ async def importar_bcu(
     if not payload:
         raise ValidationError("Arquivo vazio.")
 
-    # TODO: implement BcuService in Task 2
-    raise NotImplementedError("BcuService not yet implemented")
+    svc = BcuService(db)
+    cab = await svc.importar_bcu(payload, file.filename, current_user.id)
+    return BcuCabecalhoOut.model_validate(cab)
 
 
 @router.post("/cabecalhos/{cabecalho_id}/ativar", response_model=BcuCabecalhoOut)
@@ -92,8 +96,9 @@ async def ativar_cabecalho(
     _=Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ) -> BcuCabecalhoOut:
-    # TODO: implement in Task 2
-    raise NotImplementedError("BcuService not yet implemented")
+    svc = BcuService(db)
+    cab = await svc.ativar_cabecalho(cabecalho_id)
+    return BcuCabecalhoOut.model_validate(cab)
 
 
 @router.get("/{cabecalho_id}/mao-obra", response_model=list[BcuMaoObraItemOut])
@@ -202,9 +207,10 @@ async def listar_de_para(
     search: str | None = None,
     _=Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
-):
-    # TODO: implement in Task 3
-    raise NotImplementedError("BcuDeParaService not yet implemented")
+) -> list[DeParaListItemOut]:
+    svc = BcuDeParaService(db)
+    items = await svc.listar(search=search, only_unmapped=only_unmapped)
+    return [DeParaListItemOut.model_validate(i) for i in items]
 
 
 @router.post("/de-para", response_model=DeParaOut, status_code=201)
@@ -212,9 +218,15 @@ async def criar_de_para(
     body: DeParaCreate,
     current_user=Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
-):
-    # TODO: implement in Task 3
-    raise NotImplementedError("BcuDeParaService not yet implemented")
+) -> DeParaOut:
+    svc = BcuDeParaService(db)
+    de_para = await svc.criar(
+        base_tcpo_id=body.base_tcpo_id,
+        bcu_table_type=BcuTableType(body.bcu_table_type),
+        bcu_item_id=body.bcu_item_id,
+        criador_id=current_user.id,
+    )
+    return DeParaOut.model_validate(de_para)
 
 
 @router.patch("/de-para/{de_para_id}", response_model=DeParaOut)
@@ -223,9 +235,14 @@ async def atualizar_de_para(
     body: DeParaCreate,
     _=Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
-):
-    # TODO: implement in Task 3
-    raise NotImplementedError("BcuDeParaService not yet implemented")
+) -> DeParaOut:
+    svc = BcuDeParaService(db)
+    de_para = await svc.atualizar(
+        de_para_id=de_para_id,
+        bcu_table_type=BcuTableType(body.bcu_table_type),
+        bcu_item_id=body.bcu_item_id,
+    )
+    return DeParaOut.model_validate(de_para)
 
 
 @router.delete("/de-para/{de_para_id}", status_code=204)
@@ -233,6 +250,6 @@ async def deletar_de_para(
     de_para_id: UUID,
     _=Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
-):
-    # TODO: implement in Task 3
-    raise NotImplementedError("BcuDeParaService not yet implemented")
+) -> None:
+    svc = BcuDeParaService(db)
+    await svc.deletar(de_para_id)

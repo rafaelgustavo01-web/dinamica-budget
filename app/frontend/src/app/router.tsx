@@ -88,9 +88,14 @@ const UsersPage = lazy(() =>
     default: module.UsersPage,
   })),
 );
-const PcTabelasPage = lazy(() =>
-  import('../features/pc-tabelas/PcTabelasPage').then((module) => ({
-    default: module.PcTabelasPage,
+const BcuPage = lazy(() =>
+  import('../features/bcu/BcuPage').then((module) => ({
+    default: module.BcuPage,
+  })),
+);
+const BcuDeParaPage = lazy(() =>
+  import('../features/bcu/BcuDeParaPage').then((module) => ({
+    default: module.BcuDeParaPage,
   })),
 );
 
@@ -154,7 +159,8 @@ export function AppRouter() {
           <Route path="/associacoes" element={<AssociationsPage />} />
           <Route path="/relatorios" element={<ReportsPage />} />
           <Route path="/extracao" element={<ExtractionPage />} />
-          <Route path="/pc-tabelas" element={<PcTabelasPage />} />
+          <Route path="/bcu" element={<BcuPage />} />
+          <Route path="/bcu/de-para" element={<BcuDeParaPage />} />
           <Route path="/perfil" element={<ProfilePage />} />
 
           {proposalRoutes}

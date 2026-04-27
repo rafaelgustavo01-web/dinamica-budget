@@ -114,12 +114,20 @@ export const navigationItems: NavigationItem[] = [
     visible: (user) => hasAdminPanelAccess(user),
   },
   {
-    label: 'PC Tabelas',
-    path: '/pc-tabelas',
+    label: 'BCU',
+    path: '/bcu',
     group: 'Operação',
     icon: <TableChartOutlinedIcon fontSize="small" />,
     status: 'active',
     visible: () => true,
+  },
+  {
+    label: 'De/Para BCU',
+    path: '/bcu/de-para',
+    group: 'Operação',
+    icon: <DatasetLinkedOutlinedIcon fontSize="small" />,
+    status: 'active',
+    visible: (user) => hasAdminPanelAccess(user),
   },
   {
     label: 'Upload',

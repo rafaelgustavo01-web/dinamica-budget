@@ -1,6 +1,6 @@
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import PreviewOutlinedIcon from '@mui/icons-material/PreviewOutlined';
-import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined';
+
 import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import {
   Alert,
@@ -25,7 +25,7 @@ import { PageHeader } from '../../shared/components/PageHeader';
 import { useFeedback } from '../../shared/components/feedback/FeedbackProvider';
 import { adminApi } from '../../shared/services/api/adminApi';
 import { extractApiErrorMessage } from '../../shared/services/api/apiClient';
-import { pcTabelasApi } from '../../shared/services/api/pcTabelasApi';
+import { bcuApi } from '../../shared/services/api/bcuApi';
 import type { ImportPreviewResponse } from '../../shared/types/contracts/admin';
 
 export function UploadTcpoPage() {
@@ -37,12 +37,8 @@ export function UploadTcpoPage() {
   const [preview, setPreview] = useState<ImportPreviewResponse | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  // ── Converter state ───────────────────────────────────────────────────────
-  const [converterFile, setConverterFile] = useState<File | null>(null);
-  const [converterConfirmOpen, setConverterConfirmOpen] = useState(false);
-
-  // ── PC Tabelas state ──────────────────────────────────────────────────────
-  const [pcFile, setPcFile] = useState<File | null>(null);
+  // ── BCU state ─────────────────────────────────────────────────────────────
+  const [bcuFile, setBcuFile] = useState<File | null>(null);
 
   // ── TCPO: semantic preview (display only) ────────────────────────────────
   const previewMutation = useMutation({
@@ -71,32 +67,13 @@ export function UploadTcpoPage() {
     },
   });
 
-  // ── Converter: ETL execute ────────────────────────────────────────────────
-  const converterMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const upload = await adminApi.uploadConverter(file);
-      return adminApi.executeEtl({
-        parse_token_converter: upload.parse_token,
-        mode: 'upsert',
-        recomputar_embeddings: false,
-      });
-    },
+  // ── BCU ───────────────────────────────────────────────────────────────────
+  const bcuImportMutation = useMutation({
+    mutationFn: (file: File) => bcuApi.importarPlanilha(file),
     onSuccess: (data) => {
-      setConverterConfirmOpen(false);
-      setConverterFile(null);
-      showMessage(
-        `Converter carregado: ${data.itens_inseridos} inseridos, ${data.itens_atualizados} atualizados.`,
-      );
-    },
-  });
-
-  // ── PC Tabelas ────────────────────────────────────────────────────────────
-  const pcImportMutation = useMutation({
-    mutationFn: (file: File) => pcTabelasApi.importarPlanilha(file),
-    onSuccess: (data) => {
-      setPcFile(null);
-      void queryClient.invalidateQueries({ queryKey: ['pc-tabelas'] });
-      showMessage(`PC Tabelas importada com sucesso! ID: ${data.id}`);
+      setBcuFile(null);
+      void queryClient.invalidateQueries({ queryKey: ['bcu'] });
+      showMessage(`BCU importada com sucesso! ID: ${data.id}`);
     },
   });
 
@@ -111,7 +88,7 @@ export function UploadTcpoPage() {
     <>
       <PageHeader
         title="Upload de Tabelas"
-        description="Carregue as planilhas de referência: TCPO, Converter (EPI/Equipamentos) e PC Tabelas."
+        description="Carregue as planilhas de referência: TCPO e BCU (Base de Custos Unitários)."
       />
 
       {/* ── TCPO ─────────────────────────────────────────────────────────── */}
@@ -259,88 +236,7 @@ export function UploadTcpoPage() {
         </Stack>
       </ConfirmationDialog>
 
-      {/* ── Converter em Data Center ──────────────────────────────────────── */}
-      <Paper
-        sx={{
-          p: 3,
-          border: '1px solid',
-          borderColor: 'divider',
-          background: 'linear-gradient(145deg, rgba(100,60,185,0.06), rgba(100,60,185,0.03))',
-        }}
-      >
-        <Stack spacing={2.5}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <SwapHorizOutlinedIcon color="secondary" />
-            <Typography variant="h6">Carga da planilha Converter (EPI, Equipamentos, MO)</Typography>
-            <Chip label="Converter em Data Center.xlsx" size="small" color="secondary" variant="outlined" />
-          </Stack>
-
-          <Typography variant="body2" color="text.secondary">
-            Carrega dados de referência auxiliares: EPI/Uniforme, Equipamentos, Ferramentas, Mão de Obra e Exames.
-            Use este seção para a planilha <strong>Converter em Data Center.xlsx</strong>.
-          </Typography>
-
-          <Button
-            component="label"
-            variant="outlined"
-            color="secondary"
-            sx={{ width: { xs: '100%', md: 360 } }}
-          >
-            {converterFile ? converterFile.name : 'Selecionar Converter em Data Center.xlsx'}
-            <input
-              hidden
-              type="file"
-              accept=".xlsx"
-              onChange={(event) => {
-                const file = event.target.files?.[0] ?? null;
-                setConverterFile(file);
-              }}
-            />
-          </Button>
-
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={<CloudUploadOutlinedIcon />}
-            disabled={!converterFile || converterMutation.isPending}
-            sx={{ width: { xs: '100%', md: 280 } }}
-            onClick={() => setConverterConfirmOpen(true)}
-          >
-            {converterMutation.isPending ? 'Carregando...' : 'Executar carga Converter'}
-          </Button>
-
-          {converterMutation.isError && (
-            <Alert severity="error">
-              {extractApiErrorMessage(converterMutation.error, 'Falha ao carregar planilha Converter.')}
-            </Alert>
-          )}
-
-          {converterMutation.isSuccess && (
-            <Alert severity="success">Planilha Converter carregada com sucesso!</Alert>
-          )}
-        </Stack>
-      </Paper>
-
-      <ConfirmationDialog
-        open={converterConfirmOpen}
-        title="Confirmar carga Converter"
-        confirmLabel="Sim, executar carga"
-        confirmColor="primary"
-        isLoading={converterMutation.isPending}
-        onCancel={() => setConverterConfirmOpen(false)}
-        onConfirm={() => converterFile && converterMutation.mutate(converterFile)}
-      >
-        <Stack spacing={1.25}>
-          <Typography variant="body2">
-            Carrega dados de referência auxiliares (EPI, Equipamentos, Ferramentas, MO).
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Arquivo: {converterFile?.name ?? 'não selecionado'}
-          </Typography>
-        </Stack>
-      </ConfirmationDialog>
-
-      {/* ── PC Tabelas ────────────────────────────────────────────────────── */}
+      {/* ── BCU Tabelas ───────────────────────────────────────────────────── */}
       <Paper
         sx={{
           p: 3,
@@ -352,12 +248,12 @@ export function UploadTcpoPage() {
         <Stack spacing={2.5}>
           <Stack direction="row" spacing={1.5} alignItems="center">
             <TableChartOutlinedIcon color="success" />
-            <Typography variant="h6">Carga da planilha PC Tabelas</Typography>
+            <Typography variant="h6">Carga da planilha BCU (Base de Custos Unitários)</Typography>
             <Chip label="7 abas" size="small" color="success" variant="outlined" />
           </Stack>
 
           <Typography variant="body2" color="text.secondary">
-            Importa todas as abas da planilha PC Tabelas: Mão de Obra, Equipamentos, Encargos, EPI/Uniforme,
+            Importa todas as abas da planilha BCU: Mão de Obra, Equipamentos, Encargos, EPI/Uniforme,
             Ferramentas e Mobilização. Dados existentes com o mesmo nome de arquivo são substituídos.
           </Typography>
 
@@ -367,14 +263,14 @@ export function UploadTcpoPage() {
             color="success"
             sx={{ width: { xs: '100%', md: 360 } }}
           >
-            {pcFile ? pcFile.name : 'Selecionar PC tabelas.xlsx'}
+            {bcuFile ? bcuFile.name : 'Selecionar BCU tabelas.xlsx'}
             <input
               hidden
               type="file"
               accept=".xlsx"
               onChange={(event) => {
                 const file = event.target.files?.[0] ?? null;
-                setPcFile(file);
+                setBcuFile(file);
               }}
             />
           </Button>
@@ -383,21 +279,21 @@ export function UploadTcpoPage() {
             variant="contained"
             color="success"
             startIcon={<CloudUploadOutlinedIcon />}
-            disabled={!pcFile || pcImportMutation.isPending}
+            disabled={!bcuFile || bcuImportMutation.isPending}
             sx={{ width: { xs: '100%', md: 280 } }}
-            onClick={() => pcFile && pcImportMutation.mutate(pcFile)}
+            onClick={() => bcuFile && bcuImportMutation.mutate(bcuFile)}
           >
-            {pcImportMutation.isPending ? 'Importando...' : 'Importar PC Tabelas'}
+            {bcuImportMutation.isPending ? 'Importando...' : 'Importar BCU'}
           </Button>
 
-          {pcImportMutation.isError && (
+          {bcuImportMutation.isError && (
             <Alert severity="error">
-              {extractApiErrorMessage(pcImportMutation.error, 'Falha ao importar PC Tabelas.')}
+              {extractApiErrorMessage(bcuImportMutation.error, 'Falha ao importar BCU.')}
             </Alert>
           )}
 
-          {pcImportMutation.isSuccess && (
-            <Alert severity="success">PC Tabelas importada com sucesso!</Alert>
+          {bcuImportMutation.isSuccess && (
+            <Alert severity="success">BCU importada com sucesso!</Alert>
           )}
         </Stack>
       </Paper>
