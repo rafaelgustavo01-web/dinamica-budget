@@ -151,18 +151,26 @@ async def require_cliente_perfil(
 
 async def require_proposta_role(
     proposta_id: UUID,
-    papel_minimo: PropostaPapel | None,
+    papel_minimo,
     current_user,
     db: AsyncSession,
-) -> PropostaPapel | None:
+):
     from backend.models.enums import PropostaPapel
+    from backend.models.proposta import Proposta
     from backend.services.proposta_acl_service import PropostaAclService
 
     if current_user.is_admin:
         return PropostaPapel.OWNER
 
+    # Resolve ACL via proposta_root_id — versões herdam permissões da raiz
+    result = await db.execute(
+        select(Proposta.proposta_root_id).where(Proposta.id == proposta_id)
+    )
+    proposta_root_id = result.scalar_one_or_none()
+    acl_id = proposta_root_id if proposta_root_id is not None else proposta_id
+
     svc = PropostaAclService(db)
-    papel = await svc.papel_efetivo(proposta_id, current_user.id)
+    papel = await svc.papel_efetivo(acl_id, current_user.id)
 
     if papel_minimo is None:
         return papel
