@@ -277,6 +277,11 @@ class PropostaItemComposicao(Base):
     )
 
     proposta_item: Mapped[PropostaItem] = relationship(back_populates="composicoes", lazy="noload")
+    recursos_extras: Mapped[list["PropostaRecursoAlocacao"]] = relationship(
+        back_populates="composicao",
+        lazy="noload",
+        cascade="all, delete-orphan",
+    )
 
 
 class PropostaResumoRecurso(Base):

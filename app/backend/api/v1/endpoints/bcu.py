@@ -49,6 +49,8 @@ async def _get_cabecalho(db: AsyncSession, cabecalho_id: UUID) -> BcuCabecalho:
     return cab
 
 
+# ── Static routes BEFORE /{cabecalho_id}/ to avoid UUID capture ───────────────
+
 @router.get("/cabecalhos", response_model=list[BcuCabecalhoOut])
 async def listar_cabecalhos(
     _=Depends(get_current_active_user),
@@ -89,6 +91,64 @@ async def importar_bcu(
     cab = await svc.importar_bcu(payload, file.filename, current_user.id)
     return BcuCabecalhoOut.model_validate(cab)
 
+
+# ── De/Para — must be before /{cabecalho_id}/ ─────────────────────────────────
+
+@router.get("/de-para", response_model=list[DeParaListItemOut])
+async def listar_de_para(
+    only_unmapped: bool = False,
+    search: str | None = None,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[DeParaListItemOut]:
+    svc = BcuDeParaService(db)
+    items = await svc.listar(search=search, only_unmapped=only_unmapped)
+    return [DeParaListItemOut.model_validate(i) for i in items]
+
+
+@router.post("/de-para", response_model=DeParaOut, status_code=201)
+async def criar_de_para(
+    body: DeParaCreate,
+    current_user=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> DeParaOut:
+    svc = BcuDeParaService(db)
+    de_para = await svc.criar(
+        base_tcpo_id=body.base_tcpo_id,
+        bcu_table_type=BcuTableType(body.bcu_table_type),
+        bcu_item_id=body.bcu_item_id,
+        criador_id=current_user.id,
+    )
+    return DeParaOut.model_validate(de_para)
+
+
+@router.patch("/de-para/{de_para_id}", response_model=DeParaOut)
+async def atualizar_de_para(
+    de_para_id: UUID,
+    body: DeParaCreate,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> DeParaOut:
+    svc = BcuDeParaService(db)
+    de_para = await svc.atualizar(
+        de_para_id=de_para_id,
+        bcu_table_type=BcuTableType(body.bcu_table_type),
+        bcu_item_id=body.bcu_item_id,
+    )
+    return DeParaOut.model_validate(de_para)
+
+
+@router.delete("/de-para/{de_para_id}", status_code=204)
+async def deletar_de_para(
+    de_para_id: UUID,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    svc = BcuDeParaService(db)
+    await svc.deletar(de_para_id)
+
+
+# ── Parameterized /{cabecalho_id}/ routes ─────────────────────────────────────
 
 @router.post("/cabecalhos/{cabecalho_id}/ativar", response_model=BcuCabecalhoOut)
 async def ativar_cabecalho(
@@ -197,59 +257,3 @@ async def listar_mobilizacao(
         .options(selectinload(BcuMobilizacaoItem.quantidades_funcao))
     )
     return [BcuMobilizacaoItemOut.model_validate(r) for r in result.scalars().all()]
-
-
-# ── De/Para ────────────────────────────────────────────────────────────
-
-@router.get("/de-para", response_model=list[DeParaListItemOut])
-async def listar_de_para(
-    only_unmapped: bool = False,
-    search: str | None = None,
-    _=Depends(get_current_admin_user),
-    db: AsyncSession = Depends(get_db),
-) -> list[DeParaListItemOut]:
-    svc = BcuDeParaService(db)
-    items = await svc.listar(search=search, only_unmapped=only_unmapped)
-    return [DeParaListItemOut.model_validate(i) for i in items]
-
-
-@router.post("/de-para", response_model=DeParaOut, status_code=201)
-async def criar_de_para(
-    body: DeParaCreate,
-    current_user=Depends(get_current_admin_user),
-    db: AsyncSession = Depends(get_db),
-) -> DeParaOut:
-    svc = BcuDeParaService(db)
-    de_para = await svc.criar(
-        base_tcpo_id=body.base_tcpo_id,
-        bcu_table_type=BcuTableType(body.bcu_table_type),
-        bcu_item_id=body.bcu_item_id,
-        criador_id=current_user.id,
-    )
-    return DeParaOut.model_validate(de_para)
-
-
-@router.patch("/de-para/{de_para_id}", response_model=DeParaOut)
-async def atualizar_de_para(
-    de_para_id: UUID,
-    body: DeParaCreate,
-    _=Depends(get_current_admin_user),
-    db: AsyncSession = Depends(get_db),
-) -> DeParaOut:
-    svc = BcuDeParaService(db)
-    de_para = await svc.atualizar(
-        de_para_id=de_para_id,
-        bcu_table_type=BcuTableType(body.bcu_table_type),
-        bcu_item_id=body.bcu_item_id,
-    )
-    return DeParaOut.model_validate(de_para)
-
-
-@router.delete("/de-para/{de_para_id}", status_code=204)
-async def deletar_de_para(
-    de_para_id: UUID,
-    _=Depends(get_current_admin_user),
-    db: AsyncSession = Depends(get_db),
-) -> None:
-    svc = BcuDeParaService(db)
-    await svc.deletar(de_para_id)

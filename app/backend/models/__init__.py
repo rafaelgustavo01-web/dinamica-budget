@@ -42,6 +42,20 @@ from backend.models.bcu import (
 )
 from backend.models.proposta import PqImportacao, PqItem, Proposta, PropostaAcl, PropostaItem, PropostaItemComposicao
 from backend.models.pq_layout import PqLayoutCliente, PqImportacaoMapeamento  # noqa: F401
+from backend.models.proposta_pc import (
+    PropostaPcMaoObra,
+    PropostaPcEquipamentoPremissa,
+    PropostaPcEquipamento,
+    PropostaPcEncargo,
+    PropostaPcEpi,
+    PropostaPcFerramenta,
+    PropostaPcMobilizacao,
+    PropostaPcMobilizacaoQuantidade,
+)
+from backend.models.proposta_recurso_extra import (
+    PropostaRecursoExtra,
+    PropostaRecursoAlocacao,
+)
 
 __all__ = [
     "Base",
