@@ -53,3 +53,35 @@ class PropostaRepository(BaseRepository[Proposta]):
         proposta.deleted_at = datetime.now(timezone.utc)
         await self.db.flush()
 
+    async def max_numero_versao(self, proposta_root_id: UUID) -> int | None:
+        result = await self.db.execute(
+            select(func.max(Proposta.numero_versao)).where(
+                Proposta.proposta_root_id == proposta_root_id,
+                Proposta.deleted_at.is_(None),
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def list_by_root(self, proposta_root_id: UUID) -> list[Proposta]:
+        result = await self.db.execute(
+            select(Proposta)
+            .where(
+                Proposta.proposta_root_id == proposta_root_id,
+                Proposta.deleted_at.is_(None),
+            )
+            .order_by(Proposta.numero_versao.asc())
+        )
+        return list(result.scalars().all())
+
+    async def list_aguardando_aprovacao(self) -> list[Proposta]:
+        """Return all proposals with status AGUARDANDO_APROVACAO (non-deleted)."""
+        from backend.models.enums import StatusProposta
+
+        result = await self.db.execute(
+            select(Proposta).where(
+                Proposta.status == StatusProposta.AGUARDANDO_APROVACAO,
+                Proposta.deleted_at.is_(None),
+            )
+        )
+        return list(result.scalars().all())
+
