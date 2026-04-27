@@ -75,8 +75,8 @@ FASE C — Módulo de Orçamentos
 - `F2-07` DONE — Tabelas Recursos + Motor 4 Camadas (Worker: kimi-k2.5 rework v1) — QA aprovado 2026-04-26
 - `F2-08` DONE — RBAC por Proposta (Worker: kimi-k2.5) — QA aprovado 2026-04-26 (Amazon Q); 158 PASS, 0 FAIL; 0 tsc errors
 - `F2-09` TESTED — Versionamento + Workflow de Aprovação (Worker: claude-sonnet-4-6) — entregue 2026-04-27 (179 PASS, 0 tsc)
-- `F2-10` PLAN — BCU Unificada (Base de Custos Unitários) + De/Para — plan em `docs/sprints/F2-10/plans/2026-04-27-bcu-unificada-de-para.md`
-- `F2-11` PLAN — Histograma da Proposta — plan em `docs/sprints/F2-11/plans/2026-04-27-histograma-proposta.md`
+- `F2-10` TODO — BCU Unificada (Base de Custos Unitários) + De/Para — Worker: kimi-k2.6 — prompt em `docs/sprints/F2-10/dispatch/sprint-F2-10-worker-prompt.md`
+- `F2-11` PLAN — Histograma da Proposta — aguarda F2-10 DONE — briefing+prompt prontos em `docs/sprints/F2-11/dispatch/`
 
 ### Decisões de alocação (Scrum Master, 2026-04-26)
 
@@ -136,6 +136,7 @@ Todas as 12 sprints concluídas com aprovação do QA:
   - Sprints originais de Compras e Negociação **renomeadas e suspensas**: F2-12 (era F2-10 — Custo Base/Ajustado), F2-13 (era F2-11 — Cotações), F2-14 (era F2-12 — Frontend Compras), F2-15 (era F2-13 — Comparativo). Todas marcadas `ON-HOLD` até segunda ordem do PO.
   - Defaults arquiteturais aprovados: nome **BCU — Base de Custos Unitários** (pareia com CPU); De/Para 1:1 manual; trigger explícito "Montar Histograma"; snapshot sincronizado com aviso de divergência; recursos extras criáveis + alocáveis a composições; clonagem de histograma na nova versão; CPU desatualizada via flag (recálculo manual).
   - Plans gerados: `docs/sprints/F2-10/plans/2026-04-27-bcu-unificada-de-para.md` e `docs/sprints/F2-11/plans/2026-04-27-histograma-proposta.md`.
+- 2026-04-27 (Scrum Master): F2-10 despachada para **kimi-k2.6** (backend-heavy: migration 023, BcuService, BcuDeParaService, cpu_custo_service refactor, endpoints). Status PLAN → TODO. Worker prompt em `docs/sprints/F2-10/dispatch/sprint-F2-10-worker-prompt.md`. F2-11 permanece PLAN (depende de F2-10 DONE); briefing + worker prompt preparados para **Gemini** (frontend-evident: 8 abas, 4 novos componentes, AlocacaoRecursoDialog) em `docs/sprints/F2-11/dispatch/`. WIP = 2/4 (F2-09 TESTED + F2-10 TODO).
 
 ## Observações de Pesquisa
 - O repositório atual possui todos os artefatos canônicos do pipeline (`docs/JOB-DESCRIPTION.md`, `docs/superpowers/plans/`, `docs/roles/`, `docs/dispatch/`).
