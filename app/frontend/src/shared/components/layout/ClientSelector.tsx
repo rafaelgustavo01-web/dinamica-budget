@@ -26,7 +26,8 @@ export function ClientSelector({
   availableClients,
   onChange,
 }: ClientSelectorProps) {
-  if (isAdmin) {
+  // Admin with no scoped clients: free-form UUID input (can access any client)
+  if (isAdmin && !availableClients.length) {
     return (
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
