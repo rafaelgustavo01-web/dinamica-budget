@@ -40,6 +40,8 @@ export interface PropostaResponse {
   aprovado_por_id: string | null;
   aprovado_em: string | null;
   motivo_revisao: string | null;
+  // F2-11: Histograma
+  cpu_desatualizada: boolean;
 }
 
 export interface PropostaCreateRequest {

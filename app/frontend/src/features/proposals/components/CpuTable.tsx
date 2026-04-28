@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   Box,
+  Button,
   Chip,
   Collapse,
   IconButton,
@@ -14,10 +15,12 @@ import {
 } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '../../../shared/utils/format';
 import type { CpuItemDetalhado } from '../../../shared/services/api/proposalsApi';
 import { proposalsApi } from '../../../shared/services/api/proposalsApi';
+import { AlocacaoRecursoDialog } from './AlocacaoRecursoDialog';
 
 interface ComposicaoRowsProps {
   propostaId: string;
@@ -30,10 +33,12 @@ function ComposicaoRows({ propostaId, itemId }: ComposicaoRowsProps) {
     queryFn: () => proposalsApi.getComposicoes(propostaId, itemId),
   });
 
+  const [allocDialog, setAllocDialog] = useState<{ composicaoId: string; descricao: string } | null>(null);
+
   if (isLoading) {
     return (
       <TableRow>
-        <TableCell colSpan={5}>
+        <TableCell colSpan={6}>
           <Typography variant="caption">Carregando insumos...</Typography>
         </TableCell>
       </TableRow>
@@ -61,16 +66,35 @@ function ComposicaoRows({ propostaId, itemId }: ComposicaoRowsProps) {
           <TableCell>{parseFloat(c.quantidade_consumo).toFixed(4)}</TableCell>
           <TableCell>{c.custo_unitario_insumo ? formatCurrency(parseFloat(c.custo_unitario_insumo)) : '—'}</TableCell>
           <TableCell>{c.custo_total_insumo ? formatCurrency(parseFloat(c.custo_total_insumo)) : '—'}</TableCell>
+          <TableCell>
+            <Button
+              size="small"
+              variant="text"
+              startIcon={<AddCircleOutlineIcon fontSize="small" />}
+              onClick={() => setAllocDialog({ composicaoId: c.id, descricao: c.descricao_insumo })}
+            >
+              Alocar
+            </Button>
+          </TableCell>
         </TableRow>
       ))}
       {composicoes.length === 0 && (
         <TableRow sx={{ bgcolor: 'action.hover' }}>
-          <TableCell colSpan={5} sx={{ pl: 6 }}>
+          <TableCell colSpan={6} sx={{ pl: 6 }}>
             <Typography variant="caption" color="text.secondary">
               Sem insumos registrados para este item.
             </Typography>
           </TableCell>
         </TableRow>
+      )}
+      {allocDialog && (
+        <AlocacaoRecursoDialog
+          open={!!allocDialog}
+          onClose={() => setAllocDialog(null)}
+          propostaId={propostaId}
+          composicaoId={allocDialog.composicaoId}
+          composicaoDescricao={allocDialog.descricao}
+        />
       )}
     </>
   );
@@ -131,6 +155,7 @@ function CpuItemRow({ item, propostaId }: CpuItemRowProps) {
                     <TableCell>Qtd</TableCell>
                     <TableCell>Custo Unit.</TableCell>
                     <TableCell>Custo Total</TableCell>
+                    <TableCell>Ações</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

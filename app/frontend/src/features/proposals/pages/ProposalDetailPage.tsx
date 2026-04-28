@@ -12,6 +12,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Chip,
 } from '@mui/material';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
@@ -24,6 +25,8 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HistoryIcon from '@mui/icons-material/History';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import BarChartIcon from '@mui/icons-material/BarChart';
 
 import { PageHeader } from '../../../shared/components/PageHeader';
 import { proposalsApi } from '../../../shared/services/api/proposalsApi';
@@ -229,6 +232,16 @@ export function ProposalDetailPage() {
               <Box sx={{ mt: 0.5 }}>
                 <StatusBadge value={proposta.status} kind="proposta" />
               </Box>
+              {proposta.cpu_desatualizada && (
+                <Box sx={{ mt: 0.5 }}>
+                  <Chip
+                    label="CPU Desatualizada"
+                    color="warning"
+                    size="small"
+                    icon={<WarningAmberIcon fontSize="small" />}
+                  />
+                </Box>
+              )}
             </Box>
             <Box>
               <Typography variant="caption" color="text.secondary">Criada em</Typography>
@@ -271,6 +284,48 @@ export function ProposalDetailPage() {
                 {formatCurrency(proposta.total_geral)}
               </Typography>
             </Box>
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Typography variant="h6" gutterBottom>Resumo do Histograma</Typography>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' },
+              gap: 2,
+              mt: 2,
+            }}
+          >
+            <Paper variant="outlined" sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <BarChartIcon color="primary" />
+              <Box>
+                <Typography variant="caption" color="text.secondary">Custos BCU</Typography>
+                <Typography variant="body2" fontWeight={500}>
+                  {proposta.bcu_cabecalho_id ? 'Vinculado à base ativa' : 'Sem base BCU vinculada'}
+                </Typography>
+              </Box>
+            </Paper>
+            <Paper variant="outlined" sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <WarningAmberIcon color={proposta.cpu_desatualizada ? 'warning' : 'success'} />
+              <Box>
+                <Typography variant="caption" color="text.secondary">CPU</Typography>
+                <Typography variant="body2" fontWeight={500}>
+                  {proposta.cpu_desatualizada ? 'Desatualizada — recalcule' : 'Atualizada'}
+                </Typography>
+              </Box>
+            </Paper>
+            <Paper variant="outlined" sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }}
+              onClick={() => navigate(`/propostas/${id}/histograma`)}
+            >
+              <RuleOutlinedIcon color="info" />
+              <Box>
+                <Typography variant="caption" color="text.secondary">Ação</Typography>
+                <Typography variant="body2" fontWeight={500} color="info.main">
+                  Abrir Histograma
+                </Typography>
+              </Box>
+            </Paper>
           </Box>
         </Paper>
 
