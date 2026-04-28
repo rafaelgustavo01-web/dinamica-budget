@@ -76,7 +76,7 @@ FASE C — Módulo de Orçamentos
 - `F2-08` DONE — RBAC por Proposta (Worker: kimi-k2.5) — QA aprovado 2026-04-26 (Amazon Q); 158 PASS, 0 FAIL; 0 tsc errors
 - `F2-09` DONE — Versionamento + Workflow de Aprovação (Worker: claude-sonnet-4-6) — QA aprovado 2026-04-27 (Amazon Q); Milestone 6 fechado
 - `F2-10` TESTED — BCU Unificada (Base de Custos Unitários) + De/Para — Worker: kimi-k2.6 — prompt em `docs/sprints/F2-10/dispatch/sprint-F2-10-worker-prompt.md`
-- `F2-11` PLAN — Histograma da Proposta — aguarda F2-10 DONE — briefing+prompt prontos em `docs/sprints/F2-11/dispatch/`
+- `F2-11` TESTED — Histograma da Proposta — enviada para QA — briefing+prompt em `docs/sprints/F2-11/dispatch/`
 
 ### Decisões de alocação (Scrum Master, 2026-04-26)
 
@@ -142,3 +142,4 @@ Todas as 12 sprints concluídas com aprovação do QA:
 - O repositório atual possui todos os artefatos canônicos do pipeline (`docs/JOB-DESCRIPTION.md`, `docs/superpowers/plans/`, `docs/roles/`, `docs/dispatch/`).
 - Suite de testes: **93 unit tests PASS**, **1 smoke E2E PASS**, **build frontend OK**.
 - **Nova demanda (2026-04-22):** Módulo de Orçamentos (Fase 2) modelado em `docs/superpowers/plans/roadmap/MODELAGEM_ORCAMENTOS_FASE2.md`. Adicionadas sprints S-09 a S-12 ao backlog e Milestone 5 ao roadmap.
+oadmap.

@@ -23,6 +23,11 @@ Your inbox has `[PENDING]` with `Action: INTAKE_NEXT`, OR all active sprints are
 
 ## INBOX
 
+### [PENDING] 2026-04-27T12:00:00Z — Sprint F2-09 DONE — Milestone 6 fechado
+- From: qa (Amazon Q)
+- Action: INTAKE_NEXT
+- Notes: F2-09 fechada. Versionamento + Workflow de Aprovacao entregues. Milestone 6 (Proposta Completa) encerrado com F2-01 a F2-09 todos DONE. WIP slot disponivel. Proximo candidato: F2-10 (BCU Unificada) ja em TODO com worker kimi-k2.6 despachado. F2-11 (Histograma) em PLAN aguardando F2-10 DONE.
+
 ### [PENDING] 2026-04-26T23:11:00Z — Sprint F2-08 DONE — WIP slot liberado
 - From: qa (Gemini 3.1 Pro)
 - Action: INTAKE_NEXT

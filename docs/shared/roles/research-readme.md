@@ -21,6 +21,13 @@ Your inbox has `[PENDING]` with `Action: MINE_ROADMAP`.
 
 ## INBOX
 
+### [PENDING] 2026-04-27T12:00:00Z — Sprint F2-09 (DONE)
+- From: qa (Amazon Q)
+- Action: MINE_ROADMAP
+- Walkthrough: @docs/sprints/F2-09/walkthrough/reviewed/walkthrough-F2-09.md
+- Feedback: @docs/sprints/F2-09/technical-feedback/technical-feedback-2026-04-27-f2-09-v1.md
+- Notes: F2-09 aceita. Milestone 6 (Proposta Completa) fechado. Versionamento com proposta_root_id como agrupador logico, nova_versao clona metadados (PQ/CPU comecam limpos), workflow de aprovacao opcional por flag requer_aprovacao. ACL herdada por root_id. 5 endpoints novos com ordem de rota correta. ApprovalQueuePage + ProposalHistoryPanel entregues. Alimentar ROADMAP com padroes de versionamento de entidades (root_id + numero_versao + is_versao_atual) e workflow de aprovacao multi-papel para reutilizacao em F2-10+.
+
 ### [PENDING] 2026-04-26T23:11:00Z — Sprint F2-08 (DONE)
 - From: qa (Gemini 3.1 Pro)
 - Action: MINE_ROADMAP

@@ -30,6 +30,13 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 
 ## INBOX
 
+### [PENDING] 2026-04-27T16:00:00Z — Sprint F2-11
+- From: worker (gemini)
+- Action: REVIEW
+- Walkthrough: @docs/sprints/F2-11/walkthrough/done/walkthrough-F2-11.md
+- Review: @docs/sprints/F2-11/technical-review/technical-review-2026-04-27-F2-11.md
+- Notes: Histograma and Recursos Extras implemented. Backend API complete and tested. Frontend has functional components for viewing and navigating. Ready for QA.
+
 ### [DONE] 2026-04-26T23:11:00Z — Sprint F2-08
 - From: worker (kimi-k2.5)
 - Action: REVIEW
