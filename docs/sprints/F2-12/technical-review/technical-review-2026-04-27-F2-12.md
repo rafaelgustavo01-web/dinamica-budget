@@ -16,21 +16,26 @@
 - [x] Codigo segue padrao do repositorio (PEP 8, type hints)
 - [x] Nenhum import removido ou alterado indevidamente
 - [x] `parse_converter_datacenter` inalterado
-- [x] Testes cobrem caso feliz + edge cases (orfao, multiplos pais, mixed children)
+- [x] Testes cobrem caso feliz + edge cases (orfao, multiplos pais, mixed children, variacoes de prefixo SER.)
 - [x] Cache do singleton limpo entre testes (fixture `clear_cache`)
-- [x] Regressao: 197 passed, 0 novos failures (12 errors = conexao Windows, pre-existentes)
+- [x] Regressao: 8 passed no modulo ETL, 197 passed geral, 0 novos failures
 
 ## Decisoes tecnicas
 
 1. **Por que `values_only=False` em vez de `values_only=True`?**
-   - `values_only=True` descarta informacoes de estilo. `font.bold` eh necessario para distinguir pai de subservico.
+   - `values_only=True` descarta informacoes de estilo. `font.bold` e `alignment.indent` sao necessarios para distinguir pai de subservico.
    - Custo de memoria aceitavel: arquivo TCPO tipico tem ~40-60k linhas.
 
-2. **Por que nao usar `alignment.indent` como cross-check?**
-   - O briefing mencionava `alignment.indent` como fallback, mas a PINI usa negrito de forma deterministica. Mantive o codigo simples com apenas `font.bold`.
-   - Se necessario no futuro, eh facil adicionar: `is_bold or (descricao_cell.alignment and descricao_cell.alignment.indent == 0)`.
+2. **Por que `startswith("SER.")` em vez de `== "SER.CG"`?**
+   - A PINI usa varias classificacoes de servico: `SER.CG`, `SER.MO`, `SER.CH`, etc.
+   - `startswith("SER.")` captura todas as variacoes sem manutencao manual de enum.
+   - Classes que nao comecam com `SER.` sao sempre insumos diretos, independente do nome.
 
-3. **Por que `_MockWorkbook` em vez de `MagicMock` puro?**
+3. **Cross-check `alignment.indent == 0`**
+   - Servico pai requer TRES condicoes simultaneas: `classe.startswith("SER.")` AND `is_bold` AND `alignment.indent == 0`.
+   - Isso evita falsos positivos se uma celula accidentalmente estiver em negrito.
+
+4. **Por que `_MockWorkbook` em vez de `MagicMock` puro?**
    - `MagicMock.__getitem__` intercepta chamadas de forma peculiar no Python. Um objeto simples com `__getitem__` eh mais previsivel e evita o erro `takes 1 positional argument but 2 were given`.
 
 ## Observacoes para QA

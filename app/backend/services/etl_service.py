@@ -139,11 +139,18 @@ class EtlService:
             descricao_clean = str(descricao).strip() if descricao else ""
             custo = float(preco) if preco is not None else 0.0
 
-            # Detect bold in description cell — PINI uses bold only for parent services
+            # Detect bold + alignment in description cell — PINI uses bold only for parent services
             descricao_cell = row[1]
             is_bold = descricao_cell.font.bold if descricao_cell.font else False
+            alignment_indent = (
+                descricao_cell.alignment.indent if descricao_cell.alignment else 0
+            )
+            is_parent = (
+                classe_clean.startswith("SER.") and is_bold and alignment_indent == 0
+            )
+            is_subservice = classe_clean.startswith("SER.") and not is_parent
 
-            if classe_clean == "SER.CG" and is_bold:
+            if is_parent:
                 # New parent service
                 current_parent_codigo = codigo
                 if codigo not in seen_itens:
@@ -157,7 +164,7 @@ class EtlService:
                         )
                     )
                     seen_itens.add(codigo)
-            elif classe_clean == "SER.CG" and not is_bold:
+            elif is_subservice:
                 # Subservice: treated as child of current parent, does NOT change current_parent_codigo
                 if current_parent_codigo is None:
                     result.avisos.append(
@@ -187,7 +194,7 @@ class EtlService:
                     )
                 )
             else:
-                # Normal child component (MAT., M.O., EQP., FER.)
+                # Normal child component (anything not starting with SER.)
                 if current_parent_codigo is None:
                     result.avisos.append(
                         f"Linha {row_idx}: filho sem pai (ignorado): {codigo}"
