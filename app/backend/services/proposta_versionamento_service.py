@@ -107,22 +107,31 @@ class PropostaVersionamentoService:
                 item.proposta_id = nova.id
                 self.db.add(item)
                 
-        # Mobilizacao and Quantidades
+        # Mobilizacao and Quantidades — batch-fetch all quantities in one query (eliminates N+1)
         mob_result = await self.db.execute(select(PropostaPcMobilizacao).where(PropostaPcMobilizacao.proposta_id == atual.id))
         mobs = mob_result.scalars().all()
+
+        if mobs:
+            mob_ids = [m.id for m in mobs]
+            qtd_result = await self.db.execute(
+                select(PropostaPcMobilizacaoQuantidade).where(
+                    PropostaPcMobilizacaoQuantidade.mobilizacao_id.in_(mob_ids)
+                )
+            )
+            qtds_by_mob: dict = {}
+            for qtd in qtd_result.scalars().all():
+                qtds_by_mob.setdefault(qtd.mobilizacao_id, []).append(qtd)
+        else:
+            qtds_by_mob = {}
+
         for mob in mobs:
-            # We must load quantidades if we want to clone them, but currently they might be lazy loaded.
-            # Assuming eager load or separate query.
-            qtd_result = await self.db.execute(select(PropostaPcMobilizacaoQuantidade).where(PropostaPcMobilizacaoQuantidade.mobilizacao_id == mob.id))
-            qtds = qtd_result.scalars().all()
-            
-            self.db.expunge(mob)
             old_mob_id = mob.id
+            self.db.expunge(mob)
             mob.id = uuid.uuid4()
             mob.proposta_id = nova.id
             self.db.add(mob)
-            
-            for qtd in qtds:
+
+            for qtd in qtds_by_mob.get(old_mob_id, []):
                 self.db.expunge(qtd)
                 qtd.id = uuid.uuid4()
                 qtd.mobilizacao_id = mob.id

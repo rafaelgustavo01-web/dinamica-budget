@@ -22,6 +22,15 @@ class BcuDeParaRepository:
         )
         return result.scalar_one_or_none()
 
+    async def get_by_base_tcpo_ids(self, ids: list[UUID]) -> dict[UUID, DeParaTcpoBcu]:
+        """Batch fetch De/Para records by base_tcpo_id list — eliminates N+1."""
+        if not ids:
+            return {}
+        result = await self.db.execute(
+            select(DeParaTcpoBcu).where(DeParaTcpoBcu.base_tcpo_id.in_(ids))
+        )
+        return {row.base_tcpo_id: row for row in result.scalars().all()}
+
     async def list_all(self) -> list[DeParaTcpoBcu]:
         result = await self.db.execute(select(DeParaTcpoBcu).order_by(DeParaTcpoBcu.criado_em.desc()))
         return list(result.scalars().all())

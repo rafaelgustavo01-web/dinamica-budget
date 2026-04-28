@@ -161,8 +161,11 @@ class ServicoCatalogService:
                 select(ComposicaoBase).where(ComposicaoBase.servico_pai_id == servico_id)
             )
             composicoes = list(result_comp.scalars().all())
+            # Batch-fetch all children in one query — eliminates N+1
+            filho_ids = [c.insumo_filho_id for c in composicoes]
+            filhos_map = await base_repo.get_by_ids(filho_ids)
             for comp in composicoes:
-                filho = await base_repo.get_by_id(comp.insumo_filho_id)
+                filho = filhos_map.get(comp.insumo_filho_id)
                 if filho is None:
                     continue
                 custo_item = comp.quantidade_consumo * (filho.custo_base or Decimal("0"))
@@ -176,15 +179,19 @@ class ServicoCatalogService:
                         custo_unitario=filho.custo_base or Decimal("0"),
                         custo_total=custo_item,
                         tipo_recurso=filho.tipo_recurso.value if filho.tipo_recurso else None,
+                        codigo_origem=filho.codigo_origem,
                     )
                 )
         else:
             versao_repo = VersaoComposicaoRepository(db)
             versao = await versao_repo.get_versao_ativa(servico_id)
             if versao:
+                # Batch-fetch all BaseTcpo children in one query
+                base_ids = [c.insumo_base_id for c in versao.itens if c.insumo_base_id is not None]
+                base_filhos_map = await base_repo.get_by_ids(base_ids)
                 for comp in versao.itens:
                     if comp.insumo_base_id is not None:
-                        filho = await base_repo.get_by_id(comp.insumo_base_id)
+                        filho = base_filhos_map.get(comp.insumo_base_id)
                         if filho is None:
                             continue
                         custo_item = comp.quantidade_consumo * (filho.custo_base or Decimal("0"))
@@ -198,6 +205,7 @@ class ServicoCatalogService:
                                 custo_unitario=filho.custo_base or Decimal("0"),
                                 custo_total=custo_item,
                                 tipo_recurso=filho.tipo_recurso.value if filho.tipo_recurso else None,
+                                codigo_origem=filho.codigo_origem,
                             )
                         )
                     elif comp.insumo_proprio_id is not None:
@@ -216,6 +224,7 @@ class ServicoCatalogService:
                                 custo_unitario=filho.custo_unitario or Decimal("0"),
                                 custo_total=custo_item,
                                 tipo_recurso=filho.tipo_recurso.value if filho.tipo_recurso else None,
+                                codigo_origem=getattr(filho, "codigo_origem", None),
                             )
                         )
 

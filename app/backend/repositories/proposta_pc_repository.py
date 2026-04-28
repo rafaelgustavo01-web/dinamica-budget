@@ -18,7 +18,7 @@ from backend.models.proposta_pc import (
 )
 
 
-class ProposalPcRepository:
+class PropostaPcRepository:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
@@ -110,3 +110,7 @@ class ProposalPcRepository:
     async def get_item(self, model: type[Any], item_id: UUID) -> Any | None:
         result = await self.db.execute(select(model).where(model.id == item_id))
         return result.scalar_one_or_none()
+
+
+# Backwards-compat alias: old name kept so external callers survive the rename
+ProposalPcRepository = PropostaPcRepository

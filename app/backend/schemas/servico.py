@@ -46,6 +46,8 @@ class ComposicaoComponenteResponse(BaseModel):
     custo_unitario: Decimal
     custo_total: Decimal
     tipo_recurso: str | None = None
+    # Frozen contract (F2-DT-A/B): always present, None when child has no origin code
+    codigo_origem: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

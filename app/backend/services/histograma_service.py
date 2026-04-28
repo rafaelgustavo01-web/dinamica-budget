@@ -72,27 +72,43 @@ class HistogramaService:
             if c.insumo_base_id:
                 insumos_unicos.add(c.insumo_base_id)
 
-        # Buscar todos os De/Para relevantes
-        mapeamento = {}
-        for insumo_id in insumos_unicos:
-            de_para = await self.de_para_repo.get_by_base_tcpo_id(insumo_id)
-            if de_para:
-                mapeamento[insumo_id] = de_para
+        insumos_list = list(insumos_unicos)
+
+        # Batch fetch De/Para and BaseTcpo in two queries (eliminates N+1)
+        mapeamento = await self.de_para_repo.get_by_base_tcpo_ids(insumos_list)
+        tcpo_map = await self.tcpo_repo.get_by_ids(insumos_list)
+
+        # Batch fetch all BCU items referenced by the De/Para mapping
+        mo_ids = [dp.bcu_item_id for dp in mapeamento.values() if dp.bcu_table_type == BcuTableType.MO]
+        eqp_ids = [dp.bcu_item_id for dp in mapeamento.values() if dp.bcu_table_type == BcuTableType.EQP]
+        epi_ids = [dp.bcu_item_id for dp in mapeamento.values() if dp.bcu_table_type == BcuTableType.EPI]
+        fer_ids = [dp.bcu_item_id for dp in mapeamento.values() if dp.bcu_table_type == BcuTableType.FER]
+
+        async def _batch_get(model, ids):
+            if not ids:
+                return {}
+            r = await self.db.execute(select(model).where(model.id.in_(ids)))
+            return {item.id: item for item in r.scalars().all()}
+
+        bcu_mo_map = await _batch_get(BcuMaoObraItem, mo_ids)
+        bcu_eqp_map = await _batch_get(BcuEquipamentoItem, eqp_ids)
+        bcu_epi_map = await _batch_get(BcuEpiItem, epi_ids)
+        bcu_fer_map = await _batch_get(BcuFerramentaItem, fer_ids)
 
         mo_items = []
         eqp_items = []
         epi_items = []
         fer_items = []
 
-        for insumo_id in insumos_unicos:
-            tcpo = await self.tcpo_repo.get_by_id(insumo_id)
+        for insumo_id in insumos_list:
+            tcpo = tcpo_map.get(insumo_id)
             if not tcpo:
                 continue
 
             de_para = mapeamento.get(insumo_id)
             if de_para:
                 if de_para.bcu_table_type == BcuTableType.MO:
-                    bcu_item = await self.db.get(BcuMaoObraItem, de_para.bcu_item_id)
+                    bcu_item = bcu_mo_map.get(de_para.bcu_item_id)
                     if bcu_item:
                         mo_items.append({
                             "id": uuid.uuid4(),
@@ -121,7 +137,7 @@ class HistogramaService:
                             "editado_manualmente": False,
                         })
                 elif de_para.bcu_table_type == BcuTableType.EQP:
-                    bcu_item = await self.db.get(BcuEquipamentoItem, de_para.bcu_item_id)
+                    bcu_item = bcu_eqp_map.get(de_para.bcu_item_id)
                     if bcu_item:
                         eqp_items.append({
                             "id": uuid.uuid4(),
@@ -143,7 +159,7 @@ class HistogramaService:
                             "editado_manualmente": False,
                         })
                 elif de_para.bcu_table_type == BcuTableType.EPI:
-                    bcu_item = await self.db.get(BcuEpiItem, de_para.bcu_item_id)
+                    bcu_item = bcu_epi_map.get(de_para.bcu_item_id)
                     if bcu_item:
                         epi_items.append({
                             "id": uuid.uuid4(),
@@ -160,7 +176,7 @@ class HistogramaService:
                             "editado_manualmente": False,
                         })
                 elif de_para.bcu_table_type == BcuTableType.FER:
-                    bcu_item = await self.db.get(BcuFerramentaItem, de_para.bcu_item_id)
+                    bcu_item = bcu_fer_map.get(de_para.bcu_item_id)
                     if bcu_item:
                         fer_items.append({
                             "id": uuid.uuid4(),

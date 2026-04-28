@@ -54,6 +54,10 @@ async def test_montar_histograma_success(svc, mock_db):
     svc.bcu_repo.get_cabecalho_ativo.return_value = cabecalho
     
     mock_db.execute.return_value = MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[]))))
+    # Batch-fetch methods must return empty dicts (not AsyncMock default) so
+    # the service can iterate over .values() and .get() without type errors.
+    svc.de_para_repo.get_by_base_tcpo_ids = AsyncMock(return_value={})
+    svc.tcpo_repo.get_by_ids = AsyncMock(return_value={})
     svc.bcu_repo.list_equipamento_premissas.return_value = []
     svc.repo.list_equipamento_premissas.return_value = []
     svc.bcu_repo.list_encargos.return_value = []
