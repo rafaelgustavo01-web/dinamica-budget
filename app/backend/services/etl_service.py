@@ -3,29 +3,33 @@ ETL service — parse TCPO Excel files and load into referencia.* schema.
 
 Flow:
   1. Admin uploads .xlsx  → parse_tcpo_pini() or parse_converter_datacenter()
-     returns EtlUploadResponse with a parse_token (UUID key into in-memory cache)
-  2. Admin hits /execute  → execute_load() pops the cached results, writes DB
+     returns EtlUploadResponse with a parse_token (UUID key into DB-backed store)
+  2. Admin hits /execute  → execute_load() fetches token from DB, writes referencia.*
   3. Admin hits /status   → get_status() returns row counts
 
 Parse is synchronous (CPU-bound Excel parsing).
-DB writes are async.
+Token persistence and DB writes are async.
+Tokens expire after TOKEN_TTL_HOURS hours (default 2h) — surviving process restarts.
 """
 
 from __future__ import annotations
 
+import dataclasses
 import io
 import time
 import uuid
 from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
 
 import openpyxl
-from sqlalchemy import func, select, text
+from sqlalchemy import delete, func, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.logging import get_logger
 from backend.models.base_tcpo import BaseTcpo
 from backend.models.composicao_base import ComposicaoBase
+from backend.models.etl_preview import EtlPreview
 from backend.schemas.etl import (
     EtlExecuteRequest,
     EtlExecuteResponse,
@@ -41,6 +45,7 @@ logger = get_logger(__name__)
 
 _BATCH_SIZE = 500
 _SAMPLE_SIZE = 5
+_TOKEN_TTL_HOURS = 2
 
 # Maps Excel CLASS column → TipoRecurso enum string (or None for composite services)
 _CLASS_TO_TIPO: dict[str, str | None] = {
@@ -92,11 +97,16 @@ class _EtlParseResult:
 
 class EtlService:
     """
-    Stateful service that caches parsed Excel data between upload and execute calls.
-    One instance per application (module-level singleton at bottom of file).
+    ETL service: parses Excel files and persists parse tokens.
+
+    Durability: tokens are written to operacional.etl_preview (DB-backed) via the
+    async helpers used by the HTTP endpoints, so they survive process restarts.
+    The in-memory _cache is kept as a fast-path fallback used by unit tests only.
     """
 
     def __init__(self) -> None:
+        # In-memory fallback — populated by sync parse_tcpo_pini for unit tests.
+        # Production endpoints use parse_tcpo_pini_and_store which also writes to DB.
         self._cache: dict[str, _EtlParseResult] = {}
 
     # ── Parse: TCPO Composições ────────────────────────────────────────────────
@@ -104,6 +114,15 @@ class EtlService:
     def parse_tcpo_pini(self, file_bytes: bytes) -> EtlUploadResponse:
         """
         Parse 'Composições analíticas' sheet from Composições TCPO - PINI.xlsx.
+        Stores result in in-memory _cache and returns EtlUploadResponse.
+        Production code should use parse_tcpo_pini_and_store for DB durability.
+        """
+        result, arquivo = self._parse_tcpo_pini_result(file_bytes)
+        return self._store_and_build_response_cache(result, arquivo)
+
+    def _parse_tcpo_pini_result(self, file_bytes: bytes) -> tuple[_EtlParseResult, str]:
+        """
+        Internal: parse 'Composições analíticas' sheet. Returns (result, arquivo).
 
         Row detection:
           - Skip if col1 (CÓDIGO) is not a str, or CLASS is None → section header
@@ -226,13 +245,22 @@ class EtlService:
                 )
 
         wb.close()
-        return self._store_and_build_response(result, "Composições TCPO - PINI.xlsx")
+        return result, "Composições TCPO - PINI.xlsx"
 
     # ── Parse: Converter em Data Center ───────────────────────────────────────
 
     def parse_converter_datacenter(self, file_bytes: bytes) -> EtlUploadResponse:
         """
         Parse auxiliary reference sheets from Converter em Data Center.xlsx.
+        Stores result in in-memory _cache and returns EtlUploadResponse.
+        Production code should use parse_converter_datacenter_and_store for DB durability.
+        """
+        result, arquivo = self._parse_converter_datacenter_result(file_bytes)
+        return self._store_and_build_response_cache(result, arquivo)
+
+    def _parse_converter_datacenter_result(self, file_bytes: bytes) -> tuple[_EtlParseResult, str]:
+        """
+        Internal: parse Converter em Data Center.xlsx sheets. Returns (result, arquivo).
         Each non-ENCARGOS sheet becomes a set of BaseTcpo items.
         Codes are prefixed (EPI-0001, EQP-0001, etc.) to avoid collisions.
         """
@@ -270,7 +298,7 @@ class EtlService:
                 )
 
         wb.close()
-        return self._store_and_build_response(result, "Converter em Data Center.xlsx")
+        return result, "Converter em Data Center.xlsx"
 
     # ── Execute ────────────────────────────────────────────────────────────────
 
@@ -288,10 +316,32 @@ class EtlService:
         all_relacoes: list[_ParsedRelacao] = []
         avisos: list[str] = []
 
-        for token in filter(None, [request.parse_token_tcpo, request.parse_token_converter]):
-            parsed = self._cache.pop(token, None)
-            if parsed is None:
-                raise ValueError(f"Parse token inválido ou expirado: {token}")
+        now = datetime.now(UTC)
+        for token_str in filter(None, [request.parse_token_tcpo, request.parse_token_converter]):
+            try:
+                token_uuid = uuid.UUID(token_str)
+            except ValueError:
+                raise ValueError(f"Parse token inválido: {token_str}")
+
+            # DB-first lookup (durable across restarts)
+            row = await db.get(EtlPreview, token_uuid)
+            if row is not None:
+                if row.expira_em.replace(tzinfo=UTC) < now:
+                    await db.delete(row)
+                    raise ValueError(f"Parse token expirado: {token_str}")
+                payload = row.payload
+                parsed = _EtlParseResult(
+                    itens=[_ParsedItem(**i) for i in payload.get("itens", [])],
+                    relacoes=[_ParsedRelacao(**r) for r in payload.get("relacoes", [])],
+                    avisos=payload.get("avisos", []),
+                )
+                await db.delete(row)  # pop semantics
+            else:
+                # Fall back to in-memory cache (unit-test / same-process path)
+                parsed = self._cache.pop(token_str, None)
+                if parsed is None:
+                    raise ValueError(f"Parse token inválido ou expirado: {token_str}")
+
             all_itens.extend(parsed.itens)
             all_relacoes.extend(parsed.relacoes)
             avisos.extend(parsed.avisos)
@@ -475,13 +525,31 @@ class EtlService:
             ultima_carga=row[3],
         )
 
-    # ── Internal helpers ───────────────────────────────────────────────────────
+    # ── Public async parse-and-persist helpers ─────────────────────────────────
 
-    def _store_and_build_response(
+    async def parse_tcpo_pini_and_store(
+        self, file_bytes: bytes, db: AsyncSession
+    ) -> EtlUploadResponse:
+        """Parse TCPO Composições PINI and persist token to DB (process-restart durable)."""
+        result, arquivo = self._parse_tcpo_pini_result(file_bytes)
+        return await self._persist_and_build_response(result, arquivo, db)
+
+    async def parse_converter_datacenter_and_store(
+        self, file_bytes: bytes, db: AsyncSession
+    ) -> EtlUploadResponse:
+        """Parse Converter em Data Center and persist token to DB (process-restart durable)."""
+        result, arquivo = self._parse_converter_datacenter_result(file_bytes)
+        return await self._persist_and_build_response(result, arquivo, db)
+
+    # ── Sync in-memory token store (unit-test / same-process fast path) ────────
+
+    def _store_and_build_response_cache(
         self, result: _EtlParseResult, arquivo: str
     ) -> EtlUploadResponse:
+        """Serialise result into _cache (in-memory) and return EtlUploadResponse."""
         token = str(uuid.uuid4())
         self._cache[token] = result
+
         preview = EtlParsePreview(
             total_itens=len(result.itens),
             total_relacoes=len(result.relacoes),
@@ -507,6 +575,61 @@ class EtlService:
             avisos=result.avisos[:20],
         )
         return EtlUploadResponse(arquivo=arquivo, parse_preview=preview, parse_token=token)
+
+    # ── Internal helpers ───────────────────────────────────────────────────────
+
+    async def _persist_and_build_response(
+        self, result: _EtlParseResult, arquivo: str, db: AsyncSession
+    ) -> EtlUploadResponse:
+        """Serialise result to DB-backed etl_preview row and return upload response."""
+        # Purge expired tokens opportunistically (best-effort, non-blocking failure)
+        try:
+            await db.execute(
+                delete(EtlPreview).where(EtlPreview.expira_em < datetime.now(UTC))
+            )
+        except Exception:  # noqa: BLE001
+            pass
+
+        token = uuid.uuid4()
+        expira_em = datetime.now(UTC) + timedelta(hours=_TOKEN_TTL_HOURS)
+        row = EtlPreview(
+            token=token,
+            arquivo=arquivo,
+            payload={
+                "itens": [dataclasses.asdict(i) for i in result.itens],
+                "relacoes": [dataclasses.asdict(r) for r in result.relacoes],
+                "avisos": result.avisos,
+            },
+            expira_em=expira_em,
+        )
+        db.add(row)
+        await db.flush()
+
+        preview = EtlParsePreview(
+            total_itens=len(result.itens),
+            total_relacoes=len(result.relacoes),
+            itens_amostra=[
+                EtlItemPreview(
+                    codigo_origem=i.codigo_origem,
+                    descricao=i.descricao,
+                    unidade_medida=i.unidade_medida,
+                    custo_base=i.custo_base,
+                    tipo_recurso=i.tipo_recurso,
+                )
+                for i in result.itens[:_SAMPLE_SIZE]
+            ],
+            relacoes_amostra=[
+                EtlRelacaoPreview(
+                    pai_codigo=r.pai_codigo,
+                    filho_codigo=r.filho_codigo,
+                    quantidade_consumo=r.quantidade_consumo,
+                    unidade_medida=r.unidade_medida,
+                )
+                for r in result.relacoes[:_SAMPLE_SIZE]
+            ],
+            avisos=result.avisos[:20],
+        )
+        return EtlUploadResponse(arquivo=arquivo, parse_preview=preview, parse_token=str(token))
 
 
 # Module-level singleton

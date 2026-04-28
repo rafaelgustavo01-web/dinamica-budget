@@ -32,6 +32,7 @@ async def compute_embeddings(
 async def etl_upload_tcpo(
     file: UploadFile,
     _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
 ) -> EtlUploadResponse:
     if not file.filename or not file.filename.lower().endswith((".xlsx", ".xls")):
         raise HTTPException(
@@ -40,7 +41,7 @@ async def etl_upload_tcpo(
         )
     try:
         file_bytes = await file.read()
-        return etl_service.parse_tcpo_pini(file_bytes)
+        return await etl_service.parse_tcpo_pini_and_store(file_bytes, db)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
 
