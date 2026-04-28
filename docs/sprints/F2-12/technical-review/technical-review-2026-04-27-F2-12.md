@@ -9,7 +9,7 @@
 | Arquivo | Tipo | Descricao |
 |---|---|---|
 | `app/backend/services/etl_service.py` | Modificado | `parse_tcpo_pini`: iterador `values_only=False`, deteccao `font.bold`, roteamento subservico |
-| `app/backend/tests/unit/test_etl_service.py` | Novo | 6 testes unitarios com mocks openpyxl |
+| `app/backend/tests/unit/test_etl_service.py` | Novo | 8 testes unitarios com mocks openpyxl |
 
 ## Checklist de qualidade
 
@@ -31,9 +31,11 @@
    - `startswith("SER.")` captura todas as variacoes sem manutencao manual de enum.
    - Classes que nao comecam com `SER.` sao sempre insumos diretos, independente do nome.
 
-3. **Cross-check `alignment.indent == 0`**
-   - Servico pai requer TRES condicoes simultaneas: `classe.startswith("SER.")` AND `is_bold` AND `alignment.indent == 0`.
-   - Isso evita falsos positivos se uma celula accidentalmente estiver em negrito.
+3. **Cross-check `alignment.indent == 0` na celula de CODIGO (coluna A)**
+   - Servico pai requer TRES condicoes simultaneas: `classe.startswith("SER.")` AND `is_bold` (descricao, coluna B) AND `alignment.indent == 0` (codigo, coluna A).
+   - O `font.bold` eh extraido da celula de **descricao** (`row[1]`), pois a PINI formata em negrito apenas a descricao do servico pai.
+   - O `alignment.indent` eh extraido da celula de **codigo** (`row[0]`), pois na planilha TCPO real da PINI o alinhamento/indentacao aparece na coluna A (codigo), nao na coluna B (descricao).
+   - Esse cross-check evita falsos positivos se uma celula accidentalmente estiver em negrito.
 
 4. **Por que `_MockWorkbook` em vez de `MagicMock` puro?**
    - `MagicMock.__getitem__` intercepta chamadas de forma peculiar no Python. Um objeto simples com `__getitem__` eh mais previsivel e evita o erro `takes 1 positional argument but 2 were given`.
