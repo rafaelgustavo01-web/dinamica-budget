@@ -78,7 +78,7 @@ FASE C — Módulo de Orçamentos
 - `F2-10` TESTED — BCU Unificada (Base de Custos Unitários) + De/Para — Worker: kimi-k2.6 — prompt em `docs/sprints/F2-10/dispatch/sprint-F2-10-worker-prompt.md`
 - `F2-11` TESTED — Histograma da Proposta — enviada para QA — briefing+prompt em `docs/sprints/F2-11/dispatch/`
 - `F2-12` DONE — Refatoração Importação TCPO (Débito Técnico) — Worker: kimi-k2.6 — QA aprovado 2026-04-27 (Amazon Q); 8 testes OK, 197 PASS regressão
-- `F2-13` INICIADA — Tabela Hierárquica de Composições (UX Frontend) — Worker: kimi-k2.6 — briefing+prompt em `docs/sprints/F2-13/briefing/`
+- `F2-13` TESTED — Tabela Hierárquica de Composições (UX Frontend) — Worker: kimi-k2.6 — walkthrough em `docs/sprints/F2-13/walkthrough/done/walkthrough-F2-13.md`
 
 ### Decisões de alocação (Scrum Master, 2026-04-26)
 
