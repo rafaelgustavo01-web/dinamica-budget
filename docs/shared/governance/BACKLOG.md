@@ -39,6 +39,9 @@ Responsável: Research AI / QA Re-avaliação
 | `F2-13` | ON-HOLD | P1 | `F2-12` | M7.2 — Cotações (CRUD backend) — tabela proposta_compras_cotacoes + endpoints CRUD + selecionar_cotacao propaga para custo_unitario_ajustado **(SUSPENSA por decisão PO 2026-04-27)** | 5 endpoints autenticados via require_proposta_role(COMPRADOR); selecionar dispara recálculo do recurso; constraint UNIQUE selecionada por recurso; testes 15+ |
 | `F2-14` | ON-HOLD | P2 | `F2-13` | M7.3 — Frontend Tela de Compras — ProposalPurchasingPage com tabela de recursos, edição inline de ajustado, drawer de cotações por recurso **(SUSPENSA por decisão PO 2026-04-27)** | Rota /compras + menu; tabela com edição debounced; CotacaoForm com validações; botão Selecionar por cotação; 0 tsc errors |
 | `F2-15` | ON-HOLD | P2 | `F2-13`, `F2-14` | M7.4 — Comparativo + Recálculo — endpoint comparativo agregado + recálculo automático de totais da Proposta + card no DetailPage **(SUSPENSA por decisão PO 2026-04-27)** | GET /comparativo-base-vs-ajustado retorna agregado; recalcular_totais disparado por selecionar/PATCH; card Comparativo no detail; coluna Total Ajustado na lista |
+| `F2-DT-A` | TODO | P0 | — | **Backend Tech Debt Cleanup** — pytest infra resiliente + purga pipeline legado (subprocess + import_preview_service) + N+1 batch (5 services) + ETL durabilidade (tabela etl_preview); fecha 18 itens do checkpoint 2026-04-27 | 4 commits atomicos `feat(f2-dt-a/N)`; suite verde apos cada commit (197+ PASS); migration etl_preview com down_revision correto; query log histograma <=15 queries para 100 insumos; `codigo_origem` em ComposicaoComponenteResponse; branch main apenas |
+| `F2-DT-B` | TESTED | P1 | — | **Frontend Tech Debt Cleanup** — Vitest+RTL+MSW scaffold + ExportMenu erro/toast + ExpandableTreeRow exibe codigo_origem em filhos + ProposalDetailPage botao Excluir resolvido + dedup tema; paralela disjoint com F2-DT-A | 2 commits atomicos `feat(f2-dt-b/N)`; npm run build + tsc --noEmit verdes; npm run test "no tests found" sem erro; codigo_origem declarado no TS interface; branch main apenas |
+| `F2-DT-C` | PLAN | P2 | `F2-DT-A`, `F2-DT-B` | **Frontend Smoke Tests (Solo, HOLD)** — 4 arquivos de teste smoke em **/__tests__/** para Histograma (3 abas), ExpandableTreeRow, ProposalsListPage, ProposalDetailPage | 1 commit `test(f2-dt-c)`; 12+ asserts; npm run test passa; npm run build verde; apenas arquivos novos (sem modificar producao); branch main apenas |
 
 ## Ordem Recomendada de Execução
 
@@ -79,6 +82,9 @@ FASE C — Módulo de Orçamentos
 - `F2-11` TESTED — Histograma da Proposta — enviada para QA — briefing+prompt em `docs/sprints/F2-11/dispatch/`
 - `F2-12` DONE — Refatoração Importação TCPO (Débito Técnico) — Worker: kimi-k2.6 — QA aprovado 2026-04-27 (Amazon Q); 8 testes OK, 197 PASS regressão
 - `F2-13` TESTED — Tabela Hierárquica de Composições (UX Frontend) — Worker: kimi-k2.6 — walkthrough em `docs/sprints/F2-13/walkthrough/done/walkthrough-F2-13.md`
+- `F2-DT-A` TODO — Backend Tech Debt Cleanup — Worker: claude-sonnet-4-6 — prompt em `docs/sprints/F2-DT-A/dispatch/sprint-F2-DT-A-worker-prompt.md`; INBOX em `docs/shared/dispatch/inbox/claude-sonnet-4-6-F2-DT-A.md`
+- `F2-DT-B` TODO — Frontend Tech Debt Cleanup — Worker: kimi-k2.6 — prompt em `docs/sprints/F2-DT-B/dispatch/sprint-F2-DT-B-worker-prompt.md`; INBOX em `docs/shared/dispatch/inbox/kimi-k2.6-F2-DT-B.md`
+- `F2-DT-C` PLAN (HOLD) — Frontend Smoke Tests (Solo) — Worker: kimi-k2.6 — aguarda F2-DT-A E F2-DT-B em DONE; INBOX em `docs/shared/dispatch/inbox/kimi-k2.6-F2-DT-C.md`
 
 ### Decisões de alocação (Scrum Master, 2026-04-26)
 
@@ -139,6 +145,13 @@ Todas as 12 sprints concluídas com aprovação do QA:
   - Defaults arquiteturais aprovados: nome **BCU — Base de Custos Unitários** (pareia com CPU); De/Para 1:1 manual; trigger explícito "Montar Histograma"; snapshot sincronizado com aviso de divergência; recursos extras criáveis + alocáveis a composições; clonagem de histograma na nova versão; CPU desatualizada via flag (recálculo manual).
   - Plans gerados: `docs/sprints/F2-10/plans/2026-04-27-bcu-unificada-de-para.md` e `docs/sprints/F2-11/plans/2026-04-27-histograma-proposta.md`.
 - 2026-04-27 (Scrum Master): F2-10 despachada para **kimi-k2.6** (backend-heavy: migration 023, BcuService, BcuDeParaService, cpu_custo_service refactor, endpoints). Status PLAN → TODO. Worker prompt em `docs/sprints/F2-10/dispatch/sprint-F2-10-worker-prompt.md`. F2-11 permanece PLAN (depende de F2-10 DONE); briefing + worker prompt preparados para **Gemini** (frontend-evident: 8 abas, 4 novos componentes, AlocacaoRecursoDialog) em `docs/sprints/F2-11/dispatch/`. WIP = 2/4 (F2-09 TESTED + F2-10 TODO).
+- 2026-04-27 (PO + Arquiteto + SM): **Sprint de Divida Tecnica consolidada e particionada por ownership de arquivo.** Checkpoint tecnico (Amazon Q + Gemini + Kimi em `docs/analysis/`) consolidou 26 achados. Validacao manual confirmou 18 reais (3 falsos: DEBUG=release ja resolvido localmente; alguns parking lot). Estrategia force-multiplier: 3 sprints, 2 paralelas (zero conflito git por trees disjuntas) + 1 solo bloqueada.
+  - **F2-DT-A (claude-sonnet-4-6, P0):** backend cleanup em 4 commits — pytest infra → purga legado (subprocess + import_preview_service) → N+1 batch (5 services) → ETL durabilidade. Fecha 18 itens. Plan em `docs/sprints/F2-DT-A/plans/2026-04-27-backend-tech-debt-cleanup.md`.
+  - **F2-DT-B (kimi-k2.6, P1):** frontend cleanup em 2 commits — Vitest scaffold → polimento UI (ExportMenu, codigo_origem em filhos, botao delete, dedup tema). Fecha 5 itens. Plan em `docs/sprints/F2-DT-B/plans/2026-04-27-frontend-tech-debt-cleanup.md`.
+  - **F2-DT-C (kimi-k2.6, P2, Solo HOLD):** smoke tests apos A+B em DONE. 4 arquivos de teste, 12+ asserts. Plan em `docs/sprints/F2-DT-C/plans/2026-04-27-frontend-smoke-tests.md`.
+  - **Contrato congelado entre A e B:** `codigo_origem: str | None` em `ComposicaoComponenteResponse` — backend entrega no Commit 3 da DT-A, frontend declara TS na DT-B; codigo tolera assincronia.
+  - **Regra de branch:** `main` apenas em todas as sprints. Sem feature branches (regra global do PO).
+  - WIP = 4/4 (F2-09 TESTED + F2-10 TESTED + F2-11 TESTED + F2-13 TESTED + F2-DT-A TODO + F2-DT-B TODO + F2-DT-C PLAN-HOLD; cap excepcional para janela de cleanup).
 
 ## Observações de Pesquisa
 - O repositório atual possui todos os artefatos canônicos do pipeline (`docs/JOB-DESCRIPTION.md`, `docs/superpowers/plans/`, `docs/roles/`, `docs/dispatch/`).
