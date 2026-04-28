@@ -1,12 +1,25 @@
 """Service for proposta versioning and approval workflow."""
+import uuid
 from datetime import datetime, timezone
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.exceptions import NotFoundError, UnprocessableEntityError
 from backend.models.enums import StatusProposta
 from backend.models.proposta import Proposta
+from backend.models.proposta_pc import (
+    PropostaPcEncargo,
+    PropostaPcEquipamento,
+    PropostaPcEquipamentoPremissa,
+    PropostaPcEpi,
+    PropostaPcFerramenta,
+    PropostaPcMaoObra,
+    PropostaPcMobilizacao,
+    PropostaPcMobilizacaoQuantidade,
+)
+from backend.models.proposta_recurso_extra import PropostaRecursoExtra
 from backend.repositories.proposta_repository import PropostaRepository
 
 UTC = timezone.utc
@@ -27,20 +40,6 @@ class PropostaVersionamentoService:
         Clone metadata from current version, close it, and create a new numbered version.
         PQ and CPU start fresh (RASCUNHO). Histograma and Recursos Extras are cloned.
         """
-        import uuid
-        from sqlalchemy import select
-        from backend.models.proposta_pc import (
-            PropostaPcMaoObra,
-            PropostaPcEquipamentoPremissa,
-            PropostaPcEquipamento,
-            PropostaPcEncargo,
-            PropostaPcEpi,
-            PropostaPcFerramenta,
-            PropostaPcMobilizacao,
-            PropostaPcMobilizacaoQuantidade,
-        )
-        from backend.models.proposta_recurso_extra import PropostaRecursoExtra
-
         atual = await self.repo.get_by_id(proposta_id)
         if atual is None:
             raise NotFoundError("Proposta", str(proposta_id))

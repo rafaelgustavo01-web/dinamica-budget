@@ -62,7 +62,7 @@ async def test_gerar_excel_contem_quatro_abas(monkeypatch):
 
     wb = load_workbook(BytesIO(raw))
     assert set(wb.sheetnames) == {"Capa", "Quadro-Resumo", "CPU", "Composicoes"}
-    assert wb["Capa"]["B2"].value == "PROP-2026-0001"
+    assert wb["Capa"]["B2"].value == "Cliente Teste"  # M-03 fix: B2 shows client name, not codigo
     assert wb["CPU"].max_row >= 2
     assert wb["Composicoes"].max_row >= 2
 
