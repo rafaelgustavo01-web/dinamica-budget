@@ -121,13 +121,13 @@ class EtlService:
         current_parent_codigo: str | None = None
         seen_itens: set[str] = set()
 
-        for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-            codigo = row[0]
-            descricao = row[1]
-            classe = row[2]
-            unidade = row[3]
-            coef = row[4]
-            preco = row[5]
+        for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=False), start=2):
+            codigo = row[0].value
+            descricao = row[1].value
+            classe = row[2].value
+            unidade = row[3].value
+            coef = row[4].value
+            preco = row[5].value
 
             # Skip section headers: code is not a str, or CLASS is None
             if not isinstance(codigo, str) or classe is None:
@@ -139,7 +139,12 @@ class EtlService:
             descricao_clean = str(descricao).strip() if descricao else ""
             custo = float(preco) if preco is not None else 0.0
 
-            if classe_clean == "SER.CG":
+            # Detect bold in description cell — PINI uses bold only for parent services
+            descricao_cell = row[1]
+            is_bold = descricao_cell.font.bold if descricao_cell.font else False
+
+            if classe_clean == "SER.CG" and is_bold:
+                # New parent service
                 current_parent_codigo = codigo
                 if codigo not in seen_itens:
                     result.itens.append(
@@ -152,7 +157,37 @@ class EtlService:
                         )
                     )
                     seen_itens.add(codigo)
+            elif classe_clean == "SER.CG" and not is_bold:
+                # Subservice: treated as child of current parent, does NOT change current_parent_codigo
+                if current_parent_codigo is None:
+                    result.avisos.append(
+                        f"Linha {row_idx}: subserviço sem pai (ignorado): {codigo}"
+                    )
+                    continue
+
+                if codigo not in seen_itens:
+                    result.itens.append(
+                        _ParsedItem(
+                            codigo_origem=codigo,
+                            descricao=descricao_clean,
+                            unidade_medida=unidade_clean,
+                            custo_base=custo,
+                            tipo_recurso="SERVICO",
+                        )
+                    )
+                    seen_itens.add(codigo)
+
+                qty = float(coef) if coef is not None else 1.0
+                result.relacoes.append(
+                    _ParsedRelacao(
+                        pai_codigo=current_parent_codigo,
+                        filho_codigo=codigo,
+                        quantidade_consumo=qty,
+                        unidade_medida=unidade_clean,
+                    )
+                )
             else:
+                # Normal child component (MAT., M.O., EQP., FER.)
                 if current_parent_codigo is None:
                     result.avisos.append(
                         f"Linha {row_idx}: filho sem pai (ignorado): {codigo}"

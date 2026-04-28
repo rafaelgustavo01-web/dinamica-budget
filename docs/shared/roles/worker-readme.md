@@ -157,4 +157,12 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Plan: @docs/sprints/F2-12/plans/2026-04-27-refatoracao-tcpo.md
 - Notes: Refatoração do ETL Service para usar font.bold na identificação de Serviço Pai vs Sub-serviço no parse da TCPO.
 
+### [PENDING] 2026-04-27T12:15:00Z — Sprint F2-13
+- From: PO / Scrum Master
+- Action: BUILD
+- Assigned Worker: kimi-k2.6
+- Briefing: @docs/sprints/F2-13/briefing/sprint-F2-13-briefing.md
+- Plan: @docs/sprints/F2-13/plans/2026-04-27-tree-table-composicoes.md
+- Notes: Substituição do modelo flat por uma Table Expansível Hierárquica no Frontend do catálogo de bases. Carregamento lazily dos insumos/sub-serviços.
+
 
