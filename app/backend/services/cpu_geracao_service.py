@@ -48,7 +48,7 @@ class CpuGeracaoService:
             raise NotFoundError("Proposta", str(proposta_id))
 
         proposta_itens = await self._rebuild_proposta_itens(proposta_id, bcu_cabecalho_id)
-        custo_svc = CpuCustoService(self.db, bcu_cabecalho_id)
+        custo_svc = CpuCustoService(self.db, bcu_cabecalho_id, proposta_id=proposta_id)
 
         # Se o BDI for passado como valor decimal (ex: 0.1 para 10%), tratamos como fração.
         # Se for > 1, tratamos como porcentagem literal (ex: 25.0 -> 0.25).

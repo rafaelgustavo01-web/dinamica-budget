@@ -62,6 +62,7 @@ class Proposta(Base, TimestampMixin):
     )
     is_versao_atual: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=True)
     is_fechada: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=False)
+    cpu_desatualizada: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # Aprovação
     requer_aprovacao: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=False)

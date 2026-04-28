@@ -25,8 +25,22 @@ class PropostaVersionamentoService:
     ) -> Proposta:
         """
         Clone metadata from current version, close it, and create a new numbered version.
-        PQ and CPU start fresh (RASCUNHO). Only metadata is cloned.
+        PQ and CPU start fresh (RASCUNHO). Histograma and Recursos Extras are cloned.
         """
+        import uuid
+        from sqlalchemy import select
+        from backend.models.proposta_pc import (
+            PropostaPcMaoObra,
+            PropostaPcEquipamentoPremissa,
+            PropostaPcEquipamento,
+            PropostaPcEncargo,
+            PropostaPcEpi,
+            PropostaPcFerramenta,
+            PropostaPcMobilizacao,
+            PropostaPcMobilizacaoQuantidade,
+        )
+        from backend.models.proposta_recurso_extra import PropostaRecursoExtra
+
         atual = await self.repo.get_by_id(proposta_id)
         if atual is None:
             raise NotFoundError("Proposta", str(proposta_id))
@@ -68,8 +82,61 @@ class PropostaVersionamentoService:
             requer_aprovacao=atual.requer_aprovacao,
             bcu_cabecalho_id=atual.bcu_cabecalho_id,
             motivo_revisao=motivo_revisao,
+            cpu_desatualizada=True,
         )
         self.db.add(nova)
+        await self.db.flush()
+
+        # Clone Histograma
+        models_to_clone = [
+            PropostaPcMaoObra,
+            PropostaPcEquipamentoPremissa,
+            PropostaPcEquipamento,
+            PropostaPcEncargo,
+            PropostaPcEpi,
+            PropostaPcFerramenta,
+        ]
+
+        for model in models_to_clone:
+            result = await self.db.execute(select(model).where(model.proposta_id == atual.id))
+            items = result.scalars().all()
+            for item in items:
+                # Expunge from session to create a detached clone
+                self.db.expunge(item)
+                item.id = uuid.uuid4()
+                item.proposta_id = nova.id
+                self.db.add(item)
+                
+        # Mobilizacao and Quantidades
+        mob_result = await self.db.execute(select(PropostaPcMobilizacao).where(PropostaPcMobilizacao.proposta_id == atual.id))
+        mobs = mob_result.scalars().all()
+        for mob in mobs:
+            # We must load quantidades if we want to clone them, but currently they might be lazy loaded.
+            # Assuming eager load or separate query.
+            qtd_result = await self.db.execute(select(PropostaPcMobilizacaoQuantidade).where(PropostaPcMobilizacaoQuantidade.mobilizacao_id == mob.id))
+            qtds = qtd_result.scalars().all()
+            
+            self.db.expunge(mob)
+            old_mob_id = mob.id
+            mob.id = uuid.uuid4()
+            mob.proposta_id = nova.id
+            self.db.add(mob)
+            
+            for qtd in qtds:
+                self.db.expunge(qtd)
+                qtd.id = uuid.uuid4()
+                qtd.mobilizacao_id = mob.id
+                self.db.add(qtd)
+
+        # Clone Recursos Extras
+        extra_result = await self.db.execute(select(PropostaRecursoExtra).where(PropostaRecursoExtra.proposta_id == atual.id))
+        extras = extra_result.scalars().all()
+        for extra in extras:
+            self.db.expunge(extra)
+            extra.id = uuid.uuid4()
+            extra.proposta_id = nova.id
+            self.db.add(extra)
+
         await self.db.flush()
         await self.db.refresh(nova)
         return nova

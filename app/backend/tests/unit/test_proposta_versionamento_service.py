@@ -39,6 +39,7 @@ def mock_db():
     db.add = MagicMock()
     db.flush = AsyncMock()
     db.refresh = AsyncMock()
+    db.execute = AsyncMock()
     return db
 
 
@@ -94,6 +95,7 @@ async def test_nova_versao_success(svc, mock_repo, mock_db):
 
     mock_db.refresh.side_effect = _refresh
 
+    mock_db.execute.return_value = MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[]))))
     nova = await svc.nova_versao(p.id, uuid4())
 
     assert nova.numero_versao == 2
@@ -125,6 +127,7 @@ async def test_nova_versao_codigo_v2_gera_v3(svc, mock_repo, mock_db):
     mock_repo.max_numero_versao.return_value = 2
 
     mock_db.refresh.side_effect = AsyncMock()
+    mock_db.execute.return_value = MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[]))))
     nova = await svc.nova_versao(p.id, uuid4())
 
     assert nova.codigo == "ORC-001-v3"
