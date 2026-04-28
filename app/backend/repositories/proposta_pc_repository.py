@@ -81,21 +81,15 @@ class ProposalPcRepository:
         if not items:
             return
         stmt = insert(model).values(items)
-        update_dict = {k: getattr(stmt.excluded, k) for k in items[0].keys() if k not in index_elements}
-        
-        # We don't overwrite user-edited fields if editado_manualmente is True
-        # For simplicity and given the requirements: we will explicitly preserve editado_manualmente=True items
-        # in the service level by excluding them from the `items` list or using a complex CASE statement.
-        # It's better to handle in the service layer: if the item exists and editado_manualmente=True, don't update.
-        # But for new items or items not manually edited, we can update.
+        exclude_from_update = set(index_elements + ["id", "criado_em", "editado_manualmente"])
+        update_dict = {k: getattr(stmt.excluded, k) for k in items[0].keys() if k not in exclude_from_update}
         
         if update_dict:
             # Only update if editado_manualmente == False in the target row.
-            # In PostgreSQL: SET col1 = excluded.col1 WHERE target.editado_manualmente = False
             stmt = stmt.on_conflict_do_update(
                 index_elements=index_elements,
                 set_=update_dict,
-                where=(model.editado_manualmente == False)
+                where=(model.editado_manualmente.is_(False))
             )
         else:
             stmt = stmt.on_conflict_do_nothing(index_elements=index_elements)

@@ -259,6 +259,20 @@ class HistogramaService:
         bcu_mob = await self.bcu_repo.list_mobilizacao_items(cabecalho.id)
         mob_items = []
         mob_qtd_items = []
+        
+        mob_ids = [m.id for m in bcu_mob]
+        bcu_mob_qtds = []
+        if mob_ids:
+            result_qtd = await self.db.execute(
+                select(BcuMobilizacaoQuantidadeFuncao)
+                .where(BcuMobilizacaoQuantidadeFuncao.mobilizacao_item_id.in_(mob_ids))
+            )
+            bcu_mob_qtds = result_qtd.scalars().all()
+            
+        qtds_by_mob = {}
+        for q in bcu_mob_qtds:
+            qtds_by_mob.setdefault(q.mobilizacao_item_id, []).append(q)
+
         for m in bcu_mob:
             mob_id = uuid.uuid4()
             mob_items.append({
@@ -271,8 +285,13 @@ class HistogramaService:
                 "editado_manualmente": False,
             })
             
-            # Buscar quantidades de funcao (se houver, ignorando pra simplificar ou fazendo query manual)
-            # Para evitar N+1, idealmente viria em eager load, mas vamos ignorar por enquanto
+            for q in qtds_by_mob.get(m.id, []):
+                mob_qtd_items.append({
+                    "id": uuid.uuid4(),
+                    "mobilizacao_id": mob_id,
+                    "coluna_funcao": q.coluna_funcao,
+                    "quantidade": q.quantidade,
+                })
             
         await self.repo.bulk_insert(PropostaPcMobilizacao, mob_items)
         if mob_qtd_items:
@@ -323,8 +342,95 @@ class HistogramaService:
 
     async def detectar_divergencias(self, proposta_id: UUID) -> list[dict]:
         divergencias = []
-        # Implementar detecção simples: fetch all from bcu active and compare snapshot
-        # For simplicity in this step, return empty list. Or implement if time permits.
+        proposta = await self.proposta_repo.get_by_id(proposta_id)
+        if not proposta or not proposta.bcu_cabecalho_id:
+            return divergencias
+
+        # Mao de obra
+        r_mo = await self.db.execute(
+            select(PropostaPcMaoObra.id, PropostaPcMaoObra.valor_bcu_snapshot, BcuMaoObraItem.custo_unitario_h)
+            .join(BcuMaoObraItem, PropostaPcMaoObra.bcu_item_id == BcuMaoObraItem.id)
+            .where(PropostaPcMaoObra.proposta_id == proposta_id)
+        )
+        for p_id, snapshot, atual in r_mo:
+            if snapshot != atual:
+                divergencias.append({
+                    "tabela": "mao-obra",
+                    "item_id": str(p_id),
+                    "campo": "custo_unitario_h",
+                    "valor_snapshot": float(snapshot) if snapshot is not None else None,
+                    "valor_atual_bcu": float(atual) if atual is not None else None,
+                    "valor_proposta": None
+                })
+
+        # Equipamento
+        r_eqp = await self.db.execute(
+            select(PropostaPcEquipamento.id, PropostaPcEquipamento.valor_bcu_snapshot, BcuEquipamentoItem.aluguel_r_h)
+            .join(BcuEquipamentoItem, PropostaPcEquipamento.bcu_item_id == BcuEquipamentoItem.id)
+            .where(PropostaPcEquipamento.proposta_id == proposta_id)
+        )
+        for p_id, snapshot, atual in r_eqp:
+            if snapshot != atual:
+                divergencias.append({
+                    "tabela": "equipamento",
+                    "item_id": str(p_id),
+                    "campo": "aluguel_r_h",
+                    "valor_snapshot": float(snapshot) if snapshot is not None else None,
+                    "valor_atual_bcu": float(atual) if atual is not None else None,
+                    "valor_proposta": None
+                })
+                
+        # EPI
+        r_epi = await self.db.execute(
+            select(PropostaPcEpi.id, PropostaPcEpi.valor_bcu_snapshot, BcuEpiItem.custo_unitario)
+            .join(BcuEpiItem, PropostaPcEpi.bcu_item_id == BcuEpiItem.id)
+            .where(PropostaPcEpi.proposta_id == proposta_id)
+        )
+        for p_id, snapshot, atual in r_epi:
+            if snapshot != atual:
+                divergencias.append({
+                    "tabela": "epi",
+                    "item_id": str(p_id),
+                    "campo": "custo_unitario",
+                    "valor_snapshot": float(snapshot) if snapshot is not None else None,
+                    "valor_atual_bcu": float(atual) if atual is not None else None,
+                    "valor_proposta": None
+                })
+                
+        # Ferramenta
+        r_fer = await self.db.execute(
+            select(PropostaPcFerramenta.id, PropostaPcFerramenta.valor_bcu_snapshot, BcuFerramentaItem.preco)
+            .join(BcuFerramentaItem, PropostaPcFerramenta.bcu_item_id == BcuFerramentaItem.id)
+            .where(PropostaPcFerramenta.proposta_id == proposta_id)
+        )
+        for p_id, snapshot, atual in r_fer:
+            if snapshot != atual:
+                divergencias.append({
+                    "tabela": "ferramenta",
+                    "item_id": str(p_id),
+                    "campo": "preco",
+                    "valor_snapshot": float(snapshot) if snapshot is not None else None,
+                    "valor_atual_bcu": float(atual) if atual is not None else None,
+                    "valor_proposta": None
+                })
+                
+        # Encargo
+        r_enc = await self.db.execute(
+            select(PropostaPcEncargo.id, PropostaPcEncargo.valor_bcu_snapshot, BcuEncargoItem.taxa_percent)
+            .join(BcuEncargoItem, PropostaPcEncargo.bcu_item_id == BcuEncargoItem.id)
+            .where(PropostaPcEncargo.proposta_id == proposta_id)
+        )
+        for p_id, snapshot, atual in r_enc:
+            if snapshot != atual:
+                divergencias.append({
+                    "tabela": "encargo",
+                    "item_id": str(p_id),
+                    "campo": "taxa_percent",
+                    "valor_snapshot": float(snapshot) if snapshot is not None else None,
+                    "valor_atual_bcu": float(atual) if atual is not None else None,
+                    "valor_proposta": None
+                })
+
         return divergencias
 
     async def editar_item(self, tabela: str, item_id: UUID, payload: dict) -> None:
@@ -359,4 +465,40 @@ class HistogramaService:
         await self.db.flush()
 
     async def aceitar_valor_bcu(self, tabela: str, item_id: UUID) -> None:
-        pass
+        model_map = {
+            "mao-obra": (PropostaPcMaoObra, BcuMaoObraItem, "custo_unitario_h", "custo_unitario_h"),
+            "equipamento": (PropostaPcEquipamento, BcuEquipamentoItem, "aluguel_r_h", "aluguel_r_h"),
+            "epi": (PropostaPcEpi, BcuEpiItem, "custo_unitario", "custo_unitario"),
+            "ferramenta": (PropostaPcFerramenta, BcuFerramentaItem, "preco", "preco"),
+            "encargo": (PropostaPcEncargo, BcuEncargoItem, "taxa_percent", "taxa_percent"),
+        }
+        
+        mapping = model_map.get(tabela)
+        if not mapping:
+            raise ValidationError(f"Tabela inválida ou não suportada: {tabela}")
+            
+        model_pc, model_bcu, campo_pc, campo_bcu = mapping
+        
+        item_pc = await self.repo.get_item(model_pc, item_id)
+        if not item_pc:
+            raise NotFoundError("Item", str(item_id))
+            
+        if not item_pc.bcu_item_id:
+            raise UnprocessableEntityError("Item não possui vínculo com BCU.")
+            
+        item_bcu = await self.db.get(model_bcu, item_pc.bcu_item_id)
+        if not item_bcu:
+            raise UnprocessableEntityError("Item BCU vinculado não encontrado.")
+            
+        novo_valor = getattr(item_bcu, campo_bcu)
+        
+        setattr(item_pc, campo_pc, novo_valor)
+        item_pc.valor_bcu_snapshot = novo_valor
+        item_pc.editado_manualmente = False
+        
+        proposta = await self.proposta_repo.get_by_id(item_pc.proposta_id)
+        proposta.cpu_desatualizada = True
+        
+        self.db.add(item_pc)
+        self.db.add(proposta)
+        await self.db.flush()
