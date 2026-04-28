@@ -102,7 +102,8 @@ class CpuGeracaoService:
         proposta.total_geral = total_direto + total_indireto
         proposta.bcu_cabecalho_id = bcu_cabecalho_id
         proposta.status = StatusProposta.CPU_GERADA
-        
+        proposta.cpu_desatualizada = False
+
         # Atualizar Resumo por Recurso
         await self._atualizar_resumo_recursos(proposta_id, all_composicoes, bdi_frac, is_fraction=True)
         

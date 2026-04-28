@@ -149,7 +149,8 @@ async def execute_import(
 
     upload_dir = Path("logs") / "uploads"
     upload_dir.mkdir(parents=True, exist_ok=True)
-    suffix = Path(file.filename).suffix or ".xlsx"
+    raw_suffix = Path(file.filename).suffix or ".xlsx"
+    suffix = "".join(c for c in raw_suffix if c.isalnum() or c == ".")[:10] or ".xlsx"
 
     temp_path = None
     try:
