@@ -11,9 +11,9 @@ Substituir a lógica atual que usa somente `CLASS == "SER.CG"` por uma lógica c
 
 ### Fluxo de Parse Sugerido:
 1. Ler o arquivo `.xlsx` normalmente usando `openpyxl` sem `values_only=True` na iteração da TCPO.
-2. Ao iterar as linhas, extrair a célula de descrição (ex: `desc_cell = row[1]`).
+2. Ao iterar as linhas, extrair a célula de descrição (ex: `desc_cell = row[1]`) e de código (ex: `codigo_cell = row[0]`).
 3. Avaliar `is_bold = desc_cell.font.bold if desc_cell.font else False`.
-4. Avaliar `indent = desc_cell.alignment.indent if desc_cell.alignment else 0`.
+4. Avaliar `indent = codigo_cell.alignment.indent if codigo_cell.alignment else 0`.
 5. Condicional de Roteamento:
    - **Se `classe_clean.startswith("SER.")` E `is_bold` E `indent == 0`:** Inicia nova composição. Define `current_parent_codigo = codigo`. Adiciona aos `itens` como `"SERVICO"`.
    - **Se `classe_clean.startswith("SER.")` E (não é bold OU indent > 0):** Trata-se de um subserviço consumido pelo serviço atual. Adiciona aos `itens` como `"SERVICO"` (se ainda não visto), mas NÃO altera o `current_parent_codigo`. Adiciona à lista de `relacoes` do pai atual.
