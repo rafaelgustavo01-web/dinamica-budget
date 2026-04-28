@@ -139,11 +139,13 @@ class EtlService:
             descricao_clean = str(descricao).strip() if descricao else ""
             custo = float(preco) if preco is not None else 0.0
 
-            # Detect bold + alignment in description cell — PINI uses bold only for parent services
+            # Detect bold in description cell + alignment in code cell
+            # PINI: parent services have bold description AND code aligned to left (indent=0)
             descricao_cell = row[1]
+            codigo_cell = row[0]
             is_bold = descricao_cell.font.bold if descricao_cell.font else False
             alignment_indent = (
-                descricao_cell.alignment.indent if descricao_cell.alignment else 0
+                codigo_cell.alignment.indent if codigo_cell.alignment else 0
             )
             is_parent = (
                 classe_clean.startswith("SER.") and is_bold and alignment_indent == 0

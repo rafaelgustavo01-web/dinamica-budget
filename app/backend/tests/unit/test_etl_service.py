@@ -25,12 +25,12 @@ def _make_cell(value, bold=None, indent=None):
 
 
 def _make_row(
-    codigo, descricao, classe, unidade, coef, preco, descricao_bold=None, descricao_indent=None
+    codigo, descricao, classe, unidade, coef, preco, descricao_bold=None, codigo_indent=None
 ):
     """Build a row tuple of mock cells matching TCPO column order."""
     return (
-        _make_cell(codigo),
-        _make_cell(descricao, bold=descricao_bold, indent=descricao_indent),
+        _make_cell(codigo, indent=codigo_indent),
+        _make_cell(descricao, bold=descricao_bold),
         _make_cell(classe),
         _make_cell(unidade),
         _make_cell(coef),
@@ -75,8 +75,8 @@ class TestParseTcpoPini:
         and a normal child insumo.
         """
         rows = [
-            _make_row("S-001", "Serviço Pai", "SER.CG", "UN", None, 100.0, descricao_bold=True, descricao_indent=0),
-            _make_row("S-002", "Subserviço", "SER.CG", "UN", 1.0, 50.0, descricao_bold=False, descricao_indent=1),
+            _make_row("S-001", "Serviço Pai", "SER.CG", "UN", None, 100.0, descricao_bold=True, codigo_indent=0),
+            _make_row("S-002", "Subserviço", "SER.CG", "UN", 1.0, 50.0, descricao_bold=False, codigo_indent=1),
             _make_row("MAT-001", "Cimento", "MAT.", "KG", 10.0, 25.0),
         ]
 
@@ -96,9 +96,9 @@ class TestParseTcpoPini:
         Two bold SER.CG rows create two distinct parents; each has its own children.
         """
         rows = [
-            _make_row("S-001", "Serviço A", "SER.CG", "UN", None, 100.0, descricao_bold=True, descricao_indent=0),
+            _make_row("S-001", "Serviço A", "SER.CG", "UN", None, 100.0, descricao_bold=True, codigo_indent=0),
             _make_row("MAT-001", "Cimento A", "MAT.", "KG", 5.0, 20.0),
-            _make_row("S-002", "Serviço B", "SER.CG", "UN", None, 200.0, descricao_bold=True, descricao_indent=0),
+            _make_row("S-002", "Serviço B", "SER.CG", "UN", None, 200.0, descricao_bold=True, codigo_indent=0),
             _make_row("MAT-002", "Cimento B", "MAT.", "KG", 3.0, 15.0),
         ]
 
@@ -117,7 +117,7 @@ class TestParseTcpoPini:
         A non-bold SER.CG before any bold parent should generate a warning.
         """
         rows = [
-            _make_row("S-002", "Subserviço Órfão", "SER.CG", "UN", 1.0, 50.0, descricao_bold=False, descricao_indent=1),
+            _make_row("S-002", "Subserviço Órfão", "SER.CG", "UN", 1.0, 50.0, descricao_bold=False, codigo_indent=1),
         ]
 
         with patch("backend.services.etl_service.openpyxl.load_workbook", return_value=_mock_workbook(rows)):
@@ -147,7 +147,7 @@ class TestParseTcpoPini:
         Parent with M.O., EQP. and FER. children.
         """
         rows = [
-            _make_row("S-001", "Serviço Misto", "SER.CG", "UN", None, 100.0, descricao_bold=True, descricao_indent=0),
+            _make_row("S-001", "Serviço Misto", "SER.CG", "UN", None, 100.0, descricao_bold=True, codigo_indent=0),
             _make_row("MO-001", "Pedreiro", "M.O.", "H", 8.0, 35.0),
             _make_row("EQP-001", "Betoneira", "EQP.", "H", 2.0, 15.0),
             _make_row("FER-001", "Espátula", "FER.", "UN", 1.0, 5.0),
@@ -172,8 +172,8 @@ class TestParseTcpoPini:
         analytical sheet semantics where subservices are consumed, not exploded.
         """
         rows = [
-            _make_row("S-001", "Serviço Pai", "SER.CG", "UN", None, 100.0, descricao_bold=True, descricao_indent=0),
-            _make_row("S-002", "Subserviço", "SER.CG", "UN", 1.0, 50.0, descricao_bold=False, descricao_indent=1),
+            _make_row("S-001", "Serviço Pai", "SER.CG", "UN", None, 100.0, descricao_bold=True, codigo_indent=0),
+            _make_row("S-002", "Subserviço", "SER.CG", "UN", 1.0, 50.0, descricao_bold=False, codigo_indent=1),
             _make_row("MAT-001", "Cimento", "MAT.", "KG", 10.0, 25.0),
         ]
 
@@ -190,8 +190,8 @@ class TestParseTcpoPini:
         not just SER.CG. Test SER.MO and SER.CH.
         """
         rows = [
-            _make_row("S-001", "Serviço Pai", "SER.CH", "UN", None, 100.0, descricao_bold=True, descricao_indent=0),
-            _make_row("S-002", "Subserviço", "SER.MO", "UN", 1.0, 50.0, descricao_bold=False, descricao_indent=1),
+            _make_row("S-001", "Serviço Pai", "SER.CH", "UN", None, 100.0, descricao_bold=True, codigo_indent=0),
+            _make_row("S-002", "Subserviço", "SER.MO", "UN", 1.0, 50.0, descricao_bold=False, codigo_indent=1),
             _make_row("MAT-001", "Cimento", "MAT.", "KG", 10.0, 25.0),
         ]
 
@@ -211,7 +211,7 @@ class TestParseTcpoPini:
         even if they look like services (e.g., SRV.CG).
         """
         rows = [
-            _make_row("S-001", "Serviço Pai", "SER.CG", "UN", None, 100.0, descricao_bold=True, descricao_indent=0),
+            _make_row("S-001", "Serviço Pai", "SER.CG", "UN", None, 100.0, descricao_bold=True, codigo_indent=0),
             _make_row("X-001", "Item Estranho", "SRV.CG", "UN", 2.0, 30.0),
         ]
 

@@ -149,13 +149,13 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Plan: @docs/sprints/S-08/plans/2026-04-23-auditoria-qualidade-final.md
 - Notes: Entregue em TESTED. Quality gate executavel com `0 falhas`, smoke E2E `1 passed`, relatorio de go-live finalizado e handoff para QA aberto.
 
-### [PENDING] 2026-04-27T12:00:00Z — Sprint F2-12
+### [DONE] 2026-04-27T12:00:00Z — Sprint F2-12
 - From: PO / Scrum Master
 - Action: BUILD
 - Assigned Worker: kimi-k2.6
 - Briefing: @docs/sprints/F2-12/briefing/sprint-F2-12-briefing.md
 - Plan: @docs/sprints/F2-12/plans/2026-04-27-refatoracao-tcpo.md
-- Notes: Refatoração do ETL Service para usar font.bold na identificação de Serviço Pai vs Sub-serviço no parse da TCPO.
+- Notes: Entregue em TESTED -> Aprovado pelo QA. Testes unitários atualizados com `descricao_indent` e `font.bold`. Lógica robusta de parsing garantida.
 
 ### [PENDING] 2026-04-27T12:15:00Z — Sprint F2-13
 - From: PO / Scrum Master
