@@ -18,6 +18,9 @@ from sqlalchemy.pool import NullPool
 
 from backend.core.dependencies import get_db
 from backend.models.base import Base
+# Ensure all models are registered with Base.metadata before create_all.
+# Import any model module that is not pulled in transitively by other imports.
+import backend.models.etl_preview  # noqa: F401
 
 # Resolve test DB URL: prefer explicit TEST_DATABASE_URL env var, then derive
 # from DATABASE_URL (env or .env file), falling back to a local default.
