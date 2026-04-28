@@ -110,10 +110,10 @@ def _make_workbook():
 
 
 @pytest.mark.asyncio
-async def test_importar_bcu_cria_cabecalho_e_itens(bcu_service: BcuService, db_session: AsyncSession):
+async def test_importar_bcu_cria_cabecalho_e_itens(bcu_service: BcuService, db_session: AsyncSession, seed_user):
     wb = _make_workbook()
     with patch("backend.services.bcu_service.openpyxl.load_workbook", return_value=wb):
-        criador_id = uuid.uuid4()
+        criador_id = seed_user
         cab = await bcu_service.importar_bcu(b"fake", "BCU_test.xlsx", criador_id)
 
     assert cab is not None
@@ -123,10 +123,10 @@ async def test_importar_bcu_cria_cabecalho_e_itens(bcu_service: BcuService, db_s
 
 
 @pytest.mark.asyncio
-async def test_importar_bcu_gera_codigo_origem_sequencial(bcu_service: BcuService, db_session: AsyncSession):
+async def test_importar_bcu_gera_codigo_origem_sequencial(bcu_service: BcuService, db_session: AsyncSession, seed_user):
     wb = _make_workbook()
     with patch("backend.services.bcu_service.openpyxl.load_workbook", return_value=wb):
-        cab = await bcu_service.importar_bcu(b"fake", "BCU_seq.xlsx", uuid.uuid4())
+        cab = await bcu_service.importar_bcu(b"fake", "BCU_seq.xlsx", seed_user)
 
     result = await db_session.execute(
         __import__("sqlalchemy", fromlist=["select"]).select(BcuMaoObraItem).where(BcuMaoObraItem.cabecalho_id == cab.id)
@@ -138,11 +138,11 @@ async def test_importar_bcu_gera_codigo_origem_sequencial(bcu_service: BcuServic
 
 
 @pytest.mark.asyncio
-async def test_importar_bcu_idempotencia_reimporta_atualiza(bcu_service: BcuService, db_session: AsyncSession):
+async def test_importar_bcu_idempotencia_reimporta_atualiza(bcu_service: BcuService, db_session: AsyncSession, seed_user):
     wb = _make_workbook()
     with patch("backend.services.bcu_service.openpyxl.load_workbook", return_value=wb):
-        cab1 = await bcu_service.importar_bcu(b"fake", "BCU_idem.xlsx", uuid.uuid4())
-        cab2 = await bcu_service.importar_bcu(b"fake", "BCU_idem.xlsx", uuid.uuid4())
+        cab1 = await bcu_service.importar_bcu(b"fake", "BCU_idem.xlsx", seed_user)
+        cab2 = await bcu_service.importar_bcu(b"fake", "BCU_idem.xlsx", seed_user)
 
     # Deve ter deletado o anterior e criado novo
     assert cab1.id != cab2.id
@@ -194,25 +194,25 @@ async def test_get_cabecalho_ativo_sem_ativo_retorna_none(bcu_service: BcuServic
 
 
 @pytest.mark.asyncio
-async def test_importar_bcu_sync_base_tcpo(bcu_service: BcuService, db_session: AsyncSession):
+async def test_importar_bcu_sync_base_tcpo(bcu_service: BcuService, db_session: AsyncSession, seed_user):
     wb = _make_workbook()
     with patch("backend.services.bcu_service.openpyxl.load_workbook", return_value=wb):
-        await bcu_service.importar_bcu(b"fake", "BCU_sync.xlsx", uuid.uuid4())
+        await bcu_service.importar_bcu(b"fake", "BCU_sync.xlsx", seed_user)
 
     from backend.models.base_tcpo import BaseTcpo
     result = await db_session.execute(
         __import__("sqlalchemy", fromlist=["select"]).select(BaseTcpo).where(BaseTcpo.codigo_origem.like("BCU-%"))
     )
     items = result.scalars().all()
-    # 2 MO + 1 EQP + 1 EPI + 1 FER = 5
-    assert len(items) == 5
+    # 2 MO + 1 EQP + 1 EPI + 1 FER + 1 MOB = 6
+    assert len(items) == 6
 
 
 @pytest.mark.asyncio
-async def test_importar_bcu_com_aba_faltante_rejeita(bcu_service: BcuService, db_session: AsyncSession):
+async def test_importar_bcu_com_aba_faltante_rejeita(bcu_service: BcuService, db_session: AsyncSession, seed_user):
     wb = FakeWorkbook({"SOMENTE UMA ABA": FakeWorksheet([["test"]])})
     with patch("backend.services.bcu_service.openpyxl.load_workbook", return_value=wb):
-        cab = await bcu_service.importar_bcu(b"fake", "BCU_parcial.xlsx", uuid.uuid4())
+        cab = await bcu_service.importar_bcu(b"fake", "BCU_parcial.xlsx", seed_user)
     # Nao deve falhar, mas nao cria itens
     result = await db_session.execute(
         __import__("sqlalchemy", fromlist=["select"]).select(BcuMaoObraItem).where(BcuMaoObraItem.cabecalho_id == cab.id)

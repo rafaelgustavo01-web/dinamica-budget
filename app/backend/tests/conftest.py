@@ -4,6 +4,7 @@ import sys
 from collections.abc import AsyncGenerator
 from pathlib import Path
 
+import pytest
 import pytest_asyncio
 from dotenv import dotenv_values
 from httpx import ASGITransport, AsyncClient
@@ -89,6 +90,37 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
         await conn.run_sync(Base.metadata.drop_all)
 
     await engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def seed_user(db_session: AsyncSession):
+    """Insert a minimal Usuario so FK constraints on criado_por_id are satisfied.
+
+    Returns the UUID of the created user. Use this fixture in any test that
+    passes a user-id to a service that stores it under a FK column.
+    """
+    import uuid as _uuid
+    from backend.core.security import hash_password
+    from backend.models.usuario import Usuario
+
+    user = Usuario(
+        id=_uuid.uuid4(),
+        nome="Seed Test User",
+        email=f"seed-{_uuid.uuid4().hex[:8]}@test.invalid",
+        hashed_password=hash_password("testpass123!"),
+        is_active=True,
+        is_admin=False,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    return user.id
+
+
+@pytest.fixture
+def token_factory():
+    """Return a callable: token_factory(user_id: str) -> JWT access token string."""
+    from backend.core.security import create_access_token
+    return lambda user_id: create_access_token(user_id)
 
 
 @pytest_asyncio.fixture
