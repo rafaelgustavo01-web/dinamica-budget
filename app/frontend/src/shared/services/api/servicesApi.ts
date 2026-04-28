@@ -1,5 +1,6 @@
 import type { PaginatedResponse } from '../../types/contracts/common';
 import type {
+  ComposicaoComponenteResponse,
   ExplodeComposicaoResponse,
   ServicoCreate,
   ServicoListParams,
@@ -24,6 +25,13 @@ export const servicesApi = {
   async getComposicao(servicoId: string) {
     const response = await apiClient.get<ExplodeComposicaoResponse>(
       `/servicos/${servicoId}/composicao`,
+    );
+    return response.data;
+  },
+
+  async getComponentes(servicoId: string) {
+    const response = await apiClient.get<ComposicaoComponenteResponse[]>(
+      `/servicos/${servicoId}/componentes`,
     );
     return response.data;
   },

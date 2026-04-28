@@ -19,6 +19,7 @@ from backend.repositories.itens_proprios_repository import ItensPropiosRepositor
 from backend.repositories.versao_composicao_repository import VersaoComposicaoRepository
 from backend.schemas.common import PaginatedResponse
 from backend.schemas.servico import (
+    ComposicaoComponenteResponse,
     ComposicaoItemResponse,
     ExplodeComposicaoResponse,
     ServicoCreate,
@@ -137,6 +138,88 @@ class ServicoCatalogService:
             custo_total_composicao=custo_total,
             versao_info=versao_info,
         )
+
+    async def listar_componentes_diretos(
+        self, servico_id: UUID, db: AsyncSession
+    ) -> list[ComposicaoComponenteResponse]:
+        """Return direct children (level 1) of a composition, with tipo_recurso for tree UI."""
+        base_repo = BaseTcpoRepository(db)
+        item = await base_repo.get_by_id(servico_id)
+        is_tcpo = item is not None
+
+        if not is_tcpo:
+            propria_repo = ItensPropiosRepository(db)
+            item = await propria_repo.get_active_by_id(servico_id)
+
+        if item is None:
+            raise NotFoundError("Item", str(servico_id))
+
+        items: list[ComposicaoComponenteResponse] = []
+
+        if is_tcpo:
+            result_comp = await db.execute(
+                select(ComposicaoBase).where(ComposicaoBase.servico_pai_id == servico_id)
+            )
+            composicoes = list(result_comp.scalars().all())
+            for comp in composicoes:
+                filho = await base_repo.get_by_id(comp.insumo_filho_id)
+                if filho is None:
+                    continue
+                custo_item = comp.quantidade_consumo * (filho.custo_base or Decimal("0"))
+                items.append(
+                    ComposicaoComponenteResponse(
+                        id=comp.id,
+                        insumo_filho_id=filho.id,
+                        descricao_filho=filho.descricao,
+                        unidade_medida=comp.unidade_medida or filho.unidade_medida,
+                        quantidade_consumo=comp.quantidade_consumo,
+                        custo_unitario=filho.custo_base or Decimal("0"),
+                        custo_total=custo_item,
+                        tipo_recurso=filho.tipo_recurso.value if filho.tipo_recurso else None,
+                    )
+                )
+        else:
+            versao_repo = VersaoComposicaoRepository(db)
+            versao = await versao_repo.get_versao_ativa(servico_id)
+            if versao:
+                for comp in versao.itens:
+                    if comp.insumo_base_id is not None:
+                        filho = await base_repo.get_by_id(comp.insumo_base_id)
+                        if filho is None:
+                            continue
+                        custo_item = comp.quantidade_consumo * (filho.custo_base or Decimal("0"))
+                        items.append(
+                            ComposicaoComponenteResponse(
+                                id=comp.id,
+                                insumo_filho_id=filho.id,
+                                descricao_filho=filho.descricao,
+                                unidade_medida=comp.unidade_medida or filho.unidade_medida,
+                                quantidade_consumo=comp.quantidade_consumo,
+                                custo_unitario=filho.custo_base or Decimal("0"),
+                                custo_total=custo_item,
+                                tipo_recurso=filho.tipo_recurso.value if filho.tipo_recurso else None,
+                            )
+                        )
+                    elif comp.insumo_proprio_id is not None:
+                        propria_repo = ItensPropiosRepository(db)
+                        filho = await propria_repo.get_active_by_id(comp.insumo_proprio_id)
+                        if filho is None:
+                            continue
+                        custo_item = comp.quantidade_consumo * (filho.custo_unitario or Decimal("0"))
+                        items.append(
+                            ComposicaoComponenteResponse(
+                                id=comp.id,
+                                insumo_filho_id=filho.id,
+                                descricao_filho=filho.descricao,
+                                unidade_medida=comp.unidade_medida or filho.unidade_medida,
+                                quantidade_consumo=comp.quantidade_consumo,
+                                custo_unitario=filho.custo_unitario or Decimal("0"),
+                                custo_total=custo_item,
+                                tipo_recurso=filho.tipo_recurso.value if filho.tipo_recurso else None,
+                            )
+                        )
+
+        return items
 
     async def _explode_recursivo_tcpo(
         self,

@@ -21,6 +21,13 @@ Your inbox has `[PENDING]` with `Action: MINE_ROADMAP`.
 
 ## INBOX
 
+### [PENDING] 2026-04-27T18:00:00Z — Sprint F2-12 (DONE)
+- From: qa (Amazon Q)
+- Action: MINE_ROADMAP
+- Walkthrough: @docs/sprints/F2-12/walkthrough/reviewed/walkthrough-F2-12.md
+- Feedback: @docs/sprints/F2-12/technical-feedback/technical-feedback-2026-04-27-f2-12-v1.md
+- Notes: F2-12 aceita. Débito técnico de parsing TCPO resolvido. Detecção de serviço pai refatorada para AND triplo (font.bold + alignment.indent==0 + startswith("SER.")). Generalização cobre variantes SER.CH, SER.MO além de SER.CG. 8 testes unitários com mocks openpyxl. 197 PASS regressão. Alimentar ROADMAP com padrões de parsing de Excel com detecção de estilo (font.bold + alignment) para hierarquias implícitas.
+
 ### [PENDING] 2026-04-27T12:00:00Z — Sprint F2-09 (DONE)
 - From: qa (Amazon Q)
 - Action: MINE_ROADMAP

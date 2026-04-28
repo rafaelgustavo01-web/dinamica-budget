@@ -35,6 +35,21 @@ class ComposicaoItemResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ComposicaoComponenteResponse(BaseModel):
+    """Direct children of a composition (level 1 only), with tipo_recurso for tree expansion."""
+
+    id: UUID
+    insumo_filho_id: UUID
+    descricao_filho: str
+    unidade_medida: str
+    quantidade_consumo: Decimal
+    custo_unitario: Decimal
+    custo_total: Decimal
+    tipo_recurso: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class VersaoInfo(BaseModel):
     versao_id: UUID
     numero_versao: int

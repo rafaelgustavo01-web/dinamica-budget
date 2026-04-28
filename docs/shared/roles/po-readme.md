@@ -23,6 +23,11 @@ Your inbox has `[PENDING]` with `Action: INTAKE_NEXT`, OR all active sprints are
 
 ## INBOX
 
+### [PENDING] 2026-04-27T18:00:00Z — Sprint F2-12 DONE — WIP slot liberado
+- From: qa (Amazon Q)
+- Action: INTAKE_NEXT
+- Notes: F2-12 fechada. Débito técnico TCPO resolvido. 8 testes OK, 197 PASS regressão. WIP slot disponível. F2-10 e F2-11 estão em TESTED aguardando fechamento de ciclo. Próximos candidatos: fechar F2-10 e F2-11 como DONE após confirmação do QA.
+
 ### [PENDING] 2026-04-27T12:00:00Z — Sprint F2-09 DONE — Milestone 6 fechado
 - From: qa (Amazon Q)
 - Action: INTAKE_NEXT

@@ -11,6 +11,7 @@ from backend.core.dependencies import (
 )
 from backend.schemas.common import PaginatedResponse
 from backend.schemas.servico import (
+    ComposicaoComponenteResponse,
     ExplodeComposicaoResponse,
     ServicoCreate,
     ServicoListParams,
@@ -58,6 +59,19 @@ async def explode_composicao(
     db: AsyncSession = Depends(get_db),
 ) -> ExplodeComposicaoResponse:
     return await servico_catalog_service.explode_composicao(servico_id, db)
+
+
+@router.get(
+    "/{servico_id}/componentes",
+    response_model=list[ComposicaoComponenteResponse],
+    summary="Listar componentes diretos (nível 1) de uma composição",
+)
+async def listar_componentes_diretos(
+    servico_id: UUID,
+    _=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[ComposicaoComponenteResponse]:
+    return await servico_catalog_service.listar_componentes_diretos(servico_id, db)
 
 
 @router.post("/", response_model=ServicoTcpoResponse, status_code=201)

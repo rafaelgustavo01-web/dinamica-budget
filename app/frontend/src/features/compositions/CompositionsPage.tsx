@@ -15,6 +15,12 @@ import {
   ListItemText,
   Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -24,7 +30,6 @@ import { useState } from 'react';
 
 import { useAuth } from '../auth/AuthProvider';
 import { ConfirmationDialog } from '../../shared/components/ConfirmationDialog';
-import { DataTable } from '../../shared/components/DataTable';
 import { EmptyState } from '../../shared/components/EmptyState';
 import {
   errorMessages,
@@ -39,6 +44,7 @@ import { servicesApi } from '../../shared/services/api/servicesApi';
 import type { ServicoTcpoResponse } from '../../shared/types/contracts/servicos';
 import { formatCurrency } from '../../shared/utils/format';
 import { hasClientePerfil } from '../../shared/utils/permissions';
+import { ExpandableTreeRow } from './components/ExpandableTreeRow';
 
 export function CompositionsPage() {
   const { user, selectedClientId } = useAuth();
@@ -47,7 +53,7 @@ export function CompositionsPage() {
 
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize] = useState(20);
   const [selectedService, setSelectedService] = useState<ServicoTcpoResponse | null>(null);
 
   const [cloneOpen, setCloneOpen] = useState(false);
@@ -191,33 +197,76 @@ export function CompositionsPage() {
             </Alert>
           ) : null}
 
-          <DataTable
-            columns={[
-              { key: 'codigo', header: 'Código', render: (row) => row.codigo_origem },
-              { key: 'descricao', header: 'Descrição', render: (row) => row.descricao },
-              { key: 'unidade', header: 'Unidade', render: (row) => row.unidade_medida },
-              {
-                key: 'custo',
-                header: 'Custo',
-                align: 'right',
-                render: (row) => formatCurrency(row.custo_unitario),
-              },
-            ]}
-            rows={servicesQuery.data?.items ?? []}
-            rowKey={(row) => row.id}
-            loading={servicesQuery.isLoading}
-            page={page}
-            pageSize={pageSize}
-            total={servicesQuery.data?.total ?? 0}
-            emptyTitle="Nenhuma composição cadastrada"
-            emptyDescription="Selecione outro termo de busca ou ajuste o recorte atual para encontrar serviços com composição."
-            onPageChange={setPage}
-            onPageSizeChange={(value) => {
-              setPageSize(value);
-              setPage(1);
-            }}
-            onRowClick={(row) => setSelectedService(row)}
-          />
+          <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 560 }}>
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700 }}>Descrição</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Código</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Unidade</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }} align="right">Custo</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Tipo</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {servicesQuery.isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                      <Typography variant="body2" color="text.secondary">Carregando...</Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : servicesQuery.data?.items.length ? (
+                  servicesQuery.data.items.map((row) => (
+                    <ExpandableTreeRow
+                      key={row.id}
+                      item={{
+                        id: row.id,
+                        descricao: row.descricao,
+                        codigo_origem: row.codigo_origem,
+                        unidade_medida: row.unidade_medida,
+                        custo_unitario: row.custo_unitario,
+                        tipo_recurso: row.tipo_recurso,
+                      }}
+                      isSelected={selectedService?.id === row.id}
+                      onSelect={(id) => {
+                        const svc = servicesQuery.data.items.find((r) => r.id === id) ?? null;
+                        setSelectedService(svc);
+                      }}
+                    />
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Nenhuma composição cadastrada
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {servicesQuery.data && servicesQuery.data.total > pageSize ? (
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                Página {page} de {Math.ceil(servicesQuery.data.total / pageSize)}
+              </Typography>
+              <Stack direction="row" spacing={1}>
+                <Button size="small" variant="outlined" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                  Anterior
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  disabled={page * pageSize >= servicesQuery.data.total}
+                  onClick={() => setPage(page + 1)}
+                >
+                  Próxima
+                </Button>
+              </Stack>
+            </Stack>
+          ) : null}
         </Paper>
 
         <Paper sx={{ flex: 0.9, p: 3, border: '1px solid', borderColor: 'divider' }}>

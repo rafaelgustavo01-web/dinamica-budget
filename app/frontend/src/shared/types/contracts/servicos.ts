@@ -25,6 +25,17 @@ export interface ComposicaoItemResponse {
   custo_total: DecimalValue;
 }
 
+export interface ComposicaoComponenteResponse {
+  id: string;
+  insumo_filho_id: string;
+  descricao_filho: string;
+  unidade_medida: string;
+  quantidade_consumo: DecimalValue;
+  custo_unitario: DecimalValue;
+  custo_total: DecimalValue;
+  tipo_recurso: TipoRecurso | null;
+}
+
 export interface VersaoInfo {
   versao_id: string;
   numero_versao: number;
