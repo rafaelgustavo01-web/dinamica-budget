@@ -20,7 +20,7 @@ interface Props {
   item: {
     id: string;
     descricao: string;
-    codigo_origem?: string;
+    codigo_origem?: string | null;
     unidade_medida?: string;
     custo_unitario?: number | string;
     tipo_recurso?: string | null;
@@ -122,7 +122,7 @@ export function ExpandableTreeRow({ item, depth = 0, isExpandable, isSelected, o
                       item={{
                         id: child.insumo_filho_id,
                         descricao: child.descricao_filho,
-                        codigo_origem: undefined,
+                        codigo_origem: child.codigo_origem ?? null,
                         unidade_medida: child.unidade_medida,
                         custo_unitario: child.custo_unitario,
                         tipo_recurso: child.tipo_recurso,

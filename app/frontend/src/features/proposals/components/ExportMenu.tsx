@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { Button, Menu, MenuItem, ListItemIcon, ListItemText, CircularProgress } from '@mui/material';
+import {
+  Alert,
+  Button,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  CircularProgress,
+  Snackbar,
+} from '@mui/material';
 import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import GridOnOutlinedIcon from '@mui/icons-material/GridOnOutlined';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
@@ -25,13 +34,17 @@ function triggerDownload(blob: Blob, filename: string) {
 export function ExportMenu({ propostaId, propostaCodigo, disabled }: ExportMenuProps) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleExcel() {
     setAnchor(null);
     setBusy(true);
+    setError(null);
     try {
       const blob = await proposalsApi.exportExcel(propostaId);
       triggerDownload(blob, `proposta-${propostaCodigo}.xlsx`);
+    } catch {
+      setError('Falha ao exportar Excel. Tente novamente.');
     } finally {
       setBusy(false);
     }
@@ -40,9 +53,12 @@ export function ExportMenu({ propostaId, propostaCodigo, disabled }: ExportMenuP
   async function handlePdf() {
     setAnchor(null);
     setBusy(true);
+    setError(null);
     try {
       const blob = await proposalsApi.exportPdf(propostaId);
       triggerDownload(blob, `proposta-${propostaCodigo}.pdf`);
+    } catch {
+      setError('Falha ao exportar PDF. Tente novamente.');
     } finally {
       setBusy(false);
     }
@@ -68,6 +84,16 @@ export function ExportMenu({ propostaId, propostaCodigo, disabled }: ExportMenuP
           <ListItemText>PDF (folha de rosto)</ListItemText>
         </MenuItem>
       </Menu>
+      <Snackbar
+        open={Boolean(error)}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="error" onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

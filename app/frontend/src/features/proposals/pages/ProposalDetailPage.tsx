@@ -81,6 +81,14 @@ export function ProposalDetailPage() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: () => proposalsApi.delete(id!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['propostas'] });
+      navigate('/propostas');
+    },
+  });
+
   if (isLoading) return <Typography>Carregando...</Typography>;
   if (isError) return <Alert severity="error">{extractApiErrorMessage(error)}</Alert>;
   if (!proposta) return <Alert severity="warning">Proposta não encontrada.</Alert>;
@@ -207,7 +215,12 @@ export function ProposalDetailPage() {
                 variant="outlined"
                 color="error"
                 startIcon={<DeleteOutlineIcon />}
-                onClick={() => { /* TODO: implementar delete */ }}
+                disabled={deleteMutation.isPending}
+                onClick={() => {
+                  if (window.confirm('Tem certeza que deseja excluir esta proposta? Esta ação não pode ser desfeita.')) {
+                    deleteMutation.mutate();
+                  }
+                }}
               >
                 Excluir
               </Button>

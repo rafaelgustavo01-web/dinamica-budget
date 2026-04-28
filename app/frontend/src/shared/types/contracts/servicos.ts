@@ -29,6 +29,7 @@ export interface ComposicaoComponenteResponse {
   id: string;
   insumo_filho_id: string;
   descricao_filho: string;
+  codigo_origem: string | null;
   unidade_medida: string;
   quantidade_consumo: DecimalValue;
   custo_unitario: DecimalValue;
