@@ -176,6 +176,14 @@ export function ProposalDetailPage() {
             )}
             <Button
               variant="outlined"
+              color="info"
+              startIcon={<RuleOutlinedIcon />}
+              onClick={() => navigate(`/propostas/${id}/histograma`)}
+            >
+              Histograma
+            </Button>
+            <Button
+              variant="outlined"
               color="secondary"
               startIcon={<RuleOutlinedIcon />}
               onClick={() => navigate(`/propostas/${id}/match-review`)}

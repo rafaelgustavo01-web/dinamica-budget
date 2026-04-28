@@ -16,6 +16,9 @@ const ProposalImportPage = lazy(() =>
 const ProposalCpuPage = lazy(() =>
   import('./pages/ProposalCpuPage').then((m) => ({ default: m.ProposalCpuPage })),
 );
+const ProposalHistogramaPage = lazy(() =>
+  import('./pages/ProposalHistogramaPage').then((m) => ({ default: m.HistogramaPage })),
+);
 const MatchReviewPage = lazy(() =>
   import('./pages/MatchReviewPage').then((m) => ({ default: m.MatchReviewPage })),
 );
@@ -32,6 +35,7 @@ export const proposalRoutes = (
     <Route path="aprovacoes" element={<ApprovalQueuePage />} />
     <Route path=":id" element={<ProposalDetailPage />} />
     <Route path=":id/importar" element={<ProposalImportPage />} />
+    <Route path=":id/histograma" element={<ProposalHistogramaPage />} />
     <Route path=":id/match-review" element={<MatchReviewPage />} />
     <Route path=":id/cpu" element={<ProposalCpuPage />} />
   </Route>
