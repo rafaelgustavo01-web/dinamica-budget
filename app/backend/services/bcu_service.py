@@ -8,7 +8,7 @@ from io import BytesIO
 from typing import Any
 
 import openpyxl
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -338,13 +338,29 @@ def _parse_mobilizacao(ws, cabecalho_id: uuid.UUID):
 
     all_rows = list(ws.iter_rows(min_row=1, values_only=True))
 
-    header_row2 = all_rows[1] if len(all_rows) > 1 else []
+    header_row_idx = 1
+    for i, row in enumerate(all_rows[:6]):
+        if row and len(row) > 2 and any(cell for cell in row[2:] if cell):
+            header_row_idx = i
+            break
+
+    header_row2 = all_rows[header_row_idx] if len(all_rows) > header_row_idx else []
     funcao_cols: list[tuple[int, str]] = []
     for idx, cell in enumerate(header_row2):
         if cell and idx >= 2:
             funcao_cols.append((idx, str(cell).strip()))
 
-    for row in all_rows[7:]:
+    data_start_idx = None
+    for i in range(header_row_idx + 1, len(all_rows)):
+        row = all_rows[i]
+        if row and row[0]:
+            data_start_idx = i
+            break
+
+    if data_start_idx is None:
+        data_start_idx = len(all_rows)
+
+    for row in all_rows[data_start_idx:]:
         desc = row[0]
         if not desc:
             continue
@@ -539,7 +555,7 @@ class BcuService:
 
         # Desativa todos
         await self.db.execute(
-            BcuCabecalho.__table__.update().values(is_ativo=False)
+            update(BcuCabecalho).values(is_ativo=False)
         )
         # Ativa o solicitado
         cab.is_ativo = True

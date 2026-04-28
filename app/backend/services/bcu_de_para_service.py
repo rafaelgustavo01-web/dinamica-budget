@@ -78,10 +78,11 @@ class BcuDeParaService:
         result = await self.db.execute(q)
         rows = result.all()
 
-        # Resolve bcu_item_descricao dinamicamente
+        # Resolve bcu_item_descricao dinamicamente via batch lookup
+        bcu_desc_map = await self._resolve_bcu_descricoes_batch(rows)
         out: list[dict] = []
         for row in rows:
-            bcu_desc = await self._resolve_bcu_descricao(row.bcu_table_type, row.bcu_item_id)
+            key = (row.bcu_table_type.value, row.bcu_item_id)
             out.append({
                 "id": row.id,
                 "base_tcpo_id": row.base_tcpo_id,
@@ -90,22 +91,59 @@ class BcuDeParaService:
                 "base_tcpo_tipo_recurso": row.tipo_recurso.value if row.tipo_recurso else None,
                 "bcu_table_type": row.bcu_table_type.value,
                 "bcu_item_id": row.bcu_item_id,
-                "bcu_item_descricao": bcu_desc,
+                "bcu_item_descricao": bcu_desc_map.get(key),
             })
         return out
 
-    async def _resolve_bcu_descricao(self, table_type: BcuTableType, item_id: UUID) -> str | None:
-        if table_type == BcuTableType.MO:
-            r = await self.db.execute(select(BcuMaoObraItem.descricao_funcao).where(BcuMaoObraItem.id == item_id))
-        elif table_type == BcuTableType.EQP:
-            r = await self.db.execute(select(BcuEquipamentoItem.equipamento).where(BcuEquipamentoItem.id == item_id))
-        elif table_type == BcuTableType.EPI:
-            r = await self.db.execute(select(BcuEpiItem.epi).where(BcuEpiItem.id == item_id))
-        elif table_type == BcuTableType.FER:
-            r = await self.db.execute(select(BcuFerramentaItem.descricao).where(BcuFerramentaItem.id == item_id))
-        else:
-            return None
-        return r.scalar_one_or_none()
+    async def _resolve_bcu_descricoes_batch(self, rows) -> dict[tuple[str, UUID], str | None]:
+        from sqlalchemy import select
+
+        # Group IDs by type
+        mo_ids: list[UUID] = []
+        eqp_ids: list[UUID] = []
+        epi_ids: list[UUID] = []
+        fer_ids: list[UUID] = []
+        for row in rows:
+            if row.bcu_table_type == BcuTableType.MO:
+                mo_ids.append(row.bcu_item_id)
+            elif row.bcu_table_type == BcuTableType.EQP:
+                eqp_ids.append(row.bcu_item_id)
+            elif row.bcu_table_type == BcuTableType.EPI:
+                epi_ids.append(row.bcu_item_id)
+            elif row.bcu_table_type == BcuTableType.FER:
+                fer_ids.append(row.bcu_item_id)
+
+        desc_map: dict[tuple[str, UUID], str | None] = {}
+
+        if mo_ids:
+            result = await self.db.execute(
+                select(BcuMaoObraItem.id, BcuMaoObraItem.descricao_funcao).where(BcuMaoObraItem.id.in_(mo_ids))
+            )
+            for item_id, desc in result.all():
+                desc_map[("MO", item_id)] = desc
+
+        if eqp_ids:
+            result = await self.db.execute(
+                select(BcuEquipamentoItem.id, BcuEquipamentoItem.equipamento).where(BcuEquipamentoItem.id.in_(eqp_ids))
+            )
+            for item_id, desc in result.all():
+                desc_map[("EQP", item_id)] = desc
+
+        if epi_ids:
+            result = await self.db.execute(
+                select(BcuEpiItem.id, BcuEpiItem.epi).where(BcuEpiItem.id.in_(epi_ids))
+            )
+            for item_id, desc in result.all():
+                desc_map[("EPI", item_id)] = desc
+
+        if fer_ids:
+            result = await self.db.execute(
+                select(BcuFerramentaItem.id, BcuFerramentaItem.descricao).where(BcuFerramentaItem.id.in_(fer_ids))
+            )
+            for item_id, desc in result.all():
+                desc_map[("FER", item_id)] = desc
+
+        return desc_map
 
     async def criar(
         self, base_tcpo_id: UUID, bcu_table_type: BcuTableType, bcu_item_id: UUID, criador_id: UUID
