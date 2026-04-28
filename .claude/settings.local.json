@@ -89,7 +89,23 @@
       "Bash(.venv/Scripts/python.exe -c \":*)",
       "Bash(python -m pytest backend/tests/unit/test_pq_match_review.py::test_pq_item_response_schema_from_model backend/tests/unit/test_pq_match_review.py::test_pq_match_confirmar_request_confirmar backend/tests/unit/test_pq_match_review.py::test_pq_match_confirmar_request_rejeitar backend/tests/unit/test_pq_match_review.py::test_pq_match_confirmar_request_substituir_requer_servico_id -v)",
       "Bash(python -m pytest backend/tests/unit/test_pq_match_review.py -v)",
-      "Bash(printenv DEBUG)"
+      "Bash(printenv DEBUG)",
+      "Bash(python -m pytest backend/tests/ -q --tb=no -p no:warnings)",
+      "Bash(python -m pytest backend/tests/unit/test_bcu_service.py::test_importar_bcu_cria_cabecalho_e_itens -q --tb=short)",
+      "Bash(python -m pytest backend/tests/unit/test_bcu_service.py::test_importar_bcu_cria_cabecalho_e_itens -q --tb=long)",
+      "Bash(python -m pytest backend/tests/unit/test_histograma_endpoints.py::test_get_histograma_success -q --tb=short)",
+      "Bash(python -m pytest backend/tests/integration/test_auth_access_control.py::test_health_endpoint -q --tb=short)",
+      "Bash(python -m pytest backend/tests/unit/test_histograma_endpoints.py -q --tb=no -p no:warnings)",
+      "Bash(python -m pytest backend/tests/unit/test_bcu_service.py -q --tb=no -p no:warnings)",
+      "Bash(python -m pytest backend/tests/unit/test_bcu_service.py::test_importar_bcu_cria_cabecalho_e_itens -q --tb=short -p no:warnings)",
+      "Bash(python -m pytest backend/tests/unit/test_bcu_service.py::test_importar_bcu_cria_cabecalho_e_itens -q --tb=long -p no:warnings)",
+      "Bash(python -c \"import asyncio; import asyncpg; async def t\\(\\): conn = await asyncpg.connect\\('postgresql://postgres:password@localhost:5432/dinamica_budget_test'\\); r = await conn.fetchval\\('SELECT 1'\\); await conn.close\\(\\); print\\('OK:', r\\); asyncio.run\\(t\\(\\)\\)\")",
+      "PowerShell(netstat -ano)",
+      "PowerShell(Get-Process | Where-Object { $_.Id -eq 35184 } | Select-Object Name, Id, Path)",
+      "PowerShell($env:PGPASSWORD = \"password\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\16\\\\bin\\\\psql.exe\" -h localhost -U postgres -d postgres -c \"SELECT datname FROM pg_database WHERE datname='dinamica_budget_test'\" 2>&1)",
+      "Bash(python -m pytest backend/tests/unit/test_bcu_service.py::test_importar_bcu_cria_cabecalho_e_itens -q --tb=short -s)",
+      "Bash(python -m pytest backend/tests/unit/test_bcu_service.py::test_importar_bcu_cria_cabecalho_e_itens -s --tb=short -p no:warnings)",
+      "Bash(python -m pytest backend/tests/unit/test_bcu_service.py::test_importar_bcu_cria_cabecalho_e_itens --tb=long -p no:warnings)"
     ]
   },
   "enabledPlugins": {
