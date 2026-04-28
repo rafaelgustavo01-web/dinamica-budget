@@ -77,6 +77,7 @@ FASE C — Módulo de Orçamentos
 - `F2-09` DONE — Versionamento + Workflow de Aprovação (Worker: claude-sonnet-4-6) — QA aprovado 2026-04-27 (Amazon Q); Milestone 6 fechado
 - `F2-10` TESTED — BCU Unificada (Base de Custos Unitários) + De/Para — Worker: kimi-k2.6 — prompt em `docs/sprints/F2-10/dispatch/sprint-F2-10-worker-prompt.md`
 - `F2-11` TESTED — Histograma da Proposta — enviada para QA — briefing+prompt em `docs/sprints/F2-11/dispatch/`
+- `F2-12` INICIADA — Refatoração Importação TCPO (Débito Técnico) — Worker: kimi-k2.6 — briefing+prompt em `docs/sprints/F2-12/briefing/`
 
 ### Decisões de alocação (Scrum Master, 2026-04-26)
 
