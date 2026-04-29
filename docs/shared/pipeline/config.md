@@ -23,7 +23,7 @@
 - supervisor: KIMI
 - worker_codex: CODEX
 - worker_gemini: GEMINI
-- qa: OPENCODE
+- qa: GEMINI
 - git_controller: OPENCODE
 - assistant: OPENCODE
 - log_creator: OPENCODE
@@ -42,3 +42,16 @@
 - technical_reviews: docs/sprints/[ID]/technical-review/
 - technical_feedback: docs/sprints/[ID]/technical-feedback/
 - worker_registry: templates/workers.json
+
+
+## Operating Policy — 2026-04-29
+- WIP assumido: 4 sprints ativas no máximo (`max_active_sprints: 4`).
+- Quando QA mover uma sprint de `TESTED` para `DONE`, o Scrum Master/gedAI deve abrir/despachar novo ciclo respeitando dependências e WIP disponível.
+- QA principal para validação de sprints em `TESTED`: Gemini.
+- Fluxo documental obrigatório por sprint:
+  - Briefing: `docs/sprints/[ID]/briefing/`
+  - Plan: `docs/sprints/[ID]/plans/`
+  - Technical Review: `docs/sprints/[ID]/technical-review/`
+  - Technical Feedback: `docs/sprints/[ID]/technical-feedback/`
+  - Walkthrough: `docs/sprints/[ID]/walkthrough/done/` e/ou `docs/sprints/[ID]/walkthrough/reviewed/`
+- Agents podem editar, escrever, rodar gates e commitar/pushar na `main`, mas continuam proibidos de force-push, reset hard destrutivo, segredos e produção sem aprovação.

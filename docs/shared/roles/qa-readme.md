@@ -29,6 +29,17 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Expand verification scope only if blast radius requires it.
 
 ## INBOX
+### [PENDING] 2026-04-29T19:36:00Z — Gemini QA batch TESTED
+- From: PO / gedAI
+- Action: QA_VALIDATE_TESTED
+- Assigned QA: Gemini
+- Scope: `F3-01`, `F3-02`
+- Required outputs:
+  - `docs/sprints/F3-01/technical-feedback/technical-feedback-2026-04-29-f3-01.md`
+  - `docs/sprints/F3-02/technical-feedback/technical-feedback-2026-04-29-f3-02.md`
+  - reviewed walkthroughs under `docs/sprints/[ID]/walkthrough/reviewed/` when accepted.
+- Rule: if accepted, move sprint to DONE; if not, keep/reopen TODO with objective rework notes.
+
 ### [PENDING] 2026-04-29T18:31:00Z — Sprint F3-02
 - From: Worker / Scrum Master
 - Action: REVIEW_UIUX_FIXES

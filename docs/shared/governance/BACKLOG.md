@@ -12,11 +12,12 @@ Responsável: Research AI / QA Re-avaliação
 ## Status Operacional — 2026-04-29
 
 - Ciclo concluído: `F2-10`, `F2-11`, `F2-12`, `F2-13`, `F2-DT-A`, `F2-DT-B`, `F2-DT-C` em DONE.
-- WIP atual: **1/4**.
+- WIP atual: **2/4** (`F3-01`, `F3-02` em TESTED aguardando QA Gemini).
+- WIP assumido pelo PO em 2026-04-29: **4**; abrir novo ciclo assim que QA mover sprint de TESTED para DONE, respeitando dependências.
 - Milestone 6 — Proposta Completa: **fechado**.
 - Milestone 7 — Compras e Negociação: **GO condicional** validado por Codex + Claude; fica **pós-demo**, após saneamento/contratos.
 - Decisão PO 2026-04-29: antes de Compras, abrir **Fase 3 — Demo Readiness / Polimento UI+UX** para corrigir erros de interface e deixar o fluxo apresentável esta semana.
-- Sprint ativa: `F3-02` em TESTED aguardando QA; `F3-03` pode iniciar roteiro/dados de demo em paralelo.
+- Sprints ativas: `F3-01` e `F3-02` em TESTED aguardando QA Gemini. Próximo ciclo só abre quando QA mover sprint para DONE.
 
 ## Sprints Propostas
 
@@ -170,3 +171,8 @@ oadmap.
 oadmap.
 
 - 2026-04-29 (Worker/gedAI): `F3-02` implementada para demo readiness. Correções P1 em CPU/Match responsivo, guards de cliente/proposta, estados de erro de Importar/CPU, navegação de aprovação e divergências do Histograma. Gates frontend: `npm ci`, `npm run build`, `npm run test` PASS (13 testes).
+
+- 2026-04-29 (PO): QA passa a ser executado preferencialmente por Gemini nas sprints em TESTED. Manter fluxo documental obrigatório: Briefing, Plan, Technical Review, Technical Feedback e Walkthrough.
+
+- 2026-04-29 (QA dispatch): Gemini QA acionado para validar `F3-01` e `F3-02`, mas o Gemini CLI retornou 429 `MODEL_CAPACITY_EXHAUSTED` para `gemini-2.5-pro` e `gemini-2.5-flash`. QA permanece PENDING para retry; não mover TESTED para DONE sem feedback.
+
