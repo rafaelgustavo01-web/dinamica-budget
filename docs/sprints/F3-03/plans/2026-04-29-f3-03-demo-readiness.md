@@ -14,3 +14,8 @@ Preparar a apresentação para execução previsível, com roteiro e dados segur
 - Commit/push automático ao concluir implementação ou documentação.
 - Sem force-push, sem reset destrutivo, sem segredos.
 - Produção não deve ser alterada.
+
+
+## PO Update — 2026-04-29
+
+Status: PLAN-HOLD. Esta sprint só deve iniciar depois da conclusão das configurações/fluxos que serão apresentados. Não despachar worker antes de `F3-04` fechar o ambiente/fluxo final da demo.

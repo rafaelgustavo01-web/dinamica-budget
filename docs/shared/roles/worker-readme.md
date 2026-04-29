@@ -31,23 +31,23 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - If blocked, mark inbox item as `[BLOCKED]` with reason.
 
 ## INBOX
-### [PENDING] 2026-04-29T22:20:00Z — Sprint F3-03
+### [HOLD] 2026-04-29T22:34:00Z — Sprint F3-03
 - From: PO / Scrum Master
-- Action: BUILD_DEMO_SCRIPT_DATA
+- Action: BUILD_DEMO_SCRIPT_DATA — HOLD
 - Assigned Worker: gemini-research
 - Briefing: @docs/sprints/F3-03/briefing/sprint-F3-03-briefing.md
 - Plan: @docs/sprints/F3-03/plans/2026-04-29-f3-03-demo-readiness.md
 - Dispatch: @docs/sprints/F3-03/dispatch/sprint-F3-03-worker-prompt.md
-- Notes: Preparar roteiro de apresentação, checklist e dados seguros/reproduzíveis para demo.
+- Notes: HOLD por decisão PO: roteiro/checklist/dados só depois de concluir todas as configurações e fluxos que serão apresentados.
 
-### [PENDING] 2026-04-29T22:20:00Z — Sprint F3-04
+### [PENDING] 2026-04-29T22:34:00Z — Sprint F3-04
 - From: PO / Scrum Master
-- Action: POLISH_AND_SMOKE_DEMO
+- Action: FINAL_CONFIGS_POLISH_AND_SMOKE_DEMO
 - Assigned Worker: claude-code
 - Briefing: @docs/sprints/F3-04/briefing/sprint-F3-04-briefing.md
 - Plan: @docs/sprints/F3-04/plans/2026-04-29-f3-04-demo-readiness.md
 - Dispatch: @docs/sprints/F3-04/dispatch/sprint-F3-04-worker-prompt.md
-- Notes: Polimento visual final e smoke test de demo, respeitando correções já aceitas em F3-02.
+- Notes: Prioridade atual. Fechar configurações/fluxos que serão apresentados, aplicar polimento final e rodar smoke. F3-03 só inicia depois disso.
 
 
 ### [DONE] 2026-04-29T18:31:00Z — Sprint F3-02
