@@ -29,7 +29,7 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Expand verification scope only if blast radius requires it.
 
 ## INBOX
-### [PENDING] 2026-04-29T19:36:00Z — Gemini QA batch TESTED
+### [DONE] 2026-04-29T22:18:00Z — Gemini QA batch TESTED
 - From: PO / gedAI
 - Action: QA_VALIDATE_TESTED
 - Assigned QA: Gemini
@@ -38,9 +38,13 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
   - `docs/sprints/F3-01/technical-feedback/technical-feedback-2026-04-29-f3-01.md`
   - `docs/sprints/F3-02/technical-feedback/technical-feedback-2026-04-29-f3-02.md`
   - reviewed walkthroughs under `docs/sprints/[ID]/walkthrough/reviewed/` when accepted.
-- Rule: if accepted, move sprint to DONE; if not, keep/reopen TODO with objective rework notes.
+- Technical Feedback F3-01: @docs/sprints/F3-01/technical-feedback/technical-feedback-2026-04-29-f3-01.md
+- Technical Feedback F3-02: @docs/sprints/F3-02/technical-feedback/technical-feedback-2026-04-29-f3-02.md
+- Reviewed Walkthrough F3-01: @docs/sprints/F3-01/walkthrough/reviewed/walkthrough-F3-01-reviewed-2026-04-29.md
+- Reviewed Walkthrough F3-02: @docs/sprints/F3-02/walkthrough/reviewed/walkthrough-F3-02-reviewed-2026-04-29.md
+- Verdict: ACCEPTED; moved both sprints to DONE.
 
-### [PENDING] 2026-04-29T18:31:00Z — Sprint F3-02
+### [DONE] 2026-04-29T22:18:00Z — Sprint F3-02
 - From: Worker / Scrum Master
 - Action: REVIEW_UIUX_FIXES
 - Technical Review: @docs/sprints/F3-02/technical-review/technical-review-2026-04-29-f3-02.md
@@ -49,7 +53,7 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Notes: Validar fluxo de apresentação: Propostas, Importar PQ, Match Review, CPU, Histograma e Fila de Aprovação.
 
 
-### [PENDING] 2026-04-29T18:16:41Z — Sprint F3-01
+### [DONE] 2026-04-29T22:18:00Z — Sprint F3-01
 - From: worker (codex)
 - Action: REVIEW
 - Walkthrough: @docs/sprints/F3-01/walkthrough/done/walkthrough-F3-01.md

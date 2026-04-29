@@ -12,12 +12,12 @@ Responsável: Research AI / QA Re-avaliação
 ## Status Operacional — 2026-04-29
 
 - Ciclo concluído: `F2-10`, `F2-11`, `F2-12`, `F2-13`, `F2-DT-A`, `F2-DT-B`, `F2-DT-C` em DONE.
-- WIP atual: **2/4** (`F3-01`, `F3-02` em TESTED aguardando QA Gemini).
+- WIP atual: **2/4** (`F3-03`, `F3-04` em TODO para conclusão da preparação da demo).
 - WIP assumido pelo PO em 2026-04-29: **4**; abrir novo ciclo assim que QA mover sprint de TESTED para DONE, respeitando dependências.
 - Milestone 6 — Proposta Completa: **fechado**.
 - Milestone 7 — Compras e Negociação: **GO condicional** validado por Codex + Claude; fica **pós-demo**, após saneamento/contratos.
 - Decisão PO 2026-04-29: antes de Compras, abrir **Fase 3 — Demo Readiness / Polimento UI+UX** para corrigir erros de interface e deixar o fluxo apresentável esta semana.
-- Sprints ativas: `F3-01` e `F3-02` em TESTED aguardando QA Gemini. Próximo ciclo só abre quando QA mover sprint para DONE.
+- Sprints ativas: `F3-03` e `F3-04` em TODO após QA Gemini aceitar `F3-01` e `F3-02`.
 
 ## Sprints Propostas
 
@@ -54,10 +54,10 @@ Responsável: Research AI / QA Re-avaliação
 | `F2-DT-A` | DONE | P0 | — | **Backend Tech Debt Cleanup** — pytest infra resiliente + purga pipeline legado (subprocess + import_preview_service) + N+1 batch (5 services) + ETL durabilidade (tabela etl_preview); fecha 18 itens do checkpoint 2026-04-27 | 4 commits atomicos `feat(f2-dt-a/N)`; suite verde apos cada commit (197+ PASS); migration etl_preview com down_revision correto; query log histograma <=15 queries para 100 insumos; `codigo_origem` em ComposicaoComponenteResponse; branch main apenas |
 | `F2-DT-B` | DONE | P1 | — | **Frontend Tech Debt Cleanup** — Vitest+RTL+MSW scaffold + ExportMenu erro/toast + ExpandableTreeRow exibe codigo_origem em filhos + ProposalDetailPage botao Excluir resolvido + dedup tema; paralela disjoint com F2-DT-A | 2 commits atomicos `feat(f2-dt-b/N)`; npm run build + tsc --noEmit verdes; npm run test "no tests found" sem erro; codigo_origem declarado no TS interface; branch main apenas |
 | `F2-DT-C` | DONE | P2 | `F2-DT-A`, `F2-DT-B` | **Frontend Smoke Tests** — 4 arquivos de teste smoke em **/__tests__/** para Histograma (3 abas), ExpandableTreeRow, ProposalsListPage, ProposalDetailPage | 1 commit `test(f2-dt-c)`; 13 asserts; npm run test 13 PASS; npm run build verde; apenas arquivos novos (sem modificar producao); branch main apenas |
-| `F3-01` | TESTED | P0 | `F2-DT-C` | **Demo Readiness Audit — UI/UX e fluxos críticos**: mapear erros visuais/funcionais que impedem apresentação; validar rotas principais de Propostas, Importação PQ, Match, CPU, Histograma, Composições, Exportação e RBAC visual | Relatório em `docs/sprints/F3-01/technical-review/uiux-audit-2026-04-29.md`; 0 P0, 7 P1, 4 P2; sem alterar código; gates bloqueados por dependências/rede do ambiente |
-| `F3-02` | TESTED | P0 | `F3-01` | **Correções críticas de UI/UX para apresentação**: corrigir bugs bloqueantes identificados em F3-01 nos fluxos demonstráveis; foco em telas de Proposta, Histograma, Composições e Exportação | Correções aplicadas em CPU, Match Review, Nova Proposta, Importar PQ, CPU error states, navegação da fila de aprovação e Histograma; `npm run build` PASS; `npm run test` PASS — 13 testes |
-| `F3-03` | PLAN | P1 | `F3-02` | **Roteiro de apresentação + dados de demo**: preparar narrativa, checklist operacional, massa mínima/seed ou instruções reproduzíveis para demonstrar proposta completa | Documento `docs/sprints/F3-03/demo/demo-script-2026-04-29.md`; checklist de 10–15 minutos; dados/fixtures sem segredo; reset seguro documentado |
-| `F3-04` | PLAN | P1 | `F3-02`, `F3-03` | **Polimento visual final + smoke de demo**: ajustar estados vazios/loading/erro, labels, botões, navegação e responsividade mínima; rodar QA final da apresentação | Demo checklist 100% PASS; screenshots/evidências em walkthrough; sem regressão em build/test; pendências não-críticas documentadas |
+| `F3-01` | DONE | P0 | `F2-DT-C` | **Demo Readiness Audit — UI/UX e fluxos críticos**: mapear erros visuais/funcionais que impedem apresentação; validar rotas principais de Propostas, Importação PQ, Match, CPU, Histograma, Composições, Exportação e RBAC visual | Relatório em `docs/sprints/F3-01/technical-review/uiux-audit-2026-04-29.md`; 0 P0, 7 P1, 4 P2; sem alterar código; gates bloqueados por dependências/rede do ambiente |
+| `F3-02` | DONE | P0 | `F3-01` | **Correções críticas de UI/UX para apresentação**: corrigir bugs bloqueantes identificados em F3-01 nos fluxos demonstráveis; foco em telas de Proposta, Histograma, Composições e Exportação | Correções aplicadas em CPU, Match Review, Nova Proposta, Importar PQ, CPU error states, navegação da fila de aprovação e Histograma; `npm run build` PASS; `npm run test` PASS — 13 testes |
+| `F3-03` | TODO | P1 | `F3-02` | **Roteiro de apresentação + dados de demo**: preparar narrativa, checklist operacional, massa mínima/seed ou instruções reproduzíveis para demonstrar proposta completa | Documento `docs/sprints/F3-03/demo/demo-script-2026-04-29.md`; checklist de 10–15 minutos; dados/fixtures sem segredo; reset seguro documentado |
+| `F3-04` | TODO | P1 | `F3-02`, `F3-03` | **Polimento visual final + smoke de demo**: ajustar estados vazios/loading/erro, labels, botões, navegação e responsividade mínima; rodar QA final da apresentação | Demo checklist 100% PASS; screenshots/evidências em walkthrough; sem regressão em build/test; pendências não-críticas documentadas |
 
 ## Ordem Recomendada de Execução
 
@@ -87,9 +87,10 @@ FASE C — Módulo de Orçamentos
 
 - WIP: **1/4**.
 - Objetivo imediato: deixar o produto estável e apresentável esta semana antes de retomar Compras/M7.
-- `F3-01` em TESTED: auditoria UI/UX concluída, com relatório e walkthrough gerados.
-- `F3-02` em TESTED: correções críticas P1 aplicadas e gates frontend verdes.
-- `F3-03` pode iniciar roteiro/dados de demo; `F3-04` aguarda QA/smoke final.
+- `F3-01` em DONE: auditoria UI/UX aceita pelo QA Gemini.
+- `F3-02` em DONE: correções críticas P1 aceitas pelo QA Gemini.
+- `F3-03` em TODO: roteiro/dados seguros de demo.
+- `F3-04` em TODO: polimento visual final + smoke de demo.
 - Milestone 7 permanece **GO condicional pós-demo**.
 
 ### Decisões de alocação (Scrum Master, 2026-04-26)
@@ -178,3 +179,5 @@ oadmap.
 
 
 - 2026-04-29 (PO): definida política de roteamento de agents: Kimi/Codex para backend/DB/API/refatoração; Claude para frontend/UI/UX; Gemini para research/novas features; rotação consciente de tokens e uso de modelos menos potentes em tarefas simples.
+
+- 2026-04-29 (QA/Gemini retry): `F3-01` e `F3-02` aceitas pelo Gemini QA. Technical Feedbacks e walkthroughs reviewed criados; ambas movidas para DONE. Novos ciclos abertos: `F3-03` e `F3-04` em TODO, WIP=2/4.
