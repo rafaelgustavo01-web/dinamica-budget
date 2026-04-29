@@ -58,11 +58,9 @@ class PropostaExportService:
         capa["B3"] = proposta.titulo or ""
         capa["A4"] = "Status"
         capa["B4"] = proposta.status.value if hasattr(proposta.status, "value") else str(proposta.status)
-        capa["A5"] = "Cliente"
-        capa["B5"] = cliente.nome_fantasia if cliente else ""
         if cliente and getattr(cliente, "cnpj", None):
-            capa["A6"] = "CNPJ"
-            capa["B6"] = cliente.cnpj
+            capa["A5"] = "CNPJ"
+            capa["B5"] = cliente.cnpj
         capa["A8"] = "Total Direto"
         capa["B8"] = float(proposta.total_direto or 0)
         capa["A9"] = "Total Indireto"
