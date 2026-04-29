@@ -360,121 +360,125 @@ class EtlService:
         unique_itens = list(dedup.values())
         all_codes = [i.codigo_origem for i in unique_itens]
 
-        # ── REPLACE: clear BOM and orphaned items ─────────────────────────────
-        if request.mode == EtlMode.REPLACE:
-            await db.execute(text("DELETE FROM referencia.composicao_base"))
-            await db.execute(
+        try:
+            # ── REPLACE: clear BOM and orphaned items ─────────────────────────
+            if request.mode == EtlMode.REPLACE:
+                await db.execute(text("DELETE FROM referencia.composicao_base"))
+                await db.execute(
+                    text(
+                        """
+                        DELETE FROM referencia.base_tcpo
+                        WHERE id NOT IN (
+                            SELECT DISTINCT item_referencia_id
+                            FROM operacional.associacao_inteligente
+                        )
+                        """
+                    )
+                )
+
+            # ── Count existing to report inserts vs updates ───────────────────
+            existing_result = await db.execute(
                 text(
-                    """
-                    DELETE FROM referencia.base_tcpo
-                    WHERE id NOT IN (
-                        SELECT DISTINCT item_referencia_id
-                        FROM operacional.associacao_inteligente
-                    )
-                    """
-                )
+                    "SELECT codigo_origem FROM referencia.base_tcpo "
+                    "WHERE codigo_origem = ANY(:codes)"
+                ),
+                {"codes": all_codes},
             )
+            existing_codes: set[str] = {row[0] for row in existing_result.fetchall()}
+            inseridos = sum(1 for i in unique_itens if i.codigo_origem not in existing_codes)
+            atualizados = len(unique_itens) - inseridos
 
-        # ── Count existing to report inserts vs updates ───────────────────────
-        existing_result = await db.execute(
-            text(
-                "SELECT codigo_origem FROM referencia.base_tcpo "
-                "WHERE codigo_origem = ANY(:codes)"
-            ),
-            {"codes": all_codes},
-        )
-        existing_codes: set[str] = {row[0] for row in existing_result.fetchall()}
-        inseridos = sum(1 for i in unique_itens if i.codigo_origem not in existing_codes)
-        atualizados = len(unique_itens) - inseridos
-
-        # ── Batch upsert base_tcpo ────────────────────────────────────────────
-        for chunk_start in range(0, len(unique_itens), _BATCH_SIZE):
-            chunk = unique_itens[chunk_start : chunk_start + _BATCH_SIZE]
-            rows = [
-                {
-                    "id": uuid.uuid4(),
-                    "codigo_origem": i.codigo_origem,
-                    "descricao": i.descricao,
-                    "unidade_medida": i.unidade_medida,
-                    "custo_base": i.custo_base,
-                    "tipo_recurso": i.tipo_recurso,
-                }
-                for i in chunk
-            ]
-            stmt = pg_insert(BaseTcpo).values(rows)
-            stmt = stmt.on_conflict_do_update(
-                index_elements=["codigo_origem"],
-                set_={
-                    "descricao": stmt.excluded.descricao,
-                    "unidade_medida": stmt.excluded.unidade_medida,
-                    "custo_base": stmt.excluded.custo_base,
-                    "tipo_recurso": stmt.excluded.tipo_recurso,
-                    "updated_at": func.now(),
-                },
-            )
-            await db.execute(stmt)
-
-        # ── Resolve codigo_origem → UUID for relationships ────────────────────
-        relacoes_inseridas = 0
-        if all_relacoes:
-            all_rel_codes = list(
-                {r.pai_codigo for r in all_relacoes}
-                | {r.filho_codigo for r in all_relacoes}
-            )
-            mapping_result = await db.execute(
-                select(BaseTcpo.id, BaseTcpo.codigo_origem).where(
-                    BaseTcpo.codigo_origem.in_(all_rel_codes)
-                )
-            )
-            code_to_id: dict[str, uuid.UUID] = {
-                row[1]: row[0] for row in mapping_result.fetchall()
-            }
-
-            # UPSERT mode: delete existing BOM for parents we're about to reload
-            if request.mode == EtlMode.UPSERT:
-                parent_ids = list(
-                    {
-                        code_to_id[r.pai_codigo]
-                        for r in all_relacoes
-                        if r.pai_codigo in code_to_id
-                    }
-                )
-                if parent_ids:
-                    await db.execute(
-                        text(
-                            "DELETE FROM referencia.composicao_base "
-                            "WHERE servico_pai_id = ANY(:ids)"
-                        ),
-                        {"ids": parent_ids},
-                    )
-
-            # Batch insert composicao_base
-            valid_relacoes = []
-            for rel in all_relacoes:
-                pai_id = code_to_id.get(rel.pai_codigo)
-                filho_id = code_to_id.get(rel.filho_codigo)
-                if not pai_id or not filho_id:
-                    avisos.append(
-                        f"Relação ignorada — código ausente: "
-                        f"{rel.pai_codigo} → {rel.filho_codigo}"
-                    )
-                    continue
-                valid_relacoes.append(
+            # ── Batch upsert base_tcpo ────────────────────────────────────────
+            for chunk_start in range(0, len(unique_itens), _BATCH_SIZE):
+                chunk = unique_itens[chunk_start : chunk_start + _BATCH_SIZE]
+                rows = [
                     {
                         "id": uuid.uuid4(),
-                        "servico_pai_id": pai_id,
-                        "insumo_filho_id": filho_id,
-                        "quantidade_consumo": rel.quantidade_consumo,
-                        "unidade_medida": rel.unidade_medida,
+                        "codigo_origem": i.codigo_origem,
+                        "descricao": i.descricao,
+                        "unidade_medida": i.unidade_medida,
+                        "custo_base": i.custo_base,
+                        "tipo_recurso": i.tipo_recurso,
                     }
+                    for i in chunk
+                ]
+                stmt = pg_insert(BaseTcpo).values(rows)
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=["codigo_origem"],
+                    set_={
+                        "descricao": stmt.excluded.descricao,
+                        "unidade_medida": stmt.excluded.unidade_medida,
+                        "custo_base": stmt.excluded.custo_base,
+                        "tipo_recurso": stmt.excluded.tipo_recurso,
+                        "updated_at": func.now(),
+                    },
                 )
+                await db.execute(stmt)
 
-            for chunk_start in range(0, len(valid_relacoes), _BATCH_SIZE):
-                chunk = valid_relacoes[chunk_start : chunk_start + _BATCH_SIZE]
-                await db.execute(pg_insert(ComposicaoBase).values(chunk))
-                relacoes_inseridas += len(chunk)
+            # ── Resolve codigo_origem → UUID for relationships ────────────────
+            relacoes_inseridas = 0
+            if all_relacoes:
+                all_rel_codes = list(
+                    {r.pai_codigo for r in all_relacoes}
+                    | {r.filho_codigo for r in all_relacoes}
+                )
+                mapping_result = await db.execute(
+                    select(BaseTcpo.id, BaseTcpo.codigo_origem).where(
+                        BaseTcpo.codigo_origem.in_(all_rel_codes)
+                    )
+                )
+                code_to_id: dict[str, uuid.UUID] = {
+                    row[1]: row[0] for row in mapping_result.fetchall()
+                }
 
-        await db.commit()
+                # UPSERT mode: delete existing BOM for parents we're about to reload
+                if request.mode == EtlMode.UPSERT:
+                    parent_ids = list(
+                        {
+                            code_to_id[r.pai_codigo]
+                            for r in all_relacoes
+                            if r.pai_codigo in code_to_id
+                        }
+                    )
+                    if parent_ids:
+                        await db.execute(
+                            text(
+                                "DELETE FROM referencia.composicao_base "
+                                "WHERE servico_pai_id = ANY(:ids)"
+                            ),
+                            {"ids": parent_ids},
+                        )
+
+                # Batch insert composicao_base
+                valid_relacoes = []
+                for rel in all_relacoes:
+                    pai_id = code_to_id.get(rel.pai_codigo)
+                    filho_id = code_to_id.get(rel.filho_codigo)
+                    if not pai_id or not filho_id:
+                        avisos.append(
+                            f"Relação ignorada — código ausente: "
+                            f"{rel.pai_codigo} → {rel.filho_codigo}"
+                        )
+                        continue
+                    valid_relacoes.append(
+                        {
+                            "id": uuid.uuid4(),
+                            "servico_pai_id": pai_id,
+                            "insumo_filho_id": filho_id,
+                            "quantidade_consumo": rel.quantidade_consumo,
+                            "unidade_medida": rel.unidade_medida,
+                        }
+                    )
+
+                for chunk_start in range(0, len(valid_relacoes), _BATCH_SIZE):
+                    chunk = valid_relacoes[chunk_start : chunk_start + _BATCH_SIZE]
+                    await db.execute(pg_insert(ComposicaoBase).values(chunk))
+                    relacoes_inseridas += len(chunk)
+
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
 
         # ── Optional embedding recompute ──────────────────────────────────────
         embeddings_computados = 0
@@ -591,8 +595,8 @@ class EtlService:
             await db.execute(
                 delete(EtlPreview).where(EtlPreview.expira_em < datetime.now(UTC))
             )
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("etl.token_purge_failed", error=str(exc))
 
         token = uuid.uuid4()
         expira_em = datetime.now(UTC) + timedelta(hours=_TOKEN_TTL_HOURS)

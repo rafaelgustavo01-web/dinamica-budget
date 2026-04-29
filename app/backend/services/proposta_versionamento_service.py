@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import inspect, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.exceptions import NotFoundError, UnprocessableEntityError
@@ -23,6 +23,25 @@ from backend.models.proposta_recurso_extra import PropostaRecursoExtra
 from backend.repositories.proposta_repository import PropostaRepository
 
 UTC = timezone.utc
+
+
+def _clone_model_for_proposta(item, proposta_id: UUID):
+    values = {
+        attr.key: getattr(item, attr.key)
+        for attr in inspect(item).mapper.column_attrs
+        if attr.key not in {"id", "proposta_id", "criado_em", "atualizado_em"}
+    }
+    return item.__class__(id=uuid.uuid4(), proposta_id=proposta_id, **values)
+
+
+def _clone_model_with_overrides(item, **overrides):
+    excluded = {"id", "criado_em", "atualizado_em", *overrides.keys()}
+    values = {
+        attr.key: getattr(item, attr.key)
+        for attr in inspect(item).mapper.column_attrs
+        if attr.key not in excluded
+    }
+    return item.__class__(id=uuid.uuid4(), **values, **overrides)
 
 
 class PropostaVersionamentoService:
@@ -100,11 +119,7 @@ class PropostaVersionamentoService:
             result = await self.db.execute(select(model).where(model.proposta_id == atual.id))
             items = result.scalars().all()
             for item in items:
-                # Expunge from session to create a detached clone
-                self.db.expunge(item)
-                item.id = uuid.uuid4()
-                item.proposta_id = nova.id
-                self.db.add(item)
+                self.db.add(_clone_model_for_proposta(item, nova.id))
                 
         # Mobilizacao and Quantidades — batch-fetch all quantities in one query (eliminates N+1)
         mob_result = await self.db.execute(select(PropostaPcMobilizacao).where(PropostaPcMobilizacao.proposta_id == atual.id))
@@ -125,25 +140,17 @@ class PropostaVersionamentoService:
 
         for mob in mobs:
             old_mob_id = mob.id
-            self.db.expunge(mob)
-            mob.id = uuid.uuid4()
-            mob.proposta_id = nova.id
-            self.db.add(mob)
+            new_mob = _clone_model_for_proposta(mob, nova.id)
+            self.db.add(new_mob)
 
             for qtd in qtds_by_mob.get(old_mob_id, []):
-                self.db.expunge(qtd)
-                qtd.id = uuid.uuid4()
-                qtd.mobilizacao_id = mob.id
-                self.db.add(qtd)
+                self.db.add(_clone_model_with_overrides(qtd, mobilizacao_id=new_mob.id))
 
         # Clone Recursos Extras
         extra_result = await self.db.execute(select(PropostaRecursoExtra).where(PropostaRecursoExtra.proposta_id == atual.id))
         extras = extra_result.scalars().all()
         for extra in extras:
-            self.db.expunge(extra)
-            extra.id = uuid.uuid4()
-            extra.proposta_id = nova.id
-            self.db.add(extra)
+            self.db.add(_clone_model_for_proposta(extra, nova.id))
 
         await self.db.flush()
         await self.db.refresh(nova)

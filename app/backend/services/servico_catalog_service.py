@@ -30,6 +30,7 @@ from backend.schemas.servico import (
 from backend.services.embedding_sync_service import embedding_sync_service
 
 logger = get_logger(__name__)
+_MAX_EXPLODE_DEPTH = 10
 
 
 class ServicoCatalogService:
@@ -186,9 +187,12 @@ class ServicoCatalogService:
             versao_repo = VersaoComposicaoRepository(db)
             versao = await versao_repo.get_versao_ativa(servico_id)
             if versao:
-                # Batch-fetch all BaseTcpo children in one query
+                # Batch-fetch all children in one query per source
                 base_ids = [c.insumo_base_id for c in versao.itens if c.insumo_base_id is not None]
                 base_filhos_map = await base_repo.get_by_ids(base_ids)
+                propria_repo = ItensPropiosRepository(db)
+                proprio_ids = [c.insumo_proprio_id for c in versao.itens if c.insumo_proprio_id is not None]
+                proprio_filhos_map = await propria_repo.get_active_by_ids(proprio_ids)
                 for comp in versao.itens:
                     if comp.insumo_base_id is not None:
                         filho = base_filhos_map.get(comp.insumo_base_id)
@@ -209,8 +213,7 @@ class ServicoCatalogService:
                             )
                         )
                     elif comp.insumo_proprio_id is not None:
-                        propria_repo = ItensPropiosRepository(db)
-                        filho = await propria_repo.get_active_by_id(comp.insumo_proprio_id)
+                        filho = proprio_filhos_map.get(comp.insumo_proprio_id)
                         if filho is None:
                             continue
                         custo_item = comp.quantidade_consumo * (filho.custo_unitario or Decimal("0"))
@@ -235,8 +238,12 @@ class ServicoCatalogService:
         item_id: UUID,
         visited: set[UUID],
         db: AsyncSession,
+        depth: int = 0,
+        max_depth: int = _MAX_EXPLODE_DEPTH,
     ) -> tuple[list[ComposicaoItemResponse], Decimal]:
         """DFS over referencia.composicao_base (immutable TCPO BOM)."""
+        if depth > max_depth:
+            raise ValidationError("Profundidade máxima excedida na composição TCPO.")
         if item_id in visited:
             raise ValidationError("Ciclo detectado na composiÃ§Ã£o TCPO.")
         visited.add(item_id)
@@ -257,7 +264,7 @@ class ServicoCatalogService:
 
             if filho.tipo_recurso == TipoRecurso.SERVICO:
                 sub_itens, sub_custo = await self._explode_recursivo_tcpo(
-                    item_id=filho.id, visited=visited, db=db
+                    item_id=filho.id, visited=visited, db=db, depth=depth + 1, max_depth=max_depth
                 )
                 for sub in sub_itens:
                     items.append(

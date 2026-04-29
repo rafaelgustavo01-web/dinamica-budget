@@ -9,11 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.exceptions import NotFoundError, UnprocessableEntityError
 from backend.models.base_tcpo import BaseTcpo
 from backend.models.bcu import (
-    BcuCabecalho,
     BcuEquipamentoItem,
     BcuEpiItem,
     BcuFerramentaItem,
     BcuMaoObraItem,
+    BcuMobilizacaoItem,
     BcuTableType,
     DeParaTcpoBcu,
 )
@@ -103,6 +103,7 @@ class BcuDeParaService:
         eqp_ids: list[UUID] = []
         epi_ids: list[UUID] = []
         fer_ids: list[UUID] = []
+        mob_ids: list[UUID] = []
         for row in rows:
             if row.bcu_table_type == BcuTableType.MO:
                 mo_ids.append(row.bcu_item_id)
@@ -112,6 +113,8 @@ class BcuDeParaService:
                 epi_ids.append(row.bcu_item_id)
             elif row.bcu_table_type == BcuTableType.FER:
                 fer_ids.append(row.bcu_item_id)
+            elif row.bcu_table_type == BcuTableType.MOB:
+                mob_ids.append(row.bcu_item_id)
 
         desc_map: dict[tuple[str, UUID], str | None] = {}
 
@@ -142,6 +145,13 @@ class BcuDeParaService:
             )
             for item_id, desc in result.all():
                 desc_map[("FER", item_id)] = desc
+
+        if mob_ids:
+            result = await self.db.execute(
+                select(BcuMobilizacaoItem.id, BcuMobilizacaoItem.descricao).where(BcuMobilizacaoItem.id.in_(mob_ids))
+            )
+            for item_id, desc in result.all():
+                desc_map[("MOB", item_id)] = desc
 
         return desc_map
 
@@ -184,6 +194,8 @@ class BcuDeParaService:
             raise NotFoundError("DePara", str(de_para_id))
 
         bt = await self.db.get(BaseTcpo, de_para.base_tcpo_id)
+        if not bt:
+            raise NotFoundError("BaseTcpo", str(de_para.base_tcpo_id))
         await self._validar_bcu_item_existe(bcu_table_type, bcu_item_id)
         tr = bt.tipo_recurso.value if hasattr(bt.tipo_recurso, "value") else bt.tipo_recurso
         self._validar_tipo_coerente(tr if bt.tipo_recurso else None, bcu_table_type)
@@ -217,7 +229,7 @@ class BcuDeParaService:
         elif table_type == BcuTableType.FER:
             r = await self.db.execute(select(BcuFerramentaItem.id).where(BcuFerramentaItem.id == item_id))
         elif table_type == BcuTableType.MOB:
-            r = await self.db.execute(select(BcuCabecalho.id).where(BcuCabecalho.id == item_id))
+            r = await self.db.execute(select(BcuMobilizacaoItem.id).where(BcuMobilizacaoItem.id == item_id))
         else:
             raise UnprocessableEntityError(f"Tipo BCU invalido: {table_type}")
 

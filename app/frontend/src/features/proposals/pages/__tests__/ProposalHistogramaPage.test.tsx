@@ -68,7 +68,7 @@ const mockHistograma = {
     {
       tabela: 'mao-obra',
       item_id: 'mo-1',
-      campo: 'salario',
+      campo: 'custo_unitario_h',
       valor_snapshot: 3500,
       valor_atual_bcu: 3800,
       valor_proposta: 3500,
@@ -92,7 +92,7 @@ describe('ProposalHistogramaPage', () => {
 
     expect(await screen.findByText('Histograma da Proposta')).toBeInTheDocument();
     expect(await screen.findByText('Pedreiro')).toBeInTheDocument();
-    expect(screen.getByText('CPU Desatualizada')).toBeInTheDocument();
+    expect(await screen.findByText('CPU Desatualizada')).toBeInTheDocument();
   });
 
   it('troca de aba (MO -> EQP) muda conteudo da tabela', async () => {
@@ -138,14 +138,14 @@ describe('ProposalHistogramaPage', () => {
 
   it('edicao inline de uma celula dispara mutation com payload correto', async () => {
     let patched = false;
+    let capturedBody: Record<string, unknown> | null = null;
     server.use(
       http.get('/api/v1/propostas/123/histograma', () => {
         return HttpResponse.json(mockHistograma);
       }),
       http.patch('/api/v1/propostas/123/histograma/mao-obra/mo-1', async ({ request }) => {
-        const body = (await request.json()) as Record<string, unknown>;
+        capturedBody = (await request.json()) as Record<string, unknown>;
         patched = true;
-        expect(body.salario).toBe(4000);
         return HttpResponse.json({ ok: true });
       }),
     );
@@ -162,5 +162,6 @@ describe('ProposalHistogramaPage', () => {
     fireEvent.blur(salarioInput);
 
     await waitFor(() => expect(patched).toBe(true));
+    expect(capturedBody).toEqual(expect.objectContaining({ salario: 4000 }));
   });
 });

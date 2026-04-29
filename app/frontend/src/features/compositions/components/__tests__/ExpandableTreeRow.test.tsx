@@ -147,8 +147,7 @@ describe('ExpandableTreeRow', () => {
     await waitFor(() => expect(screen.getByText('Sub-servico')).toBeInTheDocument());
 
     // Expandir nível 2
-    const chevrons = screen.getAllByRole('button');
-    fireEvent.click(chevrons[chevrons.length - 1]);
+    fireEvent.click(screen.getByTestId('expand-toggle-srv-2'));
 
     await waitFor(() => expect(screen.getByText('Tubo PVC')).toBeInTheDocument());
     expect(screen.getByText('TUB-001')).toBeInTheDocument();

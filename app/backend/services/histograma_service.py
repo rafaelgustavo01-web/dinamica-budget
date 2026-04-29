@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.exceptions import NotFoundError, UnprocessableEntityError, ValidationError
+from backend.core.logging import get_logger
 from backend.models.bcu import (
     BcuCabecalho,
     BcuEncargoItem,
@@ -39,6 +40,50 @@ from backend.repositories.bcu_repository import BcuRepository
 from backend.repositories.proposta_pc_repository import ProposalPcRepository
 from backend.repositories.proposta_repository import PropostaRepository
 from backend.repositories.proposta_recurso_extra_repository import PropostaRecursoExtraRepository
+
+logger = get_logger(__name__)
+
+EDITABLE_FIELDS = {
+    "mao-obra": {
+        "quantidade",
+        "salario",
+        "previsao_reajuste",
+        "encargos_percent",
+        "periculosidade_insalubridade",
+        "refeicao",
+        "agua_potavel",
+        "vale_alimentacao",
+        "plano_saude",
+        "ferramentas_val",
+        "seguro_vida",
+        "abono_ferias",
+        "uniforme_val",
+        "epi_val",
+        "custo_unitario_h",
+        "custo_mensal",
+        "mobilizacao",
+    },
+    "equipamento": {
+        "combustivel_utilizado",
+        "consumo_l_h",
+        "aluguel_r_h",
+        "combustivel_r_h",
+        "mao_obra_r_h",
+        "hora_produtiva",
+        "hora_improdutiva",
+        "mes",
+        "aluguel_mensal",
+    },
+    "equipamento-premissa": {"horas_mes", "preco_gasolina_l", "preco_diesel_l"},
+    "encargo": {"taxa_percent", "grupo", "codigo_grupo", "discriminacao_encargo"},
+    "epi": {"unidade", "custo_unitario", "quantidade", "vida_util_meses", "custo_epi_mes"},
+    "ferramenta": {"item", "unidade", "quantidade", "preco", "preco_total"},
+    "mobilizacao": {"descricao", "funcao", "tipo_mao_obra"},
+}
+
+
+def _tipo_recurso_value(tipo: Any) -> str | None:
+    return tipo.value if hasattr(tipo, "value") else tipo
 
 
 class HistogramaService:
@@ -194,7 +239,8 @@ class HistogramaService:
                         })
             else:
                 # Não mapeado (sem BCU)
-                if tcpo.tipo_recurso and tcpo.tipo_recurso.value == "MO":
+                tipo_recurso = _tipo_recurso_value(tcpo.tipo_recurso)
+                if tipo_recurso == "MO":
                     mo_items.append({
                         "id": uuid.uuid4(),
                         "proposta_id": proposta_id,
@@ -205,7 +251,7 @@ class HistogramaService:
                         "valor_bcu_snapshot": tcpo.custo_base,
                         "editado_manualmente": False,
                     })
-                elif tcpo.tipo_recurso and tcpo.tipo_recurso.value == "EQUIPAMENTO":
+                elif tipo_recurso == "EQUIPAMENTO":
                     eqp_items.append({
                         "id": uuid.uuid4(),
                         "proposta_id": proposta_id,
@@ -216,18 +262,37 @@ class HistogramaService:
                         "valor_bcu_snapshot": tcpo.custo_base,
                         "editado_manualmente": False,
                     })
-                elif tcpo.tipo_recurso and tcpo.tipo_recurso.value == "INSUMO":
-                    # Assume EPI for insumo fallback if not mapped, or skip? We'll put in EPI.
-                    epi_items.append({
-                        "id": uuid.uuid4(),
-                        "proposta_id": proposta_id,
-                        "bcu_item_id": None,
-                        "codigo_origem": tcpo.codigo_origem,
-                        "epi": tcpo.descricao,
-                        "custo_unitario": tcpo.custo_base,
-                        "valor_bcu_snapshot": tcpo.custo_base,
-                        "editado_manualmente": False,
-                    })
+                elif tipo_recurso == "INSUMO":
+                    codigo_origem = (tcpo.codigo_origem or "").upper()
+                    if codigo_origem.startswith("FER-"):
+                        fer_items.append({
+                            "id": uuid.uuid4(),
+                            "proposta_id": proposta_id,
+                            "bcu_item_id": None,
+                            "codigo_origem": tcpo.codigo_origem,
+                            "descricao": tcpo.descricao,
+                            "preco": tcpo.custo_base,
+                            "valor_bcu_snapshot": tcpo.custo_base,
+                            "editado_manualmente": False,
+                        })
+                    elif codigo_origem.startswith("EPI-"):
+                        epi_items.append({
+                            "id": uuid.uuid4(),
+                            "proposta_id": proposta_id,
+                            "bcu_item_id": None,
+                            "codigo_origem": tcpo.codigo_origem,
+                            "epi": tcpo.descricao,
+                            "custo_unitario": tcpo.custo_base,
+                            "valor_bcu_snapshot": tcpo.custo_base,
+                            "editado_manualmente": False,
+                        })
+                    else:
+                        logger.warning(
+                            "histograma.insumo_sem_de_para_ignorado",
+                            proposta_id=str(proposta_id),
+                            base_tcpo_id=str(tcpo.id),
+                            codigo_origem=tcpo.codigo_origem,
+                        )
 
         # Upsert
         await self.repo.bulk_upsert(PropostaPcMaoObra, mo_items, ["proposta_id", "bcu_item_id"])
@@ -252,7 +317,6 @@ class HistogramaService:
                 }])
 
         # Encargos (Integral)
-        await self.repo.clear_encargos(proposta_id)
         bcu_encargos = await self.bcu_repo.list_encargos(cabecalho.id)
         encargos_items = []
         for e in bcu_encargos:
@@ -268,7 +332,9 @@ class HistogramaService:
                 "valor_bcu_snapshot": e.taxa_percent,
                 "editado_manualmente": False,
             })
-        await self.repo.bulk_insert(PropostaPcEncargo, encargos_items)
+        async with self.db.begin_nested():
+            await self.repo.clear_encargos(proposta_id)
+            await self.repo.bulk_insert(PropostaPcEncargo, encargos_items)
 
         # Mobilizacao (Integral)
         await self.repo.clear_mobilizacao(proposta_id)
@@ -467,6 +533,11 @@ class HistogramaService:
         if not item:
             raise NotFoundError("Item", str(item_id))
 
+        allowed = EDITABLE_FIELDS[tabela]
+        invalid_fields = sorted(set(payload) - allowed)
+        if invalid_fields:
+            raise ValidationError(f"Campo(s) não editável(is): {', '.join(invalid_fields)}")
+
         for k, v in payload.items():
             if hasattr(item, k):
                 setattr(item, k, v)
@@ -474,6 +545,8 @@ class HistogramaService:
         item.editado_manualmente = True
         
         proposta = await self.proposta_repo.get_by_id(item.proposta_id)
+        if not proposta:
+            raise NotFoundError("Proposta", str(item.proposta_id))
         proposta.cpu_desatualizada = True
 
         self.db.add(item)
@@ -513,6 +586,8 @@ class HistogramaService:
         item_pc.editado_manualmente = False
         
         proposta = await self.proposta_repo.get_by_id(item_pc.proposta_id)
+        if not proposta:
+            raise NotFoundError("Proposta", str(item_pc.proposta_id))
         proposta.cpu_desatualizada = True
         
         self.db.add(item_pc)

@@ -53,7 +53,8 @@ export function HistogramaPage() {
     mutationFn: () => histogramaApi.montarHistograma(id!),
     onSuccess: (counts) => {
       void queryClient.invalidateQueries({ queryKey: ['histograma', id] });
-      showMessage(`Histograma montado: ${Object.values(counts).reduce((a, b) => a + b, 0)} itens.`);
+      const total = Object.values(counts ?? {}).reduce((a, b) => a + Number(b ?? 0), 0);
+      showMessage(`Histograma montado: ${total} itens.`);
     },
     onError: () => showMessage('Erro ao montar histograma.', 'error'),
   });

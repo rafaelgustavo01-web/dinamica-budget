@@ -53,7 +53,7 @@ class PropostaExportService:
         capa["A1"] = "Codigo"
         capa["B1"] = "Cliente"
         capa["A2"] = proposta.codigo
-        capa["B2"] = cliente.nome_fantasia if cliente else ""
+        capa["B2"] = getattr(cliente, "nome_fantasia", "")
         capa["A3"] = "Titulo"
         capa["B3"] = proposta.titulo or ""
         capa["A4"] = "Status"
@@ -74,10 +74,9 @@ class PropostaExportService:
         resumo = wb.create_sheet("Quadro-Resumo")
         _write_header(resumo, 1, ["Tipo de Recurso", "Custo Total"])
         agregado: dict[str, Decimal] = {}
-        composicoes_por_item: dict = {}
+        composicoes_por_item = await self.composicao_repo.list_by_proposta_items_batch(proposta_id)
         for item in itens:
-            comps = await self.composicao_repo.list_by_proposta_item(item.id)
-            composicoes_por_item[item.id] = comps
+            comps = composicoes_por_item.get(item.id, [])
             for c in comps:
                 tipo = c.tipo_recurso.value if c.tipo_recurso else "OUTRO"
                 agregado[tipo] = agregado.get(tipo, Decimal("0")) + (c.custo_total_insumo or Decimal("0"))
@@ -116,9 +115,9 @@ class PropostaExportService:
                 comp_ws.cell(row=row, column=8, value=c.nivel)
                 row += 1
 
-        with BytesIO() as buffer:
-            wb.save(buffer)
-            return buffer.getvalue()
+        buffer = BytesIO()
+        wb.save(buffer)
+        return buffer.getvalue()
 
     async def gerar_pdf(self, proposta_id: UUID) -> bytes:
         proposta = await self.proposta_repo.get_by_id(proposta_id)
@@ -126,33 +125,33 @@ class PropostaExportService:
             raise NotFoundError("Proposta", str(proposta_id))
         cliente = await self.cliente_repo.get_by_id(proposta.cliente_id)
 
-        with BytesIO() as buffer:
-            doc = SimpleDocTemplate(buffer, pagesize=A4, title=f"Proposta {proposta.codigo}")
-            styles = getSampleStyleSheet()
-            story = [
-                Paragraph(f"Proposta {proposta.codigo}", styles["Title"]),
-                Spacer(1, 12),
-                Paragraph(f"<b>Titulo:</b> {proposta.titulo or '-'}", styles["Normal"]),
-                Paragraph(f"<b>Cliente:</b> {cliente.nome_fantasia if cliente else '-'}", styles["Normal"]),
-            ]
-            if cliente and getattr(cliente, "cnpj", None):
-                story.append(Paragraph(f"<b>CNPJ:</b> {cliente.cnpj}", styles["Normal"]))
-            story.append(Spacer(1, 18))
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, title=f"Proposta {proposta.codigo}")
+        styles = getSampleStyleSheet()
+        story = [
+            Paragraph(f"Proposta {proposta.codigo}", styles["Title"]),
+            Spacer(1, 12),
+            Paragraph(f"<b>Titulo:</b> {proposta.titulo or '-'}", styles["Normal"]),
+            Paragraph(f"<b>Cliente:</b> {getattr(cliente, 'nome_fantasia', '-')}", styles["Normal"]),
+        ]
+        if cliente and getattr(cliente, "cnpj", None):
+            story.append(Paragraph(f"<b>CNPJ:</b> {cliente.cnpj}", styles["Normal"]))
+        story.append(Spacer(1, 18))
 
-            totals_data = [
-                ["Indicador", "Valor (R$)"],
-                ["Total Direto", f"{float(proposta.total_direto or 0):,.2f}"],
-                ["Total Indireto", f"{float(proposta.total_indireto or 0):,.2f}"],
-                ["Total Geral", f"{float(proposta.total_geral or 0):,.2f}"],
-            ]
-            table = Table(totals_data, hAlign="LEFT")
-            table.setStyle(TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1F4E78")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                ("ALIGN", (1, 1), (1, -1), "RIGHT"),
-            ]))
-            story.append(table)
+        totals_data = [
+            ["Indicador", "Valor (R$)"],
+            ["Total Direto", f"{float(proposta.total_direto or 0):,.2f}"],
+            ["Total Indireto", f"{float(proposta.total_indireto or 0):,.2f}"],
+            ["Total Geral", f"{float(proposta.total_geral or 0):,.2f}"],
+        ]
+        table = Table(totals_data, hAlign="LEFT")
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1F4E78")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("ALIGN", (1, 1), (1, -1), "RIGHT"),
+        ]))
+        story.append(table)
 
-            doc.build(story)
-            return buffer.getvalue()
+        doc.build(story)
+        return buffer.getvalue()

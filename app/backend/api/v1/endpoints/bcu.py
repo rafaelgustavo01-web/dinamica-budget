@@ -138,7 +138,6 @@ async def importar_converter(
             error=str(exc),
             exc_info=True,
         )
-        await db.rollback()
         raise ValidationError(
             f"Erro inesperado ao importar BCU: {exc.__class__.__name__}: {exc}"
         ) from exc

@@ -26,14 +26,15 @@ interface Props {
     tipo_recurso?: string | null;
   };
   depth?: number;
+  maxDepth?: number;
   isExpandable?: boolean;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
 }
 
-export function ExpandableTreeRow({ item, depth = 0, isExpandable, isSelected, onSelect }: Props) {
+export function ExpandableTreeRow({ item, depth = 0, maxDepth = 5, isExpandable, isSelected, onSelect }: Props) {
   const [open, setOpen] = useState(false);
-  const canExpand = isExpandable ?? item.tipo_recurso === 'SERVICO';
+  const canExpand = depth < maxDepth && (isExpandable ?? item.tipo_recurso === 'SERVICO');
 
   const componentesQuery = useQuery({
     queryKey: ['composicao-componentes', item.id],
@@ -64,7 +65,13 @@ export function ExpandableTreeRow({ item, depth = 0, isExpandable, isSelected, o
         <TableCell sx={{ py: 1, px: 1.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', pl: `${indent}px` }}>
             {canExpand ? (
-              <IconButton size="small" onClick={handleToggle} sx={{ mr: 0.5 }}>
+              <IconButton
+                size="small"
+                onClick={handleToggle}
+                sx={{ mr: 0.5 }}
+                data-testid={`expand-toggle-${item.id}`}
+                aria-label={open ? `Recolher ${item.descricao}` : `Expandir ${item.descricao}`}
+              >
                 {open ? <KeyboardArrowDownIcon fontSize="small" /> : <KeyboardArrowRightIcon fontSize="small" />}
               </IconButton>
             ) : (
@@ -128,6 +135,8 @@ export function ExpandableTreeRow({ item, depth = 0, isExpandable, isSelected, o
                         tipo_recurso: child.tipo_recurso,
                       }}
                       depth={depth + 1}
+                      maxDepth={maxDepth}
+                      isExpandable={child.tipo_recurso === 'SERVICO'}
                     />
                   ))
                 ) : (
