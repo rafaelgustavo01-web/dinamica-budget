@@ -12,12 +12,12 @@ Responsável: Research AI / QA Re-avaliação
 ## Status Operacional — 2026-04-29
 
 - Ciclo concluído: `F2-10`, `F2-11`, `F2-12`, `F2-13`, `F2-DT-A`, `F2-DT-B`, `F2-DT-C` em DONE.
-- WIP atual: **1/4** (`F3-04` em TODO para configurações/polimento/smoke da demo; `F3-03` em PLAN-HOLD).
+- WIP atual: **1/4** (`F3-04` em TESTED aguardando QA Gemini; `F3-03` em PLAN-HOLD).
 - WIP assumido pelo PO em 2026-04-29: **4**; abrir novo ciclo assim que QA mover sprint de TESTED para DONE, respeitando dependências.
 - Milestone 6 — Proposta Completa: **fechado**.
 - Milestone 7 — Compras e Negociação: **GO condicional** validado por Codex + Claude; fica **pós-demo**, após saneamento/contratos.
 - Decisão PO 2026-04-29: antes de Compras, abrir **Fase 3 — Demo Readiness / Polimento UI+UX** para corrigir erros de interface e deixar o fluxo apresentável esta semana.
-- Sprint ativa: `F3-04` em TODO. `F3-03` fica em PLAN-HOLD até concluirmos todas as configurações/fluxos que serão apresentados.
+- Sprint ativa: `F3-04` em TESTED aguardando QA Gemini. `F3-03` fica em PLAN-HOLD até aprovação de `F3-04` e fechamento definitivo das configurações/fluxos apresentados.
 
 ## Sprints Propostas
 
@@ -90,7 +90,7 @@ FASE C — Módulo de Orçamentos
 - `F3-01` em DONE: auditoria UI/UX aceita pelo QA Gemini.
 - `F3-02` em DONE: correções críticas P1 aceitas pelo QA Gemini.
 - `F3-03` em PLAN-HOLD: roteiro/dados de demo só depois das configurações finais.
-- `F3-04` em TODO: configurações finais + polimento visual + smoke de demo.
+- `F3-04` em TESTED: configurações finais + polimento visual + smoke de demo executados; aguardando QA Gemini.
 - Milestone 7 permanece **GO condicional pós-demo**.
 
 ### Decisões de alocação (Scrum Master, 2026-04-26)
