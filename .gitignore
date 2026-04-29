@@ -111,3 +111,6 @@ resultado/
 .codex/
 
 # ─── ARTEFACTS ──────────────
+# ─── UPLOAD SAMPLES ───────────
+*.xlsx
+*.csv
