@@ -548,6 +548,273 @@ class BcuService:
         await self.db.refresh(cab)
         return cab
 
+    async def importar_converter(
+        self,
+        file_bytes: bytes,
+        nome_arquivo: str,
+        criador_id: uuid.UUID,
+    ) -> BcuCabecalho:
+        """
+        Importa 'Converter em Data Center.xlsx' (6 abas: ENCARGOS, EPI-UNIFORME,
+        EQUIPAMENTOS, EXAMES, FERRAMENTAS, MAO DE OBRA) e popula bcu.*.
+
+        Diferenças vs. importar_bcu (BCU.xlsx legado):
+        - Estrutura de colunas mais simples (sem premissas de equipamento, sem horista/mensalista
+          duplicados, sem mobilizacao);
+        - Aba EXAMES não tem tabela alvo no schema BCU atual — registrada como aviso no cabecalho.observacao;
+        - sync de referencia.base_tcpo cobre MO/EQP/EPI/FER (codigo_origem = BCU-{tipo}-{N}).
+        """
+        wb = openpyxl.load_workbook(BytesIO(file_bytes), data_only=True)
+
+        # Pop existing rows for same filename (idempotência)
+        result = await self.db.execute(
+            select(BcuCabecalho).where(BcuCabecalho.nome_arquivo == nome_arquivo)
+        )
+        for cab in result.scalars().all():
+            await self.db.delete(cab)
+        await self.db.flush()
+
+        cab = BcuCabecalho(
+            id=uuid.uuid4(),
+            nome_arquivo=nome_arquivo,
+            versao_layout="converter-v1",
+            is_ativo=False,
+            criado_por_id=criador_id,
+        )
+        self.db.add(cab)
+        await self.db.flush()
+
+        seq: dict[str, int] = {}
+        all_base_tcpo: list[BaseTcpo] = []
+        avisos: list[str] = []
+        total_rows = 0
+
+        def _find_sheet(*keywords: str) -> str | None:
+            for s in wb.sheetnames:
+                up = s.upper()
+                if all(k.upper() in up for k in keywords):
+                    return s
+            return None
+
+        # ── MAO DE OBRA ──
+        s = _find_sheet("MÃO DE OBRA") or _find_sheet("MAO DE OBRA")
+        if s:
+            for row in wb[s].iter_rows(min_row=2, values_only=True):
+                if not row or row[0] is None or row[1] is None:
+                    continue
+                seq["MO"] = seq.get("MO", 0) + 1
+                codigo_origem = f"BCU-MO-{seq['MO']:03d}"
+                desc = str(row[1]).strip()
+                self.db.add(
+                    BcuMaoObraItem(
+                        id=uuid.uuid4(),
+                        cabecalho_id=cab.id,
+                        descricao_funcao=desc,
+                        codigo_origem=codigo_origem,
+                        salario=_to_decimal(row[2]) if len(row) > 2 else None,
+                        previsao_reajuste=_to_decimal(row[3]) if len(row) > 3 else None,
+                        periculosidade_insalubridade=_to_decimal(row[4]) if len(row) > 4 else None,
+                        refeicao=_to_decimal(row[5]) if len(row) > 5 else None,
+                        agua_potavel=_to_decimal(row[6]) if len(row) > 6 else None,
+                        vale_alimentacao=_to_decimal(row[7]) if len(row) > 7 else None,
+                        plano_saude=_to_decimal(row[8]) if len(row) > 8 else None,
+                        seguro_vida=_to_decimal(row[9]) if len(row) > 9 else None,
+                        abono_ferias=_to_decimal(row[10]) if len(row) > 10 else None,
+                    )
+                )
+                total_rows += 1
+                all_base_tcpo.append(
+                    BaseTcpo(
+                        id=uuid.uuid4(),
+                        codigo_origem=codigo_origem,
+                        descricao=desc,
+                        unidade_medida="H",
+                        custo_base=_to_decimal(row[2]) or 0.0,
+                        tipo_recurso="MO",
+                    )
+                )
+        else:
+            avisos.append("Aba 'MÃO DE OBRA' não encontrada.")
+
+        # ── EQUIPAMENTOS ──
+        s = _find_sheet("EQUIPAMENTO")
+        if s:
+            for row in wb[s].iter_rows(min_row=2, values_only=True):
+                if not row or row[0] is None or row[1] is None:
+                    continue
+                seq["EQP"] = seq.get("EQP", 0) + 1
+                codigo_origem = f"BCU-EQP-{seq['EQP']:03d}"
+                desc = str(row[1]).strip()
+                self.db.add(
+                    BcuEquipamentoItem(
+                        id=uuid.uuid4(),
+                        cabecalho_id=cab.id,
+                        codigo=str(row[0]).strip() if row[0] else None,
+                        codigo_origem=codigo_origem,
+                        equipamento=desc,
+                        combustivel_utilizado=str(row[2]).strip() if len(row) > 2 and row[2] else None,
+                        consumo_l_h=_to_decimal(row[3]) if len(row) > 3 else None,
+                        aluguel_r_h=_to_decimal(row[4]) if len(row) > 4 else None,
+                        aluguel_mensal=_to_decimal(row[5]) if len(row) > 5 else None,
+                    )
+                )
+                total_rows += 1
+                all_base_tcpo.append(
+                    BaseTcpo(
+                        id=uuid.uuid4(),
+                        codigo_origem=codigo_origem,
+                        descricao=desc,
+                        unidade_medida="H",
+                        custo_base=_to_decimal(row[4]) or 0.0,
+                        tipo_recurso="EQUIPAMENTO",
+                    )
+                )
+        else:
+            avisos.append("Aba 'EQUIPAMENTOS' não encontrada.")
+
+        # ── ENCARGOS ──
+        s = _find_sheet("ENCARGO")
+        if s:
+            for row in wb[s].iter_rows(min_row=2, values_only=True):
+                if not row or row[0] is None or row[4] is None:
+                    continue
+                tipo = str(row[1]).strip().upper() if len(row) > 1 and row[1] else "HORISTA"
+                if tipo not in ("HORISTA", "MENSALISTA"):
+                    tipo = "HORISTA"
+                self.db.add(
+                    BcuEncargoItem(
+                        id=uuid.uuid4(),
+                        cabecalho_id=cab.id,
+                        tipo_encargo=tipo,
+                        grupo=str(row[2]).strip() if len(row) > 2 and row[2] else None,
+                        codigo_grupo=str(row[3]).strip() if len(row) > 3 and row[3] else None,
+                        discriminacao_encargo=str(row[4]).strip(),
+                        taxa_percent=_to_decimal(row[5]) if len(row) > 5 else None,
+                    )
+                )
+                total_rows += 1
+        else:
+            avisos.append("Aba 'ENCARGOS' não encontrada.")
+
+        # ── EPI ──
+        s = _find_sheet("EPI")
+        if s:
+            for row in wb[s].iter_rows(min_row=2, values_only=True):
+                if not row or row[0] is None or row[1] is None:
+                    continue
+                seq["EPI"] = seq.get("EPI", 0) + 1
+                codigo_origem = f"BCU-EPI-{seq['EPI']:03d}"
+                desc = str(row[1]).strip()
+                self.db.add(
+                    BcuEpiItem(
+                        id=uuid.uuid4(),
+                        cabecalho_id=cab.id,
+                        codigo_origem=codigo_origem,
+                        epi=desc,
+                        unidade=str(row[2]).strip() if len(row) > 2 and row[2] else "UN",
+                        custo_unitario=_to_decimal(row[3]) if len(row) > 3 else None,
+                        vida_util_meses=_to_decimal(row[4]) if len(row) > 4 else None,
+                    )
+                )
+                total_rows += 1
+                all_base_tcpo.append(
+                    BaseTcpo(
+                        id=uuid.uuid4(),
+                        codigo_origem=codigo_origem,
+                        descricao=desc,
+                        unidade_medida=str(row[2]).strip() if len(row) > 2 and row[2] else "UN",
+                        custo_base=_to_decimal(row[3]) or 0.0,
+                        tipo_recurso="INSUMO",
+                    )
+                )
+        else:
+            avisos.append("Aba 'EPI' não encontrada.")
+
+        # ── FERRAMENTAS ──
+        s = _find_sheet("FERRAMENTA")
+        if s:
+            for row in wb[s].iter_rows(min_row=2, values_only=True):
+                if not row or row[0] is None or row[1] is None:
+                    continue
+                seq["FER"] = seq.get("FER", 0) + 1
+                codigo_origem = f"BCU-FER-{seq['FER']:03d}"
+                desc = str(row[1]).strip()
+                self.db.add(
+                    BcuFerramentaItem(
+                        id=uuid.uuid4(),
+                        cabecalho_id=cab.id,
+                        codigo_origem=codigo_origem,
+                        descricao=desc,
+                        unidade=str(row[2]).strip() if len(row) > 2 and row[2] else "UN",
+                        preco=_to_decimal(row[3]) if len(row) > 3 else None,
+                    )
+                )
+                total_rows += 1
+                all_base_tcpo.append(
+                    BaseTcpo(
+                        id=uuid.uuid4(),
+                        codigo_origem=codigo_origem,
+                        descricao=desc,
+                        unidade_medida=str(row[2]).strip() if len(row) > 2 and row[2] else "UN",
+                        custo_base=_to_decimal(row[3]) or 0.0,
+                        tipo_recurso="FERRAMENTA",
+                    )
+                )
+        else:
+            avisos.append("Aba 'FERRAMENTAS' não encontrada.")
+
+        # ── EXAMES (sem tabela alvo) ──
+        s = _find_sheet("EXAME")
+        if s:
+            count = sum(
+                1 for row in wb[s].iter_rows(min_row=2, values_only=True)
+                if row and row[0] is not None and row[1] is not None
+            )
+            avisos.append(
+                f"Aba 'EXAMES' identificada ({count} linhas) — schema BCU atual não tem tabela "
+                f"para Exames. Dados ignorados; criar tabela em sprint futura."
+            )
+        else:
+            avisos.append("Aba 'EXAMES' não encontrada (opcional).")
+
+        # ── Sync base_tcpo via upsert ──
+        for bt in all_base_tcpo:
+            stmt = pg_insert(BaseTcpo).values(
+                id=bt.id,
+                codigo_origem=bt.codigo_origem,
+                descricao=bt.descricao,
+                unidade_medida=bt.unidade_medida,
+                custo_base=bt.custo_base,
+                tipo_recurso=bt.tipo_recurso,
+            )
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["codigo_origem"],
+                set_={
+                    "descricao": stmt.excluded.descricao,
+                    "unidade_medida": stmt.excluded.unidade_medida,
+                    "custo_base": stmt.excluded.custo_base,
+                    "tipo_recurso": stmt.excluded.tipo_recurso,
+                },
+            )
+            await self.db.execute(stmt)
+
+        # Salva avisos no cabeçalho (para inspeção na UI)
+        if avisos:
+            cab.observacao = " | ".join(avisos)[:2000]
+            self.db.add(cab)
+
+        logger.info(
+            "bcu.import_converter_complete",
+            arquivo=nome_arquivo,
+            cabecalho_id=str(cab.id),
+            rows=total_rows,
+            base_tcpo_synced=len(all_base_tcpo),
+            avisos=len(avisos),
+        )
+        await self.db.commit()
+        await self.db.refresh(cab)
+        return cab
+
     async def ativar_cabecalho(self, cabecalho_id: uuid.UUID) -> BcuCabecalho:
         cab = await self.db.get(BcuCabecalho, cabecalho_id)
         if not cab:

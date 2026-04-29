@@ -154,12 +154,14 @@ export function UploadTcpoPage() {
           <Stack direction="row" spacing={1.5} alignItems="center">
             <TableChartOutlinedIcon color="success" />
             <Typography variant="h6">Carga da planilha BCU (Base de Custos Unitários)</Typography>
-            <Chip label="7 abas" size="small" color="success" variant="outlined" />
+            <Chip label="6 abas" size="small" color="success" variant="outlined" />
           </Stack>
 
           <Typography variant="body2" color="text.secondary">
-            Importa todas as abas da planilha BCU: Mão de Obra, Equipamentos, Encargos, EPI/Uniforme,
-            Ferramentas e Mobilização. Dados existentes com o mesmo nome de arquivo são substituídos.
+            Fonte oficial: <strong>Converter em Data Center.xlsx</strong> — 6 abas:
+            Mão de Obra, Equipamentos, Encargos, EPI/Uniforme, Ferramentas, Exames.
+            Dados existentes com o mesmo nome de arquivo são substituídos. EXAMES é registrado
+            como aviso (sem tabela-alvo no schema atual).
           </Typography>
 
           <Button
@@ -168,7 +170,7 @@ export function UploadTcpoPage() {
             color="success"
             sx={{ width: { xs: '100%', md: 360 } }}
           >
-            {bcuFile ? bcuFile.name : 'Selecionar BCU tabelas.xlsx'}
+            {bcuFile ? bcuFile.name : 'Selecionar Converter em Data Center.xlsx'}
             <input
               hidden
               type="file"

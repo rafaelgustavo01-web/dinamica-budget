@@ -99,6 +99,38 @@ async def importar_bcu(
     return BcuCabecalhoOut.model_validate(cab)
 
 
+@router.post("/importar-converter", response_model=BcuCabecalhoOut)
+async def importar_converter(
+    file: UploadFile = File(...),
+    current_user=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuCabecalhoOut:
+    """
+    Importa 'Converter em Data Center.xlsx' (6 abas) → bcu.* + sync referencia.base_tcpo.
+
+    Aceita: Mão de Obra, Equipamentos, Encargos, EPI/Uniforme, Ferramentas, Exames.
+    Avisos sobre abas ausentes ou EXAMES (sem tabela alvo) são salvos em cabecalho.observacao.
+    """
+    if not file.filename:
+        raise ValidationError("Arquivo invalido.")
+    if not file.filename.lower().endswith(".xlsx"):
+        raise ValidationError("Somente arquivos .xlsx sao suportados.")
+
+    payload = await file.read()
+    if not payload:
+        raise ValidationError("Arquivo vazio.")
+
+    svc = BcuService(db)
+    try:
+        cab = await svc.importar_converter(payload, file.filename, current_user.id)
+    except (IndexError, KeyError, AttributeError) as exc:
+        raise ValidationError(
+            "Estrutura da planilha invalida para o formato Converter (6 abas). "
+            f"Detalhe: {exc.__class__.__name__}: {exc}"
+        ) from exc
+    return BcuCabecalhoOut.model_validate(cab)
+
+
 # ── De/Para — must be before /{cabecalho_id}/ ─────────────────────────────────
 
 @router.get("/de-para", response_model=list[DeParaListItemOut])
