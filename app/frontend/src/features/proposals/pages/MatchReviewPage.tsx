@@ -10,6 +10,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   Typography,
@@ -133,13 +134,13 @@ export function MatchReviewPage() {
           </Alert>
         )}
 
-        <Paper>
+        <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
           {isLoading ? (
             <Box sx={{ p: 3 }}>
               <LinearProgress />
             </Box>
           ) : (
-            <Table size="small">
+            <Table size="small" sx={{ minWidth: 820 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Linha</TableCell>
@@ -182,7 +183,7 @@ export function MatchReviewPage() {
               </TableBody>
             </Table>
           )}
-        </Paper>
+        </TableContainer>
       </Stack>
     </>
   );

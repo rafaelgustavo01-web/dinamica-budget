@@ -16,7 +16,7 @@ export function ProposalImportPage() {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
 
-  const { data: proposta, isLoading: loadingProposta } = useQuery({
+  const { data: proposta, isLoading: loadingProposta, isError: isErrorProposta, error: errorProposta } = useQuery({
     queryKey: ['proposta', id],
     queryFn: () => proposalsApi.getById(id!),
     enabled: Boolean(id),
@@ -37,7 +37,30 @@ export function ProposalImportPage() {
     },
   });
 
-  if (loadingProposta) return <Typography>Carregando...</Typography>;
+  if (loadingProposta) return <Typography>Carregando proposta...</Typography>;
+
+  if (isErrorProposta || !proposta) {
+    return (
+      <>
+        <PageHeader
+          title="Importar Planilha (PQ)"
+          description="Erro ao carregar proposta"
+          actions={
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackOutlinedIcon />}
+              onClick={() => navigate('/propostas')}
+            >
+              Voltar
+            </Button>
+          }
+        />
+        <Alert severity="error">
+          {extractApiErrorMessage(errorProposta, 'Não foi possível carregar a proposta. Verifique a URL e tente novamente.')}
+        </Alert>
+      </>
+    );
+  }
 
   return (
     <>
@@ -68,7 +91,7 @@ export function ProposalImportPage() {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Selecione uma planilha Excel (.xlsx) ou CSV contendo a lista de serviços e quantidades.
           </Typography>
-          
+
           <Box
             sx={{
               border: '2px dashed',
@@ -110,7 +133,7 @@ export function ProposalImportPage() {
           >
             {uploadMutation.isPending ? 'Enviando...' : 'Enviar Planilha'}
           </Button>
-          
+
           {uploadMutation.isSuccess && (
             <Alert severity="success" sx={{ mt: 2 }}>
               Planilha importada com sucesso: {uploadMutation.data.linhas_importadas} linhas processadas.
@@ -128,7 +151,7 @@ export function ProposalImportPage() {
             variant="contained"
             color="secondary"
             startIcon={<AutoFixHighOutlinedIcon />}
-            disabled={proposta?.status === 'RASCUNHO' || matchMutation.isPending}
+            disabled={proposta.status === 'RASCUNHO' || matchMutation.isPending || uploadMutation.isPending}
             onClick={() => matchMutation.mutate()}
           >
             {matchMutation.isPending ? 'Processando Match...' : 'Executar Match Inteligente'}

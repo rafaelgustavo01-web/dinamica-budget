@@ -32,14 +32,16 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 
 ## INBOX
 
-### [PENDING] 2026-04-29T18:22:00Z — Sprint F3-02
+### [DONE] 2026-04-29T18:31:00Z — Sprint F3-02
 - From: PO / Scrum Master
 - Action: BUILD_UIUX_FIXES
 - Assigned Worker: claude-code
 - Briefing: @docs/sprints/F3-02/briefing/sprint-F3-02-briefing.md
 - Plan: @docs/sprints/F3-02/plans/2026-04-29-f3-02-demo-readiness.md
 - Input Audit: @docs/sprints/F3-01/technical-review/uiux-audit-2026-04-29.md
-- Notes: Implementar correções P1 para apresentação: scroll CPU/Match, guards de cliente/proposta, erros em Importar/CPU, link da fila de aprovação e divergências do Histograma.
+- Technical Review: @docs/sprints/F3-02/technical-review/technical-review-2026-04-29-f3-02.md
+- Walkthrough: @docs/sprints/F3-02/walkthrough/done/walkthrough-F3-02.md
+- Notes: Correções P1 aplicadas para apresentação; build e testes frontend verdes.
 
 
 ### [DONE] 2026-04-29T18:16:41Z — Sprint F3-01

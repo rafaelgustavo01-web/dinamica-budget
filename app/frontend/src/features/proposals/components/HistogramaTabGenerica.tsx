@@ -75,8 +75,7 @@ export function HistogramaTabGenerica({ propostaId, tabela, items, divergencias,
 
   const divergeMap = new Map<string, DivergenciaOut[]>();
   for (const d of divergencias) {
-    const tabelaMap: Record<string, string> = { equipamento: 'equipamento', epi: 'epi', ferramenta: 'ferramenta' };
-    if (tabelaMap[tabela] === d.tabela) {
+    if (d.tabela === tabela) {
       const arr = divergeMap.get(d.item_id) || [];
       arr.push(d);
       divergeMap.set(d.item_id, arr);

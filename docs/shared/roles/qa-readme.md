@@ -29,6 +29,14 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Expand verification scope only if blast radius requires it.
 
 ## INBOX
+### [PENDING] 2026-04-29T18:31:00Z — Sprint F3-02
+- From: Worker / Scrum Master
+- Action: REVIEW_UIUX_FIXES
+- Technical Review: @docs/sprints/F3-02/technical-review/technical-review-2026-04-29-f3-02.md
+- Walkthrough: @docs/sprints/F3-02/walkthrough/done/walkthrough-F3-02.md
+- Gates: `npm run build` PASS; `npm run test` PASS (13 tests).
+- Notes: Validar fluxo de apresentação: Propostas, Importar PQ, Match Review, CPU, Histograma e Fila de Aprovação.
+
 
 ### [PENDING] 2026-04-29T18:16:41Z — Sprint F3-01
 - From: worker (codex)

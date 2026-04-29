@@ -28,13 +28,13 @@ export function ProposalCpuPage() {
   const queryClient = useQueryClient();
   const [bdi, setBdi] = useState('25');
 
-  const { data: proposta } = useQuery({
+  const { data: proposta, isError: isErrorProposta, error: errorProposta } = useQuery({
     queryKey: ['proposta', id],
     queryFn: () => proposalsApi.getById(id!),
     enabled: Boolean(id),
   });
 
-  const { data: itens = [], isLoading: loadingItens } = useQuery({
+  const { data: itens = [], isLoading: loadingItens, isError: isErrorItens, error: errorItens } = useQuery({
     queryKey: ['cpu-itens', id],
     queryFn: () => proposalsApi.listCpuItens(id!),
     enabled: Boolean(id),
@@ -59,6 +59,7 @@ export function ProposalCpuPage() {
   });
 
   const jaTemItens = itens.length > 0;
+  const hasQueryError = isErrorProposta || isErrorItens;
 
   return (
     <>
@@ -74,12 +75,22 @@ export function ProposalCpuPage() {
             >
               Voltar
             </Button>
-            <ExportMenu propostaId={id!} propostaCodigo={proposta?.codigo ?? ''} />
+            <ExportMenu propostaId={id!} propostaCodigo={proposta?.codigo ?? ''} disabled={hasQueryError} />
           </Stack>
         }
       />
 
       <Stack spacing={3}>
+        {isErrorProposta && (
+          <Alert severity="error">
+            {extractApiErrorMessage(errorProposta, 'Erro ao carregar dados da proposta.')}
+          </Alert>
+        )}
+        {isErrorItens && (
+          <Alert severity="error">
+            {extractApiErrorMessage(errorItens, 'Erro ao carregar itens de CPU. Recarregue a página.')}
+          </Alert>
+        )}
         {(gerarMutation.isError || recalcularMutation.isError) && (
           <Alert severity="error">
             {extractApiErrorMessage(gerarMutation.error ?? recalcularMutation.error)}
@@ -104,7 +115,7 @@ export function ProposalCpuPage() {
                 variant="contained"
                 startIcon={<PlayArrowOutlinedIcon />}
                 onClick={() => gerarMutation.mutate()}
-                disabled={gerarMutation.isPending}
+                disabled={gerarMutation.isPending || hasQueryError}
               >
                 {gerarMutation.isPending ? 'Gerando CPU...' : 'Gerar CPU'}
               </Button>
@@ -113,7 +124,7 @@ export function ProposalCpuPage() {
                 variant="outlined"
                 startIcon={<CalculateOutlinedIcon />}
                 onClick={() => recalcularMutation.mutate()}
-                disabled={recalcularMutation.isPending}
+                disabled={recalcularMutation.isPending || hasQueryError}
               >
                 {recalcularMutation.isPending ? 'Recalculando...' : 'Recalcular BDI'}
               </Button>
@@ -156,6 +167,10 @@ export function ProposalCpuPage() {
           {loadingItens ? (
             <Box sx={{ p: 3 }}>
               <Typography>Carregando itens...</Typography>
+            </Box>
+          ) : isErrorItens ? (
+            <Box sx={{ p: 3 }}>
+              <Typography color="text.secondary">Não foi possível carregar os itens da CPU.</Typography>
             </Box>
           ) : (
             <CpuTable itens={itens} propostaId={id!} />
