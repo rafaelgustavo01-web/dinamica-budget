@@ -9,6 +9,9 @@ from sqlalchemy.orm import selectinload
 
 from backend.core.dependencies import get_current_active_user, get_current_admin_user, get_db
 from backend.core.exceptions import NotFoundError, ValidationError
+from backend.core.logging import get_logger
+
+logger = get_logger(__name__)
 from backend.models.bcu import (
     BcuCabecalho,
     BcuEncargoItem,
@@ -123,10 +126,21 @@ async def importar_converter(
     svc = BcuService(db)
     try:
         cab = await svc.importar_converter(payload, file.filename, current_user.id)
-    except (IndexError, KeyError, AttributeError) as exc:
+    except (IndexError, KeyError, AttributeError, ValueError) as exc:
         raise ValidationError(
             "Estrutura da planilha invalida para o formato Converter (6 abas). "
             f"Detalhe: {exc.__class__.__name__}: {exc}"
+        ) from exc
+    except Exception as exc:
+        logger.error(
+            "bcu.importar_converter.unexpected_error",
+            arquivo=file.filename,
+            error=str(exc),
+            exc_info=True,
+        )
+        await db.rollback()
+        raise ValidationError(
+            f"Erro inesperado ao importar BCU: {exc.__class__.__name__}: {exc}"
         ) from exc
     return BcuCabecalhoOut.model_validate(cab)
 

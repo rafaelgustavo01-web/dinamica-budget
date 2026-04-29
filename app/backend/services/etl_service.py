@@ -129,7 +129,11 @@ class EtlService:
           - CLASS == 'SER.CG'  → new parent service
           - CLASS in MAT./M.O./EQP./FER. → child component of current parent
         """
-        wb = openpyxl.load_workbook(io.BytesIO(file_bytes), read_only=True, data_only=True)
+        # NOTE: read_only=False is required so cell.font and cell.alignment are available.
+        # Bold + indent detection is the canonical heuristic for identifying parent services in
+        # the PINI TCPO format. read_only mode strips all formatting, causing is_bold=False for
+        # every row and therefore 0 parent services detected.
+        wb = openpyxl.load_workbook(io.BytesIO(file_bytes), read_only=False, data_only=True)
         try:
             ws = wb["Composições analíticas"]
         except KeyError:
