@@ -30,6 +30,14 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 
 ## INBOX
 
+### [PENDING] 2026-04-29T18:16:41Z — Sprint F3-01
+- From: worker (codex)
+- Action: REVIEW
+- Walkthrough: @docs/sprints/F3-01/walkthrough/done/walkthrough-F3-01.md
+- Technical Review: @docs/sprints/F3-01/technical-review/uiux-audit-2026-04-29.md
+- Tests: Frontend/build/test e smoke backend bloqueados por ambiente (`tsc`/`eslint`/`vitest`/`pytest` ausentes; `npm ci` falhou com `EAI_AGAIN`).
+- Notes: Auditoria sem alteração de produção. Resultado: 0 P0, 7 P1, 4 P2; recomendação de F3-02 focada em responsividade CPU/Match, guards de cliente/proposta e descoberta da fila de aprovação.
+
 ### [DONE] 2026-04-29T02:20:00Z — Sprint F2-DT-C
 - From: worker (kimi-k2.6)
 - Action: REVIEW
@@ -215,5 +223,4 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Action: REVIEW
 - Feedback: @docs/technical-feedback-2026-04-22-v1.md
 - Notes: Aceita. 75/75 testes. 2 correções aplicadas pelo QA (test_health_endpoint + SAWarnings). S-01 → DONE.
-
 

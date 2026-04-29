@@ -16,7 +16,7 @@ Responsável: Research AI / QA Re-avaliação
 - Milestone 6 — Proposta Completa: **fechado**.
 - Milestone 7 — Compras e Negociação: **GO condicional** validado por Codex + Claude; fica **pós-demo**, após saneamento/contratos.
 - Decisão PO 2026-04-29: antes de Compras, abrir **Fase 3 — Demo Readiness / Polimento UI+UX** para corrigir erros de interface e deixar o fluxo apresentável esta semana.
-- Sprint ativa: `F3-01` em TODO para auditoria de UI/UX e levantamento de correções críticas.
+- Sprint ativa: `F3-01` em TESTED para auditoria de UI/UX e levantamento de correções críticas.
 
 ## Sprints Propostas
 
@@ -53,7 +53,7 @@ Responsável: Research AI / QA Re-avaliação
 | `F2-DT-A` | DONE | P0 | — | **Backend Tech Debt Cleanup** — pytest infra resiliente + purga pipeline legado (subprocess + import_preview_service) + N+1 batch (5 services) + ETL durabilidade (tabela etl_preview); fecha 18 itens do checkpoint 2026-04-27 | 4 commits atomicos `feat(f2-dt-a/N)`; suite verde apos cada commit (197+ PASS); migration etl_preview com down_revision correto; query log histograma <=15 queries para 100 insumos; `codigo_origem` em ComposicaoComponenteResponse; branch main apenas |
 | `F2-DT-B` | DONE | P1 | — | **Frontend Tech Debt Cleanup** — Vitest+RTL+MSW scaffold + ExportMenu erro/toast + ExpandableTreeRow exibe codigo_origem em filhos + ProposalDetailPage botao Excluir resolvido + dedup tema; paralela disjoint com F2-DT-A | 2 commits atomicos `feat(f2-dt-b/N)`; npm run build + tsc --noEmit verdes; npm run test "no tests found" sem erro; codigo_origem declarado no TS interface; branch main apenas |
 | `F2-DT-C` | DONE | P2 | `F2-DT-A`, `F2-DT-B` | **Frontend Smoke Tests** — 4 arquivos de teste smoke em **/__tests__/** para Histograma (3 abas), ExpandableTreeRow, ProposalsListPage, ProposalDetailPage | 1 commit `test(f2-dt-c)`; 13 asserts; npm run test 13 PASS; npm run build verde; apenas arquivos novos (sem modificar producao); branch main apenas |
-| `F3-01` | TODO | P0 | `F2-DT-C` | **Demo Readiness Audit — UI/UX e fluxos críticos**: mapear erros visuais/funcionais que impedem apresentação; validar rotas principais de Propostas, Importação PQ, Match, CPU, Histograma, Composições, Exportação e RBAC visual | Relatório em `docs/sprints/F3-01/technical-review/uiux-audit-2026-04-29.md`; lista priorizada P0/P1/P2; sem alterar código; evidências de build/test atual |
+| `F3-01` | TESTED | P0 | `F2-DT-C` | **Demo Readiness Audit — UI/UX e fluxos críticos**: mapear erros visuais/funcionais que impedem apresentação; validar rotas principais de Propostas, Importação PQ, Match, CPU, Histograma, Composições, Exportação e RBAC visual | Relatório em `docs/sprints/F3-01/technical-review/uiux-audit-2026-04-29.md`; 0 P0, 7 P1, 4 P2; sem alterar código; gates bloqueados por dependências/rede do ambiente |
 | `F3-02` | PLAN | P0 | `F3-01` | **Correções críticas de UI/UX para apresentação**: corrigir bugs bloqueantes identificados em F3-01 nos fluxos demonstráveis; foco em telas de Proposta, Histograma, Composições e Exportação | Fluxo feliz da demo sem erro visível; `npm run build`, `npm run test` e smoke relevantes verdes; walkthrough com antes/depois |
 | `F3-03` | PLAN | P1 | `F3-02` | **Roteiro de apresentação + dados de demo**: preparar narrativa, checklist operacional, massa mínima/seed ou instruções reproduzíveis para demonstrar proposta completa | Documento `docs/sprints/F3-03/demo/demo-script-2026-04-29.md`; checklist de 10–15 minutos; dados/fixtures sem segredo; reset seguro documentado |
 | `F3-04` | PLAN | P1 | `F3-02`, `F3-03` | **Polimento visual final + smoke de demo**: ajustar estados vazios/loading/erro, labels, botões, navegação e responsividade mínima; rodar QA final da apresentação | Demo checklist 100% PASS; screenshots/evidências em walkthrough; sem regressão em build/test; pendências não-críticas documentadas |
@@ -86,7 +86,7 @@ FASE C — Módulo de Orçamentos
 
 - WIP: **1/4**.
 - Objetivo imediato: deixar o produto estável e apresentável esta semana antes de retomar Compras/M7.
-- `F3-01` em TODO: auditoria UI/UX e priorização das correções críticas.
+- `F3-01` em TESTED: auditoria UI/UX concluída, com relatório e walkthrough gerados.
 - `F3-02`, `F3-03`, `F3-04` em PLAN aguardando saída objetiva da auditoria.
 - Milestone 7 permanece **GO condicional pós-demo**.
 
@@ -158,6 +158,7 @@ Todas as 12 sprints concluídas com aprovação do QA:
   - WIP = 4/4 (F2-09 TESTED + F2-10 TESTED + F2-11 TESTED + F2-13 TESTED + F2-DT-A TODO + F2-DT-B TODO + F2-DT-C PLAN-HOLD; cap excepcional para janela de cleanup).
 
 - 2026-04-29 (PO): aprovada recomendação Codex+Claude de **GO condicional** para Milestone 7, mas com prioridade operacional alterada: antes de implementar Compras, abrir **Fase 3 — Demo Readiness / Polimento UI+UX** para corrigir erros de interface/experiência e preparar apresentação da semana. Criadas `F3-01` a `F3-04`; `F3-01` vai para TODO imediatamente, WIP=1/4. M7 permanece pós-demo, dependente de saneamento/contratos.
+- 2026-04-29 (Worker/Codex): `F3-01` executada sem alteração de produção. Auditoria em `docs/sprints/F3-01/technical-review/uiux-audit-2026-04-29.md`; walkthrough em `docs/sprints/F3-01/walkthrough/done/walkthrough-F3-01.md`. Resultado: 0 P0, 7 P1, 4 P2. Gates locais bloqueados por ausência de dependências e rede indisponível para `npm ci`.
 
 ## Observações de Pesquisa
 - O repositório atual possui todos os artefatos canônicos do pipeline (`docs/JOB-DESCRIPTION.md`, `docs/superpowers/plans/`, `docs/roles/`, `docs/dispatch/`).
