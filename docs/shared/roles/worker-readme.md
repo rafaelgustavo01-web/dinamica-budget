@@ -40,14 +40,16 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Dispatch: @docs/sprints/F3-03/dispatch/sprint-F3-03-worker-prompt.md
 - Notes: HOLD por decisão PO: roteiro/checklist/dados só depois de concluir todas as configurações e fluxos que serão apresentados.
 
-### [PENDING] 2026-04-29T22:34:00Z — Sprint F3-04
+### [DONE] 2026-04-29T22:50:00Z — Sprint F3-04
 - From: PO / Scrum Master
 - Action: FINAL_CONFIGS_POLISH_AND_SMOKE_DEMO
 - Assigned Worker: claude-code
 - Briefing: @docs/sprints/F3-04/briefing/sprint-F3-04-briefing.md
 - Plan: @docs/sprints/F3-04/plans/2026-04-29-f3-04-demo-readiness.md
-- Dispatch: @docs/sprints/F3-04/dispatch/sprint-F3-04-worker-prompt.md
-- Notes: Prioridade atual. Fechar configurações/fluxos que serão apresentados, aplicar polimento final e rodar smoke. F3-03 só inicia depois disso.
+- Technical Review: @docs/sprints/F3-04/technical-review/technical-review-2026-04-29-f3-04.md
+- Walkthrough: @docs/sprints/F3-04/walkthrough/done/walkthrough-F3-04.md
+- Tests: 13 PASS / 0 FAIL; npm run build PASS.
+- Notes: Polimentos P2 aplicados (empty states Histograma, loading padronizado, fix campos texto). Smoke checklist 10/10 PASS. Status: TESTED.
 
 
 ### [DONE] 2026-04-29T18:31:00Z — Sprint F3-02

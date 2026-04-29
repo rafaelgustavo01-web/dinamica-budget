@@ -5,6 +5,7 @@ import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   InputAdornment,
   Paper,
   Stack,
@@ -165,8 +166,8 @@ export function ProposalCpuPage() {
 
         <Paper>
           {loadingItens ? (
-            <Box sx={{ p: 3 }}>
-              <Typography>Carregando itens...</Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
             </Box>
           ) : isErrorItens ? (
             <Box sx={{ p: 3 }}>

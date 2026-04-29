@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
+  Box,
   Button,
+  CircularProgress,
   Paper,
   Stack,
   Table,
@@ -67,7 +69,11 @@ export function ApprovalQueuePage() {
     rejeitarMutation.mutate({ propostaId: rejectTarget.id, motivo: motivoRejeicao || undefined });
   };
 
-  if (isLoading) return <Typography>Carregando...</Typography>;
+  if (isLoading) return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+      <CircularProgress />
+    </Box>
+  );
   if (isError) return <Alert severity="error">{extractApiErrorMessage(error)}</Alert>;
 
   const isEmpty = !propostas || propostas.length === 0;

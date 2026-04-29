@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Paper, Stack, Typography, Button, Alert, Box, LinearProgress } from '@mui/material';
+import { Paper, Stack, Typography, Button, Alert, Box, CircularProgress, LinearProgress } from '@mui/material';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
@@ -37,7 +37,11 @@ export function ProposalImportPage() {
     },
   });
 
-  if (loadingProposta) return <Typography>Carregando proposta...</Typography>;
+  if (loadingProposta) return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+      <CircularProgress />
+    </Box>
+  );
 
   if (isErrorProposta || !proposta) {
     return (

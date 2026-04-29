@@ -29,6 +29,14 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Expand verification scope only if blast radius requires it.
 
 ## INBOX
+### [PENDING] 2026-04-29T22:50:00Z — Sprint F3-04
+- From: worker (claude-code)
+- Action: REVIEW
+- Walkthrough: @docs/sprints/F3-04/walkthrough/done/walkthrough-F3-04.md
+- Technical Review: @docs/sprints/F3-04/technical-review/technical-review-2026-04-29-f3-04.md
+- Tests: `npm run build` PASS; `npm run test` 13/13 PASS (4 arquivos).
+- Notes: Polimentos P2 (empty states Histograma, loading CircularProgress padronizado em 4 páginas, fix campos texto não-numéricos). Smoke checklist 10 fluxos PASS. Sem regressão em build/test. Sprint em TESTED.
+
 ### [DONE] 2026-04-29T22:18:00Z — Gemini QA batch TESTED
 - From: PO / gedAI
 - Action: QA_VALIDATE_TESTED

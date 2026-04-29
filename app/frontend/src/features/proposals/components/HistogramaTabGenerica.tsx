@@ -111,6 +111,13 @@ export function HistogramaTabGenerica({ propostaId, tabela, items, divergencias,
           </TableRow>
         </TableHead>
         <TableBody>
+          {items.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={columns.length + 3} align="center" sx={{ py: 4, color: 'text.secondary', fontSize: '0.85rem' }}>
+                Nenhum item registrado nesta categoria para esta proposta.
+              </TableCell>
+            </TableRow>
+          )}
           {items.map((item) => {
             const divergeList = divergeMap.get(item.id);
             const isEditing = editing[item.id] || {};
@@ -134,8 +141,10 @@ export function HistogramaTabGenerica({ propostaId, tabela, items, divergencias,
                         onBlur={() => handleBlur(item)}
                         inputProps={{ style: { textAlign: col.numeric ? 'right' : 'left', fontSize: '0.85rem' } }}
                       />
+                    ) : col.numeric ? (
+                      fmt(item[col.key])
                     ) : (
-                      fmt(item[col.key], col.numeric ? 2 : 0)
+                      String(item[col.key] ?? '—')
                     )}
                   </TableCell>
                 ))}

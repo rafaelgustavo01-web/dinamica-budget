@@ -94,6 +94,13 @@ export function HistogramaTabMaoObra({ propostaId, items, divergencias }: Props)
           </TableRow>
         </TableHead>
         <TableBody>
+          {items.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={8} align="center" sx={{ py: 4, color: 'text.secondary', fontSize: '0.85rem' }}>
+                Nenhum item de mão de obra registrado para esta proposta.
+              </TableCell>
+            </TableRow>
+          )}
           {items.map((item) => {
             const divergeList = divergeMap.get(item.id);
             const isEditing = editing[item.id] || {};

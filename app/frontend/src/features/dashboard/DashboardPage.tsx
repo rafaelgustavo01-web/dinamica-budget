@@ -92,12 +92,12 @@ export function DashboardPage() {
       >
         <MetricCard
           label="Catálogo visível"
-          value={String(servicesQuery.data?.total ?? 0)}
+          value={servicesQuery.isLoading ? '—' : String(servicesQuery.data?.total ?? 0)}
           helper="Total de serviços disponíveis no recorte atual."
         />
         <MetricCard
           label="Pendências de homologação"
-          value={String(homologationQuery.data?.total ?? 0)}
+          value={homologationQuery.isLoading ? '—' : String(homologationQuery.data?.total ?? 0)}
           helper={
             canSeeHomologation
               ? 'Itens aguardando análise do aprovador.'

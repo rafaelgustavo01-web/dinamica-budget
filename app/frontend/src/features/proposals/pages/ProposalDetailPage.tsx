@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
+  CircularProgress,
   Paper,
   Stack,
   Typography,
@@ -89,7 +90,11 @@ export function ProposalDetailPage() {
     },
   });
 
-  if (isLoading) return <Typography>Carregando...</Typography>;
+  if (isLoading) return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+      <CircularProgress />
+    </Box>
+  );
   if (isError) return <Alert severity="error">{extractApiErrorMessage(error)}</Alert>;
   if (!proposta) return <Alert severity="warning">Proposta não encontrada.</Alert>;
 

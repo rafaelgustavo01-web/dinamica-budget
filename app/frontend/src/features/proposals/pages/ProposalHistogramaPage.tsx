@@ -5,9 +5,11 @@ import {
   Button,
   Chip,
   CircularProgress,
+  Paper,
   Stack,
   Tab,
   Tabs,
+  Typography,
 } from '@mui/material';
 import EngineeringOutlinedIcon from '@mui/icons-material/EngineeringOutlined';
 import HardwareOutlinedIcon from '@mui/icons-material/HardwareOutlined';
@@ -71,7 +73,31 @@ export function HistogramaPage() {
     return <Alert severity="error">Erro ao carregar histograma.</Alert>;
   }
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <Box>
+        <PageHeader
+          title="Histograma da Proposta"
+          description="Snapshot editável de custos por proposta."
+        />
+        <Paper sx={{ p: 6, textAlign: 'center' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => montarMutation.mutate()}
+            disabled={montarMutation.isPending}
+          >
+            {montarMutation.isPending ? 'Montando...' : 'Montar Histograma'}
+          </Button>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              O histograma ainda não foi montado para esta proposta. Clique em "Montar Histograma" para gerar o snapshot de custos.
+            </Typography>
+          </Box>
+        </Paper>
+      </Box>
+    );
+  }
 
   const hasDivergencias = data.divergencias.length > 0;
 
