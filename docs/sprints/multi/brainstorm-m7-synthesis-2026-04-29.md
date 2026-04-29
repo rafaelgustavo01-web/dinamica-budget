@@ -2,7 +2,7 @@
 
 **Data:** 2026-04-29  
 **Orquestrador:** gedAI  
-**Fontes:** Codex + tentativa Claude Code
+**Fontes:** Codex + Claude Code
 
 ## Resultado
 
@@ -22,7 +22,9 @@ Codex recomendou abrir um ciclo curto `M7-0` antes de reativar Compras:
 
 ## Claude
 
-A tentativa de consulta ao Claude Code em 2026-04-29 falhou por limite temporário de uso (`resets 5:10pm UTC`). O brainstorm deve ser repetido com Claude quando a cota liberar, antes de congelar a arquitetura final do M7.
+Consulta repetida com sucesso em 2026-04-29 após liberação da cota. Claude concordou com o Codex na recomendação **GO condicional**, com uma nuance importante: não abrir outro milestone antes; abrir imediatamente `M7-0` como sprint de saneamento e contrato, e só depois despachar as sprints funcionais de Compras.
+
+Documento: `docs/sprints/multi/brainstorm-m7-claude-2026-04-29.md`.
 
 ## Proposta de sequência
 
