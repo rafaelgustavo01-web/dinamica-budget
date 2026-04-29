@@ -30,6 +30,14 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 
 ## INBOX
 
+### [PENDING] 2026-04-29T02:20:00Z — Sprint F2-DT-C
+- From: worker (kimi-k2.6)
+- Action: REVIEW
+- Walkthrough: @docs/sprints/F2-DT-C/walkthrough/done/walkthrough-F2-DT-C.md
+- Technical Review: @docs/sprints/F2-DT-C/technical-review/technical-review-2026-04-29-f2-dt-c.md
+- Tests: 13/13 PASS (4 test files), npm run build verde, 0 tsc errors
+- Notes: Smoke tests para Histograma (4 asserts), ExpandableTreeRow (3 asserts), ProposalsListPage (2 asserts) e ProposalDetailPage (4 asserts). Apenas arquivos novos em `**/__tests__/**`; nenhuma modificação em código de produção.
+
 ### [PENDING] 2026-04-27T16:00:00Z — Sprint F2-11
 - From: worker (gemini)
 - Action: REVIEW

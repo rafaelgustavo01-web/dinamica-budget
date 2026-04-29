@@ -157,6 +157,14 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Plan: @docs/sprints/F2-12/plans/2026-04-27-refatoracao-tcpo.md
 - Notes: Entregue em TESTED -> Aprovado pelo QA. Testes unitários atualizados com `descricao_indent` e `font.bold`. Lógica robusta de parsing garantida.
 
+### [DONE] 2026-04-29T02:18:00Z — Sprint F2-DT-C
+- From: supervisor / self-dispatch (HOLD liberado)
+- Action: BUILD
+- Assigned Worker: kimi-k2.6
+- Briefing: @docs/sprints/F2-DT-C/briefing/sprint-F2-DT-C-briefing.md
+- Plan: @docs/sprints/F2-DT-C/plans/2026-04-27-frontend-smoke-tests.md
+- Notes: Entregue em TESTED. 4 arquivos de teste (13 asserts), helper test-utils.tsx, technical-review e walkthrough gerados. npm run test passa (13/13), npm run build verde, 0 tsc errors. Handoff para QA aberto.
+
 ### [PENDING] 2026-04-27T12:15:00Z — Sprint F2-13
 - From: PO / Scrum Master
 - Action: BUILD
