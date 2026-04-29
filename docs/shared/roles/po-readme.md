@@ -23,6 +23,12 @@ Your inbox has `[PENDING]` with `Action: INTAKE_NEXT`, OR all active sprints are
 
 ## INBOX
 
+### [DONE] 2026-04-29T18:10:00Z — Decisão Fase 3 Demo Readiness
+- From: orchestrator (gedAI)
+- Action: CONFIRM_SCOPE
+- Notes: PO autorizou seguir recomendação GO condicional para M7, mas priorizou UI/UX para apresentação. Fase 3 criada: F3-01 TODO, F3-02/F3-03/F3-04 PLAN. M7 fica GO condicional pós-demo.
+
+
 ### [DONE] 2026-04-27T18:00:00Z — Sprint F2-12 DONE — WIP slot liberado
 - From: qa (Amazon Q)
 - Action: INTAKE_NEXT

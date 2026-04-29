@@ -32,6 +32,15 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 
 ## INBOX
 
+### [PENDING] 2026-04-29T18:10:00Z — Sprint F3-01
+- From: PO / Scrum Master
+- Action: AUDIT_UIUX
+- Assigned Worker: codex
+- Briefing: @docs/sprints/F3-01/briefing/sprint-F3-01-briefing.md
+- Plan: @docs/sprints/F3-01/plans/2026-04-29-f3-01-demo-readiness.md
+- Notes: Prioridade de apresentação esta semana. Levantar erros UI/UX bloqueantes antes de implementar Compras/M7.
+
+
 ### [DONE] 2026-04-23T14:45:00Z — Sprint S-10
 - From: supervisor
 - Action: BUILD
