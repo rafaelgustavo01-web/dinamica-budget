@@ -176,3 +176,5 @@ oadmap.
 
 - 2026-04-29 (QA dispatch): Gemini QA acionado para validar `F3-01` e `F3-02`, mas o Gemini CLI retornou 429 `MODEL_CAPACITY_EXHAUSTED` para `gemini-2.5-pro` e `gemini-2.5-flash`. QA permanece PENDING para retry; não mover TESTED para DONE sem feedback.
 
+
+- 2026-04-29 (PO): definida política de roteamento de agents: Kimi/Codex para backend/DB/API/refatoração; Claude para frontend/UI/UX; Gemini para research/novas features; rotação consciente de tokens e uso de modelos menos potentes em tarefas simples.

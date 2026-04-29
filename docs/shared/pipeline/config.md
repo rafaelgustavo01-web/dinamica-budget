@@ -17,12 +17,14 @@
 - max_rework_per_sprint: 3
 
 ## Roles Active
-- research: KIMI
+- research: GEMINI
 - po: KIMI
 - sm: KIMI
 - supervisor: KIMI
 - worker_codex: CODEX
-- worker_gemini: GEMINI
+- worker_frontend: CLAUDE
+- worker_backend_codex: CODEX
+- worker_backend_kimi: KIMI
 - qa: GEMINI
 - git_controller: OPENCODE
 - assistant: OPENCODE
@@ -55,3 +57,16 @@
   - Technical Feedback: `docs/sprints/[ID]/technical-feedback/`
   - Walkthrough: `docs/sprints/[ID]/walkthrough/done/` e/ou `docs/sprints/[ID]/walkthrough/reviewed/`
 - Agents podem editar, escrever, rodar gates e commitar/pushar na `main`, mas continuam proibidos de force-push, reset hard destrutivo, segredos e produção sem aprovação.
+
+
+## Agent Routing Policy — 2026-04-29
+- gedAI remains the orchestrator/scrum master and decides dispatch based on sprint scope, WIP and model availability.
+- Backend, database, migrations, services, APIs, integrations and heavy refactors: prefer **Kimi** and **Codex**.
+- Frontend, UI/UX, React/TypeScript, MUI, layout, visual polish and demo flows: prefer **Claude Code**.
+- Research, feature discovery, product references, roadmap mining and new-feature ideation: prefer **Gemini**.
+- QA can use Gemini when available, but must not block the pipeline indefinitely on Gemini capacity; if Gemini returns capacity/rate errors, retry later or use Codex/Kimi as fallback reviewer with the same QA contract.
+- Use conscious token rotation:
+  - simple, bounded tasks: lower-cost/lighter models such as Codex 5.3-class or Claude Sonnet-class;
+  - full operational work, architecture review, broad refactors or high-risk changes: stronger models such as Codex 5.5-class, Claude Opus-class or Kimi.
+- Prefer more delegated, smaller tasks over one oversized prompt; each delegated task must preserve the documentation flow and commit/push discipline.
+- Mandatory sprint artifacts remain: Briefing, Plan, Technical Review, Technical Feedback and Walkthrough.
