@@ -88,7 +88,14 @@ async def importar_bcu(
         raise ValidationError("Arquivo vazio.")
 
     svc = BcuService(db)
-    cab = await svc.importar_bcu(payload, file.filename, current_user.id)
+    try:
+        cab = await svc.importar_bcu(payload, file.filename, current_user.id)
+    except (IndexError, KeyError, AttributeError) as exc:
+        # Parser falhou ao acessar coluna/aba esperada — arquivo provavelmente nao e a planilha BCU oficial.
+        raise ValidationError(
+            "Estrutura da planilha invalida. Verifique se o arquivo e a 'BCU tabelas.xlsx' oficial "
+            f"(detalhe tecnico: {exc.__class__.__name__}: {exc})"
+        ) from exc
     return BcuCabecalhoOut.model_validate(cab)
 
 
