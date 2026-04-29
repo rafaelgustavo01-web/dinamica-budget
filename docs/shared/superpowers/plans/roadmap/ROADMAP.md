@@ -232,3 +232,24 @@ Objetivo: levar o projeto para um estado de pre-producao robusto em arquitetura,
 - 2026-04-26 14:30 (PO/Supervisor/Scrum Master): Milestone 6 desmembrado para refletir backlog real. Fase 6.3 (TBD) renomeada para Exportacao Excel/PDF (F2-05/kimi). Adicionadas Fases 6.4 (UX complementar — F2-06/claude-sonnet-4-6) e 6.5 (Tabelas Recursos + Motor 4 Camadas — F2-07/gemini-3.1). Tres sprints INICIADAS em paralelo conforme alocacao por especialidade do worker.
 - 2026-04-26 (PO apos analise critica do "plano gpt"): adicionadas Fases 6.6 (RBAC por Proposta — F2-08/kimi-k2.5) e 6.7 (Versionamento + Workflow de Aprovacao — F2-09/claude-sonnet-4-6). RBAC promovido a prioridade por gap de seguranca ativo (gating por cliente em todos os endpoints de proposta). Compras + papel COMPRADOR adiados para Milestone 7 (futuro). Custo base/ajustado tambem adiado por nao ter consumidor (Compras) nesta fase.
 - 2026-04-26 (PO confirma Opcao A pos-despacho F2-08): criado Milestone 7 — Compras e Negociacao (P1) com 4 fases: 7.1 Custo Base/Ajustado + papel COMPRADOR (F2-10/kimi), 7.2 Cotacoes CRUD (F2-11/kimi), 7.3 Frontend Tela de Compras (F2-12/claude-sonnet-4-6), 7.4 Comparativo + Recalculo (F2-13/claude-sonnet-4-6). Premissa: Compras atua sobre listas consolidadas sem alterar CPU. Status BACKLOG aguardando F2-08 e F2-09 saindo de TESTED.
+
+
+## Research Mining Sync — 2026-04-29
+
+Fila `MINE_ROADMAP` acumulada foi consolidada pelo orquestrador e arquivada como DONE nos inboxes.
+
+### Padrões promovidos para roadmap técnico
+
+- **Autorização on-premise e RBAC por proposta:** manter `proposta_acl` como fronteira operacional e evitar acoplamento indevido a cliente quando a regra de negócio for proposta-orientada.
+- **Arquitetura em camadas:** preservar endpoint enxuto → service → repository; SQL direto em endpoint deve ser considerado dívida técnica.
+- **Motor de busca em cascata:** histórico confirmado → código exato → fuzzy → semântico continua sendo padrão reutilizável para match e catálogo.
+- **Revisão manual de match:** fluxos de sugestão automática devem manter confirmação humana antes de impactar CPU/proposta.
+- **Árvore N níveis:** composição hierárquica deve evitar flattening quando o usuário precisa de rastreabilidade visual e técnica.
+- **Exportação formal:** Excel/PDF de proposta deve usar streaming, multi-aba e componentes reutilizáveis de frontend.
+- **Versionamento de entidade:** padrão `root_id + numero_versao + is_versao_atual` aprovado para propostas e pode ser reutilizado em objetos versionáveis.
+- **Parsing de Excel por estilo:** para TCPO/PINI, detecção robusta combina valor (`SER.*`) + `font.bold` + `alignment.indent`.
+- **Histograma como snapshot operacional:** Compras deve operar sobre recursos consolidados por proposta, sem alterar a estrutura da CPU diretamente sem contrato explícito.
+
+### Implicação para Milestone 7
+
+Milestone 7 é desejável, mas deve iniciar por `M7-0` para sanear inbox/backlog, resolver colisão de IDs, congelar contrato de custo ajustado e definir permissão de Compras antes de implementar cotações.

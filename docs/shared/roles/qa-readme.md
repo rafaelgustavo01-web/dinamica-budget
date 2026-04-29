@@ -30,20 +30,22 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 
 ## INBOX
 
-### [PENDING] 2026-04-29T02:20:00Z — Sprint F2-DT-C
+### [DONE] 2026-04-29T02:20:00Z — Sprint F2-DT-C
 - From: worker (kimi-k2.6)
 - Action: REVIEW
 - Walkthrough: @docs/sprints/F2-DT-C/walkthrough/done/walkthrough-F2-DT-C.md
 - Technical Review: @docs/sprints/F2-DT-C/technical-review/technical-review-2026-04-29-f2-dt-c.md
 - Tests: 13/13 PASS (4 test files), npm run build verde, 0 tsc errors
 - Notes: Smoke tests para Histograma (4 asserts), ExpandableTreeRow (3 asserts), ProposalsListPage (2 asserts) e ProposalDetailPage (4 asserts). Apenas arquivos novos em `**/__tests__/**`; nenhuma modificação em código de produção.
+- Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).
 
-### [PENDING] 2026-04-27T16:00:00Z — Sprint F2-11
+### [DONE] 2026-04-27T16:00:00Z — Sprint F2-11
 - From: worker (gemini)
 - Action: REVIEW
 - Walkthrough: @docs/sprints/F2-11/walkthrough/done/walkthrough-F2-11.md
 - Review: @docs/sprints/F2-11/technical-review/technical-review-2026-04-27-F2-11.md
 - Notes: Histograma and Recursos Extras implemented. Backend API complete and tested. Frontend has functional components for viewing and navigating. Ready for QA.
+- Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).
 
 ### [DONE] 2026-04-26T23:11:00Z — Sprint F2-08
 - From: worker (kimi-k2.5)
@@ -152,7 +154,7 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Notes: Upload PQ `.csv`/`.xlsx`, criação de `PqImportacao`/`PqItem` e match automático via `BuscaService`.
 - Status: **ACCEPTED → DONE** (Reavaliação 2026-04-23)
 
-### [PENDING] 2026-04-23T12:10:00Z — Sprint S-09
+### [DONE] 2026-04-23T12:10:00Z — Sprint S-09
 - From: worker (codex-5.3)
 - Action: REVIEW
 - Walkthrough: @docs/sprints/S-09/walkthrough/done/walkthrough-S-09.md
@@ -160,8 +162,9 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Tests: `pytest app/backend/tests/unit/test_proposta_service.py -q` -> 5 passed; `pytest app/backend/tests/unit -q` -> 85 passed; `alembic upgrade head` -> success.
 - Notes: Módulo de Orçamentos — entidades operacionais, CRUD de propostas, migration 017 e isolamento por cliente.
 - Status: **ACCEPTED → DONE** (QA Review 2026-04-23)
+- Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).
 
-### [PENDING] 2026-04-23T11:30:00Z — Sprint S-04
+### [DONE] 2026-04-23T11:30:00Z — Sprint S-04
 - From: worker (kimi-k2.5 & gemini-3.1)
 - Action: REVIEW
 - Walkthrough: @docs/sprints/S-04/walkthrough/done/walkthrough-S-04.md
@@ -169,6 +172,7 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Tests: `pytest app/backend/tests/unit/ -v` -> 85 passed. Checklist OWASP in @docs/owasp-checklist-2026-04-23-FINAL.md.
 - Notes: Implementação consolidada de Kimi e Gemini. Foco em restabelecer isolamento de dados de clientes em rotas GET sensíveis.
 - Status: **ACCEPTED → DONE** (QA Review 2026-04-23)
+- Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).
 
 ### [DONE] 2026-04-23T12:30:00Z — Sprint S-09
 - From: QA (opencode)

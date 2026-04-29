@@ -34,11 +34,11 @@
 - stale_pending_threshold_hours: 24
 
 ## Paths
-- backlog: docs/BACKLOG.md
-- plans: docs/superpowers/plans/
-- briefings: docs/briefings/
-- walkthroughs_done: docs/walkthrough/done/
-- walkthroughs_reviewed: docs/walkthrough/reviewed/
-- technical_reviews: docs/technical-review-*.md
-- technical_feedback: docs/technical-feedback-*.md
+- backlog: docs/shared/governance/BACKLOG.md
+- plans: docs/sprints/[ID]/plans/; docs/shared/superpowers/plans/
+- briefings: docs/sprints/[ID]/briefing/
+- walkthroughs_done: docs/sprints/[ID]/walkthrough/done/
+- walkthroughs_reviewed: docs/sprints/[ID]/walkthrough/reviewed/
+- technical_reviews: docs/sprints/[ID]/technical-review/
+- technical_feedback: docs/sprints/[ID]/technical-feedback/
 - worker_registry: templates/workers.json
