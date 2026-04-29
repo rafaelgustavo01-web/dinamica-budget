@@ -31,14 +31,14 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - If blocked, mark inbox item as `[BLOCKED]` with reason.
 
 ## INBOX
-### [HOLD] 2026-04-29T22:34:00Z — Sprint F3-03
+### [PENDING] 2026-04-29T22:54:00Z — Sprint F3-03
 - From: PO / Scrum Master
-- Action: BUILD_DEMO_SCRIPT_DATA — HOLD
+- Action: BUILD_DEMO_SCRIPT_DATA
 - Assigned Worker: gemini-research
 - Briefing: @docs/sprints/F3-03/briefing/sprint-F3-03-briefing.md
 - Plan: @docs/sprints/F3-03/plans/2026-04-29-f3-03-demo-readiness.md
 - Dispatch: @docs/sprints/F3-03/dispatch/sprint-F3-03-worker-prompt.md
-- Notes: HOLD por decisão PO: roteiro/checklist/dados só depois de concluir todas as configurações e fluxos que serão apresentados.
+- Notes: Liberada após QA Gemini aceitar F3-04. Preparar roteiro/checklist/dados finais com base nas configurações e fluxos fechados.
 
 ### [DONE] 2026-04-29T22:50:00Z — Sprint F3-04
 - From: PO / Scrum Master

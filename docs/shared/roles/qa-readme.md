@@ -29,7 +29,7 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Expand verification scope only if blast radius requires it.
 
 ## INBOX
-### [PENDING] 2026-04-29T22:50:00Z — Sprint F3-04
+### [DONE] 2026-04-29T22:54:00Z — Sprint F3-04
 - From: worker (claude-code)
 - Action: REVIEW
 - Walkthrough: @docs/sprints/F3-04/walkthrough/done/walkthrough-F3-04.md

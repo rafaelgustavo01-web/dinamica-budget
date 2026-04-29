@@ -19,3 +19,8 @@ Preparar a apresentação para execução previsível, com roteiro e dados segur
 ## PO Update — 2026-04-29
 
 Status: PLAN-HOLD. Esta sprint só deve iniciar depois da conclusão das configurações/fluxos que serão apresentados. Não despachar worker antes de `F3-04` fechar o ambiente/fluxo final da demo.
+
+
+## PO/QA Update — 2026-04-29
+
+Liberada após F3-04 ser aceita pelo Gemini QA. Usar os fluxos/configurações finais fechados em F3-04 como base para roteiro e dados da demo.

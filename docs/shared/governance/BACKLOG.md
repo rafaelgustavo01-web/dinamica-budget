@@ -12,12 +12,12 @@ Responsável: Research AI / QA Re-avaliação
 ## Status Operacional — 2026-04-29
 
 - Ciclo concluído: `F2-10`, `F2-11`, `F2-12`, `F2-13`, `F2-DT-A`, `F2-DT-B`, `F2-DT-C` em DONE.
-- WIP atual: **1/4** (`F3-04` em TESTED aguardando QA Gemini; `F3-03` em PLAN-HOLD).
+- WIP atual: **1/4** (`F3-03` em TODO para roteiro/dados finais da demo).
 - WIP assumido pelo PO em 2026-04-29: **4**; abrir novo ciclo assim que QA mover sprint de TESTED para DONE, respeitando dependências.
 - Milestone 6 — Proposta Completa: **fechado**.
 - Milestone 7 — Compras e Negociação: **GO condicional** validado por Codex + Claude; fica **pós-demo**, após saneamento/contratos.
 - Decisão PO 2026-04-29: antes de Compras, abrir **Fase 3 — Demo Readiness / Polimento UI+UX** para corrigir erros de interface e deixar o fluxo apresentável esta semana.
-- Sprint ativa: `F3-04` em TESTED aguardando QA Gemini. `F3-03` fica em PLAN-HOLD até aprovação de `F3-04` e fechamento definitivo das configurações/fluxos apresentados.
+- Sprint ativa: `F3-03` em TODO após QA Gemini aceitar `F3-04` e fechar as configurações/fluxos da apresentação.
 
 ## Sprints Propostas
 
@@ -56,8 +56,8 @@ Responsável: Research AI / QA Re-avaliação
 | `F2-DT-C` | DONE | P2 | `F2-DT-A`, `F2-DT-B` | **Frontend Smoke Tests** — 4 arquivos de teste smoke em **/__tests__/** para Histograma (3 abas), ExpandableTreeRow, ProposalsListPage, ProposalDetailPage | 1 commit `test(f2-dt-c)`; 13 asserts; npm run test 13 PASS; npm run build verde; apenas arquivos novos (sem modificar producao); branch main apenas |
 | `F3-01` | DONE | P0 | `F2-DT-C` | **Demo Readiness Audit — UI/UX e fluxos críticos**: mapear erros visuais/funcionais que impedem apresentação; validar rotas principais de Propostas, Importação PQ, Match, CPU, Histograma, Composições, Exportação e RBAC visual | Relatório em `docs/sprints/F3-01/technical-review/uiux-audit-2026-04-29.md`; 0 P0, 7 P1, 4 P2; sem alterar código; gates bloqueados por dependências/rede do ambiente |
 | `F3-02` | DONE | P0 | `F3-01` | **Correções críticas de UI/UX para apresentação**: corrigir bugs bloqueantes identificados em F3-01 nos fluxos demonstráveis; foco em telas de Proposta, Histograma, Composições e Exportação | Correções aplicadas em CPU, Match Review, Nova Proposta, Importar PQ, CPU error states, navegação da fila de aprovação e Histograma; `npm run build` PASS; `npm run test` PASS — 13 testes |
-| `F3-03` | PLAN-HOLD | P1 | `F3-04` | **Roteiro de apresentação + dados de demo**: preparar narrativa, checklist operacional, massa mínima/seed ou instruções reproduzíveis para demonstrar proposta completa **somente após fechar as configurações/fluxos que serão apresentados** | Documento `docs/sprints/F3-03/demo/demo-script-2026-04-29.md`; checklist de 10–15 minutos; dados/fixtures sem segredo; reset seguro documentado após ambiente/fluxos finais definidos |
-| `F3-04` | TESTED | P0 | `F3-02` | **Configurações finais + polimento visual + smoke de demo**: fechar as configurações/fluxos que serão apresentados, ajustar estados vazios/loading/erro, labels, botões, navegação e responsividade mínima; rodar smoke final antes do roteiro | Configurações da apresentação concluídas; demo smoke PASS; screenshots/evidências em walkthrough; sem regressão em build/test; pendências não-críticas documentadas |
+| `F3-03` | TODO | P1 | `F3-04` | **Roteiro de apresentação + dados de demo**: preparar narrativa, checklist operacional, massa mínima/seed ou instruções reproduzíveis para demonstrar proposta completa **somente após fechar as configurações/fluxos que serão apresentados** | Documento `docs/sprints/F3-03/demo/demo-script-2026-04-29.md`; checklist de 10–15 minutos; dados/fixtures sem segredo; reset seguro documentado após ambiente/fluxos finais definidos |
+| `F3-04` | DONE | P0 | `F3-02` | **Configurações finais + polimento visual + smoke de demo**: fechar as configurações/fluxos que serão apresentados, ajustar estados vazios/loading/erro, labels, botões, navegação e responsividade mínima; rodar smoke final antes do roteiro | Configurações da apresentação concluídas; demo smoke PASS; screenshots/evidências em walkthrough; sem regressão em build/test; pendências não-críticas documentadas |
 
 ## Ordem Recomendada de Execução
 
@@ -89,8 +89,8 @@ FASE C — Módulo de Orçamentos
 - Objetivo imediato: deixar o produto estável e apresentável esta semana antes de retomar Compras/M7.
 - `F3-01` em DONE: auditoria UI/UX aceita pelo QA Gemini.
 - `F3-02` em DONE: correções críticas P1 aceitas pelo QA Gemini.
-- `F3-03` em PLAN-HOLD: roteiro/dados de demo só depois das configurações finais.
-- `F3-04` em TESTED: configurações finais + polimento visual + smoke de demo executados; aguardando QA Gemini.
+- `F3-03` em TODO: roteiro/dados finais da demo liberados após fechamento das configurações finais.
+- `F3-04` em DONE: configurações finais + polimento visual + smoke de demo aceitos pelo QA Gemini.
 - Milestone 7 permanece **GO condicional pós-demo**.
 
 ### Decisões de alocação (Scrum Master, 2026-04-26)
@@ -185,3 +185,5 @@ oadmap.
 - 2026-04-29 (PO): `F3-03` não deve iniciar agora; roteiro/dados de demo só fazem sentido depois de concluir todas as configurações/fluxos que serão apresentados. `F3-03` volta para PLAN-HOLD e `F3-04` assume prioridade P0 para configurações finais + polimento + smoke.
 
 - 2026-04-29 (Worker/Claude): `F3-04` executada. Polimentos P2 aplicados: empty state Histograma, empty rows por aba, correção campos texto não-numéricos no Histograma, métricas Dashboard com `—` em loading, `CircularProgress` padronizado em 4 páginas. Gates: `npm run build` PASS, `npm run test` 13/13 PASS. Sprint movida para TESTED; aguarda QA Gemini.
+
+- 2026-04-29 (QA/Gemini): `F3-04` ACCEPTED. Technical Feedback e walkthrough reviewed criados; sprint movida para DONE. `F3-03` liberada para TODO, pois configurações/fluxos finais da apresentação foram fechados.
