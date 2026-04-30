@@ -9,6 +9,9 @@ from sqlalchemy.orm import selectinload
 
 from backend.core.dependencies import get_current_active_user, get_current_admin_user, get_db
 from backend.core.exceptions import NotFoundError, ValidationError
+from backend.core.logging import get_logger
+
+logger = get_logger(__name__)
 from backend.models.bcu import (
     BcuCabecalho,
     BcuEncargoItem,
@@ -88,7 +91,56 @@ async def importar_bcu(
         raise ValidationError("Arquivo vazio.")
 
     svc = BcuService(db)
-    cab = await svc.importar_bcu(payload, file.filename, current_user.id)
+    try:
+        cab = await svc.importar_bcu(payload, file.filename, current_user.id)
+    except (IndexError, KeyError, AttributeError) as exc:
+        # Parser falhou ao acessar coluna/aba esperada — arquivo provavelmente nao e a planilha BCU oficial.
+        raise ValidationError(
+            "Estrutura da planilha invalida. Verifique se o arquivo e a 'BCU tabelas.xlsx' oficial "
+            f"(detalhe tecnico: {exc.__class__.__name__}: {exc})"
+        ) from exc
+    return BcuCabecalhoOut.model_validate(cab)
+
+
+@router.post("/importar-converter", response_model=BcuCabecalhoOut)
+async def importar_converter(
+    file: UploadFile = File(...),
+    current_user=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuCabecalhoOut:
+    """
+    Importa 'Converter em Data Center.xlsx' (6 abas) → bcu.* + sync referencia.base_tcpo.
+
+    Aceita: Mão de Obra, Equipamentos, Encargos, EPI/Uniforme, Ferramentas, Exames.
+    Avisos sobre abas ausentes ou EXAMES (sem tabela alvo) são salvos em cabecalho.observacao.
+    """
+    if not file.filename:
+        raise ValidationError("Arquivo invalido.")
+    if not file.filename.lower().endswith(".xlsx"):
+        raise ValidationError("Somente arquivos .xlsx sao suportados.")
+
+    payload = await file.read()
+    if not payload:
+        raise ValidationError("Arquivo vazio.")
+
+    svc = BcuService(db)
+    try:
+        cab = await svc.importar_converter(payload, file.filename, current_user.id)
+    except (IndexError, KeyError, AttributeError, ValueError) as exc:
+        raise ValidationError(
+            "Estrutura da planilha invalida para o formato Converter (6 abas). "
+            f"Detalhe: {exc.__class__.__name__}: {exc}"
+        ) from exc
+    except Exception as exc:
+        logger.error(
+            "bcu.importar_converter.unexpected_error",
+            arquivo=file.filename,
+            error=str(exc),
+            exc_info=True,
+        )
+        raise ValidationError(
+            f"Erro inesperado ao importar BCU: {exc.__class__.__name__}: {exc}"
+        ) from exc
     return BcuCabecalhoOut.model_validate(cab)
 
 

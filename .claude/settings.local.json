@@ -105,7 +105,36 @@
       "PowerShell($env:PGPASSWORD = \"password\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\16\\\\bin\\\\psql.exe\" -h localhost -U postgres -d postgres -c \"SELECT datname FROM pg_database WHERE datname='dinamica_budget_test'\" 2>&1)",
       "Bash(python -m pytest backend/tests/unit/test_bcu_service.py::test_importar_bcu_cria_cabecalho_e_itens -q --tb=short -s)",
       "Bash(python -m pytest backend/tests/unit/test_bcu_service.py::test_importar_bcu_cria_cabecalho_e_itens -s --tb=short -p no:warnings)",
-      "Bash(python -m pytest backend/tests/unit/test_bcu_service.py::test_importar_bcu_cria_cabecalho_e_itens --tb=long -p no:warnings)"
+      "Bash(python -m pytest backend/tests/unit/test_bcu_service.py::test_importar_bcu_cria_cabecalho_e_itens --tb=long -p no:warnings)",
+      "Edit(*)",
+      "Write(*)",
+      "MultiEdit(*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(npm ci:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run lint:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(mkdir:*)",
+      "Bash(cat:*)",
+      "Bash(sed:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(rm -rf:*)"
     ]
   },
   "enabledPlugins": {

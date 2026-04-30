@@ -32,6 +32,30 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 
 ## INBOX
 
+### [DONE] 2026-04-29T18:31:00Z — Sprint F3-02
+- From: PO / Scrum Master
+- Action: BUILD_UIUX_FIXES
+- Assigned Worker: claude-code
+- Briefing: @docs/sprints/F3-02/briefing/sprint-F3-02-briefing.md
+- Plan: @docs/sprints/F3-02/plans/2026-04-29-f3-02-demo-readiness.md
+- Input Audit: @docs/sprints/F3-01/technical-review/uiux-audit-2026-04-29.md
+- Technical Review: @docs/sprints/F3-02/technical-review/technical-review-2026-04-29-f3-02.md
+- Walkthrough: @docs/sprints/F3-02/walkthrough/done/walkthrough-F3-02.md
+- Notes: Correções P1 aplicadas para apresentação; build e testes frontend verdes.
+
+
+### [DONE] 2026-04-29T18:16:41Z — Sprint F3-01
+- From: PO / Scrum Master
+- Action: AUDIT_UIUX
+- Assigned Worker: codex
+- Briefing: @docs/sprints/F3-01/briefing/sprint-F3-01-briefing.md
+- Plan: @docs/sprints/F3-01/plans/2026-04-29-f3-01-demo-readiness.md
+- Technical Review: @docs/sprints/F3-01/technical-review/uiux-audit-2026-04-29.md
+- Walkthrough: @docs/sprints/F3-01/walkthrough/done/walkthrough-F3-01.md
+- Tests: Gates bloqueados no ambiente (`tsc`/`eslint`/`vitest` ausentes; `npm ci` com `EAI_AGAIN`; `pytest` ausente).
+- Notes: Auditoria UI/UX concluída sem alterar produção. Resultado: 0 P0, 7 P1, 4 P2; recomendações priorizadas para F3-02.
+
+
 ### [DONE] 2026-04-23T14:45:00Z — Sprint S-10
 - From: supervisor
 - Action: BUILD
@@ -110,12 +134,13 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Plan: @docs/sprints/S-07/plans/2026-04-23-runbook-observabilidade-onpremise.md
 - Notes: Entregue em TESTED. Endpoint /health, script PowerShell e Runbook operacional concluídos. Handoff para OpenCode (QA).
 
-### [PENDING] 2026-04-25T17:30:00Z — Sprint F2-02
+### [DONE] 2026-04-25T17:30:00Z — Sprint F2-02
 - From: QA (gemini-cli)
 - Action: REWORK
 - Briefing: @docs/briefings/sprint-f2-02-rework-v1.md
 - Feedback: @docs/technical-feedback-2026-04-25-f2-02-v1.md
 - Notes: A implementação atual duplica itens devido ao uso de explosão recursiva (DFS) do catálogo em cada nível. Metadados (tipo, custo) e suporte a Itens Próprios ausentes nas sub-explosões. Ver detalhes no feedback.
+- Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).
 
 ### [DONE] 2026-04-26T00:20:00Z — Sprint F2-02 (Rework v1)
 - From: qa
@@ -157,12 +182,19 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Plan: @docs/sprints/F2-12/plans/2026-04-27-refatoracao-tcpo.md
 - Notes: Entregue em TESTED -> Aprovado pelo QA. Testes unitários atualizados com `descricao_indent` e `font.bold`. Lógica robusta de parsing garantida.
 
-### [PENDING] 2026-04-27T12:15:00Z — Sprint F2-13
+### [DONE] 2026-04-29T02:18:00Z — Sprint F2-DT-C
+- From: supervisor / self-dispatch (HOLD liberado)
+- Action: BUILD
+- Assigned Worker: kimi-k2.6
+- Briefing: @docs/sprints/F2-DT-C/briefing/sprint-F2-DT-C-briefing.md
+- Plan: @docs/sprints/F2-DT-C/plans/2026-04-27-frontend-smoke-tests.md
+- Notes: Entregue em TESTED. 4 arquivos de teste (13 asserts), helper test-utils.tsx, technical-review e walkthrough gerados. npm run test passa (13/13), npm run build verde, 0 tsc errors. Handoff para QA aberto.
+
+### [DONE] 2026-04-27T12:15:00Z — Sprint F2-13
 - From: PO / Scrum Master
 - Action: BUILD
 - Assigned Worker: kimi-k2.6
 - Briefing: @docs/sprints/F2-13/briefing/sprint-F2-13-briefing.md
 - Plan: @docs/sprints/F2-13/plans/2026-04-27-tree-table-composicoes.md
 - Notes: Substituição do modelo flat por uma Table Expansível Hierárquica no Frontend do catálogo de bases. Carregamento lazily dos insumos/sub-serviços.
-
-
+- Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).

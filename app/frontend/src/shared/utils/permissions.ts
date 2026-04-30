@@ -69,3 +69,18 @@ export function hasAdminPanelAccess(user: MeResponse | null) {
 
   return user.perfis.some((perfil) => perfil.perfil.trim().toUpperCase() === 'ADMIN');
 }
+
+
+export function hasAprovadorAccess(user: MeResponse | null) {
+  if (!user) {
+    return false;
+  }
+
+  if (user.is_admin) {
+    return true;
+  }
+
+  return user.perfis.some((perfil) =>
+    ['ADMIN', 'APROVADOR'].includes(perfil.perfil.trim().toUpperCase()),
+  );
+}

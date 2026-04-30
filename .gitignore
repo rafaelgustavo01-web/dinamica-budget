@@ -107,7 +107,8 @@ resultado/
 .kiro/
 .claude/
 .amazonq/
-.agents/
 .codex/
 
 # ─── ARTEFACTS ──────────────
+# ─── UPLOAD SAMPLES ───────────
+*.csv

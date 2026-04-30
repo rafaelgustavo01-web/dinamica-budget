@@ -23,45 +23,59 @@ Your inbox has `[PENDING]` with `Action: INTAKE_NEXT`, OR all active sprints are
 
 ## INBOX
 
-### [PENDING] 2026-04-27T18:00:00Z — Sprint F2-12 DONE — WIP slot liberado
+### [DONE] 2026-04-29T18:10:00Z — Decisão Fase 3 Demo Readiness
+- From: orchestrator (gedAI)
+- Action: CONFIRM_SCOPE
+- Notes: PO autorizou seguir recomendação GO condicional para M7, mas priorizou UI/UX para apresentação. Fase 3 criada: F3-01 TODO, F3-02/F3-03/F3-04 PLAN. M7 fica GO condicional pós-demo.
+
+
+### [DONE] 2026-04-27T18:00:00Z — Sprint F2-12 DONE — WIP slot liberado
 - From: qa (Amazon Q)
 - Action: INTAKE_NEXT
 - Notes: F2-12 fechada. Débito técnico TCPO resolvido. 8 testes OK, 197 PASS regressão. WIP slot disponível. F2-10 e F2-11 estão em TESTED aguardando fechamento de ciclo. Próximos candidatos: fechar F2-10 e F2-11 como DONE após confirmação do QA.
+- Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).
 
-### [PENDING] 2026-04-27T12:00:00Z — Sprint F2-09 DONE — Milestone 6 fechado
+### [DONE] 2026-04-27T12:00:00Z — Sprint F2-09 DONE — Milestone 6 fechado
 - From: qa (Amazon Q)
 - Action: INTAKE_NEXT
 - Notes: F2-09 fechada. Versionamento + Workflow de Aprovacao entregues. Milestone 6 (Proposta Completa) encerrado com F2-01 a F2-09 todos DONE. WIP slot disponivel. Proximo candidato: F2-10 (BCU Unificada) ja em TODO com worker kimi-k2.6 despachado. F2-11 (Histograma) em PLAN aguardando F2-10 DONE.
+- Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).
 
-### [PENDING] 2026-04-26T23:11:00Z — Sprint F2-08 DONE — WIP slot liberado
+### [DONE] 2026-04-26T23:11:00Z — Sprint F2-08 DONE — WIP slot liberado
 - From: qa (Gemini 3.1 Pro)
 - Action: INTAKE_NEXT
 - Notes: F2-08 fechada. RBAC por proposta validado e integrado. 158 testes OK. WIP slot disponivel.
+- Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).
 
-### [PENDING] 2026-04-26T19:00:00Z — Sprint F2-07 DONE — Fase 2 encerrada
+### [DONE] 2026-04-26T19:00:00Z — Sprint F2-07 DONE — Fase 2 encerrada
 - From: qa (Amazon Q)
 - Action: INTAKE_NEXT
 - Notes: F2-07 fechada apos rework v1. Motor 4 camadas + ProposalResourcesPage + GET /recursos entregues. 143 PASS, 0 tsc errors. Todas as sprints da Fase 2 (F2-01 a F2-07) estao DONE. Pipeline da Fase 2 encerrado. Proximo ciclo: avaliar Fase 3 no ROADMAP.
+- Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).
 
-### [PENDING] 2026-04-26T14:00:00Z — Sprint F2-06 DONE — WIP slot liberado
+### [DONE] 2026-04-26T14:00:00Z — Sprint F2-06 DONE — WIP slot liberado
 - From: qa (Amazon Q)
 - Action: INTAKE_NEXT
 - Notes: F2-06 fechada. Edicao de PQ, filtros e duplicacao entregues com 143 testes OK. WIP slot disponivel. F2-07 estava em rework v1.
+- Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).
 
-### [PENDING] 2026-04-26T13:00:00Z — Sprint F2-03 DONE — WIP slot liberado
+### [DONE] 2026-04-26T13:00:00Z — Sprint F2-03 DONE — WIP slot liberado
 - From: qa (Amazon Q)
 - Action: INTAKE_NEXT
 - Notes: F2-03 fechada. Tela de Revisao de Match entregue com 6 testes OK e 0 tsc errors. WIP slot disponivel.
+- Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).
 
-### [PENDING] 2026-04-26T11:45:00Z — Sprint F2-02 DONE — WIP slot liberado
+### [DONE] 2026-04-26T11:45:00Z — Sprint F2-02 DONE — WIP slot liberado
 - From: qa
 - Action: INTAKE_NEXT
 - Notes: F2-02 fechada com sucesso apos rework. Arvore N niveis real sem duplicacao. 118 testes OK. WIP atual diminuiu. Slot disponivel.
+- Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).
 
-### [PENDING] 2026-04-26T00:30:00Z — Sprint F2-04 DONE — WIP slot liberado
+### [DONE] 2026-04-26T00:30:00Z — Sprint F2-04 DONE — WIP slot liberado
 - From: qa
 - Action: INTAKE_NEXT
 - Notes: F2-04 fechada pelo QA. CPU detalhada e BDI dinamico OK. WIP atual diminuiu. Slot disponivel.
+- Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).
 
 ### [DONE] 2026-04-22T22:45Z — Sprint S-02 DONE — WIP slot liberado
 - From: qa

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../auth/AuthProvider';
 import { PageHeader } from '../../../shared/components/PageHeader';
+import { EmptyState } from '../../../shared/components/EmptyState';
 import { proposalsApi } from '../../../shared/services/api/proposalsApi';
 import { extractApiErrorMessage } from '../../../shared/services/api/apiClient';
 import { ProposalForm } from '../components/ProposalForm';
@@ -25,6 +26,23 @@ export function ProposalCreatePage() {
       navigate(`/propostas/${newProposta.id}`);
     },
   });
+
+  if (!selectedClientId) {
+    return (
+      <>
+        <PageHeader
+          title="Nova Proposta"
+          description="Crie um rascunho de proposta comercial para iniciar a orçamentação."
+        />
+        <EmptyState
+          title="Selecione um cliente para criar uma proposta"
+          description="Defina o cliente no topo da tela antes de iniciar a orçamentação."
+          actionLabel="Voltar para Orçamentos"
+          onAction={() => navigate('/propostas')}
+        />
+      </>
+    );
+  }
 
   return (
     <>

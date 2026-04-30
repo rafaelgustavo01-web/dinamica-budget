@@ -8,6 +8,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   Tooltip,
@@ -147,7 +148,7 @@ function CpuItemRow({ item, propostaId }: CpuItemRowProps) {
               <Typography variant="caption" color="text.secondary" sx={{ ml: 5 }}>
                 Insumos
               </Typography>
-              <Table size="small">
+              <Table size="small" sx={{ minWidth: 720 }}>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'action.hover' }}>
                     <TableCell sx={{ pl: 6 }}>Insumo</TableCell>
@@ -177,7 +178,8 @@ interface CpuTableProps {
 
 export function CpuTable({ itens, propostaId }: CpuTableProps) {
   return (
-    <Table size="small">
+    <TableContainer sx={{ overflowX: 'auto' }}>
+      <Table size="small" sx={{ minWidth: 980 }}>
       <TableHead>
         <TableRow>
           <TableCell />
@@ -207,6 +209,7 @@ export function CpuTable({ itens, propostaId }: CpuTableProps) {
           </TableRow>
         )}
       </TableBody>
-    </Table>
+      </Table>
+    </TableContainer>
   );
 }

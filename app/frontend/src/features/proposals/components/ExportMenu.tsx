@@ -75,11 +75,11 @@ export function ExportMenu({ propostaId, propostaCodigo, disabled }: ExportMenuP
         Exportar
       </Button>
       <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
-        <MenuItem onClick={handleExcel}>
+        <MenuItem onClick={handleExcel} disabled={busy}>
           <ListItemIcon><GridOnOutlinedIcon fontSize="small" /></ListItemIcon>
           <ListItemText>Excel (xlsx)</ListItemText>
         </MenuItem>
-        <MenuItem onClick={handlePdf}>
+        <MenuItem onClick={handlePdf} disabled={busy}>
           <ListItemIcon><PictureAsPdfOutlinedIcon fontSize="small" /></ListItemIcon>
           <ListItemText>PDF (folha de rosto)</ListItemText>
         </MenuItem>

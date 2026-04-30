@@ -53,16 +53,14 @@ class PropostaExportService:
         capa["A1"] = "Codigo"
         capa["B1"] = "Cliente"
         capa["A2"] = proposta.codigo
-        capa["B2"] = proposta.codigo
+        capa["B2"] = getattr(cliente, "nome_fantasia", "")
         capa["A3"] = "Titulo"
         capa["B3"] = proposta.titulo or ""
         capa["A4"] = "Status"
         capa["B4"] = proposta.status.value if hasattr(proposta.status, "value") else str(proposta.status)
-        capa["A5"] = "Cliente"
-        capa["B5"] = cliente.nome_fantasia if cliente else ""
         if cliente and getattr(cliente, "cnpj", None):
-            capa["A6"] = "CNPJ"
-            capa["B6"] = cliente.cnpj
+            capa["A5"] = "CNPJ"
+            capa["B5"] = cliente.cnpj
         capa["A8"] = "Total Direto"
         capa["B8"] = float(proposta.total_direto or 0)
         capa["A9"] = "Total Indireto"
@@ -76,10 +74,9 @@ class PropostaExportService:
         resumo = wb.create_sheet("Quadro-Resumo")
         _write_header(resumo, 1, ["Tipo de Recurso", "Custo Total"])
         agregado: dict[str, Decimal] = {}
-        composicoes_por_item: dict = {}
+        composicoes_por_item = await self.composicao_repo.list_by_proposta_items_batch(proposta_id)
         for item in itens:
-            comps = await self.composicao_repo.list_by_proposta_item(item.id)
-            composicoes_por_item[item.id] = comps
+            comps = composicoes_por_item.get(item.id, [])
             for c in comps:
                 tipo = c.tipo_recurso.value if c.tipo_recurso else "OUTRO"
                 agregado[tipo] = agregado.get(tipo, Decimal("0")) + (c.custo_total_insumo or Decimal("0"))
@@ -120,7 +117,6 @@ class PropostaExportService:
 
         buffer = BytesIO()
         wb.save(buffer)
-        buffer.seek(0)
         return buffer.getvalue()
 
     async def gerar_pdf(self, proposta_id: UUID) -> bytes:
@@ -136,7 +132,7 @@ class PropostaExportService:
             Paragraph(f"Proposta {proposta.codigo}", styles["Title"]),
             Spacer(1, 12),
             Paragraph(f"<b>Titulo:</b> {proposta.titulo or '-'}", styles["Normal"]),
-            Paragraph(f"<b>Cliente:</b> {cliente.nome_fantasia if cliente else '-'}", styles["Normal"]),
+            Paragraph(f"<b>Cliente:</b> {getattr(cliente, 'nome_fantasia', '-')}", styles["Normal"]),
         ]
         if cliente and getattr(cliente, "cnpj", None):
             story.append(Paragraph(f"<b>CNPJ:</b> {cliente.cnpj}", styles["Normal"]))
@@ -158,5 +154,4 @@ class PropostaExportService:
         story.append(table)
 
         doc.build(story)
-        buffer.seek(0)
         return buffer.getvalue()

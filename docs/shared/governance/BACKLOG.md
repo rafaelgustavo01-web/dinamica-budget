@@ -8,6 +8,17 @@ Responsável: Research AI / QA Re-avaliação
 - Prioridade: `P0` (crítica), `P1` (alta), `P2` (média)
 - WIP recomendado: máximo 4 sprints ativas fora de `BACKLOG`/`DONE`
 
+
+## Status Operacional — 2026-04-29
+
+- Ciclo concluído: `F2-10`, `F2-11`, `F2-12`, `F2-13`, `F2-DT-A`, `F2-DT-B`, `F2-DT-C` em DONE.
+- WIP atual: **2/4** (`F3-01`, `F3-02` em TESTED aguardando QA Gemini).
+- WIP assumido pelo PO em 2026-04-29: **4**; abrir novo ciclo assim que QA mover sprint de TESTED para DONE, respeitando dependências.
+- Milestone 6 — Proposta Completa: **fechado**.
+- Milestone 7 — Compras e Negociação: **GO condicional** validado por Codex + Claude; fica **pós-demo**, após saneamento/contratos.
+- Decisão PO 2026-04-29: antes de Compras, abrir **Fase 3 — Demo Readiness / Polimento UI+UX** para corrigir erros de interface e deixar o fluxo apresentável esta semana.
+- Sprints ativas: `F3-01` e `F3-02` em TESTED aguardando QA Gemini. Próximo ciclo só abre quando QA mover sprint para DONE.
+
 ## Sprints Propostas
 
 | Sprint | Status | Prioridade | Dependências | Objetivo | Critérios de aceite |
@@ -33,15 +44,20 @@ Responsável: Research AI / QA Re-avaliação
 | `F2-07` | DONE | P2 | `F2-01`, `F2-02` | Tabelas de Recursos + Motor 4 Camadas — agregado por recurso na CPU + busca formalizada em 4 camadas | PropostaResumoRecurso gerado ao chamar gerar-cpu; busca aplica histórico/código/fuzzy/semântico em ordem |
 | `F2-08` | DONE | P0 | `F2-03`, `F2-04` | RBAC por Proposta — desacoplar autorização de cliente; ACL por usuário com papéis OWNER/EDITOR/APROVADOR (VIEWER implícito) e bypass via is_admin | Tabela proposta_acl + migration 021 + backfill OWNER; require_proposta_role substitui require_cliente_access em 5 routers; criador vira OWNER; last-OWNER guard; GET /propostas retorna meu_papel; modal de compartilhamento no front; 158 PASS; 0 tsc |
 | `F2-09` | DONE | P1 | `F2-08` | Versionamento de Propostas + Workflow de Aprovação — proposta_root_id como agrupador, nova_versao clona snapshot, fluxo opcional aprovador/aprovado | Migration 022 com campos de versão + aprovação; POST /propostas/{id}/nova-versao; ACL herdada por root; aba Histórico no front; tela fila do APROVADOR; 170+ PASS; 0 tsc |
-| `F2-10` | TESTED | P1 | `F2-09` | **BCU Unificada (Base de Custos Unitários) + De/Para** — substituir `pc_*` por schema `bcu.*`; unificar uploads (remover Converter ETL + Carga inteligente PC); De/Para 1:1 manual entre `referencia.base_tcpo` e `bcu.*`; refatorar `cpu_custo_service` para usar mapeamento explícito | Migration 023 (drop pc_*, create schema bcu + de_para); BcuService importa BCU.xlsx + sync `referencia.base_tcpo` (codigo_origem); BcuDeParaService CRUD + validação tipo coerente; UI: BcuPage + BcuDeParaPage + uploads unificados; cpu_custo_service usa De/Para com fallback BaseTcpo; 200+ PASS; 0 tsc |
-| `F2-11` | BACKLOG | P1 | `F2-10` | **Histograma da Proposta** — snapshot editável per-proposta gerado a partir da sumarização das composições + BCU; recursos extras alocáveis; detecção de divergência BCU; trigger CPU desatualizada | Migration 024 (8 tabelas `proposta_pc_*` + recurso_extra + alocação + flag cpu_desatualizada); HistogramaService.montar_histograma; ProposalHistogramaPage com 7 abas editáveis + aba Recursos Extras + AlocacaoRecursoDialog; cpu_custo_service hierarquia proposta_pc > bcu > BaseTcpo; nova_versao clona histograma; 245+ PASS; 0 tsc |
+| `F2-10` | DONE | P1 | `F2-09` | **BCU Unificada (Base de Custos Unitários) + De/Para** — substituir `pc_*` por schema `bcu.*`; unificar uploads (remover Converter ETL + Carga inteligente PC); De/Para 1:1 manual entre `referencia.base_tcpo` e `bcu.*`; refatorar `cpu_custo_service` para usar mapeamento explícito | Migration 023 (drop pc_*, create schema bcu + de_para); BcuService importa BCU.xlsx + sync `referencia.base_tcpo` (codigo_origem); BcuDeParaService CRUD + validação tipo coerente; UI: BcuPage + BcuDeParaPage + uploads unificados; cpu_custo_service usa De/Para com fallback BaseTcpo; 200+ PASS; 0 tsc |
+| `F2-11` | DONE | P1 | `F2-10` | **Histograma da Proposta** — snapshot editável per-proposta gerado a partir da sumarização das composições + BCU; recursos extras alocáveis; detecção de divergência BCU; trigger CPU desatualizada | Migration 024 (8 tabelas `proposta_pc_*` + recurso_extra + alocação + flag cpu_desatualizada); HistogramaService.montar_histograma; ProposalHistogramaPage com 7 abas editáveis + aba Recursos Extras + AlocacaoRecursoDialog; cpu_custo_service hierarquia proposta_pc > bcu > BaseTcpo; nova_versao clona histograma; 245+ PASS; 0 tsc |
 | `F2-12` | DONE | P1 | `F2-11` | **Refatoração Importação TCPO (Débito Técnico)** — corrigir bug arquitetural onde subserviços `SER.CG` quebravam hierarquia; detectar serviço pai via `font.bold` + `alignment.indent==0` + `startswith("SER.")` | `parse_tcpo_pini` usa `values_only=False` + AND triplo (bold + indent + prefixo); 8 testes unitários com mocks openpyxl; 197 PASS regressão; 0 novos failures |
-| `F2-13` | ON-HOLD | P1 | `F2-12` | M7.2 — Cotações (CRUD backend) — tabela proposta_compras_cotacoes + endpoints CRUD + selecionar_cotacao propaga para custo_unitario_ajustado **(SUSPENSA por decisão PO 2026-04-27)** | 5 endpoints autenticados via require_proposta_role(COMPRADOR); selecionar dispara recálculo do recurso; constraint UNIQUE selecionada por recurso; testes 15+ |
+| `F2-13` | DONE | P1 | `F2-12` | **Tabela Hierárquica de Composições (UX Frontend)** — endpoint `GET /servicos/{id}/componentes` + `ExpandableTreeRow` recursivo/lazy loading | QA aprovado em 2026-04-29; smoke test incluído; branch `main` |
+<!-- M7: Sprints originais de Compras permanecem ON-HOLD/SUPERSEDED até decisão PO pós-M7-0; não reutilizar `F2-13`. -->
 | `F2-14` | ON-HOLD | P2 | `F2-13` | M7.3 — Frontend Tela de Compras — ProposalPurchasingPage com tabela de recursos, edição inline de ajustado, drawer de cotações por recurso **(SUSPENSA por decisão PO 2026-04-27)** | Rota /compras + menu; tabela com edição debounced; CotacaoForm com validações; botão Selecionar por cotação; 0 tsc errors |
 | `F2-15` | ON-HOLD | P2 | `F2-13`, `F2-14` | M7.4 — Comparativo + Recálculo — endpoint comparativo agregado + recálculo automático de totais da Proposta + card no DetailPage **(SUSPENSA por decisão PO 2026-04-27)** | GET /comparativo-base-vs-ajustado retorna agregado; recalcular_totais disparado por selecionar/PATCH; card Comparativo no detail; coluna Total Ajustado na lista |
-| `F2-DT-A` | TESTED | P0 | — | **Backend Tech Debt Cleanup** — pytest infra resiliente + purga pipeline legado (subprocess + import_preview_service) + N+1 batch (5 services) + ETL durabilidade (tabela etl_preview); fecha 18 itens do checkpoint 2026-04-27 | 4 commits atomicos `feat(f2-dt-a/N)`; suite verde apos cada commit (197+ PASS); migration etl_preview com down_revision correto; query log histograma <=15 queries para 100 insumos; `codigo_origem` em ComposicaoComponenteResponse; branch main apenas |
-| `F2-DT-B` | TESTED | P1 | — | **Frontend Tech Debt Cleanup** — Vitest+RTL+MSW scaffold + ExportMenu erro/toast + ExpandableTreeRow exibe codigo_origem em filhos + ProposalDetailPage botao Excluir resolvido + dedup tema; paralela disjoint com F2-DT-A | 2 commits atomicos `feat(f2-dt-b/N)`; npm run build + tsc --noEmit verdes; npm run test "no tests found" sem erro; codigo_origem declarado no TS interface; branch main apenas |
-| `F2-DT-C` | PLAN | P2 | `F2-DT-A`, `F2-DT-B` | **Frontend Smoke Tests (Solo, HOLD)** — 4 arquivos de teste smoke em **/__tests__/** para Histograma (3 abas), ExpandableTreeRow, ProposalsListPage, ProposalDetailPage | 1 commit `test(f2-dt-c)`; 12+ asserts; npm run test passa; npm run build verde; apenas arquivos novos (sem modificar producao); branch main apenas |
+| `F2-DT-A` | DONE | P0 | — | **Backend Tech Debt Cleanup** — pytest infra resiliente + purga pipeline legado (subprocess + import_preview_service) + N+1 batch (5 services) + ETL durabilidade (tabela etl_preview); fecha 18 itens do checkpoint 2026-04-27 | 4 commits atomicos `feat(f2-dt-a/N)`; suite verde apos cada commit (197+ PASS); migration etl_preview com down_revision correto; query log histograma <=15 queries para 100 insumos; `codigo_origem` em ComposicaoComponenteResponse; branch main apenas |
+| `F2-DT-B` | DONE | P1 | — | **Frontend Tech Debt Cleanup** — Vitest+RTL+MSW scaffold + ExportMenu erro/toast + ExpandableTreeRow exibe codigo_origem em filhos + ProposalDetailPage botao Excluir resolvido + dedup tema; paralela disjoint com F2-DT-A | 2 commits atomicos `feat(f2-dt-b/N)`; npm run build + tsc --noEmit verdes; npm run test "no tests found" sem erro; codigo_origem declarado no TS interface; branch main apenas |
+| `F2-DT-C` | DONE | P2 | `F2-DT-A`, `F2-DT-B` | **Frontend Smoke Tests** — 4 arquivos de teste smoke em **/__tests__/** para Histograma (3 abas), ExpandableTreeRow, ProposalsListPage, ProposalDetailPage | 1 commit `test(f2-dt-c)`; 13 asserts; npm run test 13 PASS; npm run build verde; apenas arquivos novos (sem modificar producao); branch main apenas |
+| `F3-01` | TESTED | P0 | `F2-DT-C` | **Demo Readiness Audit — UI/UX e fluxos críticos**: mapear erros visuais/funcionais que impedem apresentação; validar rotas principais de Propostas, Importação PQ, Match, CPU, Histograma, Composições, Exportação e RBAC visual | Relatório em `docs/sprints/F3-01/technical-review/uiux-audit-2026-04-29.md`; 0 P0, 7 P1, 4 P2; sem alterar código; gates bloqueados por dependências/rede do ambiente |
+| `F3-02` | TESTED | P0 | `F3-01` | **Correções críticas de UI/UX para apresentação**: corrigir bugs bloqueantes identificados em F3-01 nos fluxos demonstráveis; foco em telas de Proposta, Histograma, Composições e Exportação | Correções aplicadas em CPU, Match Review, Nova Proposta, Importar PQ, CPU error states, navegação da fila de aprovação e Histograma; `npm run build` PASS; `npm run test` PASS — 13 testes |
+| `F3-03` | PLAN | P1 | `F3-02` | **Roteiro de apresentação + dados de demo**: preparar narrativa, checklist operacional, massa mínima/seed ou instruções reproduzíveis para demonstrar proposta completa | Documento `docs/sprints/F3-03/demo/demo-script-2026-04-29.md`; checklist de 10–15 minutos; dados/fixtures sem segredo; reset seguro documentado |
+| `F3-04` | PLAN | P1 | `F3-02`, `F3-03` | **Polimento visual final + smoke de demo**: ajustar estados vazios/loading/erro, labels, botões, navegação e responsividade mínima; rodar QA final da apresentação | Demo checklist 100% PASS; screenshots/evidências em walkthrough; sem regressão em build/test; pendências não-críticas documentadas |
 
 ## Ordem Recomendada de Execução
 
@@ -67,24 +83,14 @@ FASE C — Módulo de Orçamentos
 
 ## Sprints Ativas
 
-**Fase 3 — terceira leva fechada (F2-01..F2-08 todas DONE).** Próxima leva: F2-09 desbloqueada.
+**Fase 3 — Demo Readiness / Polimento UI+UX aberta em 2026-04-29.**
 
-- `F2-01` DONE — PQ Layout por Cliente (Worker: claude-sonnet-4-6) — QA aprovado 2026-04-25
-- `F2-02` DONE — Explosão Recursiva de Composições (Worker: kimi-k2.5) — QA aprovado 2026-04-26 (pos-rework)
-- `F2-03` DONE — Tela de Revisão de Match (Worker: claude-sonnet-4-6) — QA aprovado 2026-04-26
-- `F2-04` DONE — CPU Detalhada + BDI Dinâmico (Worker: kimi-k2.5) — QA aprovado 2026-04-25
-- `F2-05` DONE — Exportação Excel/PDF (Worker: kimi-k2.5) — QA aprovado 2026-04-26
-- `F2-06` DONE — UX complementar (Worker: claude-sonnet-4-6) — QA aprovado 2026-04-26 (bug debounce corrigido pelo QA)
-- `F2-07` DONE — Tabelas Recursos + Motor 4 Camadas (Worker: kimi-k2.5 rework v1) — QA aprovado 2026-04-26
-- `F2-08` DONE — RBAC por Proposta (Worker: kimi-k2.5) — QA aprovado 2026-04-26 (Amazon Q); 158 PASS, 0 FAIL; 0 tsc errors
-- `F2-09` DONE — Versionamento + Workflow de Aprovação (Worker: claude-sonnet-4-6) — QA aprovado 2026-04-27 (Amazon Q); Milestone 6 fechado
-- `F2-10` TESTED — BCU Unificada (Base de Custos Unitários) + De/Para — Worker: kimi-k2.6 — prompt em `docs/sprints/F2-10/dispatch/sprint-F2-10-worker-prompt.md`
-- `F2-11` TESTED — Histograma da Proposta — enviada para QA — briefing+prompt em `docs/sprints/F2-11/dispatch/`
-- `F2-12` DONE — Refatoração Importação TCPO (Débito Técnico) — Worker: kimi-k2.6 — QA aprovado 2026-04-27 (Amazon Q); 8 testes OK, 197 PASS regressão
-- `F2-13` TESTED — Tabela Hierárquica de Composições (UX Frontend) — Worker: kimi-k2.6 — walkthrough em `docs/sprints/F2-13/walkthrough/done/walkthrough-F2-13.md`
-- `F2-DT-A` TESTED — Backend Tech Debt Cleanup — Worker: claude-sonnet-4-6 — 223 PASS, 0 errors; walkthrough em `docs/sprints/F2-DT-A/walkthrough/done/walkthrough-F2-DT-A.md`; technical-review em `docs/sprints/F2-DT-A/technical-review/technical-review-2026-04-28-f2-dt-a.md`
-- `F2-DT-B` TODO — Frontend Tech Debt Cleanup — Worker: kimi-k2.6 — prompt em `docs/sprints/F2-DT-B/dispatch/sprint-F2-DT-B-worker-prompt.md`; INBOX em `docs/shared/dispatch/inbox/kimi-k2.6-F2-DT-B.md`
-- `F2-DT-C` PLAN (HOLD) — Frontend Smoke Tests (Solo) — Worker: kimi-k2.6 — aguarda F2-DT-A E F2-DT-B em DONE; INBOX em `docs/shared/dispatch/inbox/kimi-k2.6-F2-DT-C.md`
+- WIP: **1/4**.
+- Objetivo imediato: deixar o produto estável e apresentável esta semana antes de retomar Compras/M7.
+- `F3-01` em TESTED: auditoria UI/UX concluída, com relatório e walkthrough gerados.
+- `F3-02` em TESTED: correções críticas P1 aplicadas e gates frontend verdes.
+- `F3-03` pode iniciar roteiro/dados de demo; `F3-04` aguarda QA/smoke final.
+- Milestone 7 permanece **GO condicional pós-demo**.
 
 ### Decisões de alocação (Scrum Master, 2026-04-26)
 
@@ -153,6 +159,9 @@ Todas as 12 sprints concluídas com aprovação do QA:
   - **Regra de branch:** `main` apenas em todas as sprints. Sem feature branches (regra global do PO).
   - WIP = 4/4 (F2-09 TESTED + F2-10 TESTED + F2-11 TESTED + F2-13 TESTED + F2-DT-A TODO + F2-DT-B TODO + F2-DT-C PLAN-HOLD; cap excepcional para janela de cleanup).
 
+- 2026-04-29 (PO): aprovada recomendação Codex+Claude de **GO condicional** para Milestone 7, mas com prioridade operacional alterada: antes de implementar Compras, abrir **Fase 3 — Demo Readiness / Polimento UI+UX** para corrigir erros de interface/experiência e preparar apresentação da semana. Criadas `F3-01` a `F3-04`; `F3-01` vai para TODO imediatamente, WIP=1/4. M7 permanece pós-demo, dependente de saneamento/contratos.
+- 2026-04-29 (Worker/Codex): `F3-01` executada sem alteração de produção. Auditoria em `docs/sprints/F3-01/technical-review/uiux-audit-2026-04-29.md`; walkthrough em `docs/sprints/F3-01/walkthrough/done/walkthrough-F3-01.md`. Resultado: 0 P0, 7 P1, 4 P2. Gates locais bloqueados por ausência de dependências e rede indisponível para `npm ci`.
+
 ## Observações de Pesquisa
 - O repositório atual possui todos os artefatos canônicos do pipeline (`docs/JOB-DESCRIPTION.md`, `docs/superpowers/plans/`, `docs/roles/`, `docs/dispatch/`).
 - Suite de testes: **93 unit tests PASS**, **1 smoke E2E PASS**, **build frontend OK**.
@@ -160,3 +169,12 @@ Todas as 12 sprints concluídas com aprovação do QA:
 oadmap.
  S-12 ao backlog e Milestone 5 ao roadmap.
 oadmap.
+
+- 2026-04-29 (Worker/gedAI): `F3-02` implementada para demo readiness. Correções P1 em CPU/Match responsivo, guards de cliente/proposta, estados de erro de Importar/CPU, navegação de aprovação e divergências do Histograma. Gates frontend: `npm ci`, `npm run build`, `npm run test` PASS (13 testes).
+
+- 2026-04-29 (PO): QA passa a ser executado preferencialmente por Gemini nas sprints em TESTED. Manter fluxo documental obrigatório: Briefing, Plan, Technical Review, Technical Feedback e Walkthrough.
+
+- 2026-04-29 (QA dispatch): Gemini QA acionado para validar `F3-01` e `F3-02`, mas o Gemini CLI retornou 429 `MODEL_CAPACITY_EXHAUSTED` para `gemini-2.5-pro` e `gemini-2.5-flash`. QA permanece PENDING para retry; não mover TESTED para DONE sem feedback.
+
+
+- 2026-04-29 (PO): definida política de roteamento de agents: Kimi/Codex para backend/DB/API/refatoração; Claude para frontend/UI/UX; Gemini para research/novas features; rotação consciente de tokens e uso de modelos menos potentes em tarefas simples.

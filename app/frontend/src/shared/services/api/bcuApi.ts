@@ -146,7 +146,9 @@ export const bcuApi = {
   async importarPlanilha(file: File): Promise<BcuCabecalho> {
     const formData = new FormData();
     formData.append('file', file);
-    const r = await apiClient.post<BcuCabecalho>('/bcu/importar', formData);
+    // Endpoint atualizado: planilha-fonte oficial agora é "Converter em Data Center.xlsx"
+    // (6 abas: Mão de Obra, Equipamentos, Encargos, EPI/Uniforme, Ferramentas, Exames).
+    const r = await apiClient.post<BcuCabecalho>('/bcu/importar-converter', formData);
     return r.data;
   },
 

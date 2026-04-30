@@ -1,24 +1,16 @@
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
-import PreviewOutlinedIcon from '@mui/icons-material/PreviewOutlined';
 
 import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import {
   Alert,
-  Box,
   Button,
   Chip,
-  LinearProgress,
   Paper,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   Typography,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { ConfirmationDialog } from '../../shared/components/ConfirmationDialog';
 import { PageHeader } from '../../shared/components/PageHeader';
@@ -26,7 +18,6 @@ import { useFeedback } from '../../shared/components/feedback/FeedbackProvider';
 import { adminApi } from '../../shared/services/api/adminApi';
 import { extractApiErrorMessage } from '../../shared/services/api/apiClient';
 import { bcuApi } from '../../shared/services/api/bcuApi';
-import type { ImportPreviewResponse } from '../../shared/types/contracts/admin';
 
 export function UploadTcpoPage() {
   const { showMessage } = useFeedback();
@@ -34,22 +25,12 @@ export function UploadTcpoPage() {
 
   // ── TCPO state ────────────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<ImportPreviewResponse | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   // ── BCU state ─────────────────────────────────────────────────────────────
   const [bcuFile, setBcuFile] = useState<File | null>(null);
 
-  // ── TCPO: semantic preview (display only) ────────────────────────────────
-  const previewMutation = useMutation({
-    mutationFn: (file: File) => adminApi.previewImport(file, 'TCPO'),
-    onSuccess: (data) => {
-      setPreview(data);
-      showMessage('Preview TCPO gerado. Revise os mapeamentos antes de executar.');
-    },
-  });
-
-  // ── TCPO: proper ETL execute (upload → execute) ──────────────────────────
+  // ── TCPO: ETL upload + execute (single-shot) ─────────────────────────────
   const executeMutation = useMutation({
     mutationFn: async (file: File) => {
       const upload = await adminApi.uploadTcpo(file);
@@ -77,13 +58,6 @@ export function UploadTcpoPage() {
     },
   });
 
-  const confidenceAvg = useMemo(() => {
-    if (!preview) return 0;
-    const all = preview.sheets.flatMap((sheet) => sheet.mapped_fields);
-    if (!all.length) return 0;
-    return all.reduce((acc, item) => acc + item.confidence, 0) / all.length;
-  }, [preview]);
-
   return (
     <>
       <PageHeader
@@ -107,7 +81,8 @@ export function UploadTcpoPage() {
           </Stack>
 
           <Typography variant="body2" color="text.secondary">
-            Selecione a planilha, gere o preview semântico e execute a carga somente após validar o mapeamento.
+            Selecione a planilha "Composições TCPO - PINI.xlsx" e execute a carga. O parser identifica
+            serviços-pai por bold + indent + prefixo SER. e popula referencia.base_tcpo + composicao_base.
           </Typography>
 
           <Button component="label" variant="outlined" sx={{ width: { xs: '100%', md: 360 } }}>
@@ -119,24 +94,15 @@ export function UploadTcpoPage() {
               onChange={(event) => {
                 const file = event.target.files?.[0] ?? null;
                 setSelectedFile(file);
-                setPreview(null);
               }}
             />
           </Button>
 
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1}>
             <Button
-              variant="contained"
-              startIcon={<PreviewOutlinedIcon />}
-              disabled={previewMutation.isPending || !selectedFile}
-              onClick={() => selectedFile && previewMutation.mutate(selectedFile)}
-            >
-              {previewMutation.isPending ? 'Gerando preview...' : 'Gerar preview'}
-            </Button>
-
-            <Button
               color="warning"
               variant="contained"
+              startIcon={<CloudUploadOutlinedIcon />}
               disabled={executeMutation.isPending || !selectedFile}
               onClick={() => setConfirmOpen(true)}
             >
@@ -144,70 +110,14 @@ export function UploadTcpoPage() {
             </Button>
           </Stack>
 
-          {previewMutation.isError && (
-            <Alert severity="error">
-              {extractApiErrorMessage(previewMutation.error, 'Falha ao gerar preview da planilha TCPO.')}
-            </Alert>
-          )}
-
           {executeMutation.isError && (
             <Alert severity="error">
               {extractApiErrorMessage(executeMutation.error, 'Falha na execução da carga TCPO.')}
             </Alert>
           )}
 
-          {preview && (
-            <Stack spacing={1.5}>
-              <Alert severity="success">
-                Preview pronto para {preview.file_name}. Estimativa: {preview.estimated_records} registros.
-              </Alert>
-
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Confiança média de mapeamento: {(confidenceAvg * 100).toFixed(1)}%
-                </Typography>
-                <LinearProgress
-                  variant="determinate"
-                  value={Math.max(5, Math.round(confidenceAvg * 100))}
-                  sx={{ mt: 0.75, borderRadius: 999 }}
-                />
-              </Box>
-
-              {preview.warnings.length > 0 && (
-                <Alert severity="warning">{preview.warnings.join(' | ')}</Alert>
-              )}
-
-              <Table size="small" sx={{ border: '1px solid', borderColor: 'divider' }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Aba</TableCell>
-                    <TableCell>Linhas</TableCell>
-                    <TableCell>Estimativa</TableCell>
-                    <TableCell>Campos mapeados</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {preview.sheets.map((sheet) => (
-                    <TableRow key={sheet.sheet_name}>
-                      <TableCell>{sheet.sheet_name}</TableCell>
-                      <TableCell>{sheet.total_rows}</TableCell>
-                      <TableCell>{sheet.estimated_records}</TableCell>
-                      <TableCell>
-                        {sheet.mapped_fields.slice(0, 4).map((field) => (
-                          <Typography
-                            key={`${sheet.sheet_name}-${field.source_header}`}
-                            variant="caption"
-                            display="block"
-                          >
-                            {field.source_header} → {field.target_field} ({Math.round(field.confidence * 100)}%)
-                          </Typography>
-                        ))}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Stack>
+          {executeMutation.isSuccess && (
+            <Alert severity="success">Carga TCPO concluída com sucesso.</Alert>
           )}
         </Stack>
       </Paper>
@@ -228,11 +138,6 @@ export function UploadTcpoPage() {
           <Typography variant="body2" color="text.secondary">
             Fonte: TCPO | Arquivo: {selectedFile?.name ?? 'não selecionado'}
           </Typography>
-          {preview && (
-            <Typography variant="body2" color="text.secondary">
-              Estimativa do preview: {preview.estimated_records} registros.
-            </Typography>
-          )}
         </Stack>
       </ConfirmationDialog>
 
@@ -249,12 +154,14 @@ export function UploadTcpoPage() {
           <Stack direction="row" spacing={1.5} alignItems="center">
             <TableChartOutlinedIcon color="success" />
             <Typography variant="h6">Carga da planilha BCU (Base de Custos Unitários)</Typography>
-            <Chip label="7 abas" size="small" color="success" variant="outlined" />
+            <Chip label="6 abas" size="small" color="success" variant="outlined" />
           </Stack>
 
           <Typography variant="body2" color="text.secondary">
-            Importa todas as abas da planilha BCU: Mão de Obra, Equipamentos, Encargos, EPI/Uniforme,
-            Ferramentas e Mobilização. Dados existentes com o mesmo nome de arquivo são substituídos.
+            Fonte oficial: <strong>Converter em Data Center.xlsx</strong> — 6 abas:
+            Mão de Obra, Equipamentos, Encargos, EPI/Uniforme, Ferramentas, Exames.
+            Dados existentes com o mesmo nome de arquivo são substituídos. EXAMES é registrado
+            como aviso (sem tabela-alvo no schema atual).
           </Typography>
 
           <Button
@@ -263,7 +170,7 @@ export function UploadTcpoPage() {
             color="success"
             sx={{ width: { xs: '100%', md: 360 } }}
           >
-            {bcuFile ? bcuFile.name : 'Selecionar BCU tabelas.xlsx'}
+            {bcuFile ? bcuFile.name : 'Selecionar Converter em Data Center.xlsx'}
             <input
               hidden
               type="file"

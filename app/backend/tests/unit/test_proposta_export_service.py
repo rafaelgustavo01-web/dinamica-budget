@@ -56,13 +56,13 @@ async def test_gerar_excel_contem_quatro_abas(monkeypatch):
     svc.proposta_repo.get_by_id = AsyncMock(return_value=proposta)
     svc.cliente_repo.get_by_id = AsyncMock(return_value=cliente)
     svc.item_repo.list_by_proposta = AsyncMock(return_value=[item])
-    svc.composicao_repo.list_by_proposta_item = AsyncMock(return_value=[composicao])
+    svc.composicao_repo.list_by_proposta_items_batch = AsyncMock(return_value={item.id: [composicao]})
 
     raw = await svc.gerar_excel(proposta.id)
 
     wb = load_workbook(BytesIO(raw))
     assert set(wb.sheetnames) == {"Capa", "Quadro-Resumo", "CPU", "Composicoes"}
-    assert wb["Capa"]["B2"].value == "PROP-2026-0001"
+    assert wb["Capa"]["B2"].value == "Cliente Teste"  # M-03 fix: B2 shows client name, not codigo
     assert wb["CPU"].max_row >= 2
     assert wb["Composicoes"].max_row >= 2
 

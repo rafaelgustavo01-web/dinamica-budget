@@ -4,6 +4,7 @@ import DatasetLinkedOutlinedIcon from '@mui/icons-material/DatasetLinkedOutlined
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import TableViewOutlinedIcon from '@mui/icons-material/TableViewOutlined';
 import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
+import HowToRegOutlinedIcon from '@mui/icons-material/HowToRegOutlined';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
@@ -17,7 +18,7 @@ import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import type { ReactNode } from 'react';
 
 import type { MeResponse } from '../../types/contracts/auth';
-import { hasAdminPanelAccess } from '../../utils/permissions';
+import { hasAdminPanelAccess, hasAprovadorAccess } from '../../utils/permissions';
 
 export type NavigationStatus = 'active' | 'partial' | 'missing';
 
@@ -48,6 +49,14 @@ export const navigationItems: NavigationItem[] = [
     icon: <ReceiptLongOutlinedIcon fontSize="small" />,
     status: 'active',
     visible: () => true,
+  },
+  {
+    label: 'Fila de Aprovação',
+    path: '/propostas/aprovacoes',
+    group: 'Operação',
+    icon: <HowToRegOutlinedIcon fontSize="small" />,
+    status: 'active',
+    visible: (user) => hasAprovadorAccess(user),
   },
   {
     label: 'Busca Inteligente',
