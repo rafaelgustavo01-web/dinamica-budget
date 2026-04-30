@@ -598,9 +598,9 @@ for %%f in (requirements.txt alembic.ini .env.example) do (
         goto :abort
     )
 )
-if not exist "!SRC!\app\main.py" (
-    echo   !R![FAIL]!N! Arquivo ausente: app\main.py
-    >> "!LOG!" echo [FAIL] app\main.py ausente
+if not exist "!SRC!\backend\main.py" (
+    echo   !R![FAIL]!N! Arquivo ausente: backend\main.py
+    >> "!LOG!" echo [FAIL] backend\main.py ausente
     goto :abort
 )
 if not exist "!SRC!\frontend\package.json" (

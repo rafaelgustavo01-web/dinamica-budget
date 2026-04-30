@@ -9,7 +9,11 @@ interface StatusBadgeProps {
 }
 
 function normalizeStatusKey(value: string, kind: 'status' | 'origemMatch' | 'proposta') {
-  const normalized = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  if (!value) {
+    return 'tcpo';
+  }
+
+  const normalized = String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 
   if (kind === 'origemMatch') {
     if (normalized === 'PROPRIA_CLIENTE') {

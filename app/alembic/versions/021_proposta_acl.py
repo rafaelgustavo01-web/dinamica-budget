@@ -28,7 +28,11 @@ def upgrade() -> None:
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("proposta_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("usuario_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("papel", sa.Enum("OWNER", "EDITOR", "APROVADOR", name="proposta_papel_enum"), nullable=False),
+        sa.Column(
+            "papel",
+            postgresql.ENUM("OWNER", "EDITOR", "APROVADOR", name="proposta_papel_enum", create_type=False),
+            nullable=False,
+        ),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),

@@ -40,6 +40,16 @@ def _to_decimal(value: Any):
         return None
 
 
+def __safe_get(row: tuple | None, idx: int):
+    """Retorna row[idx] se existir, caso contrário None (acesso seguro a colunas)."""
+    try:
+        if not row:
+            return None
+        return row[idx] if idx < len(row) else None
+    except Exception:
+        return None
+
+
 def _find_col(col_map: dict[str, int], *keywords: str) -> int | None:
     """Finds first column index matching any of the keywords (case-insensitive)."""
     for kw in keywords:
@@ -141,14 +151,14 @@ def _parse_equipamentos(ws, cabecalho_id: uuid.UUID, seq_counter: dict[str, int]
     gasolina = None
     diesel = None
     for r in all_rows[:5]:
-        if r and len(r) > 9:
-            label = str(r[8]).lower() if r[8] else ""
+        if r:
+            label = str(__safe_get(r, 8)).lower() if __safe_get(r, 8) else ""
             if "hora" in label:
-                horas_mes = _to_decimal(r[9])
+                horas_mes = _to_decimal(__safe_get(r, 9))
             if "gasolina" in label:
-                gasolina = _to_decimal(r[9])
+                gasolina = _to_decimal(__safe_get(r, 9))
             if "diesel" in label:
-                diesel = _to_decimal(r[9])
+                diesel = _to_decimal(__safe_get(r, 9))
 
     premissa = BcuEquipamentoPremissa(
         id=uuid.uuid4(),
@@ -159,39 +169,47 @@ def _parse_equipamentos(ws, cabecalho_id: uuid.UUID, seq_counter: dict[str, int]
     )
 
     for row in ws.iter_rows(min_row=7, values_only=True):
-        equip = row[1] if len(row) > 1 else None
+        equip = __safe_get(row, 1)
         if not equip:
             continue
         seq_counter["EQP"] = seq_counter.get("EQP", 0) + 1
         codigo_origem = f"BCU-EQP-{seq_counter['EQP']:03d}"
-        items.append(
-            BcuEquipamentoItem(
-                id=uuid.uuid4(),
-                cabecalho_id=cabecalho_id,
-                codigo=str(row[0]).strip() if row[0] else None,
-                codigo_origem=codigo_origem,
-                equipamento=str(equip).strip(),
-                combustivel_utilizado=str(row[2]).strip() if row[2] else None,
-                consumo_l_h=_to_decimal(row[3]),
-                aluguel_r_h=_to_decimal(row[4]),
-                combustivel_r_h=_to_decimal(row[5]),
-                mao_obra_r_h=_to_decimal(row[6]),
-                hora_produtiva=_to_decimal(row[7]),
-                hora_improdutiva=_to_decimal(row[8]),
-                mes=_to_decimal(row[9]) if len(row) > 9 else None,
-                aluguel_mensal=_to_decimal(row[11]) if len(row) > 11 else None,
+        try:
+            items.append(
+                BcuEquipamentoItem(
+                    id=uuid.uuid4(),
+                    cabecalho_id=cabecalho_id,
+                    codigo=str(__safe_get(row, 0)).strip() if __safe_get(row, 0) else None,
+                    codigo_origem=codigo_origem,
+                    equipamento=str(equip).strip(),
+                    combustivel_utilizado=str(__safe_get(row, 2)).strip() if __safe_get(row, 2) else None,
+                    consumo_l_h=_to_decimal(__safe_get(row, 3)),
+                    aluguel_r_h=_to_decimal(__safe_get(row, 4)),
+                    combustivel_r_h=_to_decimal(__safe_get(row, 5)),
+                    mao_obra_r_h=_to_decimal(__safe_get(row, 6)),
+                    hora_produtiva=_to_decimal(__safe_get(row, 7)),
+                    hora_improdutiva=_to_decimal(__safe_get(row, 8)),
+                    mes=_to_decimal(__safe_get(row, 9)),
+                    aluguel_mensal=_to_decimal(__safe_get(row, 11)),
+                )
             )
-        )
-        base_tcpo_items.append(
-            BaseTcpo(
-                id=uuid.uuid4(),
-                codigo_origem=codigo_origem,
-                descricao=str(equip).strip(),
-                unidade_medida="H",
-                custo_base=_to_decimal(row[4]) or 0.0,
-                tipo_recurso="EQUIPAMENTO",
+        except Exception as e:
+            logger.exception("bcu.equipamento_row_failed", sheet=str(ws.title), row_preview=str(row))
+            continue
+        try:
+            base_tcpo_items.append(
+                BaseTcpo(
+                    id=uuid.uuid4(),
+                    codigo_origem=codigo_origem,
+                    descricao=str(equip).strip(),
+                    unidade_medida="H",
+                    custo_base=_to_decimal(__safe_get(row, 4)) or 0.0,
+                    tipo_recurso="EQUIPAMENTO",
+                )
             )
-        )
+        except Exception:
+            logger.exception("bcu.base_tcpo_equipamento_failed", sheet=str(ws.title), row_preview=str(row))
+            continue
     return premissa, items, base_tcpo_items
 
 
@@ -200,19 +218,22 @@ def _parse_encargos(ws, cabecalho_id: uuid.UUID, tipo: str) -> list[BcuEncargoIt
     current_grupo = None
 
     for row in ws.iter_rows(min_row=4, values_only=True):
-        if row[0] and str(row[0]).strip().upper() not in ("GRUPOS",):
-            val0 = str(row[0]).strip()
-            if len(val0) <= 3 and val0.isalpha():
+        if row and len(row) > 0 and row[0]:
+            try:
+                val0 = str(row[0]).strip()
+            except Exception:
+                val0 = None
+            if val0 and len(val0) <= 3 and val0.isalpha():
                 current_grupo = val0
 
         if tipo == "HORISTA":
-            cod = str(row[1]).strip() if row[1] else None
-            disc = str(row[2]).strip() if row[2] else None
-            taxa = _to_decimal(row[5]) if len(row) > 5 else None
+            cod = str(row[1]).strip() if row and len(row) > 1 and row[1] else None
+            disc = str(row[2]).strip() if row and len(row) > 2 and row[2] else None
+            taxa = _to_decimal(row[5]) if row and len(row) > 5 else None
         else:
-            cod = str(row[1]).strip() if row[1] else None
-            disc = str(row[2]).strip() if row[2] else None
-            taxa = _to_decimal(row[3]) if len(row) > 3 else None
+            cod = str(row[1]).strip() if row and len(row) > 1 and row[1] else None
+            disc = str(row[2]).strip() if row and len(row) > 2 and row[2] else None
+            taxa = _to_decimal(row[3]) if row and len(row) > 3 else None
 
         if not disc or disc.lower() in ("discriminação do encargo", "grupos"):
             continue
@@ -243,48 +264,57 @@ def _parse_epi(ws, cabecalho_id: uuid.UUID, seq_counter: dict[str, int]):
     epi_items: list[BcuEpiItem] = []
     dist_items: list[BcuEpiDistribuicaoFuncao] = []
     base_tcpo_items: list[BaseTcpo] = []
-
-    header_row = list(ws.iter_rows(min_row=2, max_row=2, values_only=True))[0]
+    header_rows = list(ws.iter_rows(min_row=2, max_row=2, values_only=True))
+    header_row = header_rows[0] if header_rows else []
     funcao_cols: list[tuple[int, str]] = []
     for idx, cell in enumerate(header_row):
         if cell and idx >= 8:
-            funcao_cols.append((idx, str(cell).strip()))
+            try:
+                funcao_cols.append((idx, str(cell).strip()))
+            except Exception:
+                continue
 
     for row in ws.iter_rows(min_row=3, values_only=True):
-        epi_name = row[1] if len(row) > 1 else None
+        if not row or len(row) <= 1:
+            continue
+        epi_name = __safe_get(row, 1)
         if not epi_name:
             continue
 
         seq_counter["EPI"] = seq_counter.get("EPI", 0) + 1
         codigo_origem = f"BCU-EPI-{seq_counter['EPI']:03d}"
         epi_id = uuid.uuid4()
-        epi_items.append(
-            BcuEpiItem(
-                id=epi_id,
-                cabecalho_id=cabecalho_id,
-                codigo_origem=codigo_origem,
-                epi=str(epi_name).strip(),
-                unidade=str(row[2]).strip() if row[2] else None,
-                custo_unitario=_to_decimal(row[3]),
-                quantidade=_to_decimal(row[4]),
-                vida_util_meses=_to_decimal(row[5]),
-                custo_epi_mes=_to_decimal(row[6]),
+        try:
+            epi_items.append(
+                BcuEpiItem(
+                    id=epi_id,
+                    cabecalho_id=cabecalho_id,
+                    codigo_origem=codigo_origem,
+                    epi=str(epi_name).strip(),
+                    unidade=str(__safe_get(row, 2)).strip() if __safe_get(row, 2) else None,
+                    custo_unitario=_to_decimal(__safe_get(row, 3)),
+                    quantidade=_to_decimal(__safe_get(row, 4)),
+                    vida_util_meses=_to_decimal(__safe_get(row, 5)),
+                    custo_epi_mes=_to_decimal(__safe_get(row, 6)),
+                )
             )
-        )
+        except Exception as e:
+            logger.exception("bcu.epi_row_failed", sheet=str(ws.title), row_preview=str(row), error=str(e))
+            continue
         base_tcpo_items.append(
             BaseTcpo(
                 id=uuid.uuid4(),
                 codigo_origem=codigo_origem,
                 descricao=str(epi_name).strip(),
-                unidade_medida=str(row[2]).strip() if row[2] else "UN",
-                custo_base=_to_decimal(row[3]) or 0.0,
+                unidade_medida=str(__safe_get(row, 2)).strip() if __safe_get(row, 2) else "UN",
+                custo_base=(_to_decimal(__safe_get(row, 3)) or 0.0),
                 tipo_recurso="INSUMO",
             )
         )
 
         for col_idx, funcao in funcao_cols:
-            val = row[col_idx] if len(row) > col_idx else None
-            if val is not None:
+            val = __safe_get(row, col_idx)
+            if val is not None and str(val).strip() != "":
                 dist_items.append(
                     BcuEpiDistribuicaoFuncao(
                         id=uuid.uuid4(),
@@ -436,7 +466,11 @@ class BcuService:
         for sheet_name in wb.sheetnames:
             if "MÃO DE OBRA" in sheet_name.upper() and "INDIRETA" not in sheet_name.upper():
                 ws = wb[sheet_name]
-                items, bt_items = _parse_mao_obra(ws, cab.id, seq_counter)
+                try:
+                    items, bt_items = _parse_mao_obra(ws, cab.id, seq_counter)
+                except Exception as e:
+                    logger.exception("bcu.parse_mao_obra_failed", sheet=sheet_name)
+                    raise ValueError(f"Erro ao parsear MÃO DE OBRA ({sheet_name}): {e}") from e
                 for item in items:
                     self.db.add(item)
                     total_rows += 1
@@ -446,7 +480,11 @@ class BcuService:
         for sheet_name in wb.sheetnames:
             if "EQUIPAMENTO" in sheet_name.upper():
                 ws = wb[sheet_name]
-                premissa, eq_items, bt_items = _parse_equipamentos(ws, cab.id, seq_counter)
+                try:
+                    premissa, eq_items, bt_items = _parse_equipamentos(ws, cab.id, seq_counter)
+                except Exception as e:
+                    logger.exception("bcu.parse_equipamentos_failed", sheet=sheet_name)
+                    raise ValueError(f"Erro ao parsear EQUIPAMENTO ({sheet_name}): {e}") from e
                 self.db.add(premissa)
                 for item in eq_items:
                     self.db.add(item)
@@ -458,7 +496,12 @@ class BcuService:
         for sheet_name in wb.sheetnames:
             if "HORISTA" in sheet_name.upper():
                 ws = wb[sheet_name]
-                for item in _parse_encargos(ws, cab.id, "HORISTA"):
+                try:
+                    enc_items = _parse_encargos(ws, cab.id, "HORISTA")
+                except Exception as e:
+                    logger.exception("bcu.parse_encargos_failed", sheet=sheet_name)
+                    raise ValueError(f"Erro ao parsear ENCARGOS HORISTA ({sheet_name}): {e}") from e
+                for item in enc_items:
                     self.db.add(item)
                     total_rows += 1
                 horista_done = True
@@ -468,7 +511,12 @@ class BcuService:
         for sheet_name in wb.sheetnames:
             if "MENSALISTA" in sheet_name.upper():
                 ws = wb[sheet_name]
-                for item in _parse_encargos(ws, cab.id, "MENSALISTA"):
+                try:
+                    enc_items = _parse_encargos(ws, cab.id, "MENSALISTA")
+                except Exception as e:
+                    logger.exception("bcu.parse_encargos_failed", sheet=sheet_name)
+                    raise ValueError(f"Erro ao parsear ENCARGOS MENSALISTA ({sheet_name}): {e}") from e
+                for item in enc_items:
                     self.db.add(item)
                     total_rows += 1
                 mensalista_done = True
@@ -478,7 +526,12 @@ class BcuService:
             for sheet_name in wb.sheetnames:
                 if "ENCARGO" in sheet_name.upper():
                     ws = wb[sheet_name]
-                    for item in _parse_encargos(ws, cab.id, "HORISTA"):
+                    try:
+                        enc_items = _parse_encargos(ws, cab.id, "HORISTA")
+                    except Exception as e:
+                        logger.exception("bcu.parse_encargos_failed", sheet=sheet_name)
+                        raise ValueError(f"Erro ao parsear ENCARGOS ({sheet_name}): {e}") from e
+                    for item in enc_items:
                         self.db.add(item)
                         total_rows += 1
                     break
@@ -486,7 +539,11 @@ class BcuService:
         for sheet_name in wb.sheetnames:
             if "EPI" in sheet_name.upper():
                 ws = wb[sheet_name]
-                epi_items, dist_items, bt_items = _parse_epi(ws, cab.id, seq_counter)
+                try:
+                    epi_items, dist_items, bt_items = _parse_epi(ws, cab.id, seq_counter)
+                except Exception as e:
+                    logger.exception("bcu.parse_epi_failed", sheet=sheet_name)
+                    raise ValueError(f"Erro ao parsear EPI ({sheet_name}): {e}") from e
                 for item in epi_items:
                     self.db.add(item)
                     total_rows += 1
@@ -498,7 +555,11 @@ class BcuService:
         for sheet_name in wb.sheetnames:
             if "FERRAMENTA" in sheet_name.upper():
                 ws = wb[sheet_name]
-                items, bt_items = _parse_ferramentas(ws, cab.id, seq_counter)
+                try:
+                    items, bt_items = _parse_ferramentas(ws, cab.id, seq_counter)
+                except Exception as e:
+                    logger.exception("bcu.parse_ferramentas_failed", sheet=sheet_name)
+                    raise ValueError(f"Erro ao parsear FERRAMENTA ({sheet_name}): {e}") from e
                 for item in items:
                     self.db.add(item)
                     total_rows += 1
@@ -508,7 +569,11 @@ class BcuService:
         for sheet_name in wb.sheetnames:
             if "MOBILIZA" in sheet_name.upper():
                 ws = wb[sheet_name]
-                mob_items, quant_items = _parse_mobilizacao(ws, cab.id)
+                try:
+                    mob_items, quant_items = _parse_mobilizacao(ws, cab.id)
+                except Exception as e:
+                    logger.exception("bcu.parse_mobilizacao_failed", sheet=sheet_name)
+                    raise ValueError(f"Erro ao parsear MOBILIZACAO ({sheet_name}): {e}") from e
                 for item in mob_items:
                     self.db.add(item)
                     total_rows += 1

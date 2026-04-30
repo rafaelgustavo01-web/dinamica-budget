@@ -8,6 +8,7 @@ from backend.core.dependencies import (
     get_current_admin_user,
     get_db,
     require_cliente_access,
+    get_current_user_optional,
 )
 from backend.schemas.common import PaginatedResponse
 from backend.schemas.servico import (
@@ -29,10 +30,15 @@ async def list_servicos(
     cliente_id: UUID | None = Query(default=None, description="Scope to client visibility"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
-    current_user=Depends(get_current_active_user),
+    current_user=Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ) -> PaginatedResponse[ServicoTcpoResponse]:
     if cliente_id:
+        # cliente-scoped requests require authentication
+        from backend.core.exceptions import AuthenticationError
+
+        if not current_user:
+            raise AuthenticationError("Autenticação requerida para filtrar por cliente.")
         await require_cliente_access(cliente_id, current_user, db)
     params = ServicoListParams(q=q, categoria_id=categoria_id, page=page, page_size=page_size)
     return await servico_catalog_service.list_servicos(params, db, cliente_id=cliente_id)

@@ -83,8 +83,9 @@ export function SearchPage() {
       }),
     onSuccess: (data) => {
       setSearchResponse(data);
-      setSelectedResult(data.resultados[0] ?? null);
-      showMessage(infoMessageTemplates.searchResultsLoaded(data.resultados.length), 'info');
+      setSelectedResult(data.resultados?.[0] ?? null);
+      const resultsCount = Array.isArray(data.resultados) ? data.resultados.length : 0;
+      showMessage(infoMessageTemplates.searchResultsLoaded(resultsCount), 'info');
     },
   });
 

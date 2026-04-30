@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -57,6 +57,47 @@ async def get_current_admin_user(current_user=Depends(get_current_active_user)):
     if not current_user.is_admin:
         raise AuthorizationError("Acesso restrito a administradores.")
     return current_user
+
+
+async def get_current_user_optional(request: Request, db: AsyncSession = Depends(get_db)):
+    """Return current user if Authorization header present and valid, else None.
+
+    This is intended for read-only endpoints that may show a preview to
+    unauthenticated users while preserving authentication for protected
+    actions.
+    """
+    from fastapi import Request
+    from backend.core.security import decode_token
+    from backend.repositories.usuario_repository import UsuarioRepository
+    from uuid import UUID
+
+    # Accept missing Authorization header as anonymous access
+    auth: str | None = None
+    if isinstance(request, Request):
+        auth = request.headers.get("Authorization")
+    if not auth:
+        return None
+
+    # Expect Bearer token but tolerate bare token as well
+    token = auth.split(" ", 1)[1] if auth.startswith("Bearer ") else auth
+    try:
+        payload = decode_token(token)
+    except Exception:
+        return None
+
+    if payload.get("type") != "access":
+        return None
+
+    user_id_str = payload.get("sub")
+    if not user_id_str:
+        return None
+
+    repo = UsuarioRepository(db)
+    try:
+        user = await repo.get_by_id(UUID(user_id_str))
+    except Exception:
+        return None
+    return user
 
 
 async def get_current_catalog_import_user(

@@ -88,6 +88,32 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # Normalize trailing slashes for API v1: if a GET request targets
+    # an API path without a trailing slash but an equivalent route exists
+    # with a trailing slash, redirect to the slash version so SPA fallback
+    # doesn't capture the request.
+    from fastapi import Request
+    from starlette.responses import RedirectResponse
+
+    @app.middleware("http")
+    async def api_trailing_slash_redirect(request: Request, call_next):
+        try:
+            path = request.url.path
+            if request.method == "GET" and path.startswith(settings.API_V1_PREFIX) and not path.endswith("/"):
+                # Look for an exact route matching path + '/'
+                candidate = path + "/"
+                for route in app.router.routes:
+                    route_path = getattr(route, "path", None)
+                    if route_path == candidate:
+                        # preserve query string
+                        qs = request.url.query
+                        url = candidate + ("?" + qs if qs else "")
+                        return RedirectResponse(url)
+        except Exception:
+            # Non-fatal: fall through to normal processing
+            pass
+        return await call_next(request)
+
     # CORS — configurable origin list; never allow wildcard in production
     # Set ALLOWED_ORIGINS in .env: ["http://app.intranet.local","http://localhost:3000"]
     app.add_middleware(

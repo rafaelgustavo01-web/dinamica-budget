@@ -78,6 +78,26 @@ async function refreshAccessToken() {
 apiClient.interceptors.request.use((config) => {
   const currentSession = readSessionTokens();
 
+  // Normalize GET requests to the servicos list endpoint so the
+  // backend receives the trailing slash and returns JSON (prevents SPA fallback).
+  try {
+    const method = (config.method || '').toString().toLowerCase();
+    const url = typeof config.url === 'string' ? config.url : '';
+    if (method === 'get') {
+      // handle both '/servicos' and 'servicos' forms
+      if (/^\/?servicos($|\?|$)/.test(url) && !url.endsWith('/')) {
+        config.url = url.replace(/^(\/)?servicos/, '/servicos/') + (config.params ? '' : '');
+      }
+    }
+
+    // NOTE: do not add trailing slashes for non-GET methods — FastAPI
+    // treats routes with/without trailing slash as distinct and POST
+    // on the slash version can return 405. Keep POST/PUT/PATCH/DELETE
+    // requests as the client originally specified.
+  } catch (err) {
+    // non-fatal: proceed with original config
+  }
+
   // Let the browser set multipart boundaries for uploads.
   if (config.data instanceof FormData) {
     delete config.headers['Content-Type'];
