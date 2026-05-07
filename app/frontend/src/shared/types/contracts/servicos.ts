@@ -7,7 +7,8 @@ export interface ServicoTcpoResponse {
   codigo_origem: string;
   descricao: string;
   unidade_medida: string;
-  custo_unitario: DecimalValue;
+  custo_base: DecimalValue | null;
+  custo_unitario: DecimalValue | null;
   categoria_id: number | null;
   origem: 'TCPO' | 'PROPRIA';
   cliente_id: string | null;
@@ -62,6 +63,7 @@ export interface ServicoCreate {
 export interface ServicoListParams {
   q?: string;
   categoria_id?: number;
+  tipo_recurso?: string;
   cliente_id?: string;
   page: number;
   page_size: number;

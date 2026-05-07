@@ -54,7 +54,8 @@ class ServicoCatalogService:
         limit = params.page_size
 
         tcpo_items, tcpo_total = await base_repo.list_paginated(
-            q=params.q, categoria_id=params.categoria_id, offset=offset, limit=limit
+            q=params.q, categoria_id=params.categoria_id, offset=offset, limit=limit,
+            tipo_recurso=params.tipo_recurso,
         )
 
         propria_items: list[ItemProprio] = []

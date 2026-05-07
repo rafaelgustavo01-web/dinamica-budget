@@ -483,88 +483,88 @@ class BcuService:
             db_items: list[Any] = []
             total_rows = 0
 
-        for sheet_name in wb.sheetnames:
-            if "MÃO DE OBRA" in sheet_name.upper() and "INDIRETA" not in sheet_name.upper():
-                ws = wb[sheet_name]
-                items, bt_items = _parse_mao_obra(ws, cab.id, seq_counter)
-                for item in items:
-                    self.db.add(item)
-                    total_rows += 1
-                all_base_tcpo.extend(bt_items)
-                break
-
-        for sheet_name in wb.sheetnames:
-            if "EQUIPAMENTO" in sheet_name.upper():
-                ws = wb[sheet_name]
-                premissa, eq_items, bt_items = _parse_equipamentos(ws, cab.id, seq_counter)
-                self.db.add(premissa)
-                for item in eq_items:
-                    self.db.add(item)
-                    total_rows += 1
-                all_base_tcpo.extend(bt_items)
-                break
-
-        horista_done = False
-        for sheet_name in wb.sheetnames:
-            if "HORISTA" in sheet_name.upper():
-                ws = wb[sheet_name]
-                for item in _parse_encargos(ws, cab.id, "HORISTA"):
-                    self.db.add(item)
-                    total_rows += 1
-                horista_done = True
-                break
-
-        mensalista_done = False
-        for sheet_name in wb.sheetnames:
-            if "MENSALISTA" in sheet_name.upper():
-                ws = wb[sheet_name]
-                for item in _parse_encargos(ws, cab.id, "MENSALISTA"):
-                    self.db.add(item)
-                    total_rows += 1
-                mensalista_done = True
-                break
-
-        if not horista_done and not mensalista_done:
             for sheet_name in wb.sheetnames:
-                if "ENCARGO" in sheet_name.upper():
+                if "MÃO DE OBRA" in sheet_name.upper() and "INDIRETA" not in sheet_name.upper():
+                    ws = wb[sheet_name]
+                    items, bt_items = _parse_mao_obra(ws, cab.id, seq_counter)
+                    for item in items:
+                        self.db.add(item)
+                        total_rows += 1
+                    all_base_tcpo.extend(bt_items)
+                    break
+
+            for sheet_name in wb.sheetnames:
+                if "EQUIPAMENTO" in sheet_name.upper():
+                    ws = wb[sheet_name]
+                    premissa, eq_items, bt_items = _parse_equipamentos(ws, cab.id, seq_counter)
+                    self.db.add(premissa)
+                    for item in eq_items:
+                        self.db.add(item)
+                        total_rows += 1
+                    all_base_tcpo.extend(bt_items)
+                    break
+
+            horista_done = False
+            for sheet_name in wb.sheetnames:
+                if "HORISTA" in sheet_name.upper():
                     ws = wb[sheet_name]
                     for item in _parse_encargos(ws, cab.id, "HORISTA"):
                         self.db.add(item)
                         total_rows += 1
+                    horista_done = True
                     break
 
-        for sheet_name in wb.sheetnames:
-            if "EPI" in sheet_name.upper():
-                ws = wb[sheet_name]
-                epi_items, dist_items, bt_items = _parse_epi(ws, cab.id, seq_counter)
-                for item in epi_items:
-                    self.db.add(item)
-                    total_rows += 1
-                for dist in dist_items:
-                    self.db.add(dist)
-                all_base_tcpo.extend(bt_items)
-                break
+            mensalista_done = False
+            for sheet_name in wb.sheetnames:
+                if "MENSALISTA" in sheet_name.upper():
+                    ws = wb[sheet_name]
+                    for item in _parse_encargos(ws, cab.id, "MENSALISTA"):
+                        self.db.add(item)
+                        total_rows += 1
+                    mensalista_done = True
+                    break
 
-        for sheet_name in wb.sheetnames:
-            if "FERRAMENTA" in sheet_name.upper():
-                ws = wb[sheet_name]
-                items, bt_items = _parse_ferramentas(ws, cab.id, seq_counter)
-                for item in items:
-                    self.db.add(item)
-                    total_rows += 1
-                all_base_tcpo.extend(bt_items)
-                break
+            if not horista_done and not mensalista_done:
+                for sheet_name in wb.sheetnames:
+                    if "ENCARGO" in sheet_name.upper():
+                        ws = wb[sheet_name]
+                        for item in _parse_encargos(ws, cab.id, "HORISTA"):
+                            self.db.add(item)
+                            total_rows += 1
+                        break
 
-        for sheet_name in wb.sheetnames:
-            if "MOBILIZA" in sheet_name.upper():
-                ws = wb[sheet_name]
-                mob_items, quant_items = _parse_mobilizacao(ws, cab.id)
-                for item in mob_items:
-                    self.db.add(item)
-                    total_rows += 1
-                for q in quant_items:
-                    self.db.add(q)
-                break
+            for sheet_name in wb.sheetnames:
+                if "EPI" in sheet_name.upper():
+                    ws = wb[sheet_name]
+                    epi_items, dist_items, bt_items = _parse_epi(ws, cab.id, seq_counter)
+                    for item in epi_items:
+                        self.db.add(item)
+                        total_rows += 1
+                    for dist in dist_items:
+                        self.db.add(dist)
+                    all_base_tcpo.extend(bt_items)
+                    break
+
+            for sheet_name in wb.sheetnames:
+                if "FERRAMENTA" in sheet_name.upper():
+                    ws = wb[sheet_name]
+                    items, bt_items = _parse_ferramentas(ws, cab.id, seq_counter)
+                    for item in items:
+                        self.db.add(item)
+                        total_rows += 1
+                    all_base_tcpo.extend(bt_items)
+                    break
+
+            for sheet_name in wb.sheetnames:
+                if "MOBILIZA" in sheet_name.upper():
+                    ws = wb[sheet_name]
+                    mob_items, quant_items = _parse_mobilizacao(ws, cab.id)
+                    for item in mob_items:
+                        self.db.add(item)
+                        total_rows += 1
+                    for q in quant_items:
+                        self.db.add(q)
+                    break
 
             result = await self.db.execute(select(BcuCabecalho).where(BcuCabecalho.nome_arquivo == nome_arquivo))
             for existing in result.scalars().all():

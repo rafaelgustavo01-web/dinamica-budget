@@ -6,7 +6,8 @@ All mutation goes through the admin ETL layer, not this repo.
 
 from uuid import UUID
 
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select, text, String
+from sqlalchemy import cast as sa_cast
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -47,11 +48,14 @@ class BaseTcpoRepository(BaseRepository[BaseTcpo]):
         categoria_id: int | None,
         offset: int,
         limit: int,
+        tipo_recurso: str | None = None,
     ) -> tuple[list[BaseTcpo], int]:
-        """List TCPO catalog with optional text + category filter."""
+        """List TCPO catalog with optional text + category + tipo_recurso filter."""
         base_filter = []
         if categoria_id is not None:
             base_filter.append(BaseTcpo.categoria_id == categoria_id)
+        if tipo_recurso is not None:
+            base_filter.append(sa_cast(BaseTcpo.tipo_recurso, String) == tipo_recurso)
         if q:
             base_filter.append(BaseTcpo.descricao.ilike(f"%{q}%"))
 

@@ -73,13 +73,14 @@ export function ReportsPage() {
                 onClick={() =>
                   downloadCsv(
                     'relatorio-servicos.csv',
-                    ['Código', 'Descrição', 'Unidade', 'Categoria', 'Custo'],
+                    ['Código', 'Descrição', 'Unidade', 'Categoria', 'Tipo', 'Custo'],
                     (servicesReportQuery.data?.items ?? []).map((item) => [
                       item.codigo_origem,
                       item.descricao,
                       item.unidade_medida,
                       item.categoria_id ?? '-',
-                      String(item.custo_unitario),
+                      item.tipo_recurso ?? '-',
+                      formatCurrency(item.custo_unitario ?? item.custo_base),
                     ]),
                   )
                 }
@@ -98,12 +99,13 @@ export function ReportsPage() {
               { key: 'codigo', header: 'Código', render: (row) => row.codigo_origem },
               { key: 'descricao', header: 'Descrição', render: (row) => row.descricao },
               { key: 'unidade', header: 'Unidade', render: (row) => row.unidade_medida },
-              { key: 'categoria', header: 'Categoria', render: (row) => row.categoria_id ?? '-' },
+              { key: 'categoria', header: 'Categoria', render: (row) => row.categoria_id ? String(row.categoria_id) : '—' },
+              { key: 'tipo', header: 'Tipo', render: (row) => row.tipo_recurso ?? '—' },
               {
                 key: 'custo',
-                header: 'Custo',
+                header: 'Custo (R$)',
                 align: 'right',
-                render: (row) => formatCurrency(row.custo_unitario),
+                render: (row) => formatCurrency(row.custo_unitario ?? row.custo_base),
               },
             ]}
             rows={servicesReportQuery.data?.items ?? []}

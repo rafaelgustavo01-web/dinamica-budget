@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ServicoTcpoResponse(BaseModel):
@@ -21,6 +21,13 @@ class ServicoTcpoResponse(BaseModel):
     descricao_tokens: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode='after')
+    def resolve_custo_unitario(self) -> 'ServicoTcpoResponse':
+        """Ensure custo_unitario is always populated — BaseTcpo stores cost in custo_base."""
+        if self.custo_unitario is None and self.custo_base is not None:
+            self.custo_unitario = self.custo_base
+        return self
 
 
 class ComposicaoItemResponse(BaseModel):
@@ -82,6 +89,7 @@ class ExplodeComposicaoResponse(BaseModel):
 class ServicoListParams(BaseModel):
     q: str | None = None
     categoria_id: int | None = None
+    tipo_recurso: str | None = None
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=20, ge=1, le=100)
 

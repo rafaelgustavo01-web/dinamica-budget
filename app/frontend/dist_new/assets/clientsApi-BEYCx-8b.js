@@ -1,0 +1,1 @@
+import{f as t}from"./index-C1G61Mo6.js";const r={async list(e){return(await t.get("/clientes/",{params:e})).data},async create(e){return(await t.post("/clientes/",e)).data},async patch(e,s){return(await t.patch(`/clientes/${e}`,s)).data}};export{r as c};

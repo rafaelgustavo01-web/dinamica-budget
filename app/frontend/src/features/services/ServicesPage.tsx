@@ -1,14 +1,26 @@
 import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Alert,
+  Box,
   Button,
+  Chip,
   CircularProgress,
+  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
 } from '@mui/material';
@@ -18,15 +30,12 @@ import { useForm } from 'react-hook-form';
 import { useState } from 'react';
 import { z } from 'zod';
 
-import { DataTable } from '../../shared/components/DataTable';
 import { EmptyState } from '../../shared/components/EmptyState';
 import {
   errorMessages,
   successMessages,
-  warningMessages,
 } from '../../shared/components/FeedbackMessages';
 import { PageHeader } from '../../shared/components/PageHeader';
-import { StatusBadge } from '../../shared/components/StatusBadge';
 import { useFeedback } from '../../shared/components/feedback/FeedbackProvider';
 import { extractApiErrorMessage } from '../../shared/services/api/apiClient';
 import { servicesApi } from '../../shared/services/api/servicesApi';
@@ -45,15 +54,169 @@ const createServiceSchema = z.object({
 type CreateServiceFormInput = z.input<typeof createServiceSchema>;
 type CreateServiceFormOutput = z.output<typeof createServiceSchema>;
 
+const TIPO_RECURSO_LABEL: Record<string, string> = {
+  MO: 'Mão de Obra',
+  INSUMO: 'Insumo',
+  FERRAMENTA: 'Ferramenta',
+  EQUIPAMENTO: 'Equipamento',
+  SERVICO: 'Serviço',
+};
+
+function ComposicaoRow({ servicoId }: { servicoId: string }) {
+  const componentesQuery = useQuery({
+    queryKey: ['services', 'componentes', servicoId],
+    queryFn: () => servicesApi.getComponentes(servicoId),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  if (componentesQuery.isLoading) {
+    return (
+      <TableRow>
+        <TableCell colSpan={5} sx={{ pl: 8 }}>
+          <CircularProgress size={16} sx={{ mr: 1 }} />
+          <Typography variant="caption" color="text.secondary">
+            Carregando composição...
+          </Typography>
+        </TableCell>
+      </TableRow>
+    );
+  }
+
+  if (componentesQuery.isError || !componentesQuery.data) {
+    return (
+      <TableRow>
+        <TableCell colSpan={5} sx={{ pl: 8 }}>
+          <Typography variant="caption" color="error">
+            Erro ao carregar composição.
+          </Typography>
+        </TableCell>
+      </TableRow>
+    );
+  }
+
+  if (componentesQuery.data.length === 0) {
+    return (
+      <TableRow>
+        <TableCell colSpan={5} sx={{ pl: 8 }}>
+          <Typography variant="caption" color="text.secondary">
+            Sem componentes na composição.
+          </Typography>
+        </TableCell>
+      </TableRow>
+    );
+  }
+
+  const totalComposicao = componentesQuery.data.reduce(
+    (acc, item) => acc + (typeof item.custo_total === 'number' ? item.custo_total : parseFloat(String(item.custo_total)) || 0),
+    0,
+  );
+
+  return (
+    <>
+      {componentesQuery.data.map((item) => (
+        <TableRow key={item.id} sx={{ bgcolor: 'action.hover' }}>
+          <TableCell sx={{ width: 48 }} />
+          <TableCell sx={{ pl: 5 }}>
+            <Typography variant="caption" color="text.secondary">
+              {item.codigo_origem ?? '—'}
+            </Typography>
+          </TableCell>
+          <TableCell>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography variant="body2">{item.descricao_filho}</Typography>
+              {item.tipo_recurso && item.tipo_recurso !== 'SERVICO' ? (
+                <Chip
+                  label={TIPO_RECURSO_LABEL[item.tipo_recurso] ?? item.tipo_recurso}
+                  size="small"
+                  variant="outlined"
+                  sx={{ fontSize: 10, height: 18 }}
+                />
+              ) : null}
+            </Stack>
+          </TableCell>
+          <TableCell>
+            <Typography variant="caption">{item.unidade_medida}</Typography>
+          </TableCell>
+          <TableCell align="right">
+            <Stack alignItems="flex-end">
+              <Typography variant="caption" color="text.secondary">
+                {String(item.quantidade_consumo)} × {formatCurrency(item.custo_unitario)}
+              </Typography>
+              <Typography variant="caption" fontWeight={600}>
+                {formatCurrency(item.custo_total)}
+              </Typography>
+            </Stack>
+          </TableCell>
+        </TableRow>
+      ))}
+      <TableRow sx={{ bgcolor: 'action.selected' }}>
+        <TableCell colSpan={4} sx={{ pl: 5 }}>
+          <Typography variant="caption" fontWeight={700} color="text.secondary">
+            Total da composição
+          </Typography>
+        </TableCell>
+        <TableCell align="right">
+          <Typography variant="caption" fontWeight={700}>
+            {formatCurrency(totalComposicao)}
+          </Typography>
+        </TableCell>
+      </TableRow>
+    </>
+  );
+}
+
+function ServiceRow({ row }: { row: ServicoTcpoResponse }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <TableRow
+        hover
+        sx={{ cursor: 'pointer', '& > td': { borderBottom: open ? 'none' : undefined } }}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <TableCell sx={{ width: 48, p: 0.5, pl: 1 }}>
+          <IconButton size="small" aria-label={open ? 'colapsar' : 'expandir'}>
+            {open ? <ExpandMoreIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
+          </IconButton>
+        </TableCell>
+        <TableCell>
+          <Typography variant="body2" fontFamily="monospace" fontSize={12}>
+            {row.codigo_origem}
+          </Typography>
+        </TableCell>
+        <TableCell>
+          <Typography variant="body2">{row.descricao}</Typography>
+        </TableCell>
+        <TableCell>
+          <Typography variant="body2">{row.unidade_medida}</Typography>
+        </TableCell>
+        <TableCell align="right">
+          <Typography variant="body2">{formatCurrency(row.custo_unitario ?? row.custo_base)}</Typography>
+        </TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell colSpan={5} sx={{ p: 0, border: 'none' }}>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Table size="small">
+              <TableBody>
+                {open && <ComposicaoRow servicoId={row.id} />}
+              </TableBody>
+            </Table>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </>
+  );
+}
+
 export function ServicesPage() {
   const { user, selectedClientId } = useAuth();
   const { showMessage } = useFeedback();
   const queryClient = useQueryClient();
   const [query, setQuery] = useState('');
-  const [categoriaId, setCategoriaId] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [selectedService, setSelectedService] = useState<ServicoTcpoResponse | null>(null);
+  const PAGE_SIZE = 25;
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const {
@@ -73,22 +236,16 @@ export function ServicesPage() {
   });
 
   const servicesQuery = useQuery({
-    queryKey: ['services', selectedClientId, query, categoriaId, page, pageSize, user?.is_admin],
+    queryKey: ['services', selectedClientId, query, page, user?.is_admin],
     queryFn: () =>
       servicesApi.list({
         page,
-        page_size: pageSize,
+        page_size: PAGE_SIZE,
         q: query || undefined,
-        categoria_id: categoriaId ? Number(categoriaId) : undefined,
+        tipo_recurso: 'SERVICO',
         cliente_id: selectedClientId || undefined,
       }),
     enabled: Boolean(user && (selectedClientId || user.is_admin)),
-  });
-
-  const compositionQuery = useQuery({
-    queryKey: ['services', 'composition', selectedService?.id],
-    queryFn: () => servicesApi.getComposicao(selectedService!.id),
-    enabled: Boolean(selectedService?.id),
   });
 
   const createServiceMutation = useMutation({
@@ -113,21 +270,25 @@ export function ServicesPage() {
       <>
         <PageHeader
           title="Catálogo de Serviços"
-          description="Consulte os serviços disponíveis para orçamentação no contexto do cliente atual."
+          description="Serviços disponíveis para orçamentação. Expanda cada linha para ver a composição."
         />
         <EmptyState
           title="Selecione um cliente para listar o catálogo"
-          description="Defina o cliente no topo para carregar os serviços visíveis e abrir o detalhamento das composições."
+          description="Defina o cliente no topo para carregar os serviços visíveis."
         />
       </>
     );
   }
 
+  const items = servicesQuery.data?.items ?? [];
+  const total = servicesQuery.data?.total ?? 0;
+  const totalPages = servicesQuery.data?.pages ?? 0;
+
   return (
     <>
       <PageHeader
         title="Catálogo de Serviços"
-        description="Gerencie os serviços do catálogo com filtros, detalhamento de composição e criação administrativa quando disponível."
+        description={`${total > 0 ? total.toLocaleString('pt-BR') + ' serviços' : 'Carregando...'} — expanda para ver composição`}
         actions={
           user?.is_admin ? (
             <Button
@@ -141,124 +302,75 @@ export function ServicesPage() {
         }
       />
 
-      <Stack direction={{ xs: 'column', xl: 'row' }} spacing={2}>
-        <Paper sx={{ flex: 1.2, p: 3, border: '1px solid', borderColor: 'divider' }}>
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
-            <TextField
-              fullWidth
-              label="Buscar"
-              placeholder="Buscar..."
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setPage(1);
-              }}
-            />
-            <TextField
-              label="Categoria"
-              value={categoriaId}
-              onChange={(event) => {
-                setCategoriaId(event.target.value);
-                setPage(1);
-              }}
-            />
-          </Stack>
-
-          {servicesQuery.isError ? (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {extractApiErrorMessage(servicesQuery.error, errorMessages.loadData)}
-            </Alert>
-          ) : null}
-
-          <DataTable
-            columns={[
-              { key: 'codigo', header: 'Código', render: (row) => row.codigo_origem },
-              { key: 'descricao', header: 'Descrição', render: (row) => row.descricao },
-              { key: 'unidade', header: 'Unidade', render: (row) => row.unidade_medida },
-              {
-                key: 'origem',
-                header: 'Origem',
-                render: (row) => <StatusBadge value={row.origem} />,
-              },
-              {
-                key: 'custo',
-                header: 'Custo unitário (R$)',
-                align: 'right',
-                render: (row) => formatCurrency(row.custo_unitario),
-              },
-            ]}
-            rows={servicesQuery.data?.items ?? []}
-            rowKey={(row) => row.id}
-            loading={servicesQuery.isLoading}
-            page={page}
-            pageSize={pageSize}
-            total={servicesQuery.data?.total ?? 0}
-            emptyTitle="Seu catálogo está vazio"
-            emptyDescription="Nenhum serviço disponível para o recorte atual. Ajuste os filtros ou cadastre novos itens."
-            onPageChange={setPage}
-            onPageSizeChange={(value) => {
-              setPageSize(value);
+      <Paper sx={{ p: 2, border: '1px solid', borderColor: 'divider' }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
+          <TextField
+            fullWidth
+            label="Buscar serviço"
+            placeholder="Descrição ou código..."
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
               setPage(1);
             }}
-            onRowClick={(row) => setSelectedService(row)}
+            size="small"
           />
-        </Paper>
+          {servicesQuery.isLoading && <CircularProgress size={28} sx={{ alignSelf: 'center' }} />}
+        </Stack>
 
-        <Paper sx={{ flex: 0.8, p: 3, border: '1px solid', borderColor: 'divider' }}>
-          <Typography variant="h6" sx={{ mb: 1.5 }}>
-            Detalhes do serviço
-          </Typography>
-          {selectedService ? (
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle1">{selectedService.descricao}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Código: {selectedService.codigo_origem}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Unidade: {selectedService.unidade_medida}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Custo unitário: {formatCurrency(selectedService.custo_unitario)}
-              </Typography>
-              <Stack direction="row" spacing={1}>
-                <StatusBadge value={selectedService.origem} />
-              </Stack>
+        {servicesQuery.isError ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {extractApiErrorMessage(servicesQuery.error, errorMessages.loadData)}
+          </Alert>
+        ) : null}
 
-              {compositionQuery.isFetching ? (
-                <Typography variant="body2" color="text.secondary">
-                  Carregando composições...
-                </Typography>
-              ) : compositionQuery.data ? (
-                <>
-                  <Typography variant="subtitle2">Composição</Typography>
-                  {compositionQuery.data.itens.length ? (
-                    compositionQuery.data.itens.map((item) => (
-                      <Paper key={item.id} variant="outlined" sx={{ p: 1.5 }}>
-                        <Typography variant="body2">{item.descricao_filho}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {item.quantidade_consumo} {item.unidade_medida} ·{' '}
-                          {formatCurrency(item.custo_total)}
-                        </Typography>
-                      </Paper>
-                    ))
-                  ) : (
-                    <Alert severity="warning">{warningMessages.serviceNoComposition}</Alert>
-                  )}
-                </>
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ width: 48 }} />
+                <TableCell sx={{ width: 180 }}>Código</TableCell>
+                <TableCell>Descrição</TableCell>
+                <TableCell sx={{ width: 80 }}>Unidade</TableCell>
+                <TableCell align="right" sx={{ width: 140 }}>Custo unit. (R$)</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {items.length === 0 && !servicesQuery.isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Nenhum serviço encontrado.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
               ) : (
-                <Typography variant="body2" color="text.secondary">
-                  Selecione um serviço para abrir o detalhamento.
-                </Typography>
+                items.map((row) => <ServiceRow key={row.id} row={row} />)
               )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {totalPages > 1 && (
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              Página {page} de {totalPages} ({total.toLocaleString('pt-BR')} serviços)
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <Button size="small" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                Anterior
+              </Button>
+              <Button
+                size="small"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Próxima
+              </Button>
             </Stack>
-          ) : (
-            <EmptyState
-              title="Nenhum serviço selecionado"
-              description="Selecione um serviço na tabela para revisar dados, origem e composição."
-            />
-          )}
-        </Paper>
-      </Stack>
+          </Stack>
+        )}
+      </Paper>
 
       <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>Novo serviço</DialogTitle>
@@ -329,3 +441,4 @@ export function ServicesPage() {
     </>
   );
 }
+

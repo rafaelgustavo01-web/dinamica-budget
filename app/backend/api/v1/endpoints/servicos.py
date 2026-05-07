@@ -27,6 +27,7 @@ router = APIRouter(prefix="/servicos", tags=["servicos"])
 async def list_servicos(
     q: str | None = Query(default=None),
     categoria_id: int | None = Query(default=None),
+    tipo_recurso: str | None = Query(default=None, description="Filter by tipo_recurso (e.g. SERVICO)"),
     cliente_id: UUID | None = Query(default=None, description="Scope to client visibility"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -40,7 +41,7 @@ async def list_servicos(
         if not current_user:
             raise AuthenticationError("Autenticação requerida para filtrar por cliente.")
         await require_cliente_access(cliente_id, current_user, db)
-    params = ServicoListParams(q=q, categoria_id=categoria_id, page=page, page_size=page_size)
+    params = ServicoListParams(q=q, categoria_id=categoria_id, tipo_recurso=tipo_recurso, page=page, page_size=page_size)
     return await servico_catalog_service.list_servicos(params, db, cliente_id=cliente_id)
 
 
