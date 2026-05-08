@@ -56,14 +56,14 @@ Responsável: Research AI / QA Re-avaliação
 | `F2-DT-C` | DONE | P2 | `F2-DT-A`, `F2-DT-B` | **Frontend Smoke Tests** — 4 arquivos de teste smoke em **/__tests__/** para Histograma (3 abas), ExpandableTreeRow, ProposalsListPage, ProposalDetailPage | 1 commit `test(f2-dt-c)`; 13 asserts; npm run test 13 PASS; npm run build verde; apenas arquivos novos (sem modificar producao); branch main apenas |
 | `F3-01` | DONE | P0 | `F2-DT-C` | **Demo Readiness Audit — UI/UX e fluxos críticos**: mapear erros visuais/funcionais que impedem apresentação; validar rotas principais de Propostas, Importação PQ, Match, CPU, Histograma, Composições, Exportação e RBAC visual | Relatório em `docs/sprints/F3-01/technical-review/uiux-audit-2026-04-29.md`; 0 P0, 7 P1, 4 P2; sem alterar código; gates bloqueados por dependências/rede do ambiente |
 | `F3-02` | DONE | P0 | `F3-01` | **Correções críticas de UI/UX para apresentação**: corrigir bugs bloqueantes identificados em F3-01 nos fluxos demonstráveis; foco em telas de Proposta, Histograma, Composições e Exportação | Correções aplicadas em CPU, Match Review, Nova Proposta, Importar PQ, CPU error states, navegação da fila de aprovação e Histograma; `npm run build` PASS; `npm run test` PASS — 13 testes |
-| `F3-03` | TODO | P1 | `F3-04` | **Roteiro de apresentação + dados de demo**: preparar narrativa, checklist operacional, massa mínima/seed ou instruções reproduzíveis para demonstrar proposta completa **somente após fechar as configurações/fluxos que serão apresentados** | Documento `docs/sprints/F3-03/demo/demo-script-2026-04-29.md`; checklist de 10–15 minutos; dados/fixtures sem segredo; reset seguro documentado após ambiente/fluxos finais definidos |
+| `F3-03` | ON-HOLD | P1 | `F3-04` | **Roteiro de apresentação + dados de demo**: **ON-HOLD por decisão Rafael 2026-05-08**; preparar narrativa, checklist operacional, massa mínima/seed ou instruções reproduzíveis para demonstrar proposta completa **somente após fechar as configurações/fluxos que serão apresentados** | Documento `docs/sprints/F3-03/demo/demo-script-2026-04-29.md`; checklist de 10–15 minutos; dados/fixtures sem segredo; reset seguro documentado após ambiente/fluxos finais definidos |
 | `F3-04` | DONE | P0 | `F3-02` | **Configurações finais + polimento visual + smoke de demo**: fechar as configurações/fluxos que serão apresentados, ajustar estados vazios/loading/erro, labels, botões, navegação e responsividade mínima; rodar smoke final antes do roteiro | Configurações da apresentação concluídas; demo smoke PASS; screenshots/evidências em walkthrough; sem regressão em build/test; pendências não-críticas documentadas |
 
 | `F3-05` | DONE | P0 | `F3-04` | **Hotfix PQ Match + TCPO Recursive Tree** — corrigir habilitação do Match Inteligente após importação PQ e explosão recursiva de serviços TCPO compostos por subserviços | Upload PQ habilita Match; árvore TCPO expande serviços dentro de serviços; testes backend focados + build frontend + diff check PASS |
-| `F4-01` | PLAN | P0 | `F3-05` | **Smart Import Architecture** — arquitetura de leitura flexível e gravação rígida, com spike Docling para PQs variadas | Documento de arquitetura + spike Docling + contrato staging/validação/auditoria aprovado |
-| `F4-02` | BACKLOG | P1 | `F4-01` | **PQ Client Profiles + Learning Loop** — padrões de importação por cliente, correção humana vira aprendizado controlado | Perfil por cliente reaproveitado em nova PQ; score de confiança; preview e validação rígida antes de gravar |
-| `F4-03` | BACKLOG | P1 | `F4-01` | **BASES/BCUs Upload Individual + CRUD** — upload individual e manutenção manual das bases internas com validação rígida | CRUD e upload individual com preview, validação e auditoria; sem IA pesada |
-| `F4-04` | BACKLOG | P2 | `F4-01` | **Cadastro de Clientes para Folha PC** — enriquecer cliente com dados empresariais úteis à folha de rosto da Proposta Comercial | Campos de engenharia/empresa disponíveis na folha de rosto e sem IDs técnicos na UI |
+| `F4-01` | TODO | P0 | `F3-05` | **Smart Import Architecture** — arquitetura de leitura flexível e gravação rígida, com spike Docling para PQs variadas | Documento de arquitetura + spike Docling + contrato staging/validação/auditoria aprovado |
+| `F4-02` | TODO | P1 | `F4-01` | **PQ Client Profiles + Learning Loop** — padrões de importação por cliente, correção humana vira aprendizado controlado | Perfil por cliente reaproveitado em nova PQ; score de confiança; preview e validação rígida antes de gravar |
+| `F4-03` | TODO | P1 | `F4-01` | **BASES/BCUs Upload Individual + CRUD** — upload individual e manutenção manual das bases internas com validação rígida | CRUD e upload individual com preview, validação e auditoria; sem IA pesada |
+| `F4-04` | TODO | P2 | `F4-01` | **Cadastro de Clientes para Folha PC** — enriquecer cliente com dados empresariais úteis à folha de rosto da Proposta Comercial | Campos de engenharia/empresa disponíveis na folha de rosto e sem IDs técnicos na UI |
 
 ## Ordem Recomendada de Execução
 
@@ -88,6 +88,15 @@ FASE C — Módulo de Orçamentos
 ```
 
 ## Sprints Ativas
+
+### Pipeline update — 2026-05-08 Fase 4 WIP 4/4
+
+- `F3-03` confirmado como sprint de apresentação/demo e colocado em `ON-HOLD`.
+- Fase 4 aberta com WIP **4/4**: `F4-01`, `F4-02`, `F4-03`, `F4-04` em `TODO`.
+- Orquestração master: gedAI consolida; workers não fazem push direto.
+- Recursos autorizados por Rafael: Codex, Claude, Kimi, Opencode, Gemini e Kiro; workers podem instalar dependências locais necessárias para implementar/testar.
+- Regra bloqueante da Fase 4: qualquer alteração de banco exige atenção total a Alembic/migrations, validação de dados existentes, rollback e testes.
+- README deve ser atualizado ao finalizar a Fase 4.
 
 
 ### Pipeline update — 2026-05-08

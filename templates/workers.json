@@ -1,66 +1,113 @@
 {
   "registry_version": "1.0",
-  "last_updated": "2026-04-25T10:00:00-03:00",
+  "last_updated": "2026-05-08T23:20:00Z",
   "workers": [
     {
       "worker_id": "kimi-k2.5",
       "name": "Kimi K2.5",
       "provider": "Kimi CLI",
-      "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
-      "roles": ["research", "po", "sm", "supervisor", "worker"],
+      "capabilities": [
+        "python",
+        "fastapi",
+        "sqlalchemy",
+        "react",
+        "typescript"
+      ],
+      "roles": [
+        "research",
+        "po",
+        "sm",
+        "supervisor",
+        "worker"
+      ],
       "available": false,
       "busy": true,
       "reserved_for_sprint": "F2-04",
-      "last_checked_at": "2026-04-25T23:00:00-03:00",
-      "notes": "F2-02 TESTED (aguardando QA). Alocado para F2-04 — CPU Detalhada + BDI Dinamico. Inbox: docs/sprints/F2-04/dispatch/sprint-F2-04-worker-prompt.md"
+      "last_checked_at": "2026-05-08T23:20:00Z",
+      "notes": "Fase 4 WIP 4/4 — recurso alocado sob orquestração gedAI; sem push direto."
     },
     {
       "worker_id": "claude-sonnet-4-6",
       "name": "Claude Sonnet 4.6",
       "provider": "Anthropic (Claude Code)",
-      "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript", "alembic"],
-      "roles": ["worker"],
+      "capabilities": [
+        "python",
+        "fastapi",
+        "sqlalchemy",
+        "react",
+        "typescript",
+        "alembic"
+      ],
+      "roles": [
+        "worker"
+      ],
       "available": false,
       "busy": true,
       "reserved_for_sprint": "F2-03",
-      "last_checked_at": "2026-04-25T23:00:00-03:00",
-      "notes": "F2-01 DONE. Alocado para F2-03 — Tela de Revisao de Match (frontend-heavy). Inbox: docs/sprints/F2-03/dispatch/sprint-F2-03-worker-prompt.md"
+      "last_checked_at": "2026-05-08T23:20:00Z",
+      "notes": "Fase 4 WIP 4/4 — recurso alocado sob orquestração gedAI; sem push direto."
     },
     {
       "worker_id": "codex-5.3",
       "name": "Codex 5.3",
       "provider": "OpenAI",
-      "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
-      "roles": ["worker"],
-      "available": true,
-      "busy": false,
+      "capabilities": [
+        "python",
+        "fastapi",
+        "sqlalchemy",
+        "react",
+        "typescript"
+      ],
+      "roles": [
+        "worker"
+      ],
+      "available": false,
+      "busy": true,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-25T10:00:00-03:00",
-      "notes": "Worker de BUILD. Liberado de F2-01 — reassignado para claude-sonnet-4-6. Disponivel para proximas sprints."
+      "last_checked_at": "2026-05-08T23:20:00Z",
+      "notes": "Fase 4 WIP 4/4 — recurso alocado sob orquestração gedAI; sem push direto."
     },
     {
       "worker_id": "gemini-3.1",
       "name": "Gemini 3.1",
       "provider": "Google",
-      "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript"],
-      "roles": ["worker"],
-      "available": true,
-      "busy": false,
+      "capabilities": [
+        "python",
+        "fastapi",
+        "sqlalchemy",
+        "react",
+        "typescript"
+      ],
+      "roles": [
+        "worker"
+      ],
+      "available": false,
+      "busy": true,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-23T16:15:00-03:00",
-      "notes": "Worker de BUILD + QA. Pipeline encerrado — 12 sprints DONE. Disponível para novas tarefas."
+      "last_checked_at": "2026-05-08T23:20:00Z",
+      "notes": "Fase 4 WIP 4/4 — recurso alocado sob orquestração gedAI; sem push direto."
     },
     {
       "worker_id": "opencode-cli",
       "name": "OpenCode CLI",
       "provider": "OpenCode",
-      "capabilities": ["python", "fastapi", "sqlalchemy", "react", "typescript", "git"],
-      "roles": ["qa", "git-controller"],
-      "available": true,
-      "busy": false,
+      "capabilities": [
+        "python",
+        "fastapi",
+        "sqlalchemy",
+        "react",
+        "typescript",
+        "git"
+      ],
+      "roles": [
+        "qa",
+        "git-controller"
+      ],
+      "available": false,
+      "busy": true,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-04-23T16:15:00-03:00",
-      "notes": "QA + Git Controller. Reavaliação final completa: 12 sprints DONE, 93 tests PASS, 1 smoke E2E PASS, build OK. Pipeline encerrado."
+      "last_checked_at": "2026-05-08T23:20:00Z",
+      "notes": "Fase 4 WIP 4/4 — recurso alocado sob orquestração gedAI; sem push direto."
     }
   ],
   "pos": [

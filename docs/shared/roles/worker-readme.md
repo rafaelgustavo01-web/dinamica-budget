@@ -227,3 +227,39 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Plan: @docs/sprints/F3-05/plans/2026-05-08-f3-05-hotfix-pq-match-tcpo-tree.md
 - Dispatch: @docs/sprints/F3-05/dispatch/sprint-F3-05-worker-prompt.md
 - Notes: Aplicar apenas hotfix incremental. Não misturar Smart Import/Docling nem hardening amplo nesta sprint.
+
+### [PENDING] 2026-05-08T23:20:00Z — Sprint F4-01
+- From: PO / gedAI Orchestrator
+- Action: BUILD_SMART_IMPORT_ARCHITECTURE
+- Assigned Worker: gemini + kiro
+- Briefing: @docs/sprints/F4-01/briefing/sprint-F4-01-briefing.md
+- Plan: @docs/sprints/F4-01/plans/2026-05-08-f4-01-smart-import-architecture.md
+- Dispatch: @docs/sprints/F4-01/dispatch/sprint-F4-01-worker-prompt.md
+- Notes: WIP 1/4. Arquitetura/spike; Docling como extrator; banco rígido.
+
+### [PENDING] 2026-05-08T23:20:00Z — Sprint F4-02
+- From: PO / gedAI Orchestrator
+- Action: BUILD_PQ_CLIENT_PROFILES
+- Assigned Worker: codex + kimi-review
+- Briefing: @docs/sprints/F4-02/briefing/sprint-F4-02-briefing.md
+- Plan: @docs/sprints/F4-02/plans/2026-05-08-f4-02-pq-client-profiles.md
+- Dispatch: @docs/sprints/F4-02/dispatch/sprint-F4-02-worker-prompt.md
+- Notes: WIP 2/4. Migration Alembic obrigatoriamente revisada se houver schema.
+
+### [PENDING] 2026-05-08T23:20:00Z — Sprint F4-03
+- From: PO / gedAI Orchestrator
+- Action: BUILD_BASE_BCU_CRUD
+- Assigned Worker: kimi + claude-frontend
+- Briefing: @docs/sprints/F4-03/briefing/sprint-F4-03-briefing.md
+- Plan: @docs/sprints/F4-03/plans/2026-05-08-f4-03-base-bcu-crud.md
+- Dispatch: @docs/sprints/F4-03/dispatch/sprint-F4-03-worker-prompt.md
+- Notes: WIP 3/4. Reusar schema bcu.* se possível; migração só se indispensável.
+
+### [PENDING] 2026-05-08T23:20:00Z — Sprint F4-04
+- From: PO / gedAI Orchestrator
+- Action: BUILD_CLIENTES_PC
+- Assigned Worker: claude + codex-backend
+- Briefing: @docs/sprints/F4-04/briefing/sprint-F4-04-briefing.md
+- Plan: @docs/sprints/F4-04/plans/2026-05-08-f4-04-clientes-pc.md
+- Dispatch: @docs/sprints/F4-04/dispatch/sprint-F4-04-worker-prompt.md
+- Notes: WIP 4/4. UI/UX clara, sem IDs técnicos; migration segura se novos campos.

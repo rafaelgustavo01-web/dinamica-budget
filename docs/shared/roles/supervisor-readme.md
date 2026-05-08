@@ -80,3 +80,10 @@ BACKLOG has `INICIADA` sprint without plan, OR your inbox has `[PENDING]` messag
 - Briefing: @docs/sprints/F3-05/briefing/sprint-F3-05-briefing.md
 - Plan: @docs/sprints/F3-05/plans/2026-05-08-f3-05-hotfix-pq-match-tcpo-tree.md
 - Notes: Plano criado após validação multiagente. Worker notificado.
+
+### [DONE] 2026-05-08T23:20:00Z — Fase 4 WIP 4/4
+- From: PO / Rafael via gedAI
+- Action: PLAN_AND_DISPATCH
+- Briefings: @docs/sprints/F4-01..F4-04/briefing/
+- Plans: @docs/sprints/F4-01..F4-04/plans/
+- Notes: F3-03 ON-HOLD; F4 inteira em TODO com WIP 4/4; workers acionados por CLI em worktrees isoladas.
