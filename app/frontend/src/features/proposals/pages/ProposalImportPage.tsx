@@ -26,6 +26,7 @@ export function ProposalImportPage() {
     mutationFn: (f: File) => proposalsApi.uploadPq(id!, f),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['proposta', id] });
+      void queryClient.invalidateQueries({ queryKey: ['pq-itens', id] });
       setFile(null);
     },
   });
@@ -36,6 +37,14 @@ export function ProposalImportPage() {
       void queryClient.invalidateQueries({ queryKey: ['proposta', id] });
     },
   });
+
+  const pqItensQuery = useQuery({
+    queryKey: ['pq-itens', id],
+    queryFn: () => proposalsApi.listPqItens(id!),
+    enabled: Boolean(id),
+  });
+
+  const hasPqItems = (pqItensQuery.data?.length ?? 0) > 0 || uploadMutation.isSuccess;
 
   if (loadingProposta) return (
     <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -155,7 +164,7 @@ export function ProposalImportPage() {
             variant="contained"
             color="secondary"
             startIcon={<AutoFixHighOutlinedIcon />}
-            disabled={proposta.status === 'RASCUNHO' || matchMutation.isPending || uploadMutation.isPending}
+            disabled={!hasPqItems || matchMutation.isPending || uploadMutation.isPending}
             onClick={() => matchMutation.mutate()}
           >
             {matchMutation.isPending ? 'Processando Match...' : 'Executar Match Inteligente'}

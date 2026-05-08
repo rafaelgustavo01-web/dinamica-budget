@@ -43,6 +43,7 @@ class _MockWorkbook:
 
     def __init__(self, ws):
         self._ws = ws
+        self.sheetnames = ["Composições analíticas"]
 
     def __getitem__(self, key):
         if key == "Composições analíticas":
@@ -167,22 +168,56 @@ class TestParseTcpoPini:
     def test_parent_with_subservice_and_grandchildren(self):
         """
         Parent -> subservice -> insumo under subservice.
-        The subservice does NOT become a new parent, so the insumo is a child
-        of the original parent (not the subservice). This matches the TCPO
-        analytical sheet semantics where subservices are consumed, not exploded.
+        Indented descendants below a subservice belong to the subservice, so
+        catalog explosion can recurse service inside service.
         """
         rows = [
             _make_row("S-001", "Serviço Pai", "SER.CG", "UN", None, 100.0, descricao_bold=True, codigo_indent=0),
             _make_row("S-002", "Subserviço", "SER.CG", "UN", 1.0, 50.0, descricao_bold=False, codigo_indent=1),
-            _make_row("MAT-001", "Cimento", "MAT.", "KG", 10.0, 25.0),
+            _make_row("MAT-001", "Cimento", "MAT.", "KG", 10.0, 25.0, codigo_indent=2),
         ]
 
         with patch("backend.services.etl_service.openpyxl.load_workbook", return_value=_mock_workbook(rows)):
             resp = etl_service.parse_tcpo_pini(b"dummy")
 
-        # All relations point to S-001 (the bold parent)
-        for rel in resp.parse_preview.relacoes_amostra:
-            assert rel.pai_codigo == "S-001"
+        rels = resp.parse_preview.relacoes_amostra
+        assert any(r.pai_codigo == "S-001" and r.filho_codigo == "S-002" for r in rels)
+        assert any(r.pai_codigo == "S-002" and r.filho_codigo == "MAT-001" for r in rels)
+
+    def test_tcpo_subservice_2233_keeps_own_children(self):
+        rows = [
+            _make_row(
+                "3R0412140000002230",
+                "Serviço Pai",
+                "SER.CG",
+                "UN",
+                None,
+                100.0,
+                descricao_bold=True,
+                codigo_indent=0,
+            ),
+            _make_row(
+                "3R0412140000002233",
+                "Subserviço",
+                "SER.CG",
+                "UN",
+                1.0,
+                50.0,
+                descricao_bold=False,
+                codigo_indent=1,
+            ),
+            _make_row("MAT-2233", "Insumo do subserviço", "MAT.", "KG", 2.0, 10.0, codigo_indent=2),
+        ]
+
+        with patch("backend.services.etl_service.openpyxl.load_workbook", return_value=_mock_workbook(rows)):
+            resp = etl_service.parse_tcpo_pini(b"dummy")
+
+        rels = resp.parse_preview.relacoes_amostra
+        assert any(
+            r.pai_codigo == "3R0412140000002230" and r.filho_codigo == "3R0412140000002233"
+            for r in rels
+        )
+        assert any(r.pai_codigo == "3R0412140000002233" and r.filho_codigo == "MAT-2233" for r in rels)
 
     def test_ser_prefix_variations(self):
         """

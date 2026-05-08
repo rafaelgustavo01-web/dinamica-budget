@@ -73,3 +73,10 @@ BACKLOG has `INICIADA` sprint without plan, OR your inbox has `[PENDING]` messag
 - From: po
 - Action: PLAN → BUILD
 - Notes: Sprint no forno. Auditoria de qualidade final, smoke E2E, go-live gate. Worker Codex-5.3 notificado.
+
+### [DONE] 2026-05-08T22:15:00Z — Sprint F3-05
+- From: PO / gedAI
+- Action: PLAN
+- Briefing: @docs/sprints/F3-05/briefing/sprint-F3-05-briefing.md
+- Plan: @docs/sprints/F3-05/plans/2026-05-08-f3-05-hotfix-pq-match-tcpo-tree.md
+- Notes: Plano criado após validação multiagente. Worker notificado.

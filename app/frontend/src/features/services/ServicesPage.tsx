@@ -38,7 +38,7 @@ import { PageHeader } from '../../shared/components/PageHeader';
 import { useFeedback } from '../../shared/components/feedback/FeedbackProvider';
 import { extractApiErrorMessage } from '../../shared/services/api/apiClient';
 import { servicesApi } from '../../shared/services/api/servicesApi';
-import type { ServicoTcpoResponse } from '../../shared/types/contracts/servicos';
+import type { ComposicaoComponenteResponse, ServicoTcpoResponse } from '../../shared/types/contracts/servicos';
 import { formatCurrency, toNumber } from '../../shared/utils/format';
 import { useAuth } from '../auth/AuthProvider';
 
@@ -61,7 +61,74 @@ const TIPO_RECURSO_LABEL: Record<string, string> = {
   SERVICO: 'Serviço',
 };
 
-function ComposicaoRow({ servicoId }: { servicoId: string }) {
+function ComposicaoItemRow({ item, depth }: { item: ComposicaoComponenteResponse; depth: number }) {
+  const [open, setOpen] = useState(false);
+  const canExpand = item.tipo_recurso === 'SERVICO';
+
+  return (
+    <>
+      <TableRow sx={{ bgcolor: 'action.hover' }}>
+        <TableCell sx={{ width: 48, p: 0.5, pl: 1 + depth }}>
+          {canExpand ? (
+            <IconButton
+              size="small"
+              onClick={() => setOpen((v) => !v)}
+              aria-label={open ? 'colapsar' : 'expandir'}
+            >
+              {open ? <ExpandMoreIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
+            </IconButton>
+          ) : null}
+        </TableCell>
+        <TableCell sx={{ pl: canExpand ? 1 : 5 }}>
+          <Typography variant="caption" color="text.secondary">
+            {item.codigo_origem ?? '—'}
+          </Typography>
+        </TableCell>
+        <TableCell>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Typography variant="body2">{item.descricao_filho}</Typography>
+            {item.tipo_recurso && item.tipo_recurso !== 'SERVICO' ? (
+              <Chip
+                label={TIPO_RECURSO_LABEL[item.tipo_recurso] ?? item.tipo_recurso}
+                size="small"
+                variant="outlined"
+                sx={{ fontSize: 10, height: 18 }}
+              />
+            ) : null}
+          </Stack>
+        </TableCell>
+        <TableCell>
+          <Typography variant="caption">{item.unidade_medida}</Typography>
+        </TableCell>
+        <TableCell align="right">
+          <Stack alignItems="flex-end">
+            <Typography variant="caption" color="text.secondary">
+              {String(item.quantidade_consumo)} × {formatCurrency(item.custo_unitario)}
+            </Typography>
+            <Typography variant="caption" fontWeight={600}>
+              {formatCurrency(item.custo_total)}
+            </Typography>
+          </Stack>
+        </TableCell>
+      </TableRow>
+      {canExpand && (
+        <TableRow>
+          <TableCell colSpan={5} sx={{ p: 0, border: 'none' }}>
+            <Collapse in={open} timeout="auto" unmountOnExit>
+              <Table size="small">
+                <TableBody>
+                  {open && <ComposicaoRow servicoId={item.insumo_filho_id} depth={depth + 1} />}
+                </TableBody>
+              </Table>
+            </Collapse>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
+  );
+}
+
+function ComposicaoRow({ servicoId, depth = 0 }: { servicoId: string; depth?: number }) {
   const componentesQuery = useQuery({
     queryKey: ['services', 'componentes', servicoId],
     queryFn: () => servicesApi.getComponentes(servicoId),
@@ -119,40 +186,7 @@ function ComposicaoRow({ servicoId }: { servicoId: string }) {
   return (
     <>
       {componentesQuery.data.map((item) => (
-        <TableRow key={item.id} sx={{ bgcolor: 'action.hover' }}>
-          <TableCell sx={{ width: 48 }} />
-          <TableCell sx={{ pl: 5 }}>
-            <Typography variant="caption" color="text.secondary">
-              {item.codigo_origem ?? '—'}
-            </Typography>
-          </TableCell>
-          <TableCell>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography variant="body2">{item.descricao_filho}</Typography>
-              {item.tipo_recurso && item.tipo_recurso !== 'SERVICO' ? (
-                <Chip
-                  label={TIPO_RECURSO_LABEL[item.tipo_recurso] ?? item.tipo_recurso}
-                  size="small"
-                  variant="outlined"
-                  sx={{ fontSize: 10, height: 18 }}
-                />
-              ) : null}
-            </Stack>
-          </TableCell>
-          <TableCell>
-            <Typography variant="caption">{item.unidade_medida}</Typography>
-          </TableCell>
-          <TableCell align="right">
-            <Stack alignItems="flex-end">
-              <Typography variant="caption" color="text.secondary">
-                {String(item.quantidade_consumo)} × {formatCurrency(item.custo_unitario)}
-              </Typography>
-              <Typography variant="caption" fontWeight={600}>
-                {formatCurrency(item.custo_total)}
-              </Typography>
-            </Stack>
-          </TableCell>
-        </TableRow>
+        <ComposicaoItemRow key={item.id} item={item} depth={depth} />
       ))}
       <TableRow sx={{ bgcolor: 'action.selected' }}>
         <TableCell colSpan={4} sx={{ pl: 5 }}>

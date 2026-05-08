@@ -218,3 +218,12 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Plan: @docs/sprints/F2-13/plans/2026-04-27-tree-table-composicoes.md
 - Notes: Substituição do modelo flat por uma Table Expansível Hierárquica no Frontend do catálogo de bases. Carregamento lazily dos insumos/sub-serviços.
 - Status: **ARCHIVED → DONE** (Orchestrator sync 2026-04-29; sprint already closed/aligned in BACKLOG).
+
+### [PENDING] 2026-05-08T22:15:00Z — Sprint F3-05
+- From: PO / Scrum Master / gedAI
+- Action: BUILD_HOTFIX
+- Assigned Worker: codex-backend + claude-frontend
+- Briefing: @docs/sprints/F3-05/briefing/sprint-F3-05-briefing.md
+- Plan: @docs/sprints/F3-05/plans/2026-05-08-f3-05-hotfix-pq-match-tcpo-tree.md
+- Dispatch: @docs/sprints/F3-05/dispatch/sprint-F3-05-worker-prompt.md
+- Notes: Aplicar apenas hotfix incremental. Não misturar Smart Import/Docling nem hardening amplo nesta sprint.

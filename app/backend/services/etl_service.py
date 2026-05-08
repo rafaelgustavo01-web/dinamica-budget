@@ -177,6 +177,25 @@ class EtlService:
 
         ws_anal = wb[WS_ANALITICAS]
         current_parent_codigo: str | None = None
+        service_stack: list[tuple[float, str]] = []
+
+        def _cell_indent(cell) -> float:
+            alignment = cell.alignment if cell.alignment else None
+            indent = alignment.indent if alignment else 0
+            return float(indent or 0)
+
+        def _nearest_service_parent(indent: float) -> str | None:
+            for parent_indent, parent_codigo in reversed(service_stack):
+                if parent_indent < indent:
+                    return parent_codigo
+            if service_stack:
+                return service_stack[0][1]
+            return current_parent_codigo
+
+        def _push_service(indent: float, codigo: str) -> None:
+            while service_stack and service_stack[-1][0] >= indent:
+                service_stack.pop()
+            service_stack.append((indent, codigo))
 
         for row_idx, row in enumerate(ws_anal.iter_rows(min_row=2, values_only=False), start=2):
             codigo = row[0].value
@@ -192,7 +211,7 @@ class EtlService:
 
             codigo = codigo.strip()
             classe_clean = str(classe).strip()
-            tipo_recurso = _CLASS_TO_TIPO.get(classe_clean)
+            tipo_recurso = "SERVICO" if classe_clean.startswith("SER.") else _CLASS_TO_TIPO.get(classe_clean)
             unidade_clean = str(unidade).strip() if unidade else "UN"
             descricao_clean = str(descricao).strip() if descricao else ""
             custo = float(preco) if preco is not None else 0.0
@@ -201,12 +220,13 @@ class EtlService:
             descricao_cell = row[1]
             codigo_cell = row[0]
             is_bold = descricao_cell.font.bold if descricao_cell.font else False
-            alignment_indent = codigo_cell.alignment.indent if codigo_cell.alignment else 0
+            alignment_indent = _cell_indent(codigo_cell)
             is_parent = classe_clean.startswith("SER.") and is_bold and alignment_indent == 0
             is_subservice = classe_clean.startswith("SER.") and not is_parent
 
             if is_parent:
                 current_parent_codigo = codigo
+                _push_service(alignment_indent, codigo)
                 # Upsert: if already seeded from sintéticas, update custo_base from analíticas
                 if codigo not in seen_itens:
                     result.itens.append(
@@ -221,7 +241,8 @@ class EtlService:
                     seen_itens.add(codigo)
 
             elif is_subservice:
-                if current_parent_codigo is None:
+                parent_codigo = _nearest_service_parent(alignment_indent)
+                if parent_codigo is None:
                     result.avisos.append(
                         f"Linha {row_idx}: subserviço sem pai (ignorado): {codigo}"
                     )
@@ -240,16 +261,19 @@ class EtlService:
                 qty = float(coef) if coef is not None else 1.0
                 result.relacoes.append(
                     _ParsedRelacao(
-                        pai_codigo=current_parent_codigo,
+                        pai_codigo=parent_codigo,
                         filho_codigo=codigo,
                         quantidade_consumo=qty,
                         unidade_medida=unidade_clean,
                     )
                 )
+                current_parent_codigo = codigo
+                _push_service(alignment_indent, codigo)
 
             else:
                 # Normal child component
-                if current_parent_codigo is None:
+                parent_codigo = _nearest_service_parent(alignment_indent)
+                if parent_codigo is None:
                     result.avisos.append(
                         f"Linha {row_idx}: filho sem pai (ignorado): {codigo}"
                     )
@@ -268,7 +292,7 @@ class EtlService:
                 qty = float(coef) if coef is not None else 1.0
                 result.relacoes.append(
                     _ParsedRelacao(
-                        pai_codigo=current_parent_codigo,
+                        pai_codigo=parent_codigo,
                         filho_codigo=codigo,
                         quantidade_consumo=qty,
                         unidade_medida=unidade_clean,

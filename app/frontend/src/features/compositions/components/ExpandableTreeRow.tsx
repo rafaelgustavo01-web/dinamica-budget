@@ -16,6 +16,14 @@ import { servicesApi } from '../../../shared/services/api/servicesApi';
 import type { ComposicaoComponenteResponse } from '../../../shared/types/contracts/servicos';
 import { formatCurrency } from '../../../shared/utils/format';
 
+const TIPO_RECURSO_LABEL: Record<string, string> = {
+  MO: 'M.O.',
+  INSUMO: 'Insumo',
+  FERRAMENTA: 'Ferramenta',
+  EQUIPAMENTO: 'Equip.',
+  SERVICO: 'Serviço',
+};
+
 interface Props {
   item: {
     id: string;
@@ -103,7 +111,7 @@ export function ExpandableTreeRow({ item, depth = 0, maxDepth = 5, isExpandable,
         </TableCell>
         <TableCell sx={{ py: 1, px: 1.5 }}>
           <Typography variant="caption" color="text.secondary">
-            {item.tipo_recurso ?? '—'}
+            {item.tipo_recurso ? (TIPO_RECURSO_LABEL[item.tipo_recurso] ?? item.tipo_recurso) : '—'}
           </Typography>
         </TableCell>
         {actionSlot !== undefined ? (

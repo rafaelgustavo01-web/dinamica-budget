@@ -6,7 +6,7 @@ import openpyxl
 import pytest
 
 from backend.core.exceptions import ValidationError
-from backend.models.enums import StatusImportacao
+from backend.models.enums import StatusImportacao, StatusProposta
 from backend.services.pq_import_service import PqImportService
 
 
@@ -21,6 +21,7 @@ def _build_upload(filename: str, payload: bytes):
 async def test_importar_planilha_csv_cria_itens_e_normaliza_tokens():
     proposta = MagicMock()
     proposta.id = uuid4()
+    proposta.status = StatusProposta.RASCUNHO
 
     proposta_repo = AsyncMock()
     proposta_repo.get_by_id.return_value = proposta
@@ -41,6 +42,7 @@ async def test_importar_planilha_csv_cria_itens_e_normaliza_tokens():
     assert resultado.status == StatusImportacao.CONCLUIDO
     assert resultado.linhas_total == 1
     assert resultado.linhas_importadas == 1
+    assert proposta.status == StatusProposta.EM_ANALISE
     created_items = item_repo.create_batch.await_args.args[0]
     assert created_items[0].descricao_tokens == "escavacao manual"
 
@@ -49,6 +51,7 @@ async def test_importar_planilha_csv_cria_itens_e_normaliza_tokens():
 async def test_importar_planilha_xlsx_reconhece_aliases_de_coluna():
     proposta = MagicMock()
     proposta.id = uuid4()
+    proposta.status = StatusProposta.RASCUNHO
 
     proposta_repo = AsyncMock()
     proposta_repo.get_by_id.return_value = proposta
@@ -80,6 +83,7 @@ async def test_importar_planilha_xlsx_reconhece_aliases_de_coluna():
 async def test_importar_planilha_rejeita_extensao_nao_suportada():
     proposta = MagicMock()
     proposta.id = uuid4()
+    proposta.status = StatusProposta.RASCUNHO
 
     proposta_repo = AsyncMock()
     proposta_repo.get_by_id.return_value = proposta

@@ -59,6 +59,12 @@ Responsável: Research AI / QA Re-avaliação
 | `F3-03` | TODO | P1 | `F3-04` | **Roteiro de apresentação + dados de demo**: preparar narrativa, checklist operacional, massa mínima/seed ou instruções reproduzíveis para demonstrar proposta completa **somente após fechar as configurações/fluxos que serão apresentados** | Documento `docs/sprints/F3-03/demo/demo-script-2026-04-29.md`; checklist de 10–15 minutos; dados/fixtures sem segredo; reset seguro documentado após ambiente/fluxos finais definidos |
 | `F3-04` | DONE | P0 | `F3-02` | **Configurações finais + polimento visual + smoke de demo**: fechar as configurações/fluxos que serão apresentados, ajustar estados vazios/loading/erro, labels, botões, navegação e responsividade mínima; rodar smoke final antes do roteiro | Configurações da apresentação concluídas; demo smoke PASS; screenshots/evidências em walkthrough; sem regressão em build/test; pendências não-críticas documentadas |
 
+| `F3-05` | TESTED | P0 | `F3-04` | **Hotfix PQ Match + TCPO Recursive Tree** — corrigir habilitação do Match Inteligente após importação PQ e explosão recursiva de serviços TCPO compostos por subserviços | Upload PQ habilita Match; árvore TCPO expande serviços dentro de serviços; testes backend focados + build frontend + diff check PASS |
+| `F4-01` | PLAN | P0 | `F3-05` | **Smart Import Architecture** — arquitetura de leitura flexível e gravação rígida, com spike Docling para PQs variadas | Documento de arquitetura + spike Docling + contrato staging/validação/auditoria aprovado |
+| `F4-02` | BACKLOG | P1 | `F4-01` | **PQ Client Profiles + Learning Loop** — padrões de importação por cliente, correção humana vira aprendizado controlado | Perfil por cliente reaproveitado em nova PQ; score de confiança; preview e validação rígida antes de gravar |
+| `F4-03` | BACKLOG | P1 | `F4-01` | **BASES/BCUs Upload Individual + CRUD** — upload individual e manutenção manual das bases internas com validação rígida | CRUD e upload individual com preview, validação e auditoria; sem IA pesada |
+| `F4-04` | BACKLOG | P2 | `F4-01` | **Cadastro de Clientes para Folha PC** — enriquecer cliente com dados empresariais úteis à folha de rosto da Proposta Comercial | Campos de engenharia/empresa disponíveis na folha de rosto e sem IDs técnicos na UI |
+
 ## Ordem Recomendada de Execução
 
 ```
@@ -82,6 +88,15 @@ FASE C — Módulo de Orçamentos
 ```
 
 ## Sprints Ativas
+
+
+### Pipeline update — 2026-05-08
+
+- `F3-05` aberto como hotfix P0 para bugs reportados por Rafael: PQ Match e árvore TCPO recursiva.
+- `F4-01` planejado para Smart Import Architecture com Docling como candidato de leitura flexível.
+- `F4-02` planejado para perfis de PQ por cliente e aprendizado controlado.
+- Premissa aprovada: **PQ aprende por cliente; BASE segue contrato; TCPO tolera variação controlada; banco continua rígido**.
+- Roteamento: Claude frontend/UX; Codex backend hotfix; Kimi hardening; Gemini inteligência/roadmap/QA.
 
 **Fase 3 — Demo Readiness / Polimento UI+UX aberta em 2026-04-29.**
 

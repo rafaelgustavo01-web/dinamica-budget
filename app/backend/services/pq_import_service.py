@@ -9,7 +9,7 @@ import openpyxl
 from fastapi import UploadFile
 
 from backend.core.exceptions import NotFoundError, ValidationError
-from backend.models.enums import StatusImportacao, StatusMatch
+from backend.models.enums import StatusImportacao, StatusMatch, StatusProposta
 from backend.models.proposta import PqImportacao, PqItem
 from backend.repositories.associacao_repository import normalize_text
 from backend.repositories.pq_importacao_repository import PqImportacaoRepository
@@ -168,6 +168,8 @@ class PqImportService:
 
         if itens:
             await self.item_repo.create_batch(itens)
+            if proposta.status == StatusProposta.RASCUNHO:
+                proposta.status = StatusProposta.EM_ANALISE
 
         importacao.linhas_importadas = len(itens)
         importacao.linhas_com_erro = linhas_com_erro
@@ -254,4 +256,3 @@ class PqImportService:
             "quantidade": _value("quantidade"),
             "linha_planilha": line_number,
         }
-
