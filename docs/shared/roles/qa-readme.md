@@ -256,10 +256,17 @@ Your inbox has `[PENDING]` with `Action: REVIEW`.
 - Notes: Aceita. 75/75 testes. 2 correções aplicadas pelo QA (test_health_endpoint + SAWarnings). S-01 → DONE.
 
 
-### [PENDING] 2026-05-08T22:25:00Z — Sprint F3-05
+### [DONE] 2026-05-08T22:25:00Z — Sprint F3-05
 - From: worker (codex-backend + claude-frontend via gedAI)
 - Action: REVIEW
 - Walkthrough: @docs/sprints/F3-05/walkthrough/done/walkthrough-F3-05.md
 - Technical Review: @docs/sprints/F3-05/technical-review/technical-review-2026-05-08-f3-05.md
 - Tests: `git diff --check` PASS; `python3 -m compileall -q backend` PASS; `npm run build` PASS; pytest bloqueado no ambiente principal (`No module named pytest`).
 - Notes: Hotfix incremental de PQ Match + árvore TCPO recursiva. Solicitar QA Gemini/Codex antes de mover para DONE.
+
+### [DONE] 2026-05-08T22:35:00Z — Opencode QA ACCEPTED F3-05
+- From: Opencode QA
+- Action: ACCEPTED
+- Technical Feedback: @docs/sprints/F3-05/technical-feedback/technical-feedback-2026-05-08-opencode-qa.md
+- Decision: F3-05 pode ir para DONE.
+- Notes: Sem P0; pytest bloqueado por ambiente.
