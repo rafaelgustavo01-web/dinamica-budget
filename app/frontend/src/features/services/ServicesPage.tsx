@@ -39,7 +39,7 @@ import { useFeedback } from '../../shared/components/feedback/FeedbackProvider';
 import { extractApiErrorMessage } from '../../shared/services/api/apiClient';
 import { servicesApi } from '../../shared/services/api/servicesApi';
 import type { ServicoTcpoResponse } from '../../shared/types/contracts/servicos';
-import { formatCurrency } from '../../shared/utils/format';
+import { formatCurrency, toNumber } from '../../shared/utils/format';
 import { useAuth } from '../auth/AuthProvider';
 
 const createServiceSchema = z.object({
@@ -106,7 +106,13 @@ function ComposicaoRow({ servicoId }: { servicoId: string }) {
   }
 
   const totalComposicao = componentesQuery.data.reduce(
-    (acc, item) => acc + (typeof item.custo_total === 'number' ? item.custo_total : parseFloat(String(item.custo_total)) || 0),
+    (acc, item) => {
+      if (item.custo_total == null) {
+        return acc;
+      }
+      const custoTotal = toNumber(item.custo_total);
+      return Number.isFinite(custoTotal) ? acc + custoTotal : acc;
+    },
     0,
   );
 

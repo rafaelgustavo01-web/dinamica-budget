@@ -1,4 +1,5 @@
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
@@ -7,7 +8,9 @@ import pytest
 from backend.core import database
 from backend.models.base_tcpo import BaseTcpo
 from backend.models.enums import TipoRecurso
+from backend.models.itens_proprios import ItemProprio
 from backend.models.versao_composicao import VersaoComposicao
+from backend.schemas.servico import ServicoTcpoResponse
 from backend.services.servico_catalog_service import ServicoCatalogService
 from backend.services.versao_service import VersaoService
 
@@ -136,6 +139,40 @@ async def test_servico_catalog_read_path_does_not_flush_or_commit(monkeypatch):
     result = await service.get_servico(servico_id, db)
 
     assert result.id == servico_id
+    assert result.origem == "TCPO"
+    assert result.custo_unitario == Decimal("10.00")
     db.flush.assert_not_awaited()
     db.commit.assert_not_awaited()
 
+
+def test_servico_response_resolves_propria_origin_from_cliente_id():
+    servico = ItemProprio(
+        id=uuid4(),
+        cliente_id=uuid4(),
+        codigo_origem="PROP-1",
+        descricao="Servico proprio",
+        unidade_medida="UN",
+        custo_unitario=Decimal("12.50"),
+        tipo_recurso=TipoRecurso.SERVICO,
+    )
+
+    result = ServicoTcpoResponse.model_validate(servico)
+
+    assert result.origem == "PROPRIA"
+
+
+def test_servico_response_resolves_null_origin_before_literal_validation():
+    result = ServicoTcpoResponse.model_validate(
+        SimpleNamespace(
+            id=uuid4(),
+            cliente_id=uuid4(),
+            origem=None,
+            codigo_origem="PROP-2",
+            descricao="Servico proprio",
+            unidade_medida="UN",
+            custo_unitario=Decimal("12.50"),
+            tipo_recurso=TipoRecurso.SERVICO,
+        )
+    )
+
+    assert result.origem == "PROPRIA"
