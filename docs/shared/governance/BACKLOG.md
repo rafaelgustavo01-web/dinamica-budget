@@ -212,3 +212,11 @@ oadmap.
 - 2026-04-29 (Worker/Claude): `F3-04` executada. Polimentos P2 aplicados: empty state Histograma, empty rows por aba, correção campos texto não-numéricos no Histograma, métricas Dashboard com `—` em loading, `CircularProgress` padronizado em 4 páginas. Gates: `npm run build` PASS, `npm run test` 13/13 PASS. Sprint movida para TESTED; aguarda QA Gemini.
 
 - 2026-04-29 (QA/Gemini): `F3-04` ACCEPTED. Technical Feedback e walkthrough reviewed criados; sprint movida para DONE. `F3-03` liberada para TODO, pois configurações/fluxos finais da apresentação foram fechados.
+
+### Orchestration note — 2026-05-08 Claude frontend review
+
+- Claude exhausted quota/returned overloaded during F4-03/F4-04 frontend work.
+- Opencode was assigned as replacement to continue frontend implementation immediately.
+- Rafael requested a delayed Claude review after quota reset because Claude is the project frontend expert.
+- Scheduled review target: after ~2h, review Opencode frontend work for F4-03/F4-04 before final consolidation.
+- Migration rule remains strict: parallel `027` migrations must not be merged without renumbering and Alembic chain validation.

@@ -263,3 +263,11 @@ Your inbox has `[PENDING]` with `Action: BUILD` or `Action: REWORK`.
 - Plan: @docs/sprints/F4-04/plans/2026-05-08-f4-04-clientes-pc.md
 - Dispatch: @docs/sprints/F4-04/dispatch/sprint-F4-04-worker-prompt.md
 - Notes: WIP 4/4. UI/UX clara, sem IDs técnicos; migration segura se novos campos.
+
+### [PENDING] 2026-05-09T01:40:00Z — Claude frontend review after quota reset
+- From: Rafael / gedAI Orchestrator
+- Action: FRONTEND_REVIEW_AFTER_OPENCODE
+- Assigned Worker: claude-frontend-expert
+- Scope: F4-03 and F4-04 frontend delivered by Opencode replacement workers
+- Worktrees: @/tmp/db-f4-03-claude and @/tmp/db-f4-04-claude
+- Notes: Claude is the frontend expert for Dinamica Budget. Review Opencode frontend output after quota reset; do not push directly; preserve project-pipeline artifacts; do not touch Alembic/migrations except to flag integration risks.
