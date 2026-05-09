@@ -26,20 +26,37 @@ from backend.models.bcu import (
 )
 from backend.schemas.bcu import (
     BcuCabecalhoOut,
+    BcuEncargoItemCreate,
     BcuEncargoItemOut,
+    BcuEncargoItemUpdate,
     BcuEquipamentosOut,
+    BcuEquipamentoItemCreate,
     BcuEquipamentoItemOut,
+    BcuEquipamentoItemUpdate,
     BcuEquipamentoPremissaOut,
+    BcuEpiItemCreate,
     BcuEpiItemOut,
+    BcuEpiItemUpdate,
+    BcuFerramentaItemCreate,
     BcuFerramentaItemOut,
+    BcuFerramentaItemUpdate,
+    BcuMaoObraItemCreate,
     BcuMaoObraItemOut,
+    BcuMaoObraItemUpdate,
+    BcuMobilizacaoItemCreate,
     BcuMobilizacaoItemOut,
+    BcuMobilizacaoItemUpdate,
+    BcuUploadConfirmOut,
+    BcuUploadPreviewOut,
+    BcuUploadPreviewRow,
     DeParaCreate,
     DeParaOut,
     DeParaListItemOut,
 )
 from backend.services.bcu_service import BcuService
 from backend.services.bcu_de_para_service import BcuDeParaService
+from backend.services.bcu_upload_service import BcuUploadService
+from backend.services.bcu_crud_service import BcuCrudService
 
 router = APIRouter(prefix="/bcu", tags=["bcu"])
 
@@ -202,6 +219,18 @@ async def deletar_de_para(
 
 # ── Parameterized /{cabecalho_id}/ routes ─────────────────────────────────────
 
+@router.delete("/cabecalhos/{cabecalho_id}", status_code=204)
+async def deletar_cabecalho(
+    cabecalho_id: UUID,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    cab = await _get_cabecalho(db, cabecalho_id)
+    if cab.is_ativo:
+        raise ValidationError("Não é possível remover a BCU ativa. Ative outra versão primeiro.")
+    await db.delete(cab)
+    await db.commit()
+
 @router.post("/cabecalhos/{cabecalho_id}/ativar", response_model=BcuCabecalhoOut)
 async def ativar_cabecalho(
     cabecalho_id: UUID,
@@ -309,3 +338,296 @@ async def listar_mobilizacao(
         .options(selectinload(BcuMobilizacaoItem.quantidades_funcao))
     )
     return [BcuMobilizacaoItemOut.model_validate(r) for r in result.scalars().all()]
+
+
+# ── Upload individual por tipo ────────────────────────────────────────────────
+
+@router.post("/upload-individual/{tipo}/preview", response_model=BcuUploadPreviewOut)
+async def preview_upload_individual(
+    tipo: str,
+    file: UploadFile = File(...),
+    _=Depends(get_current_admin_user),
+) -> BcuUploadPreviewOut:
+    if not file.filename or not file.filename.lower().endswith(".xlsx"):
+        raise ValidationError("Somente arquivos .xlsx são suportados.")
+    payload = await file.read()
+    if not payload:
+        raise ValidationError("Arquivo vazio.")
+
+    svc = BcuUploadService(None)  # db not needed for preview
+    result = await svc.preview(tipo, payload, file.filename)
+    return BcuUploadPreviewOut(
+        tipo=result.tipo,
+        total_rows=result.total_rows,
+        valid_rows=result.valid_rows,
+        invalid_rows=result.invalid_rows,
+        rows=[
+            BcuUploadPreviewRow(
+                row_number=r.row_number,
+                data=r.data,
+                errors=r.errors,
+            )
+            for r in result.rows
+        ],
+    )
+
+
+@router.post("/upload-individual/{tipo}/confirmar", response_model=BcuUploadConfirmOut)
+async def confirmar_upload_individual(
+    tipo: str,
+    cabecalho_id: UUID,
+    file: UploadFile = File(...),
+    current_user=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuUploadConfirmOut:
+    if not file.filename or not file.filename.lower().endswith(".xlsx"):
+        raise ValidationError("Somente arquivos .xlsx são suportados.")
+    payload = await file.read()
+    if not payload:
+        raise ValidationError("Arquivo vazio.")
+
+    svc = BcuUploadService(db)
+    result = await svc.importar(tipo, payload, file.filename, cabecalho_id, current_user.id)
+    await db.commit()
+    return BcuUploadConfirmOut(
+        tipo=result.tipo,
+        cabecalho_id=cabecalho_id,
+        imported_rows=result.valid_rows,
+        warnings=None,
+    )
+
+
+# ── CRUD seguro por tipo ──────────────────────────────────────────────────────
+
+@router.post("/{cabecalho_id}/mao-obra", response_model=BcuMaoObraItemOut, status_code=201)
+async def criar_mao_obra(
+    cabecalho_id: UUID,
+    body: BcuMaoObraItemCreate,
+    current_user=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuMaoObraItemOut:
+    svc = BcuCrudService(db)
+    item = await svc.criar("mo", cabecalho_id, body.model_dump(), current_user.id)
+    await db.commit()
+    return BcuMaoObraItemOut.model_validate(item)
+
+
+@router.patch("/{cabecalho_id}/mao-obra/{item_id}", response_model=BcuMaoObraItemOut)
+async def atualizar_mao_obra(
+    cabecalho_id: UUID,
+    item_id: UUID,
+    body: BcuMaoObraItemUpdate,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuMaoObraItemOut:
+    svc = BcuCrudService(db)
+    item = await svc.atualizar("mo", cabecalho_id, item_id, body.model_dump(exclude_unset=True))
+    await db.commit()
+    return BcuMaoObraItemOut.model_validate(item)
+
+
+@router.delete("/{cabecalho_id}/mao-obra/{item_id}", status_code=204)
+async def deletar_mao_obra(
+    cabecalho_id: UUID,
+    item_id: UUID,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    svc = BcuCrudService(db)
+    await svc.deletar("mo", cabecalho_id, item_id)
+    await db.commit()
+
+
+@router.post("/{cabecalho_id}/equipamentos", response_model=BcuEquipamentoItemOut, status_code=201)
+async def criar_equipamento(
+    cabecalho_id: UUID,
+    body: BcuEquipamentoItemCreate,
+    current_user=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuEquipamentoItemOut:
+    svc = BcuCrudService(db)
+    item = await svc.criar("equipamentos", cabecalho_id, body.model_dump(), current_user.id)
+    await db.commit()
+    return BcuEquipamentoItemOut.model_validate(item)
+
+
+@router.patch("/{cabecalho_id}/equipamentos/{item_id}", response_model=BcuEquipamentoItemOut)
+async def atualizar_equipamento(
+    cabecalho_id: UUID,
+    item_id: UUID,
+    body: BcuEquipamentoItemUpdate,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuEquipamentoItemOut:
+    svc = BcuCrudService(db)
+    item = await svc.atualizar("equipamentos", cabecalho_id, item_id, body.model_dump(exclude_unset=True))
+    await db.commit()
+    return BcuEquipamentoItemOut.model_validate(item)
+
+
+@router.delete("/{cabecalho_id}/equipamentos/{item_id}", status_code=204)
+async def deletar_equipamento(
+    cabecalho_id: UUID,
+    item_id: UUID,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    svc = BcuCrudService(db)
+    await svc.deletar("equipamentos", cabecalho_id, item_id)
+    await db.commit()
+
+
+@router.post("/{cabecalho_id}/encargos", response_model=BcuEncargoItemOut, status_code=201)
+async def criar_encargo(
+    cabecalho_id: UUID,
+    body: BcuEncargoItemCreate,
+    current_user=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuEncargoItemOut:
+    svc = BcuCrudService(db)
+    item = await svc.criar("encargos", cabecalho_id, body.model_dump(), current_user.id)
+    await db.commit()
+    return BcuEncargoItemOut.model_validate(item)
+
+
+@router.patch("/{cabecalho_id}/encargos/{item_id}", response_model=BcuEncargoItemOut)
+async def atualizar_encargo(
+    cabecalho_id: UUID,
+    item_id: UUID,
+    body: BcuEncargoItemUpdate,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuEncargoItemOut:
+    svc = BcuCrudService(db)
+    item = await svc.atualizar("encargos", cabecalho_id, item_id, body.model_dump(exclude_unset=True))
+    await db.commit()
+    return BcuEncargoItemOut.model_validate(item)
+
+
+@router.delete("/{cabecalho_id}/encargos/{item_id}", status_code=204)
+async def deletar_encargo(
+    cabecalho_id: UUID,
+    item_id: UUID,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    svc = BcuCrudService(db)
+    await svc.deletar("encargos", cabecalho_id, item_id)
+    await db.commit()
+
+
+@router.post("/{cabecalho_id}/epi", response_model=BcuEpiItemOut, status_code=201)
+async def criar_epi(
+    cabecalho_id: UUID,
+    body: BcuEpiItemCreate,
+    current_user=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuEpiItemOut:
+    svc = BcuCrudService(db)
+    item = await svc.criar("epi", cabecalho_id, body.model_dump(), current_user.id)
+    await db.commit()
+    return BcuEpiItemOut.model_validate(item)
+
+
+@router.patch("/{cabecalho_id}/epi/{item_id}", response_model=BcuEpiItemOut)
+async def atualizar_epi(
+    cabecalho_id: UUID,
+    item_id: UUID,
+    body: BcuEpiItemUpdate,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuEpiItemOut:
+    svc = BcuCrudService(db)
+    item = await svc.atualizar("epi", cabecalho_id, item_id, body.model_dump(exclude_unset=True))
+    await db.commit()
+    return BcuEpiItemOut.model_validate(item)
+
+
+@router.delete("/{cabecalho_id}/epi/{item_id}", status_code=204)
+async def deletar_epi(
+    cabecalho_id: UUID,
+    item_id: UUID,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    svc = BcuCrudService(db)
+    await svc.deletar("epi", cabecalho_id, item_id)
+    await db.commit()
+
+
+@router.post("/{cabecalho_id}/ferramentas", response_model=BcuFerramentaItemOut, status_code=201)
+async def criar_ferramenta(
+    cabecalho_id: UUID,
+    body: BcuFerramentaItemCreate,
+    current_user=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuFerramentaItemOut:
+    svc = BcuCrudService(db)
+    item = await svc.criar("ferramentas", cabecalho_id, body.model_dump(), current_user.id)
+    await db.commit()
+    return BcuFerramentaItemOut.model_validate(item)
+
+
+@router.patch("/{cabecalho_id}/ferramentas/{item_id}", response_model=BcuFerramentaItemOut)
+async def atualizar_ferramenta(
+    cabecalho_id: UUID,
+    item_id: UUID,
+    body: BcuFerramentaItemUpdate,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuFerramentaItemOut:
+    svc = BcuCrudService(db)
+    item = await svc.atualizar("ferramentas", cabecalho_id, item_id, body.model_dump(exclude_unset=True))
+    await db.commit()
+    return BcuFerramentaItemOut.model_validate(item)
+
+
+@router.delete("/{cabecalho_id}/ferramentas/{item_id}", status_code=204)
+async def deletar_ferramenta(
+    cabecalho_id: UUID,
+    item_id: UUID,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    svc = BcuCrudService(db)
+    await svc.deletar("ferramentas", cabecalho_id, item_id)
+    await db.commit()
+
+
+@router.post("/{cabecalho_id}/mobilizacao", response_model=BcuMobilizacaoItemOut, status_code=201)
+async def criar_mobilizacao(
+    cabecalho_id: UUID,
+    body: BcuMobilizacaoItemCreate,
+    current_user=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuMobilizacaoItemOut:
+    svc = BcuCrudService(db)
+    item = await svc.criar("mobilizacao", cabecalho_id, body.model_dump(), current_user.id)
+    await db.commit()
+    return BcuMobilizacaoItemOut.model_validate(item)
+
+
+@router.patch("/{cabecalho_id}/mobilizacao/{item_id}", response_model=BcuMobilizacaoItemOut)
+async def atualizar_mobilizacao(
+    cabecalho_id: UUID,
+    item_id: UUID,
+    body: BcuMobilizacaoItemUpdate,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> BcuMobilizacaoItemOut:
+    svc = BcuCrudService(db)
+    item = await svc.atualizar("mobilizacao", cabecalho_id, item_id, body.model_dump(exclude_unset=True))
+    await db.commit()
+    return BcuMobilizacaoItemOut.model_validate(item)
+
+
+@router.delete("/{cabecalho_id}/mobilizacao/{item_id}", status_code=204)
+async def deletar_mobilizacao(
+    cabecalho_id: UUID,
+    item_id: UUID,
+    _=Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    svc = BcuCrudService(db)
+    await svc.deletar("mobilizacao", cabecalho_id, item_id)
+    await db.commit()

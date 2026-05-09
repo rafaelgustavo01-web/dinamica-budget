@@ -1,5 +1,6 @@
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
+import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import DatasetLinkedOutlinedIcon from '@mui/icons-material/DatasetLinkedOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import TableViewOutlinedIcon from '@mui/icons-material/TableViewOutlined';
@@ -128,6 +129,22 @@ export const navigationItems: NavigationItem[] = [
     icon: <TableChartOutlinedIcon fontSize="small" />,
     status: 'active',
     visible: () => true,
+  },
+  {
+    label: 'Gestão da Base',
+    path: '/bcu/gestao',
+    group: 'Governança',
+    icon: <TableChartOutlinedIcon fontSize="small" />,
+    status: 'active',
+    visible: (user) => hasAdminPanelAccess(user),
+  },
+  {
+    label: 'Upload Individual',
+    path: '/bcu/upload',
+    group: 'Governança',
+    icon: <CloudUploadOutlinedIcon fontSize="small" />,
+    status: 'partial',
+    visible: (user) => hasAdminPanelAccess(user),
   },
   {
     label: 'De/Para Base',

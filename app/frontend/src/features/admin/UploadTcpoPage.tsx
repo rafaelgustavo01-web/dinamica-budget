@@ -53,8 +53,9 @@ export function UploadTcpoPage() {
     mutationFn: (file: File) => bcuApi.importarPlanilha(file),
     onSuccess: (data) => {
       setBcuFile(null);
-      void queryClient.invalidateQueries({ queryKey: ['bcu'] });
-      showMessage(`BCU importada com sucesso! ID: ${data.id}`);
+      void queryClient.invalidateQueries({ queryKey: ['bcu-cabecalhos'] });
+      void queryClient.invalidateQueries({ queryKey: ['bcu-cabecalho-ativo'] });
+      showMessage(`BCU "${data.nome_arquivo}" importada com sucesso. Ative-a em Gestão da Base.`);
     },
   });
 

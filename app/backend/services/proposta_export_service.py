@@ -20,6 +20,21 @@ from backend.repositories.proposta_item_composicao_repository import (
 
 _HEADER_FONT = Font(bold=True, color="FFFFFF")
 _HEADER_FILL = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+_CLIENTE_PC_EXPORT_FIELDS = [
+    ("Razao Social", "razao_social"),
+    ("Inscricao Estadual", "inscricao_estadual"),
+    ("Inscricao Municipal", "inscricao_municipal"),
+    ("Endereco", "endereco_logradouro"),
+    ("Numero", "endereco_numero"),
+    ("Complemento", "endereco_complemento"),
+    ("Bairro", "endereco_bairro"),
+    ("Municipio", "endereco_municipio"),
+    ("UF", "endereco_uf"),
+    ("CEP", "endereco_cep"),
+    ("Contato", "contato_nome"),
+    ("Email", "contato_email"),
+    ("Telefone", "contato_telefone"),
+]
 
 
 def _write_header(ws, row: int, headers: list[str]) -> None:
@@ -67,6 +82,13 @@ class PropostaExportService:
         capa["B9"] = float(proposta.total_indireto or 0)
         capa["A10"] = "Total Geral"
         capa["B10"] = float(proposta.total_geral or 0)
+        row = 12
+        for label, field in _CLIENTE_PC_EXPORT_FIELDS:
+            value = getattr(cliente, field, None)
+            if isinstance(value, str) and value:
+                capa.cell(row=row, column=1, value=label)
+                capa.cell(row=row, column=2, value=value)
+                row += 1
         for col in ("A", "B"):
             capa.column_dimensions[col].width = 28
 

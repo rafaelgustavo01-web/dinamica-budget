@@ -10,6 +10,7 @@ from fastapi import UploadFile
 
 from backend.core.exceptions import NotFoundError, ValidationError
 from backend.models.enums import StatusImportacao, StatusMatch, StatusProposta
+from backend.models.pq_layout import PqLayoutCliente
 from backend.models.proposta import PqImportacao, PqItem
 from backend.repositories.associacao_repository import normalize_text
 from backend.repositories.pq_importacao_repository import PqImportacaoRepository
@@ -86,6 +87,28 @@ def _parse_decimal(value: object, default: Decimal) -> Decimal:
         raise ValidationError("Quantidade inválida na planilha.", details={"valor": str(value)}) from exc
 
 
+def _build_layout_map(layout: PqLayoutCliente | None) -> dict[str, str] | None:
+    if layout is None:
+        return None
+    return {m.campo_sistema.value: m.coluna_planilha for m in layout.mapeamentos}
+
+
+def _calcular_score(headers: list[object], layout: PqLayoutCliente | None) -> Decimal:
+    if layout is None or not layout.mapeamentos:
+        return Decimal("0")
+    normalized = [_normalize_header(value) for value in headers]
+    encontrados = 0
+    total = len(layout.mapeamentos)
+    for m in layout.mapeamentos:
+        norm = _normalize_header(m.coluna_planilha)
+        if norm in normalized:
+            encontradas = 1
+        else:
+            encontradas = 0
+        encontrados += encontradas
+    return Decimal(str(round(encontrados / total, 4)))
+
+
 class PqImportService:
     def __init__(
         self,
@@ -99,13 +122,90 @@ class PqImportService:
         self.item_repo = item_repo
         self._pq_layout_repo = pq_layout_repo
 
-    async def _resolver_mapa_colunas(self, cliente_id: UUID) -> dict[str, str] | None:
+    async def _resolver_layout(self, cliente_id: UUID) -> PqLayoutCliente | None:
         if self._pq_layout_repo is None:
             return None
-        layout = await self._pq_layout_repo.get_by_cliente_id(cliente_id)
-        if layout is None:
-            return None
-        return {m.campo_sistema.value: m.coluna_planilha for m in layout.mapeamentos}
+        return await self._pq_layout_repo.get_by_cliente_id(cliente_id)
+
+    async def preview_planilha(
+        self, proposta_id: UUID, arquivo: UploadFile
+    ) -> dict[str, Any]:
+        """Parseia arquivo sem gravar no banco. Retorna itens sugeridos + score."""
+        proposta = await self.proposta_repo.get_by_id(proposta_id)
+        if not proposta:
+            raise NotFoundError("Proposta", str(proposta_id))
+        if not arquivo.filename:
+            raise ValidationError("Arquivo inválido.")
+
+        ext = arquivo.filename.rsplit(".", 1)[-1].lower() if "." in arquivo.filename else ""
+        if ext not in _SUPPORTED_EXTENSIONS:
+            raise ValidationError("Somente arquivos .csv e .xlsx são suportados.")
+
+        contents = await arquivo.read()
+        if not contents:
+            raise ValidationError("Arquivo vazio.")
+
+        layout = await self._resolver_layout(proposta.cliente_id)
+        parsed_rows = self._parse_contents(contents, ext, layout=layout)
+
+        score = Decimal("0")
+        if layout is not None and parsed_rows:
+            # score baseado no cabeçalho real do arquivo
+            score = _calcular_score(self._last_headers, layout)
+
+        itens: list[dict[str, Any]] = []
+        linhas_ok = 0
+        linhas_com_erro = 0
+        for row in parsed_rows:
+            descricao = str(row["descricao"] or "").strip()
+            if not descricao:
+                linhas_com_erro += 1
+                itens.append({
+                    "linha_planilha": row["linha_planilha"],
+                    "codigo": None,
+                    "descricao": "",
+                    "unidade": None,
+                    "quantidade": Decimal("0"),
+                    "status": "ERRO",
+                    "erro_msg": "Descrição vazia",
+                })
+                continue
+
+            try:
+                quantidade = _parse_decimal(row["quantidade"], Decimal("1"))
+            except ValidationError as exc:
+                linhas_com_erro += 1
+                itens.append({
+                    "linha_planilha": row["linha_planilha"],
+                    "codigo": str(row["codigo"]).strip() if row["codigo"] not in (None, "") else None,
+                    "descricao": descricao,
+                    "unidade": str(row["unidade"]).strip() if row["unidade"] not in (None, "") else None,
+                    "quantidade": Decimal("0"),
+                    "status": "ERRO",
+                    "erro_msg": str(exc),
+                })
+                continue
+
+            codigo = str(row["codigo"]).strip() if row["codigo"] not in (None, "") else None
+            unidade = str(row["unidade"]).strip() if row["unidade"] not in (None, "") else None
+            linhas_ok += 1
+            itens.append({
+                "linha_planilha": row["linha_planilha"],
+                "codigo": codigo,
+                "descricao": descricao,
+                "unidade": unidade,
+                "quantidade": quantidade,
+                "status": "OK",
+                "erro_msg": None,
+            })
+
+        return {
+            "score_confianca": score,
+            "linhas_total": len(parsed_rows),
+            "linhas_ok": linhas_ok,
+            "linhas_com_erro": linhas_com_erro,
+            "itens": itens,
+        }
 
     async def importar_planilha(self, proposta_id: uuid.UUID, arquivo: UploadFile) -> PqImportacao:
         proposta = await self.proposta_repo.get_by_id(proposta_id)
@@ -122,8 +222,10 @@ class PqImportService:
         if not contents:
             raise ValidationError("Arquivo vazio.")
 
-        layout_map = await self._resolver_mapa_colunas(proposta.cliente_id)
-        parsed_rows = self._parse_contents(contents, ext, layout_map=layout_map)
+        layout = await self._resolver_layout(proposta.cliente_id)
+        layout_map = _build_layout_map(layout)
+        parsed_rows = self._parse_contents(contents, ext, layout=layout)
+
         importacao = PqImportacao(
             id=uuid.uuid4(),
             proposta_id=proposta_id,
@@ -177,36 +279,50 @@ class PqImportService:
         await self.importacao_repo.update(importacao)
         return importacao
 
-    def _parse_contents(self, contents: bytes, ext: str, layout_map: dict[str, str] | None = None) -> list[dict[str, Any]]:
+    def _parse_contents(
+        self, contents: bytes, ext: str, layout: PqLayoutCliente | None = None
+    ) -> list[dict[str, Any]]:
         if ext == "csv":
-            return self._parse_csv(contents, layout_map=layout_map)
-        return self._parse_xlsx(contents, layout_map=layout_map)
+            return self._parse_csv(contents, layout=layout)
+        return self._parse_xlsx(contents, layout=layout)
 
-    def _parse_csv(self, contents: bytes, layout_map: dict[str, str] | None = None) -> list[dict[str, Any]]:
+    def _parse_csv(self, contents: bytes, layout: PqLayoutCliente | None = None) -> list[dict[str, Any]]:
         text = _decode_csv(contents)
         reader = csv.reader(io.StringIO(text))
         rows = list(reader)
         if not rows:
             return []
 
+        layout_map = _build_layout_map(layout)
         if layout_map:
             column_map = _find_column_map_from_layout(rows[0], layout_map)
         else:
             column_map = _find_column_map(rows[0])
+        self._last_headers = rows[0]
+
+        start_line = layout.linha_inicio if layout and layout.linha_inicio else 2
         parsed_rows: list[dict[str, Any]] = []
-        for line_number, row in enumerate(rows[1:], start=2):
+        # CSV é 0-based internamente; linha_inicio 2 significa pular rows[0] (header) e rows[1] (linha 2 do arquivo)
+        # Mas rows[0] é sempre header. Se linha_inicio > 2, pular mais linhas.
+        skip = max(0, start_line - 2)
+        for line_number, row in enumerate(rows[1 + skip :], start=2 + skip):
             if not any(str(cell).strip() for cell in row if cell is not None):
                 continue
             parsed_rows.append(self._build_parsed_row(row, column_map, line_number))
         return parsed_rows
 
-    def _parse_xlsx(self, contents: bytes, layout_map: dict[str, str] | None = None) -> list[dict[str, Any]]:
+    def _parse_xlsx(self, contents: bytes, layout: PqLayoutCliente | None = None) -> list[dict[str, Any]]:
         workbook = openpyxl.load_workbook(io.BytesIO(contents), read_only=True, data_only=True)
-        worksheet = workbook.active
+        worksheet = workbook[layout.aba_nome] if layout and layout.aba_nome and layout.aba_nome in workbook.sheetnames else workbook.active
 
+        layout_map = _build_layout_map(layout)
         header_row_number = None
         header_values: list[object] = []
+        linha_inicio = layout.linha_inicio if layout and layout.linha_inicio else 1
+
         for row_number, row in enumerate(worksheet.iter_rows(values_only=True), start=1):
+            if row_number < linha_inicio:
+                continue
             values = list(row)
             try:
                 if layout_map:
@@ -222,6 +338,8 @@ class PqImportService:
         if header_row_number is None:
             raise ValidationError("Não foi possível identificar o cabeçalho da planilha.")
 
+        self._last_headers = header_values
+
         if layout_map:
             column_map = _find_column_map_from_layout(header_values, layout_map)
         else:
@@ -235,6 +353,7 @@ class PqImportService:
             if not any(str(cell).strip() for cell in values if cell is not None):
                 continue
             parsed_rows.append(self._build_parsed_row(values, column_map, row_number))
+        workbook.close()
         return parsed_rows
 
     def _build_parsed_row(

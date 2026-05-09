@@ -17,6 +17,7 @@ from backend.schemas.proposta import (
     PqMatchConfirmarRequest,
     PqMatchResponse,
 )
+from backend.schemas.pq_layout import PqPreviewResponse
 from backend.services.pq_import_service import PqImportService
 from backend.services.pq_match_service import PqMatchService
 
@@ -28,6 +29,26 @@ async def _get_proposta_or_404(db: AsyncSession, proposta_id: UUID):
     if not proposta:
         raise NotFoundError("Proposta", str(proposta_id))
     return proposta
+
+
+@router.post("/preview", response_model=PqPreviewResponse)
+async def preview_planilha(
+    proposta_id: UUID,
+    arquivo: UploadFile = File(...),
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> PqPreviewResponse:
+    proposta = await _get_proposta_or_404(db, proposta_id)
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
+
+    svc = PqImportService(
+        proposta_repo=PropostaRepository(db),
+        importacao_repo=PqImportacaoRepository(db),
+        item_repo=PqItemRepository(db),
+        pq_layout_repo=PqLayoutRepository(db),
+    )
+    preview = await svc.preview_planilha(proposta_id, arquivo)
+    return PqPreviewResponse(**preview)
 
 
 @router.post("/importar", response_model=PqImportacaoResponse, status_code=status.HTTP_201_CREATED)
@@ -127,4 +148,3 @@ async def atualizar_match_item(
     await db.commit()
     await db.refresh(item)
     return PqItemResponse.model_validate(item)
-

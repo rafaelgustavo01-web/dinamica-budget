@@ -41,7 +41,8 @@ from backend.models.bcu import (
     BcuTableType,
 )
 from backend.models.proposta import PqImportacao, PqItem, Proposta, PropostaAcl, PropostaItem, PropostaItemComposicao
-from backend.models.pq_layout import PqLayoutCliente, PqImportacaoMapeamento  # noqa: F401
+from backend.models.pq_layout import PqLayoutCliente, PqImportacaoMapeamento, PqLayoutHistorico  # noqa: F401
+from backend.models.smart_import import SmartImportJob, SmartImportStatus  # noqa: F401
 from backend.models.proposta_pc import (
     PropostaPcMaoObra,
     PropostaPcEquipamentoPremissa,
@@ -79,6 +80,11 @@ __all__ = [
     "PropostaItem",
     "PropostaItemComposicao",
     "PropostaAcl",
+    "PqLayoutHistorico",
+    "PqImportacaoMapeamento",
+    "PqLayoutCliente",
+    "SmartImportStatus",
+    "SmartImportJob",
     "PropostaPapel",
     # enums
     "TipoCusto",

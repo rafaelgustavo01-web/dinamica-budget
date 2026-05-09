@@ -93,6 +93,16 @@ const BcuDeParaPage = lazy(() =>
     default: module.BcuDeParaPage,
   })),
 );
+const BcuGestaoPage = lazy(() =>
+  import('../features/bcu/BcuGestaoPage').then((module) => ({
+    default: module.BcuGestaoPage,
+  })),
+);
+const BcuUploadPage = lazy(() =>
+  import('../features/bcu/BcuUploadPage').then((module) => ({
+    default: module.BcuUploadPage,
+  })),
+);
 
 import { proposalRoutes } from '../features/proposals/routes';
 
@@ -155,6 +165,8 @@ export function AppRouter() {
           <Route path="/relatorios" element={<ReportsPage />} />
           <Route path="/extracao" element={<ExtractionPage />} />
           <Route path="/bcu" element={<BcuPage />} />
+          <Route path="/bcu/gestao" element={<BcuGestaoPage />} />
+          <Route path="/bcu/upload" element={<BcuUploadPage />} />
           <Route path="/bcu/de-para" element={<BcuDeParaPage />} />
           <Route path="/perfil" element={<ProfilePage />} />
 

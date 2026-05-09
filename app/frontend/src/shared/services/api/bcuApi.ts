@@ -156,4 +156,8 @@ export const bcuApi = {
     const r = await apiClient.post<BcuCabecalho>(`/bcu/cabecalhos/${cabecalhoId}/ativar`);
     return r.data;
   },
+
+  async deletarCabecalho(cabecalhoId: string): Promise<void> {
+    await apiClient.delete(`/bcu/cabecalhos/${cabecalhoId}`);
+  },
 };

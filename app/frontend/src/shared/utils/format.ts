@@ -85,6 +85,20 @@ export function getHomologacaoLabel(status: string) {
   return labels[status] ?? status;
 }
 
+export function formatCnpj(value: string | null | undefined) {
+  if (!value) return '—';
+  const d = value.replace(/\D/g, '');
+  if (d.length !== 14) return value;
+  return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+}
+
+export function formatCep(value: string | null | undefined) {
+  if (!value) return '—';
+  const d = value.replace(/\D/g, '');
+  if (d.length !== 8) return value;
+  return `${d.slice(0, 5)}-${d.slice(5)}`;
+}
+
 export function getPropostaStatusLabel(status: string) {
   const labels: Record<string, string> = {
     RASCUNHO: 'Rascunho',

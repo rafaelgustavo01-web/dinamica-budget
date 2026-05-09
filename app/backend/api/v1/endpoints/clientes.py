@@ -20,6 +20,22 @@ from backend.schemas.common import PaginatedResponse
 
 router = APIRouter(prefix="/clientes", tags=["clientes"])
 
+_CLIENTE_PC_FIELDS = (
+    "razao_social",
+    "inscricao_estadual",
+    "inscricao_municipal",
+    "endereco_logradouro",
+    "endereco_numero",
+    "endereco_complemento",
+    "endereco_bairro",
+    "endereco_municipio",
+    "endereco_uf",
+    "endereco_cep",
+    "contato_nome",
+    "contato_email",
+    "contato_telefone",
+)
+
 
 def _get_repo(db: AsyncSession = Depends(get_db)) -> ClienteRepository:
     return ClienteRepository(db)
@@ -70,6 +86,7 @@ async def create_cliente(
     cliente = await repo.create_cliente(
         nome_fantasia=data.nome_fantasia,
         cnpj=data.cnpj,
+        **data.model_dump(include=set(_CLIENTE_PC_FIELDS)),
     )
     return ClienteResponse.model_validate(cliente)
 
@@ -86,10 +103,10 @@ async def patch_cliente(
     repo: ClienteRepository = Depends(_get_repo),
 ) -> ClienteResponse:
     """Admin-only: partially update a client's nome_fantasia and/or is_active."""
+    update_data = data.model_dump(exclude_unset=True)
     cliente = await repo.update_cliente(
         cliente_id=cliente_id,
-        nome_fantasia=data.nome_fantasia,
-        is_active=data.is_active,
+        **update_data,
     )
     if not cliente:
         raise NotFoundError("Cliente", str(cliente_id))

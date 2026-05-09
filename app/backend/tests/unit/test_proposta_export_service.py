@@ -30,6 +30,9 @@ async def test_gerar_excel_contem_quatro_abas(monkeypatch):
     cliente = MagicMock()
     cliente.nome_fantasia = "Cliente Teste"
     cliente.cnpj = "12.345.678/0001-90"
+    cliente.razao_social = "Cliente Teste Engenharia S.A."
+    cliente.endereco_uf = "SP"
+    cliente.contato_email = "pc@cliente.test"
 
     item = MagicMock()
     item.id = uuid4()
@@ -63,6 +66,8 @@ async def test_gerar_excel_contem_quatro_abas(monkeypatch):
     wb = load_workbook(BytesIO(raw))
     assert set(wb.sheetnames) == {"Capa", "Quadro-Resumo", "CPU", "Composicoes"}
     assert wb["Capa"]["B2"].value == "Cliente Teste"  # M-03 fix: B2 shows client name, not codigo
+    assert wb["Capa"]["A12"].value == "Razao Social"
+    assert wb["Capa"]["B12"].value == "Cliente Teste Engenharia S.A."
     assert wb["CPU"].max_row >= 2
     assert wb["Composicoes"].max_row >= 2
 

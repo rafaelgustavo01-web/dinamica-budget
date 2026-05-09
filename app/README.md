@@ -28,6 +28,19 @@
 
 ---
 
+## Atualizacao Fase 4 - Smart Import, PQ Profiles, BCU CRUD e Folha PC
+
+Consolidacao tecnica em 2026-05-09:
+
+- Smart Import: adiciona `SmartImportJob`, schemas e service para separar leitura flexivel/staging de gravacao rigida transacional.
+- PQ Client Profiles: perfis por cliente com aprovacao, score de confianca, aliases controlados e historico de aprendizado/auditoria.
+- BCU/BASE: upload individual e CRUD administrativo para manutencao rigida das bases internas, com frontend dedicado de gestao/upload.
+- Clientes/Folha PC: cadastro de clientes enriquecido com razao social, inscricoes, endereco e contato comercial para uso na folha de rosto/exportacao da Proposta Comercial.
+- Alembic F4 consolidado em cadeia unica: `027` Smart Import, `028` PQ Client Profile Learning, `029` Cliente/Folha PC.
+
+Validacao registrada: `git diff --check`, `compileall`, testes unitarios sem DB, `npm run build` e `npm test` passaram. Upgrade/downgrade Alembic e testes BCU dependentes de Postgres ainda exigem banco local com credencial valida.
+
+
 ## Visão Geral
 
 O **Dinamica Budget** é uma aplicação backend on-premise para empresas de construção civil que precisam:

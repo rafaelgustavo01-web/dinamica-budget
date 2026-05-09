@@ -60,10 +60,10 @@ Responsável: Research AI / QA Re-avaliação
 | `F3-04` | DONE | P0 | `F3-02` | **Configurações finais + polimento visual + smoke de demo**: fechar as configurações/fluxos que serão apresentados, ajustar estados vazios/loading/erro, labels, botões, navegação e responsividade mínima; rodar smoke final antes do roteiro | Configurações da apresentação concluídas; demo smoke PASS; screenshots/evidências em walkthrough; sem regressão em build/test; pendências não-críticas documentadas |
 
 | `F3-05` | DONE | P0 | `F3-04` | **Hotfix PQ Match + TCPO Recursive Tree** — corrigir habilitação do Match Inteligente após importação PQ e explosão recursiva de serviços TCPO compostos por subserviços | Upload PQ habilita Match; árvore TCPO expande serviços dentro de serviços; testes backend focados + build frontend + diff check PASS |
-| `F4-01` | TODO | P0 | `F3-05` | **Smart Import Architecture** — arquitetura de leitura flexível e gravação rígida, com spike Docling para PQs variadas | Documento de arquitetura + spike Docling + contrato staging/validação/auditoria aprovado |
-| `F4-02` | TODO | P1 | `F4-01` | **PQ Client Profiles + Learning Loop** — padrões de importação por cliente, correção humana vira aprendizado controlado | Perfil por cliente reaproveitado em nova PQ; score de confiança; preview e validação rígida antes de gravar |
-| `F4-03` | TODO | P1 | `F4-01` | **BASES/BCUs Upload Individual + CRUD** — upload individual e manutenção manual das bases internas com validação rígida | CRUD e upload individual com preview, validação e auditoria; sem IA pesada |
-| `F4-04` | TODO | P2 | `F4-01` | **Cadastro de Clientes para Folha PC** — enriquecer cliente com dados empresariais úteis à folha de rosto da Proposta Comercial | Campos de engenharia/empresa disponíveis na folha de rosto e sem IDs técnicos na UI |
+| `F4-01` | TESTED | P0 | `F3-05` | **Smart Import Architecture** — arquitetura de leitura flexível e gravação rígida, com spike Docling para PQs variadas | Documento de arquitetura + spike Docling + contrato staging/validação/auditoria aprovado |
+| `F4-02` | TESTED | P1 | `F4-01` | **PQ Client Profiles + Learning Loop** — padrões de importação por cliente, correção humana vira aprendizado controlado | Perfil por cliente reaproveitado em nova PQ; score de confiança; preview e validação rígida antes de gravar |
+| `F4-03` | TESTED | P1 | `F4-01` | **BASES/BCUs Upload Individual + CRUD** — upload individual e manutenção manual das bases internas com validação rígida | CRUD e upload individual com preview, validação e auditoria; sem IA pesada |
+| `F4-04` | TESTED | P2 | `F4-01` | **Cadastro de Clientes para Folha PC** — enriquecer cliente com dados empresariais úteis à folha de rosto da Proposta Comercial | Campos de engenharia/empresa disponíveis na folha de rosto e sem IDs técnicos na UI |
 
 ## Ordem Recomendada de Execução
 
@@ -96,7 +96,17 @@ FASE C — Módulo de Orçamentos
 - Orquestração master: gedAI consolida; workers não fazem push direto.
 - Recursos autorizados por Rafael: Codex, Claude, Kimi, Opencode, Gemini e Kiro; workers podem instalar dependências locais necessárias para implementar/testar.
 - Regra bloqueante da Fase 4: qualquer alteração de banco exige atenção total a Alembic/migrations, validação de dados existentes, rollback e testes.
-- README deve ser atualizado ao finalizar a Fase 4.
+- README atualizado na consolidação F4 em 2026-05-09.
+
+### Pipeline update — 2026-05-09 Fase 4 consolidada
+
+- `F4-01`, `F4-02`, `F4-03`, `F4-04` consolidadas em worktree dedicada `/tmp/db-f4-migration-consolidation`.
+- Cadeia Alembic linear validada em inventário: `027_smart_import_job_table.py` -> `028_pq_client_profile_learning.py` -> `029_cliente_campos_folha_pc.py`; `alembic heads` retorna head único `029`.
+- Contrato canônico escolhido para F4-02: implementação Kimi com `is_aprovado`, `aprovado_por_id`, `aprovado_em`, `aliases_json`, `score_confianca` e `pq_layout_historico`.
+- Contrato canônico escolhido para F4-04: backend Codex com campos `contato_email`, `contato_telefone`, `endereco_municipio`; frontend Claude reconciliado para esses nomes.
+- Gates executados: `git diff --check` PASS; `python3 -m compileall -q app/backend` PASS; pytest unitário sem DB 27 PASS; `npm run build` PASS; `npm test` 13 PASS.
+- Gates bloqueados pelo ambiente local: testes BCU com Postgres e `alembic check` falham antes de executar por senha inválida do usuário `postgres` no banco local de teste.
+- Status das sprints F4 movido para `TESTED`; não mover para `DONE` até rodar upgrade/downgrade Alembic contra banco seguro ou corrigir credencial do banco local.
 
 
 ### Pipeline update — 2026-05-08

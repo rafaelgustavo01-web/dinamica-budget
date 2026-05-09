@@ -51,11 +51,12 @@ class ClienteRepository(BaseRepository[Cliente]):
         )
         return list(items_result.scalars().all()), total
 
-    async def create_cliente(self, nome_fantasia: str, cnpj: str) -> Cliente:
+    async def create_cliente(self, nome_fantasia: str, cnpj: str, **pc_fields: str | None) -> Cliente:
         cliente = Cliente(
             id=uuid_module.uuid4(),
             nome_fantasia=nome_fantasia,
             cnpj=cnpj,
+            **pc_fields,
         )
         self.db.add(cliente)
         await self.db.flush()
@@ -65,8 +66,9 @@ class ClienteRepository(BaseRepository[Cliente]):
     async def update_cliente(
         self,
         cliente_id: UUID,
-        nome_fantasia: str | None,
-        is_active: bool | None,
+        nome_fantasia: str | None = None,
+        is_active: bool | None = None,
+        **pc_fields: str | None,
     ) -> Cliente | None:
         cliente = await self.get_by_id(cliente_id)
         if not cliente:
@@ -75,6 +77,8 @@ class ClienteRepository(BaseRepository[Cliente]):
             cliente.nome_fantasia = nome_fantasia
         if is_active is not None:
             cliente.is_active = is_active
+        for field, value in pc_fields.items():
+            setattr(cliente, field, value)
         await self.db.flush()
         await self.db.refresh(cliente)
         return cliente
