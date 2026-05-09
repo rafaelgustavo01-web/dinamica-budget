@@ -7,6 +7,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { ContractNotice } from '../../shared/components/ContractNotice';
 import { DataTable } from '../../shared/components/DataTable';
 import { EmptyState } from '../../shared/components/EmptyState';
+import { HelpTooltip } from '../../shared/components/HelpTooltip';
 import { PageHeader } from '../../shared/components/PageHeader';
 import { homologationApi } from '../../shared/services/api/homologationApi';
 import { servicesApi } from '../../shared/services/api/servicesApi';
@@ -59,8 +60,8 @@ export function ReportsPage() {
 
       <Paper sx={{ mb: 2, border: '1px solid', borderColor: 'divider' }}>
         <Tabs value={tab} onChange={(_, value) => setTab(value)}>
-          <Tab label="Catálogo de serviços" />
-          <Tab label="Pendências de homologação" />
+          <Tab label={<>Catálogo de serviços<HelpTooltip title="Lista completa de serviços do catálogo com filtros e opção de exportação em CSV." /></>} />
+          <Tab label={<>Pendências de homologação<HelpTooltip title="Itens próprios cadastrados pelo cliente que aguardam aprovação do aprovador responsável." /></>} />
         </Tabs>
       </Paper>
 

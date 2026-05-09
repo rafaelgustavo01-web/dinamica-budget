@@ -8,7 +8,6 @@ import HowToRegOutlinedIcon from '@mui/icons-material/HowToRegOutlined';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
-import PublishOutlinedIcon from '@mui/icons-material/PublishOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import SourceOutlinedIcon from '@mui/icons-material/SourceOutlined';
@@ -123,7 +122,7 @@ export const navigationItems: NavigationItem[] = [
     visible: (user) => hasAdminPanelAccess(user),
   },
   {
-    label: 'BCU',
+    label: 'Base',
     path: '/bcu',
     group: 'Operação',
     icon: <TableChartOutlinedIcon fontSize="small" />,
@@ -131,18 +130,10 @@ export const navigationItems: NavigationItem[] = [
     visible: () => true,
   },
   {
-    label: 'De/Para BCU',
+    label: 'De/Para Base',
     path: '/bcu/de-para',
     group: 'Operação',
     icon: <DatasetLinkedOutlinedIcon fontSize="small" />,
-    status: 'active',
-    visible: (user) => hasAdminPanelAccess(user),
-  },
-  {
-    label: 'Upload',
-    path: '/upload',
-    group: 'Governança',
-    icon: <PublishOutlinedIcon fontSize="small" />,
     status: 'active',
     visible: (user) => hasAdminPanelAccess(user),
   },

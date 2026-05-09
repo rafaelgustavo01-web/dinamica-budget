@@ -21,6 +21,8 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 
+import { HelpTooltip } from '../../../shared/components/HelpTooltip';
+
 import { PageHeader } from '../../../shared/components/PageHeader';
 import { useFeedback } from '../../../shared/components/feedback/FeedbackProvider';
 import { histogramaApi } from '../../../shared/services/api/histogramaApi';
@@ -29,14 +31,38 @@ import { HistogramaTabGenerica } from '../components/HistogramaTabGenerica';
 import { RecursosExtrasTab } from '../components/RecursosExtrasTab';
 
 const TABS = [
-  { id: 'mao-obra', label: 'Mão de Obra', icon: <EngineeringOutlinedIcon fontSize="small" /> },
-  { id: 'equipamentos', label: 'Equipamentos', icon: <LocalShippingOutlinedIcon fontSize="small" /> },
-  { id: 'encargos-horista', label: 'Encargos Horista', icon: <WorkOutlineOutlinedIcon fontSize="small" /> },
-  { id: 'encargos-mensalista', label: 'Encargos Mensalista', icon: <WorkOutlineOutlinedIcon fontSize="small" /> },
-  { id: 'epi', label: 'EPI / Uniforme', icon: <SecurityOutlinedIcon fontSize="small" /> },
-  { id: 'ferramentas', label: 'Ferramentas', icon: <HardwareOutlinedIcon fontSize="small" /> },
-  { id: 'mobilizacao', label: 'Mobilização', icon: <SafetyDividerOutlinedIcon fontSize="small" /> },
-  { id: 'recursos-extras', label: 'Recursos Extras', icon: <AddCircleOutlineIcon fontSize="small" /> },
+  {
+    id: 'mao-obra', label: 'Mão de Obra', icon: <EngineeringOutlinedIcon fontSize="small" />,
+    help: 'Custos de mão de obra no snapshot desta proposta. Edite valores unitários conforme negociação.',
+  },
+  {
+    id: 'equipamentos', label: 'Equipamentos', icon: <LocalShippingOutlinedIcon fontSize="small" />,
+    help: 'Snapshot de custos de equipamentos com valores editáveis por proposta.',
+  },
+  {
+    id: 'encargos-horista', label: 'Encargos Horista', icon: <WorkOutlineOutlinedIcon fontSize="small" />,
+    help: 'Encargos trabalhistas aplicados sobre mão de obra horista nesta proposta.',
+  },
+  {
+    id: 'encargos-mensalista', label: 'Encargos Mensalista', icon: <WorkOutlineOutlinedIcon fontSize="small" />,
+    help: 'Encargos trabalhistas aplicados sobre mão de obra mensalista nesta proposta.',
+  },
+  {
+    id: 'epi', label: 'EPI / Uniforme', icon: <SecurityOutlinedIcon fontSize="small" />,
+    help: 'Custo de EPIs e uniformes no snapshot desta proposta.',
+  },
+  {
+    id: 'ferramentas', label: 'Ferramentas', icon: <HardwareOutlinedIcon fontSize="small" />,
+    help: 'Custo de ferramentas e instrumentos no snapshot desta proposta.',
+  },
+  {
+    id: 'mobilizacao', label: 'Mobilização', icon: <SafetyDividerOutlinedIcon fontSize="small" />,
+    help: 'Custos de mobilização e desmobilização de equipes no snapshot desta proposta.',
+  },
+  {
+    id: 'recursos-extras', label: 'Recursos Extras', icon: <AddCircleOutlineIcon fontSize="small" />,
+    help: 'Adicione itens de custo não previstos na BCU base diretamente nesta proposta (materiais, terceiros, etc.).',
+  },
 ];
 
 export function HistogramaPage() {
@@ -145,7 +171,17 @@ export function HistogramaPage() {
         }}
       >
         {TABS.map((tab) => (
-          <Tab key={tab.id} label={tab.label} icon={tab.icon} iconPosition="start" />
+          <Tab
+            key={tab.id}
+            icon={tab.icon}
+            iconPosition="start"
+            label={
+              <>
+                {tab.label}
+                <HelpTooltip title={tab.help} />
+              </>
+            }
+          />
         ))}
       </Tabs>
 

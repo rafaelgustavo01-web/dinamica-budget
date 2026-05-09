@@ -17,6 +17,7 @@ export interface ClientePatchRequest {
 
 export interface ClienteListParams {
   is_active?: boolean;
+  nome?: string;
   page: number;
   page_size: number;
 }

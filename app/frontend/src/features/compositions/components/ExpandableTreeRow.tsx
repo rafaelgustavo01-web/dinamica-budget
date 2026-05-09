@@ -30,9 +30,13 @@ interface Props {
   isExpandable?: boolean;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
+  /** Extra cell rendered only on this row (depth=0 peer). Caller controls column header. */
+  actionSlot?: React.ReactNode;
+  /** Total number of data columns including action column, for Collapse colSpan. Default 5. */
+  totalCols?: number;
 }
 
-export function ExpandableTreeRow({ item, depth = 0, maxDepth = 5, isExpandable, isSelected, onSelect }: Props) {
+export function ExpandableTreeRow({ item, depth = 0, maxDepth = 5, isExpandable, isSelected, onSelect, actionSlot, totalCols = 5 }: Props) {
   const [open, setOpen] = useState(false);
   const canExpand = depth < maxDepth && (isExpandable ?? item.tipo_recurso === 'SERVICO');
 
@@ -102,11 +106,16 @@ export function ExpandableTreeRow({ item, depth = 0, maxDepth = 5, isExpandable,
             {item.tipo_recurso ?? '—'}
           </Typography>
         </TableCell>
+        {actionSlot !== undefined ? (
+          <TableCell sx={{ py: 1, px: 0.5 }} align="right">
+            {actionSlot}
+          </TableCell>
+        ) : null}
       </TableRow>
 
       {canExpand && (
         <TableRow>
-          <TableCell colSpan={5} sx={{ py: 0, px: 0, border: 0 }}>
+          <TableCell colSpan={totalCols} sx={{ py: 0, px: 0, border: 0 }}>
             <Collapse in={open} timeout="auto" unmountOnExit>
               <Box sx={{ py: 0.5 }}>
                 {componentesQuery.isLoading ? (
@@ -137,6 +146,7 @@ export function ExpandableTreeRow({ item, depth = 0, maxDepth = 5, isExpandable,
                       depth={depth + 1}
                       maxDepth={maxDepth}
                       isExpandable={child.tipo_recurso === 'SERVICO'}
+                      totalCols={totalCols}
                     />
                   ))
                 ) : (

@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 class ClonarComposicaoRequest(BaseModel):
     servico_origem_id: UUID
     cliente_id: UUID
-    codigo_clone: str
+    codigo_clone: str | None = None  # if None, DB auto-generates via sequence
     descricao: str | None = None  # if None, inherits from original
 
 

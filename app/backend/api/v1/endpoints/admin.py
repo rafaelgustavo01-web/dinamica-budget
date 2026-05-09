@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import get_current_admin_user, get_current_catalog_import_user, get_db
+from backend.core.database import async_session_factory
 from backend.schemas.admin import ComputeEmbeddingsResponse
 from backend.schemas.etl import (
     EtlExecuteRequest,
@@ -13,8 +14,21 @@ from backend.services.etl_service import etl_service
 from backend.services.servico_catalog_service import servico_catalog_service
 from fastapi import Form
 from backend.schemas.etl import EtlMode
+from backend.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+
+async def _background_compute_embeddings() -> None:
+    """Background task: compute missing embeddings with a fresh DB session."""
+    try:
+        async with async_session_factory() as db:
+            count = await servico_catalog_service.compute_all_embeddings(db)
+            logger.info("background_embeddings_done", count=count)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("background_embeddings_failed", error=str(exc))
 
 
 @router.post("/compute-embeddings")
@@ -55,11 +69,25 @@ async def etl_upload_tcpo(
 )
 async def etl_execute(
     request: EtlExecuteRequest,
+    background_tasks: BackgroundTasks,
     _=Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ) -> EtlExecuteResponse:
     try:
-        return await etl_service.execute_load(request, db)
+        # Run ETL without blocking on embeddings (recomputar_embeddings=False here)
+        result = await etl_service.execute_load(
+            EtlExecuteRequest(
+                parse_token_tcpo=request.parse_token_tcpo,
+                parse_token_converter=request.parse_token_converter,
+                mode=request.mode,
+                recomputar_embeddings=False,  # handled by background task below
+            ),
+            db,
+        )
+        # Dispatch embedding computation in background after commit
+        if request.recomputar_embeddings:
+            background_tasks.add_task(_background_compute_embeddings)
+        return result
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
 

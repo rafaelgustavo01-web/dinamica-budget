@@ -29,10 +29,13 @@ class ClienteRepository(BaseRepository[Cliente]):
         offset: int,
         limit: int,
         is_active: bool | None = None,
+        nome: str | None = None,
     ) -> tuple[list[Cliente], int]:
         filters = []
         if is_active is not None:
             filters.append(Cliente.is_active == is_active)
+        if nome:
+            filters.append(Cliente.nome_fantasia.ilike(f"%{nome}%"))
 
         count_result = await self.db.execute(
             select(func.count()).select_from(Cliente).where(*filters)

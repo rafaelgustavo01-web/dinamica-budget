@@ -11,6 +11,8 @@ export const adminApi = {
   async computeEmbeddings() {
     const response = await apiClient.post<ComputeEmbeddingsResponse>(
       '/admin/compute-embeddings',
+      undefined,
+      { timeout: 180000 },
     );
     return response.data;
   },
@@ -31,6 +33,7 @@ export const adminApi = {
     const response = await apiClient.post<EtlExecuteResponse>(
       '/admin/etl/execute',
       req,
+      { timeout: 180000 },
     );
     return response.data;
   },

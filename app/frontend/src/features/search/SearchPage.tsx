@@ -71,7 +71,7 @@ export function SearchPage() {
     defaultValues: {
       texto_busca: '',
       limite_resultados: 5,
-      threshold_score: 0.65,
+      threshold_score: 0.45,
     },
   });
 

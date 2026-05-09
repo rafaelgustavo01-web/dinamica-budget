@@ -33,13 +33,14 @@ def _get_repo(db: AsyncSession = Depends(get_db)) -> ClienteRepository:
 )
 async def list_clientes(
     is_active: bool | None = Query(default=None),
+    nome: str | None = Query(default=None, description="Filtrar pelo nome fantasia (parcial, case-insensitive)"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     repo: ClienteRepository = Depends(_get_repo),
 ) -> PaginatedResponse[ClienteResponse]:
     """Admin-only: paginated list of all clients."""
     offset = (page - 1) * page_size
-    items, total = await repo.list_paginated(offset=offset, limit=page_size, is_active=is_active)
+    items, total = await repo.list_paginated(offset=offset, limit=page_size, is_active=is_active, nome=nome)
     pages = math.ceil(total / page_size) if total else 0
     return PaginatedResponse(
         items=[ClienteResponse.model_validate(c) for c in items],

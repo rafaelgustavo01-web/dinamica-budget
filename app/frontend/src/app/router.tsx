@@ -18,11 +18,6 @@ const AdminPage = lazy(() =>
     default: module.AdminPage,
   })),
 );
-const UploadTcpoPage = lazy(() =>
-  import('../features/admin/UploadTcpoPage').then((module) => ({
-    default: module.UploadTcpoPage,
-  })),
-);
 const AssociationsPage = lazy(() =>
   import('../features/associations/AssociationsPage').then((module) => ({
     default: module.AssociationsPage,
@@ -167,8 +162,6 @@ export function AppRouter() {
 
           <Route element={<AdminOnlyLayout />}>
             <Route path="/admin" element={<AdminPage />} />
-            <Route path="/upload" element={<UploadTcpoPage />} />
-            <Route path="/governanca/upload-tcpo" element={<Navigate to="/upload" replace />} />
             <Route path="/usuarios" element={<UsersPage />} />
             <Route path="/clientes" element={<ClientsPage />} />
             <Route path="/permissoes" element={<PermissionsPage />} />

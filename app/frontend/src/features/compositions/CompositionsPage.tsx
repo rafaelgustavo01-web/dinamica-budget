@@ -85,6 +85,7 @@ export function CompositionsPage() {
         page_size: pageSize,
         q: query || undefined,
         cliente_id: selectedClientId || undefined,
+        tipo_recurso: 'SERVICO',
       }),
     enabled: Boolean(user && (selectedClientId || user.is_admin)),
   });
@@ -94,6 +95,7 @@ export function CompositionsPage() {
     queryFn: () => servicesApi.getComposicao(selectedService!.id),
     enabled: Boolean(selectedService?.id),
   });
+
 
   const componentSearchQuery = useQuery({
     queryKey: ['composition-page', 'component-search', addSearch, addSearchPage, selectedClientId],
@@ -224,7 +226,7 @@ export function CompositionsPage() {
                         descricao: row.descricao,
                         codigo_origem: row.codigo_origem,
                         unidade_medida: row.unidade_medida,
-                        custo_unitario: row.custo_unitario,
+                        custo_unitario: row.custo_unitario ?? undefined,
                         tipo_recurso: row.tipo_recurso,
                       }}
                       isSelected={selectedService?.id === row.id}
@@ -325,50 +327,64 @@ export function CompositionsPage() {
           ) : null}
 
           {selectedService ? (
-            compositionQuery.data ? (
+            compositionQuery.isLoading ? (
+              <Typography variant="body2" color="text.secondary">Carregando explosão...</Typography>
+            ) : (compositionQuery.data?.itens?.length ?? 0) > 0 ? (
               <Stack spacing={1.5}>
-                <Typography variant="subtitle1">{selectedService.descricao}</Typography>
+                <Typography variant="subtitle1" fontWeight={700}>{selectedService.descricao}</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Custo total da composição: {formatCurrency(compositionQuery.data.custo_total_composicao)}
+                  Custo total da composição: {formatCurrency(compositionQuery.data!.custo_total_composicao)}
                 </Typography>
-                {compositionQuery.data.itens.length ? (
-                  compositionQuery.data.itens.map((item) => (
-                    <Paper key={item.id} variant="outlined" sx={{ p: 1.5 }}>
-                      <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-                        <Stack spacing={0.25}>
-                          <Typography variant="body2">{item.descricao_filho}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {item.quantidade_consumo} {item.unidade_medida} ·{' '}
-                            {formatCurrency(item.custo_total)}
-                          </Typography>
-                        </Stack>
-                        {isOwnedByClient && canEdit ? (
-                          <Tooltip title="Remover componente">
-                            <IconButton
-                              size="small"
-                              onClick={() =>
-                                setComponentToRemove({
-                                  id: item.id,
-                                  descricao: item.descricao_filho,
-                                })
-                              }
-                              disabled={removeComponentMutation.isPending}
-                            >
-                              <DeleteOutlineIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        ) : null}
-                      </Stack>
-                    </Paper>
-                  ))
-                ) : (
-                  <Alert severity="warning">{warningMessages.serviceNoComposition}</Alert>
-                )}
+
+                <Typography variant="overline" color="text.secondary" sx={{ mt: 1 }}>
+                  Explosão de custos
+                </Typography>
+
+                <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 480 }}>
+                  <Table size="small" stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.72rem', textTransform: 'uppercase' }}>Componente</TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.72rem', textTransform: 'uppercase' }}>Unid.</TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.72rem', textTransform: 'uppercase', textAlign: 'right' }}>Qtd</TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.72rem', textTransform: 'uppercase', textAlign: 'right' }}>Custo</TableCell>
+                        {isOwnedByClient && canEdit ? <TableCell /> : null}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {compositionQuery.data!.itens.map((item) => (
+                        <TableRow key={item.id} hover>
+                          <TableCell sx={{ fontSize: '0.82rem' }}>{item.descricao_filho}</TableCell>
+                          <TableCell sx={{ fontSize: '0.82rem' }}>{item.unidade_medida}</TableCell>
+                          <TableCell sx={{ fontSize: '0.82rem', textAlign: 'right' }}>{Number(item.quantidade_consumo).toFixed(4)}</TableCell>
+                          <TableCell sx={{ fontSize: '0.82rem', textAlign: 'right' }}>{formatCurrency(item.custo_total)}</TableCell>
+                          {isOwnedByClient && canEdit ? (
+                            <TableCell padding="none">
+                              <Tooltip title="Remover componente">
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    setComponentToRemove({
+                                      id: item.id,
+                                      descricao: item.descricao_filho,
+                                    })
+                                  }
+                                  disabled={removeComponentMutation.isPending}
+                                >
+                                  <DeleteOutlineIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+
+                            </TableCell>
+                          ) : null}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </Stack>
             ) : (
-              <Typography variant="body2" color="text.secondary">
-                Selecione um serviço para carregar a composição.
-              </Typography>
+              <Alert severity="warning">{warningMessages.serviceNoComposition}</Alert>
             )
           ) : (
             <EmptyState
@@ -387,9 +403,8 @@ export function CompositionsPage() {
               label="Código do clone"
               value={cloneCode}
               onChange={(event) => setCloneCode(event.target.value)}
-              required
               fullWidth
-              helperText="Código único para identificar o novo serviço no catálogo próprio."
+              helperText="Opcional — deixe em branco para gerar automaticamente (PROP-XXXXXX)."
             />
             <TextField
               label="Descrição"
@@ -404,7 +419,7 @@ export function CompositionsPage() {
           <Button onClick={() => setCloneOpen(false)}>Cancelar</Button>
           <Button
             variant="contained"
-            disabled={!cloneCode.trim() || cloneMutation.isPending}
+            disabled={cloneMutation.isPending}
             onClick={() => cloneMutation.mutate()}
           >
             Clonar composição

@@ -62,6 +62,7 @@ export function ClientsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [nomeFilter, setNomeFilter] = useState('');
   const [selectedClientId, setSelectedClientId] = useState('');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -93,11 +94,12 @@ export function ClientsPage() {
   });
 
   const clientsQuery = useQuery({
-    queryKey: ['clients', statusFilter, page, pageSize],
+    queryKey: ['clients', statusFilter, nomeFilter, page, pageSize],
     queryFn: () =>
       clientsApi.list({
         page,
         page_size: pageSize,
+        nome: nomeFilter.trim() || undefined,
         is_active:
           statusFilter === 'all' ? undefined : statusFilter === 'active',
       }),
@@ -160,6 +162,16 @@ export function ClientsPage() {
       <Stack direction={{ xs: 'column', xl: 'row' }} spacing={2}>
         <Paper sx={{ flex: 1.2, p: 3 }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
+            <TextField
+              label="Buscar por nome"
+              placeholder="Filtrar clientes..."
+              value={nomeFilter}
+              onChange={(event) => {
+                setNomeFilter(event.target.value);
+                setPage(1);
+              }}
+              sx={{ flex: 1 }}
+            />
             <TextField
               select
               label="Status"

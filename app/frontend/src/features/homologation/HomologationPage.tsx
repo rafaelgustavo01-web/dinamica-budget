@@ -13,6 +13,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { useState } from 'react';
+
+import { HelpTooltip } from '../../shared/components/HelpTooltip';
 import { z } from 'zod';
 
 import { useAuth } from '../auth/AuthProvider';
@@ -137,8 +139,8 @@ export function HomologationPage() {
 
       <Paper sx={{ mb: 2, border: '1px solid', borderColor: 'divider' }}>
         <Tabs value={tab} onChange={(_, value) => setTab(value)}>
-          <Tab label="Pendentes" />
-          <Tab label="Novo item próprio" />
+          <Tab label={<>Pendentes<HelpTooltip title="Lista de itens próprios aguardando aprovação ou rejeição pelo aprovador do cliente." /></>} />
+          <Tab label={<>Novo item próprio<HelpTooltip title="Cadastre um novo serviço personalizado no catálogo do cliente, com código, descrição, unidade e custo unitário." /></>} />
         </Tabs>
       </Paper>
 

@@ -320,25 +320,45 @@ class ServicoCatalogService:
 
         for comp in versao.itens:
             if comp.insumo_base_id is not None:
-                # TCPO child: leaf â€” no further expansion in PROPRIA context
+                # TCPO child — expand recursively if it is itself a service
                 filho_base: BaseTcpo | None = comp.insumo_base
                 if filho_base is None:
                     filho_base = await base_repo.get_by_id(comp.insumo_base_id)
                 if filho_base is None:
                     continue
-                custo_item = comp.quantidade_consumo * filho_base.custo_base
-                items.append(
-                    ComposicaoItemResponse(
-                        id=comp.id,
-                        insumo_filho_id=filho_base.id,
-                        descricao_filho=filho_base.descricao,
-                        unidade_medida=comp.unidade_medida or filho_base.unidade_medida,
-                        quantidade_consumo=comp.quantidade_consumo,
-                        custo_unitario=filho_base.custo_base,
-                        custo_total=custo_item,
+
+                if filho_base.tipo_recurso == TipoRecurso.SERVICO:
+                    # Recursively explode TCPO sub-service into leaf items
+                    sub_itens, sub_custo = await self._explode_recursivo_tcpo(
+                        item_id=filho_base.id, visited=set(), db=db
                     )
-                )
-                total += custo_item
+                    for sub in sub_itens:
+                        items.append(
+                            ComposicaoItemResponse(
+                                id=sub.id,
+                                insumo_filho_id=sub.insumo_filho_id,
+                                descricao_filho=sub.descricao_filho,
+                                unidade_medida=sub.unidade_medida,
+                                quantidade_consumo=sub.quantidade_consumo * comp.quantidade_consumo,
+                                custo_unitario=sub.custo_unitario,
+                                custo_total=sub.custo_total * comp.quantidade_consumo,
+                            )
+                        )
+                    total += sub_custo * comp.quantidade_consumo
+                else:
+                    custo_item = comp.quantidade_consumo * filho_base.custo_base
+                    items.append(
+                        ComposicaoItemResponse(
+                            id=comp.id,
+                            insumo_filho_id=filho_base.id,
+                            descricao_filho=filho_base.descricao,
+                            unidade_medida=comp.unidade_medida or filho_base.unidade_medida,
+                            quantidade_consumo=comp.quantidade_consumo,
+                            custo_unitario=filho_base.custo_base,
+                            custo_total=custo_item,
+                        )
+                    )
+                    total += custo_item
 
             elif comp.insumo_proprio_id is not None:
                 filho_prop: ItemProprio | None = comp.insumo_proprio
@@ -572,7 +592,7 @@ class ServicoCatalogService:
         self,
         servico_origem_id: UUID,
         cliente_id: UUID,
-        codigo_clone: str,
+        codigo_clone: str | None,
         descricao: str | None,
         criado_por_id: UUID,
         db: AsyncSession,
@@ -582,22 +602,28 @@ class ServicoCatalogService:
         ItemProprio bound to cliente_id. Each ComposicaoBase child becomes a
         ComposicaoCliente row with insumo_base_id set (preserving the reference).
         The clone starts with status_homologacao=PENDENTE.
+        When codigo_clone is None, the DB sequence generates the code automatically.
         """
         base_repo = BaseTcpoRepository(db)
         original = await base_repo.get_with_composicao_base(servico_origem_id)
         if not original:
             raise NotFoundError("BaseTcpo", str(servico_origem_id))
 
-        novo = ItemProprio(
+        novo_kwargs: dict = dict(
             cliente_id=cliente_id,
-            codigo_origem=codigo_clone,
             descricao=descricao if descricao is not None else original.descricao,
             unidade_medida=original.unidade_medida,
             custo_unitario=original.custo_base,
             categoria_id=original.categoria_id,
+            tipo_recurso=TipoRecurso.SERVICO,  # cloned compositions are always services
             status_homologacao=StatusHomologacao.PENDENTE,
             descricao_tokens=normalize_text(descricao if descricao is not None else original.descricao),
         )
+        # Only set codigo_origem explicitly if provided; otherwise let DB sequence generate it
+        if codigo_clone is not None:
+            novo_kwargs["codigo_origem"] = codigo_clone
+
+        novo = ItemProprio(**novo_kwargs)
         db.add(novo)
         await db.flush()
 

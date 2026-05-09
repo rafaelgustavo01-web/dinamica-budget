@@ -26,6 +26,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { HelpTooltip } from '../../shared/components/HelpTooltip';
 import { PageHeader } from '../../shared/components/PageHeader';
 import type {
   BcuEncargoItem,
@@ -90,30 +91,30 @@ function MaoObraTab({ cabecalhoId }: { cabecalhoId: string }) {
   if (error || !data) return <Alert severity="error">Erro ao carregar mão de obra.</Alert>;
 
   return (
-    <TableContainer>
-      <Table size="small" stickyHeader>
+    <Box sx={{ overflowX: 'auto', width: '100%' }}>
+      <Table size="small" stickyHeader sx={{ minWidth: 1200 }}>
         <TableHead>
           <TableRow>
-            <TableCell sx={headCell}>Função</TableCell>
-            <TableCell sx={{ ...headCell, textAlign: 'right' }}>Qtd</TableCell>
-            <TableCell sx={{ ...headCell, textAlign: 'right' }}>Salário</TableCell>
-            <TableCell sx={{ ...headCell, textAlign: 'right' }}>Reajuste</TableCell>
-            <TableCell sx={{ ...headCell, textAlign: 'right' }}>Encargos %</TableCell>
-            <TableCell sx={{ ...headCell, textAlign: 'right' }}>Refeição</TableCell>
-            <TableCell sx={{ ...headCell, textAlign: 'right' }}>Vale Alim.</TableCell>
-            <TableCell sx={{ ...headCell, textAlign: 'right' }}>Plano Saúde</TableCell>
-            <TableCell sx={{ ...headCell, textAlign: 'right' }}>EPI (R$)</TableCell>
-            <TableCell sx={{ ...headCell, textAlign: 'right' }}>Uniforme</TableCell>
-            <TableCell sx={{ ...headCell, textAlign: 'right' }}>Seguro Vida</TableCell>
-            <TableCell sx={{ ...headCell, textAlign: 'right' }}>Custo/H (R$)</TableCell>
-            <TableCell sx={{ ...headCell, textAlign: 'right' }}>Custo Mensal</TableCell>
-            <TableCell sx={{ ...headCell, textAlign: 'right' }}>Mobilização</TableCell>
+            <TableCell sx={{ ...headCell, position: 'sticky', left: 0, zIndex: 3, bgcolor: 'background.paper', minWidth: 180 }}>Função</TableCell>
+            <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 55 }}>Qtd</TableCell>
+            <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 95 }}>Salário</TableCell>
+            <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 95 }}>Reajuste</TableCell>
+            <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 90 }}>Encargos %</TableCell>
+            <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 90 }}>Refeição</TableCell>
+            <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 90 }}>Vale Alim.</TableCell>
+            <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 100 }}>Plano Saúde</TableCell>
+            <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 80 }}>EPI (R$)</TableCell>
+            <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 80 }}>Uniforme</TableCell>
+            <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 90 }}>Seguro Vida</TableCell>
+            <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 95 }}>Custo/H (R$)</TableCell>
+            <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 105 }}>Custo Mensal</TableCell>
+            <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 105 }}>Mobilização</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {data.map((item: BcuMaoObraItem) => (
             <TableRow key={item.id} hover>
-              <TableCell sx={dataCell}>
+              <TableCell sx={{ ...dataCell, position: 'sticky', left: 0, zIndex: 1, bgcolor: 'background.paper' }}>
                 <Typography variant="body2" fontWeight={500}>{item.descricao_funcao}</Typography>
               </TableCell>
               <TableCell sx={numCell}>{fmt(item.quantidade, 0)}</TableCell>
@@ -133,7 +134,7 @@ function MaoObraTab({ cabecalhoId }: { cabecalhoId: string }) {
           ))}
         </TableBody>
       </Table>
-    </TableContainer>
+    </Box>
   );
 }
 
@@ -216,13 +217,13 @@ function EquipamentosTab({ cabecalhoId }: { cabecalhoId: string }) {
   );
 }
 
-function EncargosTab({ cabecalhoId, tipo }: { cabecalhoId: string; tipo: 'HORISTA' | 'MENSALISTA' }) {
+function EncargosTab({ cabecalhoId }: { cabecalhoId: string }) {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['bcu-encargos', cabecalhoId, tipo],
-    queryFn: () => bcuApi.getEncargos(cabecalhoId, tipo),
+    queryKey: ['bcu-encargos', cabecalhoId],
+    queryFn: () => bcuApi.getEncargos(cabecalhoId),
   });
 
-  if (isLoading) return <TableSkeleton rows={20} cols={4} />;
+  if (isLoading) return <TableSkeleton rows={20} cols={5} />;
   if (error || !data) return <Alert severity="error">Erro ao carregar encargos.</Alert>;
 
   return (
@@ -230,6 +231,7 @@ function EncargosTab({ cabecalhoId, tipo }: { cabecalhoId: string; tipo: 'HORIST
       <Table size="small" stickyHeader>
         <TableHead>
           <TableRow>
+            <TableCell sx={headCell}>Tipo</TableCell>
             <TableCell sx={headCell}>Grupo</TableCell>
             <TableCell sx={headCell}>Código</TableCell>
             <TableCell sx={headCell}>Discriminação</TableCell>
@@ -239,6 +241,16 @@ function EncargosTab({ cabecalhoId, tipo }: { cabecalhoId: string; tipo: 'HORIST
         <TableBody>
           {data.map((item: BcuEncargoItem) => (
             <TableRow key={item.id} hover>
+              <TableCell sx={dataCell}>
+                {item.tipo_encargo && (
+                  <Chip
+                    label={item.tipo_encargo}
+                    size="small"
+                    color={item.tipo_encargo === 'HORISTA' ? 'info' : 'secondary'}
+                    variant="outlined"
+                  />
+                )}
+              </TableCell>
               <TableCell sx={dataCell}>
                 {item.grupo && <Chip label={item.grupo} size="small" color="primary" variant="outlined" />}
               </TableCell>
@@ -312,26 +324,24 @@ function FerramentasTab({ cabecalhoId }: { cabecalhoId: string }) {
           <TableHead>
             <TableRow>
               <TableCell sx={headCell}>Item</TableCell>
-              <TableCell sx={headCell}>Descrição</TableCell>
-              <TableCell sx={headCell}>Unid.</TableCell>
+              <TableCell sx={headCell}>Unidade</TableCell>
               <TableCell sx={{ ...headCell, textAlign: 'right' }}>Qtd</TableCell>
-              <TableCell sx={{ ...headCell, textAlign: 'right' }}>Preço Unit.</TableCell>
-              <TableCell sx={{ ...headCell, textAlign: 'right' }}>Total</TableCell>
+              <TableCell sx={{ ...headCell, textAlign: 'right' }}>Preço Unit. (R$)</TableCell>
+              <TableCell sx={{ ...headCell, textAlign: 'right' }}>Total (R$)</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {data.map((item: BcuFerramentaItem) => (
               <TableRow key={item.id} hover>
-                <TableCell sx={dataCell}>{item.item ?? '—'}</TableCell>
-                <TableCell sx={dataCell}>{item.descricao}</TableCell>
+                <TableCell sx={dataCell}>{item.item ?? item.descricao ?? '—'}</TableCell>
                 <TableCell sx={dataCell}>{item.unidade ?? '—'}</TableCell>
-                <TableCell sx={numCell}>{fmt(item.quantidade, 0)}</TableCell>
-                <TableCell sx={numCell}>R$ {fmt(item.preco)}</TableCell>
+                <TableCell sx={{ ...numCell }}>{item.quantidade != null ? fmt(item.quantidade) : '—'}</TableCell>
+                <TableCell sx={{ ...numCell }}>R$ {fmt(item.preco)}</TableCell>
                 <TableCell sx={{ ...numCell, fontWeight: 600 }}>R$ {fmt(item.preco_total)}</TableCell>
               </TableRow>
             ))}
             <TableRow>
-              <TableCell colSpan={5} sx={{ ...dataCell, fontWeight: 700, textAlign: 'right' }}>TOTAL</TableCell>
+              <TableCell colSpan={4} sx={{ ...dataCell, fontWeight: 700, textAlign: 'right' }}>TOTAL</TableCell>
               <TableCell sx={{ ...numCell, fontWeight: 700, color: 'primary.main' }}>R$ {fmt(total)}</TableCell>
             </TableRow>
           </TableBody>
@@ -403,13 +413,30 @@ function TableSkeleton({ rows, cols }: { rows: number; cols: number }) {
 // ── Tab config ───────────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: 'mao-obra', label: 'Mão de Obra', icon: <EngineeringOutlinedIcon fontSize="small" /> },
-  { id: 'equipamentos', label: 'Equipamentos', icon: <LocalShippingOutlinedIcon fontSize="small" /> },
-  { id: 'encargos-horista', label: 'Encargos Horista', icon: <WorkOutlineOutlinedIcon fontSize="small" /> },
-  { id: 'encargos-mensalista', label: 'Encargos Mensalista', icon: <WorkOutlineOutlinedIcon fontSize="small" /> },
-  { id: 'epi', label: 'EPI / Uniforme', icon: <SecurityOutlinedIcon fontSize="small" /> },
-  { id: 'ferramentas', label: 'Ferramentas', icon: <HardwareOutlinedIcon fontSize="small" /> },
-  { id: 'mobilizacao', label: 'Mobilização', icon: <SafetyDividerOutlinedIcon fontSize="small" /> },
+  {
+    id: 'mao-obra', label: 'Mão de Obra', icon: <EngineeringOutlinedIcon fontSize="small" />,
+    help: 'Tabela de salários, categorias, produtividade e encargos de mão de obra utilizada nas composições.',
+  },
+  {
+    id: 'equipamentos', label: 'Equipamentos', icon: <LocalShippingOutlinedIcon fontSize="small" />,
+    help: 'Custo horário de equipamentos: aluguel, consumo de combustível e manutenção por hora trabalhada.',
+  },
+  {
+    id: 'encargos', label: 'Encargos', icon: <WorkOutlineOutlinedIcon fontSize="small" />,
+    help: 'Encargos sociais e trabalhistas (horistas e mensalistas) incidentes sobre a remuneração da mão de obra.',
+  },
+  {
+    id: 'epi', label: 'EPI / Uniforme', icon: <SecurityOutlinedIcon fontSize="small" />,
+    help: 'Custo de Equipamentos de Proteção Individual e uniformes por função, rateados mensalmente.',
+  },
+  {
+    id: 'ferramentas', label: 'Ferramentas', icon: <HardwareOutlinedIcon fontSize="small" />,
+    help: 'Custo de ferramentas e instrumentos necessários à execução dos serviços, rateado pelo tempo de vida útil.',
+  },
+  {
+    id: 'mobilizacao', label: 'Mobilização', icon: <SafetyDividerOutlinedIcon fontSize="small" />,
+    help: 'Custos de mobilização e desmobilização de equipes e equipamentos no início e encerramento da obra.',
+  },
 ];
 
 // ── Main Page ────────────────────────────────────────────────────────────────
@@ -427,7 +454,7 @@ export function BcuPage() {
   return (
     <Box>
       <PageHeader
-        title="BCU (Base de Custos Unitários)"
+        title="Base de Custos Unitários"
         description="Dados base para composição de preços unitários: mão de obra, equipamentos, encargos, EPI e ferramentas."
       />
 
@@ -485,18 +512,27 @@ export function BcuPage() {
               }}
             >
               {TABS.map((tab) => (
-                <Tab key={tab.id} label={tab.label} icon={tab.icon} iconPosition="start" />
+                <Tab
+                  key={tab.id}
+                  icon={tab.icon}
+                  iconPosition="start"
+                  label={
+                    <>
+                      {tab.label}
+                      <HelpTooltip title={tab.help} />
+                    </>
+                  }
+                />
               ))}
             </Tabs>
 
             <Box sx={{ p: 0, overflowX: 'auto' }}>
               {activeTab === 0 && <MaoObraTab cabecalhoId={cabecalho.id} />}
               {activeTab === 1 && <EquipamentosTab cabecalhoId={cabecalho.id} />}
-              {activeTab === 2 && <EncargosTab cabecalhoId={cabecalho.id} tipo="HORISTA" />}
-              {activeTab === 3 && <EncargosTab cabecalhoId={cabecalho.id} tipo="MENSALISTA" />}
-              {activeTab === 4 && <EpiTab cabecalhoId={cabecalho.id} />}
-              {activeTab === 5 && <FerramentasTab cabecalhoId={cabecalho.id} />}
-              {activeTab === 6 && <MobilizacaoTab cabecalhoId={cabecalho.id} />}
+              {activeTab === 2 && <EncargosTab cabecalhoId={cabecalho.id} />}
+              {activeTab === 3 && <EpiTab cabecalhoId={cabecalho.id} />}
+              {activeTab === 4 && <FerramentasTab cabecalhoId={cabecalho.id} />}
+              {activeTab === 5 && <MobilizacaoTab cabecalhoId={cabecalho.id} />}
             </Box>
           </Paper>
         </>

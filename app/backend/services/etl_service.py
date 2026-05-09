@@ -122,29 +122,63 @@ class EtlService:
 
     def _parse_tcpo_pini_result(self, file_bytes: bytes) -> tuple[_EtlParseResult, str]:
         """
-        Internal: parse 'Composições analíticas' sheet. Returns (result, arquivo).
+        Parse TCPO PINI file with TWO sheets:
+          - 'Composições sintéticas':  CÓDIGO | DESCRIÇÃO RESUMO | UNIDADE | PREÇO
+            → Summary of all services. Ingested first as base SERVICO items.
+          - 'Composições analíticas':  CÓDIGO | DESCRIÇÃO | CLASS | UNIDADE | COEF. | PREÇO(R$) | PREÇO TOTAL
+            → Full BOM with parent/child relationships.
+            Parent services: CLASS == SER.* AND bold description AND indent == 0
+            Child insumos: CLASS in MAT./M.O./EQP./FER.
 
-        Row detection:
-          - Skip if col1 (CÓDIGO) is not a str, or CLASS is None → section header
-          - CLASS == 'SER.CG'  → new parent service
-          - CLASS in MAT./M.O./EQP./FER. → child component of current parent
+        NOTE: read_only=False is required so cell.font and cell.alignment are available.
         """
-        # NOTE: read_only=False is required so cell.font and cell.alignment are available.
-        # Bold + indent detection is the canonical heuristic for identifying parent services in
-        # the PINI TCPO format. read_only mode strips all formatting, causing is_bold=False for
-        # every row and therefore 0 parent services detected.
         wb = openpyxl.load_workbook(io.BytesIO(file_bytes), read_only=False, data_only=True)
-        try:
-            ws = wb["Composições analíticas"]
-        except KeyError:
-            wb.close()
-            raise ValueError("Planilha 'Composições analíticas' não encontrada no arquivo.")
 
         result = _EtlParseResult()
-        current_parent_codigo: str | None = None
         seen_itens: set[str] = set()
 
-        for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=False), start=2):
+        # ── Pass 1: Composições sintéticas → seed all parent services ────────
+        WS_SINTETICAS = "Composições sintéticas"
+        if WS_SINTETICAS in wb.sheetnames:
+            ws_sint = wb[WS_SINTETICAS]
+            for row in ws_sint.iter_rows(min_row=2, values_only=True):
+                codigo = row[0]
+                descricao = row[1]
+                unidade = row[2]
+                preco = row[3]
+                if not isinstance(codigo, str) or not codigo.strip():
+                    continue
+                codigo = codigo.strip()
+                if codigo in seen_itens:
+                    continue
+                result.itens.append(
+                    _ParsedItem(
+                        codigo_origem=codigo,
+                        descricao=str(descricao).strip() if descricao else "",
+                        unidade_medida=str(unidade).strip() if unidade else "UN",
+                        custo_base=float(preco) if preco is not None else 0.0,
+                        tipo_recurso="SERVICO",
+                    )
+                )
+                seen_itens.add(codigo)
+        else:
+            result.avisos.append(
+                f"Aba '{WS_SINTETICAS}' não encontrada — apenas analíticas serão importadas."
+            )
+
+        # ── Pass 2: Composições analíticas → BOM relationships + child items ─
+        WS_ANALITICAS = "Composições analíticas"
+        if WS_ANALITICAS not in wb.sheetnames:
+            wb.close()
+            raise ValueError(
+                f"Aba '{WS_ANALITICAS}' não encontrada. "
+                "Verifique se o arquivo é 'Composições TCPO - PINI.xlsx'."
+            )
+
+        ws_anal = wb[WS_ANALITICAS]
+        current_parent_codigo: str | None = None
+
+        for row_idx, row in enumerate(ws_anal.iter_rows(min_row=2, values_only=False), start=2):
             codigo = row[0].value
             descricao = row[1].value
             classe = row[2].value
@@ -153,31 +187,27 @@ class EtlService:
             preco = row[5].value
 
             # Skip section headers: code is not a str, or CLASS is None
-            if not isinstance(codigo, str) or classe is None:
+            if not isinstance(codigo, str) or not codigo.strip() or classe is None:
                 continue
 
+            codigo = codigo.strip()
             classe_clean = str(classe).strip()
             tipo_recurso = _CLASS_TO_TIPO.get(classe_clean)
             unidade_clean = str(unidade).strip() if unidade else "UN"
             descricao_clean = str(descricao).strip() if descricao else ""
             custo = float(preco) if preco is not None else 0.0
 
-            # Detect bold in description cell + alignment in code cell
-            # PINI: parent services have bold description AND code aligned to left (indent=0)
+            # Detect bold description + zero indent → parent service
             descricao_cell = row[1]
             codigo_cell = row[0]
             is_bold = descricao_cell.font.bold if descricao_cell.font else False
-            alignment_indent = (
-                codigo_cell.alignment.indent if codigo_cell.alignment else 0
-            )
-            is_parent = (
-                classe_clean.startswith("SER.") and is_bold and alignment_indent == 0
-            )
+            alignment_indent = codigo_cell.alignment.indent if codigo_cell.alignment else 0
+            is_parent = classe_clean.startswith("SER.") and is_bold and alignment_indent == 0
             is_subservice = classe_clean.startswith("SER.") and not is_parent
 
             if is_parent:
-                # New parent service
                 current_parent_codigo = codigo
+                # Upsert: if already seeded from sintéticas, update custo_base from analíticas
                 if codigo not in seen_itens:
                     result.itens.append(
                         _ParsedItem(
@@ -189,14 +219,13 @@ class EtlService:
                         )
                     )
                     seen_itens.add(codigo)
+
             elif is_subservice:
-                # Subservice: treated as child of current parent, does NOT change current_parent_codigo
                 if current_parent_codigo is None:
                     result.avisos.append(
                         f"Linha {row_idx}: subserviço sem pai (ignorado): {codigo}"
                     )
                     continue
-
                 if codigo not in seen_itens:
                     result.itens.append(
                         _ParsedItem(
@@ -208,7 +237,6 @@ class EtlService:
                         )
                     )
                     seen_itens.add(codigo)
-
                 qty = float(coef) if coef is not None else 1.0
                 result.relacoes.append(
                     _ParsedRelacao(
@@ -218,14 +246,14 @@ class EtlService:
                         unidade_medida=unidade_clean,
                     )
                 )
+
             else:
-                # Normal child component (anything not starting with SER.)
+                # Normal child component
                 if current_parent_codigo is None:
                     result.avisos.append(
                         f"Linha {row_idx}: filho sem pai (ignorado): {codigo}"
                     )
                     continue
-
                 if codigo not in seen_itens:
                     result.itens.append(
                         _ParsedItem(
@@ -237,7 +265,6 @@ class EtlService:
                         )
                     )
                     seen_itens.add(codigo)
-
                 qty = float(coef) if coef is not None else 1.0
                 result.relacoes.append(
                     _ParsedRelacao(
@@ -249,6 +276,12 @@ class EtlService:
                 )
 
         wb.close()
+        logger.info(
+            "tcpo_parse_complete",
+            itens=len(result.itens),
+            relacoes=len(result.relacoes),
+            avisos=len(result.avisos),
+        )
         return result, "Composições TCPO - PINI.xlsx"
 
     # ── Parse: Converter em Data Center ───────────────────────────────────────

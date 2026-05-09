@@ -20,12 +20,12 @@ _STOP_WORDS_PT = {
 
 def normalize_text(text: str) -> str:
     """
-    Full normalization pipeline:
+    Full normalization pipeline — canonical form for association lookups.
       1. Strip + lowercase
       2. Remove diacritics/accents (NFD + strip Mn)
       3. Remove punctuation (non-alphanumeric chars → space)
       4. Remove Portuguese stop words
-      5. Dedup tokens + sort (canonical form for embedding/search)
+      5. Dedup tokens + sort (canonical form for exact-match lookup)
     """
     text = text.strip().lower()
     nfkd = unicodedata.normalize("NFD", text)
@@ -34,6 +34,23 @@ def normalize_text(text: str) -> str:
     tokens = [t for t in text.split() if t not in _STOP_WORDS_PT]
     tokens = sorted(set(tokens))
     return " ".join(tokens)
+
+
+def normalize_light(text: str) -> str:
+    """
+    Light normalization for fuzzy / semantic search — preserves word order.
+      1. Strip + lowercase
+      2. Remove diacritics/accents (NFD + strip Mn)
+      3. Remove punctuation (non-alphanumeric chars → space)
+      4. Collapse whitespace
+    Word order is kept intentionally so sentence-transformer embeddings
+    and pg_trgm n-grams are computed over natural-language token sequences.
+    """
+    text = text.strip().lower()
+    nfkd = unicodedata.normalize("NFD", text)
+    text = "".join(c for c in nfkd if unicodedata.category(c) != "Mn")
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    return " ".join(text.split())
 
 
 class AssociacaoRepository(BaseRepository[AssociacaoInteligente]):

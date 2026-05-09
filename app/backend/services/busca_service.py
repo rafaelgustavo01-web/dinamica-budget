@@ -27,7 +27,7 @@ from backend.core.logging import get_logger
 from backend.ml.embedder import embedder
 from backend.ml.vector_search import vector_searcher
 from backend.models.enums import OrigemAssociacao, StatusHomologacao, StatusValidacaoAssociacao
-from backend.repositories.associacao_repository import AssociacaoRepository, normalize_text
+from backend.repositories.associacao_repository import AssociacaoRepository, normalize_text, normalize_light
 from backend.repositories.base_tcpo_repository import BaseTcpoRepository
 from backend.repositories.historico_repository import HistoricoRepository
 from backend.repositories.itens_proprios_repository import ItensPropiosRepository
@@ -55,6 +55,9 @@ class BuscaService:
 
         # ── Normalização obrigatória ──────────────────────────────────────────
         texto_norm = normalize_text(request.texto_busca)
+        # Light normalization for fuzzy/semantic: preserves word order so
+        # sentence embeddings and pg_trgm n-grams are computed correctly.
+        texto_leve = normalize_light(request.texto_busca)
 
         assoc_repo = AssociacaoRepository(db)
         base_repo = BaseTcpoRepository(db)
@@ -85,7 +88,7 @@ class BuscaService:
         if request.cliente_id is not None:
             resultado = await self._fase0_itens_proprios(
                 cliente_id=request.cliente_id,
-                texto_norm=texto_norm,
+                texto_norm=texto_leve,
                 threshold=request.threshold_score,
                 limit=request.limite_resultados,
                 proprios_repo=proprios_repo,
@@ -106,7 +109,7 @@ class BuscaService:
         if request.cliente_id is not None:
             resultado, associacao = await self._fase1_associacao(
                 cliente_id=request.cliente_id,
-                texto_norm=texto_norm,
+                texto_norm=texto_norm,  # canonical sorted form for exact lookup
                 assoc_repo=assoc_repo,
                 base_repo=base_repo,
             )
@@ -123,12 +126,13 @@ class BuscaService:
                 )
 
         # ─────────────────────────────────────────────────────────────────────
-        # FASE 2: Fuzzy Global (pg_trgm — catálogo TCPO)
+        # FASE 2: IA Semântica (pgvector) — executa antes do fuzzy
         # ─────────────────────────────────────────────────────────────────────
-        resultado = await self._fase2_fuzzy(
-            texto_busca=texto_norm,
+        resultado = await self._fase3_semantica(
+            texto_busca=texto_leve,  # natural word order for sentence embeddings
             threshold=request.threshold_score,
             limit=request.limite_resultados,
+            db=db,
             base_repo=base_repo,
         )
         if resultado:
@@ -142,19 +146,22 @@ class BuscaService:
             )
 
         # ─────────────────────────────────────────────────────────────────────
-        # FASE 3: IA Semântica (pgvector)
+        # FASE 3: Fuzzy Global (pg_trgm) — fallback quando embedding falha
         # ─────────────────────────────────────────────────────────────────────
-        resultado = await self._fase3_semantica(
-            texto_busca=texto_norm,
-            threshold=request.threshold_score,
+        # Use a lower threshold for pg_trgm: cosine similarity and trigram
+        # similarity operate on different scales. 0.25 is a robust default
+        # for Portuguese construction-domain descriptions.
+        fuzzy_threshold = min(0.30, request.threshold_score * 0.45)
+        resultado = await self._fase2_fuzzy(
+            texto_busca=texto_leve,  # natural word order for trigram n-grams
+            threshold=fuzzy_threshold,
             limit=request.limite_resultados,
-            db=db,
             base_repo=base_repo,
         )
 
         return await self._build_response(
             texto_busca=request.texto_busca,
-            resultados=resultado,
+            resultados=resultado or [],
             t0=t0,
             cliente_id=request.cliente_id,
             usuario_id=usuario_id,
