@@ -73,6 +73,7 @@ export function ProposalItemsExpandedPage() {
     queryKey: ['proposalItems', id],
     queryFn: () => proposalItemsApi.listItems(id!),
     enabled: Boolean(id),
+    select: (data) => (Array.isArray(data) ? data : []),
   });
 
   // Listar mão de obra (sempre carregado para busca inline)
@@ -80,6 +81,7 @@ export function ProposalItemsExpandedPage() {
     queryKey: ['bcu.mao_obra', id],
     queryFn: () => proposalItemsApi.listMaoObra(id!),
     enabled: Boolean(id),
+    select: (data) => (Array.isArray(data) ? data : []),
   });
 
   // Listar EPI
@@ -87,6 +89,7 @@ export function ProposalItemsExpandedPage() {
     queryKey: ['bcu.epi', id],
     queryFn: () => proposalItemsApi.listEpi(id!),
     enabled: Boolean(id),
+    select: (data) => (Array.isArray(data) ? data : []),
   });
 
   // Listar equipamento
@@ -94,6 +97,7 @@ export function ProposalItemsExpandedPage() {
     queryKey: ['bcu.equipamento', id],
     queryFn: () => proposalItemsApi.listEquipamento(id!),
     enabled: Boolean(id),
+    select: (data) => (Array.isArray(data) ? data : []),
   });
 
   // Listar ferramenta
@@ -101,6 +105,7 @@ export function ProposalItemsExpandedPage() {
     queryKey: ['bcu.ferramenta', id],
     queryFn: () => proposalItemsApi.listFerramenta(id!),
     enabled: Boolean(id),
+    select: (data) => (Array.isArray(data) ? data : []),
   });
 
   // Adicionar mão de obra

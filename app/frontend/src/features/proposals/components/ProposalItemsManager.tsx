@@ -65,6 +65,7 @@ export function ProposalItemsManager({
     queryKey: ['proposalItems', propostaId],
     queryFn: () => proposalItemsApi.listItems(propostaId),
     enabled: Boolean(propostaId),
+    select: (data): ProposalItem[] => (Array.isArray(data) ? data : []),
   });
 
   // Adicionar/atualizar item

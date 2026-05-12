@@ -49,98 +49,111 @@ export const proposalItemsApi = {
    * Lista todos os items de uma proposta
    */
   async listItems(propostaId: string): Promise<ProposalItem[]> {
-    return apiClient.get(`/propostas/${propostaId}/items`);
+    const response = await apiClient.get(`/propostas/${propostaId}/items`);
+    return response.data;
   },
 
   /**
    * Adiciona um novo item à proposta
    */
   async addItem(propostaId: string, body: AddItemRequest): Promise<ProposalItem> {
-    return apiClient.post(`/propostas/${propostaId}/items`, body);
+    const response = await apiClient.post(`/propostas/${propostaId}/items`, body);
+    return response.data;
   },
 
   /**
    * Atualiza um item existente
    */
   async updateItem(propostaId: string, itemId: string, body: UpdateItemRequest): Promise<ProposalItem> {
-    return apiClient.patch(`/propostas/${propostaId}/items/${itemId}`, body);
+    const response = await apiClient.patch(`/propostas/${propostaId}/items/${itemId}`, body);
+    return response.data;
   },
 
   /**
    * Remove um item da proposta
    */
   async deleteItem(propostaId: string, itemId: string): Promise<void> {
-    return apiClient.delete(`/propostas/${propostaId}/items/${itemId}`);
+    await apiClient.delete(`/propostas/${propostaId}/items/${itemId}`);
   },
 
   /**
    * Reordena items da proposta
    */
   async reorderItems(propostaId: string, itemIds: string[]): Promise<{ success: boolean; items: ProposalItem[] }> {
-    return apiClient.post(`/propostas/${propostaId}/items/reordenar`, { items_ids: itemIds });
+    const response = await apiClient.post(`/propostas/${propostaId}/items/reordenar`, { items_ids: itemIds });
+    return response.data;
   },
 
   /**
    * Lista tipos de items que podem ser adicionados
    */
   async listItemTipos(propostaId: string): Promise<{ tipos: ItemTipo[] }> {
-    return apiClient.get(`/propostas/${propostaId}/items/tipos`);
+    const response = await apiClient.get(`/propostas/${propostaId}/items/tipos`);
+    return response.data;
   },
 
   /**
    * Lista mão de obra disponível na base de custos
    */
   async listMaoObra(propostaId: string): Promise<BcuItem[]> {
-    return apiClient.get(`/propostas/${propostaId}/items/bcu/mao-obra`);
+    const response = await apiClient.get(`/propostas/${propostaId}/items/bcu/mao-obra`);
+    return response.data;
   },
 
   /**
    * Lista EPI disponível na base de custos
    */
   async listEpi(propostaId: string): Promise<BcuItem[]> {
-    return apiClient.get(`/propostas/${propostaId}/items/bcu/epi`);
+    const response = await apiClient.get(`/propostas/${propostaId}/items/bcu/epi`);
+    return response.data;
   },
 
   /**
    * Lista equipamentos disponíveis na base de custos
    */
   async listEquipamento(propostaId: string): Promise<BcuItem[]> {
-    return apiClient.get(`/propostas/${propostaId}/items/bcu/equipamento`);
+    const response = await apiClient.get(`/propostas/${propostaId}/items/bcu/equipamento`);
+    return response.data;
   },
 
   /**
    * Lista ferramentas disponíveis na base de custos
    */
   async listFerramenta(propostaId: string): Promise<BcuItem[]> {
-    return apiClient.get(`/propostas/${propostaId}/items/bcu/ferramenta`);
+    const response = await apiClient.get(`/propostas/${propostaId}/items/bcu/ferramenta`);
+    return response.data;
   },
 
   /**
    * Adiciona mão de obra da base BCU
    */
   async addMaoObra(propostaId: string, body: AddBcuItemRequest): Promise<ProposalItem> {
-    return apiClient.post(`/propostas/${propostaId}/items/mao-obra`, body);
+    const response = await apiClient.post(`/propostas/${propostaId}/items/mao-obra`, body);
+    return response.data;
   },
 
   /**
    * Adiciona EPI da base BCU
    */
   async addEpi(propostaId: string, body: AddBcuItemRequest): Promise<ProposalItem> {
-    return apiClient.post(`/propostas/${propostaId}/items/epi`, body);
+    const response = await apiClient.post(`/propostas/${propostaId}/items/epi`, body);
+    return response.data;
   },
 
   /**
    * Adiciona equipamento da base BCU
    */
   async addEquipamento(propostaId: string, body: AddBcuItemRequest): Promise<ProposalItem> {
-    return apiClient.post(`/propostas/${propostaId}/items/equipamento`, body);
+    const response = await apiClient.post(`/propostas/${propostaId}/items/equipamento`, body);
+    return response.data;
   },
 
   /**
    * Adiciona ferramenta da base BCU
    */
   async addFerramenta(propostaId: string, body: AddBcuItemRequest): Promise<ProposalItem> {
-    return apiClient.post(`/propostas/${propostaId}/items/ferramenta`, body);
+    const response = await apiClient.post(`/propostas/${propostaId}/items/ferramenta`, body);
+    return response.data;
   },
 };
 
