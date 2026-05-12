@@ -465,7 +465,7 @@ async def adicionar_item_proposta(
         codigo=body["codigo"],
         descricao=body["descricao"],
         unidade_medida=body["unidade_medida"],
-        quantidade=float(body["quantidade"]),
+        quantidade=max(1, int(float(body["quantidade"]))),
     )
     await db.commit()
     return resultado
@@ -633,7 +633,7 @@ async def adicionar_mao_obra(
         resultado = await svc.adicionar_mao_obra(
             proposta_id,
             UUID(body["bcu_item_id"]),
-            float(body["quantidade"]),
+            max(1, int(float(body["quantidade"]))),
         )
         await db.commit()
     except IntegrityError:
@@ -664,7 +664,7 @@ async def adicionar_epi(
         resultado = await svc.adicionar_epi(
             proposta_id,
             UUID(body["bcu_item_id"]),
-            float(body["quantidade"]),
+            max(1, int(float(body["quantidade"]))),
         )
         await db.commit()
     except IntegrityError:
@@ -695,7 +695,7 @@ async def adicionar_equipamento(
         resultado = await svc.adicionar_equipamento(
             proposta_id,
             UUID(body["bcu_item_id"]),
-            float(body["quantidade"]),
+            max(1, int(float(body["quantidade"]))),
         )
         await db.commit()
     except IntegrityError:
@@ -726,7 +726,7 @@ async def adicionar_ferramenta(
         resultado = await svc.adicionar_ferramenta(
             proposta_id,
             UUID(body["bcu_item_id"]),
-            float(body["quantidade"]),
+            max(1, int(float(body["quantidade"]))),
         )
         await db.commit()
     except IntegrityError:

@@ -472,19 +472,19 @@ export function ProposalItemsExpandedPage() {
                         {fmtBRL(item.valor)}
                       </TableCell>
 
-                      {/* Quantidade editável */}
+                      {/* Quantidade editável (inteiro) */}
                       <TableCell align="right" sx={{ width: 120 }}>
                         <TextField
                           size="small"
                           type="number"
                           value={qty}
                           onChange={e => {
-                            const v = parseFloat(e.target.value);
+                            const v = parseInt(e.target.value, 10);
                             if (!isNaN(v) && v > 0) {
                               setQuantities(prev => ({ ...prev, [item.id]: v }));
                             }
                           }}
-                          inputProps={{ min: 0.01, step: 0.01, style: { textAlign: 'right' } }}
+                          inputProps={{ min: 1, step: 1, style: { textAlign: 'right' } }}
                           sx={{ width: 90 }}
                         />
                       </TableCell>
@@ -604,7 +604,7 @@ export function ProposalItemsExpandedPage() {
                       {item.codigo}
                     </TableCell>
                     <TableCell>{item.descricao}</TableCell>
-                    <TableCell align="right">{item.quantidade.toFixed(2)}</TableCell>
+                    <TableCell align="right">{Math.trunc(item.quantidade)}</TableCell>
                     <TableCell sx={{ color: 'text.secondary' }}>{item.unidade_medida}</TableCell>
                     <TableCell align="right">
                       {item.valor_unitario != null ? fmtBRL(item.valor_unitario) : '—'}

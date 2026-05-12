@@ -83,9 +83,14 @@ export function HistogramaTabGenerica({ propostaId, tabela, items, divergencias,
   }
 
   const handleChange = (itemId: string, field: string, value: string) => {
+    const parsed = value === ''
+      ? null
+      : field === 'quantidade'
+        ? parseInt(value, 10)
+        : parseFloat(value.replace(',', '.'));
     setEditing((prev) => ({
       ...prev,
-      [itemId]: { ...prev[itemId], [field]: value === '' ? null : parseFloat(value.replace(',', '.')) },
+      [itemId]: { ...prev[itemId], [field]: parsed },
     }));
   };
 
@@ -142,7 +147,7 @@ export function HistogramaTabGenerica({ propostaId, tabela, items, divergencias,
                         inputProps={{ style: { textAlign: col.numeric ? 'right' : 'left', fontSize: '0.85rem' } }}
                       />
                     ) : col.numeric ? (
-                      fmt(item[col.key])
+                      col.key === 'quantidade' ? String(Math.trunc(Number(item[col.key] ?? 0))) : fmt(item[col.key])
                     ) : (
                       String(item[col.key] ?? '—')
                     )}

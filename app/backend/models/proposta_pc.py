@@ -5,7 +5,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -24,7 +24,7 @@ class PropostaPcMaoObra(Base):
     bcu_item_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), nullable=True)
     descricao_funcao: Mapped[str] = mapped_column(String(255), nullable=False)
     codigo_origem: Mapped[str | None] = mapped_column(String(40), nullable=True)
-    quantidade: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
+    quantidade: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     salario: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
     previsao_reajuste: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
     encargos_percent: Mapped[Decimal | None] = mapped_column(Numeric(15, 6), nullable=True)
@@ -84,6 +84,7 @@ class PropostaPcEquipamento(Base):
     hora_improdutiva: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
     mes: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
     aluguel_mensal: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
+    quantidade: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     valor_bcu_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
     editado_manualmente: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
@@ -122,7 +123,7 @@ class PropostaPcEpi(Base):
     epi: Mapped[str] = mapped_column(String(255), nullable=False)
     unidade: Mapped[str | None] = mapped_column(String(30), nullable=True)
     custo_unitario: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
-    quantidade: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
+    quantidade: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     vida_util_meses: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
     custo_epi_mes: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
     valor_bcu_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
@@ -145,7 +146,7 @@ class PropostaPcFerramenta(Base):
     item: Mapped[str | None] = mapped_column(String(40), nullable=True)
     descricao: Mapped[str] = mapped_column(String(255), nullable=False)
     unidade: Mapped[str | None] = mapped_column(String(30), nullable=True)
-    quantidade: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
+    quantidade: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     preco: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
     preco_total: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
     valor_bcu_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)

@@ -151,7 +151,7 @@ class PropostaItemsExpandedService:
                 "codigo": pc.codigo_origem or "",
                 "descricao": pc.descricao_funcao,
                 "unidade_medida": "mês",
-                "quantidade": float(qtd),
+                "quantidade": int(qtd),
                 "valor_unitario": float(valor_un),
                 "valor_total": float(valor_un * qtd),
                 "ordem": ordem,
@@ -178,7 +178,7 @@ class PropostaItemsExpandedService:
                 "codigo": pc.codigo_origem or "",
                 "descricao": pc.epi,
                 "unidade_medida": pc.unidade or "un",
-                "quantidade": float(qtd),
+                "quantidade": int(qtd),
                 "valor_unitario": float(valor_un),
                 "valor_total": float(valor_un * qtd),
                 "ordem": ordem,
@@ -205,7 +205,7 @@ class PropostaItemsExpandedService:
                 "codigo": pc.codigo_origem or "",
                 "descricao": pc.equipamento,
                 "unidade_medida": "h",
-                "quantidade": float(qtd),
+                "quantidade": int(qtd),
                 "valor_unitario": float(valor_un),
                 "valor_total": float(valor_un * qtd),
                 "ordem": ordem,
@@ -232,7 +232,7 @@ class PropostaItemsExpandedService:
                 "codigo": pc.codigo_origem or "",
                 "descricao": pc.descricao,
                 "unidade_medida": pc.unidade or "un",
-                "quantidade": float(qtd),
+                "quantidade": int(qtd),
                 "valor_unitario": float(valor_un),
                 "valor_total": float(valor_un * qtd),
                 "ordem": ordem,
@@ -247,7 +247,7 @@ class PropostaItemsExpandedService:
         self,
         proposta_id: UUID,
         bcu_item_id: UUID,
-        quantidade: float,
+        quantidade: int,
     ) -> dict:
         proposta = await self.proposta_repo.get_by_id(proposta_id)
         if not proposta:
@@ -260,7 +260,7 @@ class PropostaItemsExpandedService:
             raise ValueError("Item de mão de obra não encontrado na base")
 
         total = _total_mao_obra(bcu_item)
-        qtd = Decimal(str(quantidade))
+        qtd = max(1, int(quantidade))
         pc_item = PropostaPcMaoObra(
             proposta_id=proposta_id,
             bcu_item_id=bcu_item_id,
@@ -292,7 +292,7 @@ class PropostaItemsExpandedService:
             "codigo": pc_item.codigo_origem or "",
             "descricao": pc_item.descricao_funcao,
             "unidade_medida": "mês",
-            "quantidade": float(qtd),
+            "quantidade": int(qtd),
             "valor_unitario": float(total),
             "valor_total": float(total * qtd),
         }
@@ -301,7 +301,7 @@ class PropostaItemsExpandedService:
         self,
         proposta_id: UUID,
         bcu_item_id: UUID,
-        quantidade: float,
+        quantidade: int,
     ) -> dict:
         proposta = await self.proposta_repo.get_by_id(proposta_id)
         if not proposta:
@@ -314,7 +314,7 @@ class PropostaItemsExpandedService:
             raise ValueError("EPI não encontrado na base")
 
         total = _total_epi(bcu_item)
-        qtd = Decimal(str(quantidade))
+        qtd = max(1, int(quantidade))
         pc_item = PropostaPcEpi(
             proposta_id=proposta_id,
             bcu_item_id=bcu_item_id,
@@ -334,7 +334,7 @@ class PropostaItemsExpandedService:
             "codigo": pc_item.codigo_origem or "",
             "descricao": pc_item.epi,
             "unidade_medida": pc_item.unidade or "un",
-            "quantidade": float(qtd),
+            "quantidade": int(qtd),
             "valor_unitario": float(total),
             "valor_total": float(total * qtd),
         }
@@ -343,7 +343,7 @@ class PropostaItemsExpandedService:
         self,
         proposta_id: UUID,
         bcu_item_id: UUID,
-        quantidade: float,
+        quantidade: int,
     ) -> dict:
         proposta = await self.proposta_repo.get_by_id(proposta_id)
         if not proposta:
@@ -356,7 +356,7 @@ class PropostaItemsExpandedService:
             raise ValueError("Equipamento não encontrado na base")
 
         total = _total_equipamento(bcu_item)
-        qtd = Decimal(str(quantidade))
+        qtd = max(1, int(quantidade))
         pc_item = PropostaPcEquipamento(
             proposta_id=proposta_id,
             bcu_item_id=bcu_item_id,
@@ -372,6 +372,7 @@ class PropostaItemsExpandedService:
             hora_improdutiva=bcu_item.hora_improdutiva,
             mes=bcu_item.mes,
             aluguel_mensal=bcu_item.aluguel_mensal,
+            quantidade=qtd,
             valor_bcu_snapshot=total,
         )
         self.db.add(pc_item)
@@ -382,7 +383,7 @@ class PropostaItemsExpandedService:
             "codigo": pc_item.codigo_origem or "",
             "descricao": pc_item.equipamento,
             "unidade_medida": "h",
-            "quantidade": float(qtd),
+            "quantidade": int(qtd),
             "valor_unitario": float(total),
             "valor_total": float(total * qtd),
         }
@@ -391,7 +392,7 @@ class PropostaItemsExpandedService:
         self,
         proposta_id: UUID,
         bcu_item_id: UUID,
-        quantidade: float,
+        quantidade: int,
     ) -> dict:
         proposta = await self.proposta_repo.get_by_id(proposta_id)
         if not proposta:
@@ -404,7 +405,7 @@ class PropostaItemsExpandedService:
             raise ValueError("Ferramenta não encontrada na base")
 
         total = _total_ferramenta(bcu_item)
-        qtd = Decimal(str(quantidade))
+        qtd = max(1, int(quantidade))
         pc_item = PropostaPcFerramenta(
             proposta_id=proposta_id,
             bcu_item_id=bcu_item_id,
@@ -425,7 +426,7 @@ class PropostaItemsExpandedService:
             "codigo": pc_item.codigo_origem or "",
             "descricao": pc_item.descricao,
             "unidade_medida": pc_item.unidade or "un",
-            "quantidade": float(qtd),
+            "quantidade": int(qtd),
             "valor_unitario": float(total),
             "valor_total": float(total * qtd),
         }
