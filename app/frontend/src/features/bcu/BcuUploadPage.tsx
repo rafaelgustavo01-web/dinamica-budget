@@ -129,22 +129,22 @@ export function BcuUploadPage() {
         }
       }
 
-      const headers = (json[headerRowIdx] ?? []).map((h) => String(h ?? '').trim().toLowerCase().replace(/\s+/g, '_'));
-      const rows = json.slice(headerRowIdx + 1).map((r) => {
+      const headers = (json[headerRowIdx] ?? []).map((h: unknown) => String(h ?? '').trim().toLowerCase().replace(/\s+/g, '_'));
+      const rows = json.slice(headerRowIdx + 1).map((r: unknown) => {
         const rowArray = Array.isArray(r) ? r : [];
         const obj: Record<string, unknown> = {};
         rowArray.forEach((cell, idx) => {
           obj[headers[idx] ?? `col_${idx}`] = cell;
         });
         return obj;
-      }).filter((r) => Object.values(r).some((v) => v !== null && v !== undefined));
+      }).filter((r: Record<string, unknown>) => Object.values(r).some((v) => v !== null && v !== undefined));
 
       setPreviewRows(rows.slice(0, 20));
 
       // validate
       const errors: BcuUploadError[] = [];
       const required = REQUIRED_COLS[tabela];
-      rows.forEach((row, idx) => {
+      rows.forEach((row: Record<string, unknown>, idx: number) => {
         required.forEach((col) => {
           const val = row[col];
           if (val === null || val === undefined || String(val).trim() === '') {

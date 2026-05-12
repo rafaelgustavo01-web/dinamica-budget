@@ -164,11 +164,21 @@ class RecalcularBdiRequest(BaseModel):
 
 class RecalcularBdiResponse(BaseModel):
     proposta_id: str
-    percentual_bdi: Decimal
-    total_direto: Decimal
-    total_indireto: Decimal
-    total_geral: Decimal
+    percentual_bdi: float
+    total_direto: float
+    total_indireto: float
+    total_geral: float
     itens_recalculados: int
+
+
+class PropostaRebuildResponse(BaseModel):
+    proposta_id: str
+    total_direto: float
+    total_indireto: float
+    total_geral: float
+    bdi_percentual: float
+    itens_processados: int
+    cpu_desatualizada: bool
 
 
 class PqItemResponse(BaseModel):
