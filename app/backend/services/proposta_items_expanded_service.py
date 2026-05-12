@@ -71,7 +71,7 @@ class PropostaItemsExpandedService:
                 "id": str(item.id),
                 "codigo": item.codigo_origem,
                 "descricao": item.descricao_funcao,
-                "valor": float(item.salario_base or 0),
+                "valor": float(item.custo_unitario_h or 0),
             }
             for item in items
         ]
@@ -85,8 +85,8 @@ class PropostaItemsExpandedService:
             {
                 "id": str(item.id),
                 "codigo": item.codigo_origem,
-                "descricao": item.descricao,
-                "valor": float(item.valor or 0),
+                "descricao": item.epi,
+                "valor": float(item.custo_unitario or 0),
             }
             for item in items
         ]
@@ -100,8 +100,8 @@ class PropostaItemsExpandedService:
             {
                 "id": str(item.id),
                 "codigo": item.codigo_origem,
-                "descricao": item.descricao,
-                "valor": float(item.custo_diario or 0),
+                "descricao": item.equipamento,
+                "valor": float(item.hora_produtiva or 0),
             }
             for item in items
         ]
@@ -116,7 +116,7 @@ class PropostaItemsExpandedService:
                 "id": str(item.id),
                 "codigo": item.codigo_origem,
                 "descricao": item.descricao,
-                "valor": float(item.valor or 0),
+                "valor": float(item.preco or 0),
             }
             for item in items
         ]

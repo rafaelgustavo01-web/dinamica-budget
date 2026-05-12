@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -21,14 +21,16 @@ import {
   Card,
   CardContent,
   Chip,
-  Autocomplete,
+  Divider,
+  Tabs,
+  Tab,
+  InputAdornment,
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import CheckIcon from '@mui/icons-material/Check';
-import CloseIcon from '@mui/icons-material/Close';
+import SearchIcon from '@mui/icons-material/Search';
 
 import { PageHeader } from '../../../shared/components/PageHeader';
 import { proposalsApi } from '../../../shared/services/api/proposalsApi';
@@ -38,37 +40,35 @@ import type {
 } from '../../../shared/services/api/proposalItemsApi';
 import { proposalItemsApi } from '../../../shared/services/api/proposalItemsApi';
 
-type ItemType = 'generico' | 'mao_obra' | 'epi' | 'equipamento' | 'ferramenta';
+type BcuType = 'mao_obra' | 'epi' | 'equipamento' | 'ferramenta';
 
-interface NewItemRowState {
-  isOpen: boolean;
-  tipo: ItemType;
-  selectedItem: BcuItem | null;
-  quantidade: number;
-  calculatedTotal: number;
-}
+const BCU_TABS: { value: BcuType; label: string }[] = [
+  { value: 'mao_obra', label: 'Mão de Obra' },
+  { value: 'epi', label: 'EPI' },
+  { value: 'equipamento', label: 'Equipamento' },
+  { value: 'ferramenta', label: 'Ferramenta' },
+];
+
+const fmtBRL = (v: number) =>
+  v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export function ProposalItemsExpandedPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [newItemRow, setNewItemRow] = useState<NewItemRowState>({
-    isOpen: false,
-    tipo: 'mao_obra',
-    selectedItem: null,
-    quantidade: 1,
-    calculatedTotal: 0,
-  });
+  const [activeTab, setActiveTab] = useState<BcuType>('mao_obra');
+  const [searchFilter, setSearchFilter] = useState('');
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
 
-  // Buscar proposta
+  // ── Queries ────────────────────────────────────────────────────────────────────────
+
   const { data: proposta, isLoading: isLoadingProposta } = useQuery({
     queryKey: ['proposta', id],
     queryFn: () => proposalsApi.getById(id!),
     enabled: Boolean(id),
   });
 
-  // Listar items
   const { data: items = [], isLoading: isLoadingItems, refetch } = useQuery({
     queryKey: ['proposalItems', id],
     queryFn: () => proposalItemsApi.listItems(id!),
@@ -76,210 +76,162 @@ export function ProposalItemsExpandedPage() {
     select: (data) => (Array.isArray(data) ? data : []),
   });
 
-  // Listar mão de obra (sempre carregado para busca inline)
-  const { data: maoObraItems = [] } = useQuery({
+  const {
+    data: maoObraItems = [],
+    isLoading: isLoadingMaoObra,
+    isError: isErrorMaoObra,
+    refetch: refetchMaoObra,
+  } = useQuery({
     queryKey: ['bcu.mao_obra', id],
     queryFn: () => proposalItemsApi.listMaoObra(id!),
     enabled: Boolean(id),
     select: (data) => (Array.isArray(data) ? data : []),
   });
 
-  // Listar EPI
-  const { data: epiItems = [] } = useQuery({
+  const {
+    data: epiItems = [],
+    isLoading: isLoadingEpi,
+    isError: isErrorEpi,
+    refetch: refetchEpi,
+  } = useQuery({
     queryKey: ['bcu.epi', id],
     queryFn: () => proposalItemsApi.listEpi(id!),
     enabled: Boolean(id),
     select: (data) => (Array.isArray(data) ? data : []),
   });
 
-  // Listar equipamento
-  const { data: equipamentoItems = [] } = useQuery({
+  const {
+    data: equipamentoItems = [],
+    isLoading: isLoadingEquipamento,
+    isError: isErrorEquipamento,
+    refetch: refetchEquipamento,
+  } = useQuery({
     queryKey: ['bcu.equipamento', id],
     queryFn: () => proposalItemsApi.listEquipamento(id!),
     enabled: Boolean(id),
     select: (data) => (Array.isArray(data) ? data : []),
   });
 
-  // Listar ferramenta
-  const { data: ferramentaItems = [] } = useQuery({
+  const {
+    data: ferramentaItems = [],
+    isLoading: isLoadingFerramenta,
+    isError: isErrorFerramenta,
+    refetch: refetchFerramenta,
+  } = useQuery({
     queryKey: ['bcu.ferramenta', id],
     queryFn: () => proposalItemsApi.listFerramenta(id!),
     enabled: Boolean(id),
     select: (data) => (Array.isArray(data) ? data : []),
   });
 
-  // Adicionar mão de obra
+  // ── Mutations ────────────────────────────────────────────────────────────────────────
+
+  const invalidate = () => {
+    refetch();
+    queryClient.invalidateQueries({ queryKey: ['proposta', id] });
+  };
+
   const addMaoObraMutation = useMutation({
     mutationFn: (body: AddBcuItemRequest) => proposalItemsApi.addMaoObra(id!, body),
-    onSuccess: () => {
-      refetch();
-      queryClient.invalidateQueries({ queryKey: ['proposta', id] });
-      setNewItemRow({
-        isOpen: false,
-        tipo: 'mao_obra',
-        selectedItem: null,
-        quantidade: 1,
-        calculatedTotal: 0,
-      });
-    },
+    onSuccess: invalidate,
   });
-
-  // Adicionar EPI
   const addEpiMutation = useMutation({
     mutationFn: (body: AddBcuItemRequest) => proposalItemsApi.addEpi(id!, body),
-    onSuccess: () => {
-      refetch();
-      queryClient.invalidateQueries({ queryKey: ['proposta', id] });
-      setNewItemRow({
-        isOpen: false,
-        tipo: 'epi',
-        selectedItem: null,
-        quantidade: 1,
-        calculatedTotal: 0,
-      });
-    },
+    onSuccess: invalidate,
   });
-
-  // Adicionar equipamento
   const addEquipamentoMutation = useMutation({
     mutationFn: (body: AddBcuItemRequest) => proposalItemsApi.addEquipamento(id!, body),
-    onSuccess: () => {
-      refetch();
-      queryClient.invalidateQueries({ queryKey: ['proposta', id] });
-      setNewItemRow({
-        isOpen: false,
-        tipo: 'equipamento',
-        selectedItem: null,
-        quantidade: 1,
-        calculatedTotal: 0,
-      });
-    },
+    onSuccess: invalidate,
   });
-
-  // Adicionar ferramenta
   const addFerramentaMutation = useMutation({
     mutationFn: (body: AddBcuItemRequest) => proposalItemsApi.addFerramenta(id!, body),
-    onSuccess: () => {
-      refetch();
-      queryClient.invalidateQueries({ queryKey: ['proposta', id] });
-      setNewItemRow({
-        isOpen: false,
-        tipo: 'ferramenta',
-        selectedItem: null,
-        quantidade: 1,
-        calculatedTotal: 0,
-      });
-    },
+    onSuccess: invalidate,
   });
-
-  // Remover item
   const deleteItemMutation = useMutation({
     mutationFn: (itemId: string) => proposalItemsApi.deleteItem(id!, itemId),
     onSuccess: () => refetch(),
   });
 
-  const handleOpenNewItemRow = (tipo: ItemType) => {
-    setNewItemRow({
-      isOpen: true,
-      tipo,
-      selectedItem: null,
-      quantidade: 1,
-      calculatedTotal: 0,
-    });
-  };
+  // ── Helpers ────────────────────────────────────────────────────────────────────────
 
-  const handleCloseNewItemRow = () => {
-    setNewItemRow({
-      isOpen: false,
-      tipo: 'mao_obra',
-      selectedItem: null,
-      quantidade: 1,
-      calculatedTotal: 0,
-    });
-  };
-
-  const handleSelectItemInRow = (item: BcuItem | null) => {
-    setNewItemRow(prev => ({
-      ...prev,
-      selectedItem: item,
-      calculatedTotal: item ? item.valor * prev.quantidade : 0,
-    }));
-  };
-
-  const handleQuantityChange = (newQuantity: number) => {
-    setNewItemRow(prev => ({
-      ...prev,
-      quantidade: newQuantity,
-      calculatedTotal: prev.selectedItem ? prev.selectedItem.valor * newQuantity : 0,
-    }));
-  };
-
-  const handleConfirmNewItem = async () => {
-    if (!newItemRow.selectedItem) {
-      alert('Selecione um item');
-      return;
+  const getBcuItems = (tipo: BcuType): BcuItem[] => {
+    switch (tipo) {
+      case 'mao_obra':    return maoObraItems;
+      case 'epi':         return epiItems;
+      case 'equipamento': return equipamentoItems;
+      case 'ferramenta':  return ferramentaItems;
     }
+  };
 
-    if (newItemRow.quantidade <= 0) {
-      alert('Quantidade deve ser maior que 0');
-      return;
+  const isBcuLoading = (): boolean => {
+    switch (activeTab) {
+      case 'mao_obra':    return isLoadingMaoObra;
+      case 'epi':         return isLoadingEpi;
+      case 'equipamento': return isLoadingEquipamento;
+      case 'ferramenta':  return isLoadingFerramenta;
     }
+  };
 
+  const isBcuError = (): boolean => {
+    switch (activeTab) {
+      case 'mao_obra':    return isErrorMaoObra;
+      case 'epi':         return isErrorEpi;
+      case 'equipamento': return isErrorEquipamento;
+      case 'ferramenta':  return isErrorFerramenta;
+    }
+  };
+
+  const refetchBcu = () => {
+    switch (activeTab) {
+      case 'mao_obra':    void refetchMaoObra(); break;
+      case 'epi':         void refetchEpi(); break;
+      case 'equipamento': void refetchEquipamento(); break;
+      case 'ferramenta':  void refetchFerramenta(); break;
+    }
+  };
+
+  const filteredBcuItems = useMemo(() => {
+    const all = getBcuItems(activeTab);
+    if (!searchFilter.trim()) return all;
+    const q = searchFilter.toLowerCase();
+    return all.filter(
+      item =>
+        item.codigo?.toLowerCase().includes(q) ||
+        item.descricao?.toLowerCase().includes(q),
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, searchFilter, maoObraItems, epiItems, equipamentoItems, ferramentaItems]);
+
+  const getQty = (itemId: string) => quantities[itemId] ?? 1;
+
+  const handleAdd = async (item: BcuItem) => {
     const payload: AddBcuItemRequest = {
-      bcu_item_id: newItemRow.selectedItem.id,
-      quantidade: newItemRow.quantidade,
+      bcu_item_id: item.id,
+      quantidade: getQty(item.id),
     };
-
-    try {
-      if (newItemRow.tipo === 'mao_obra') {
-        await addMaoObraMutation.mutateAsync(payload);
-      } else if (newItemRow.tipo === 'epi') {
-        await addEpiMutation.mutateAsync(payload);
-      } else if (newItemRow.tipo === 'equipamento') {
-        await addEquipamentoMutation.mutateAsync(payload);
-      } else if (newItemRow.tipo === 'ferramenta') {
-        await addFerramentaMutation.mutateAsync(payload);
-      }
-    } catch (error) {
-      alert('Erro ao adicionar item: ' + (error instanceof Error ? error.message : 'Desconhecido'));
-    }
+    if (activeTab === 'mao_obra')         await addMaoObraMutation.mutateAsync(payload);
+    else if (activeTab === 'epi')         await addEpiMutation.mutateAsync(payload);
+    else if (activeTab === 'equipamento') await addEquipamentoMutation.mutateAsync(payload);
+    else                                  await addFerramentaMutation.mutateAsync(payload);
+    setQuantities(prev => { const n = { ...prev }; delete n[item.id]; return n; });
   };
 
-  const isLoading = isLoadingProposta || isLoadingItems;
-  const isSubmitting =
+  const isAnyPending =
     addMaoObraMutation.isPending ||
     addEpiMutation.isPending ||
     addEquipamentoMutation.isPending ||
     addFerramentaMutation.isPending ||
     deleteItemMutation.isPending;
 
-  // Retorna a lista de items BCU baseado no tipo selecionado
-  const getBcuItemsForType = (tipo: ItemType): BcuItem[] => {
-    switch (tipo) {
-      case 'mao_obra':
-        return maoObraItems;
-      case 'epi':
-        return epiItems;
-      case 'equipamento':
-        return equipamentoItems;
-      case 'ferramenta':
-        return ferramentaItems;
-      default:
-        return [];
-    }
-  };
+  const totalValue = items.reduce((acc, item) => acc + (item.valor_total ?? 0), 0);
 
-  const bcuItemsForCurrentType = useMemo(
-    () => getBcuItemsForType(newItemRow.tipo),
-    [newItemRow.tipo, maoObraItems, epiItems, equipamentoItems, ferramentaItems]
-  );
-
-  if (isLoading) {
-    return <CircularProgress />;
-  }
-
-  if (isLoading) {
-    return <CircularProgress />;
+  // ── Render ────────────────────────────────────────────────────────────────────────
+  if (isLoadingProposta || isLoadingItems) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', pt: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   if (!proposta) {
@@ -287,13 +239,14 @@ export function ProposalItemsExpandedPage() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
+    <Container maxWidth="xl" sx={{ py: 3 }}>
       <PageHeader
-        title={`Gerenciar Items - ${proposta.codigo}`}
-        description={`${proposta.titulo || 'Sem título'}`}
+        title={`Gerenciar Items — ${proposta.codigo}`}
+        description={proposta.titulo || 'Sem título'}
       />
 
-      <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+      {/* Barra de ações */}
+      <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
         <Button
           variant="outlined"
           startIcon={<ArrowBackIcon />}
@@ -310,238 +263,387 @@ export function ProposalItemsExpandedPage() {
         </Button>
       </Stack>
 
-      {/* Status Card */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Stack direction="row" spacing={2}>
+      {/* Card de resumo */}
+      <Card
+        elevation={0}
+        sx={{ mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
+      >
+        <CardContent sx={{ py: 2, '&:last-child': { pb: 2 } }}>
+          <Stack direction="row" spacing={4} alignItems="center">
             <Box>
-              <Typography variant="body2" color="textSecondary">
-                Status da Proposta
+              <Typography variant="caption" color="text.secondary">
+                Status
               </Typography>
-              <Chip label={proposta.status} color="primary" variant="outlined" />
+              <Box mt={0.5}>
+                <Chip
+                  label={proposta.status}
+                  size="small"
+                  sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 700 }}
+                />
+              </Box>
             </Box>
+
+            <Divider orientation="vertical" flexItem />
+
             <Box>
-              <Typography variant="body2" color="textSecondary">
-                Total de Items
+              <Typography variant="caption" color="text.secondary">
+                Itens adicionados
               </Typography>
-              <Typography variant="h6">{items.length} items</Typography>
+              <Typography variant="h6" fontWeight={700}>
+                {items.length}
+              </Typography>
+            </Box>
+
+            <Divider orientation="vertical" flexItem />
+
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Valor total da proposta
+              </Typography>
+              <Typography variant="h6" fontWeight={700} color="primary.main">
+                {fmtBRL(totalValue)}
+              </Typography>
             </Box>
           </Stack>
         </CardContent>
       </Card>
 
-      {/* Items Table */}
-      {items.length > 0 || newItemRow.isOpen ? (
-        <TableContainer component={Paper} sx={{ mb: 3 }}>
-          <Table>
+      {/* ================================================================
+          CATÁLOGO BCU
+          ================================================================ */}
+      <Paper
+        elevation={0}
+        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}
+      >
+        {/* Cabeçalho + Tabs */}
+        <Box
+          sx={{
+            px: 3,
+            pt: 2.5,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Typography variant="h6" fontWeight={600} sx={{ mb: 1.5 }}>
+            Catálogo BCU — Selecione os Itens
+          </Typography>
+          <Tabs
+            value={activeTab}
+            onChange={(_, v: BcuType) => {
+              setActiveTab(v);
+              setSearchFilter('');
+            }}
+            sx={{
+              '& .MuiTab-root': {
+                fontWeight: 600,
+                textTransform: 'none',
+                minHeight: 42,
+                fontSize: '0.875rem',
+              },
+            }}
+          >
+            {BCU_TABS.map(t => (
+              <Tab key={t.value} value={t.value} label={t.label} />
+            ))}
+          </Tabs>
+        </Box>
+
+        {/* Barra de filtro */}
+        <Box sx={{ px: 3, py: 2 }}>
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="Filtrar por codigo ou descrição..."
+            value={searchFilter}
+            onChange={e => setSearchFilter(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" sx={{ color: 'text.disabled' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ maxWidth: 480 }}
+          />
+        </Box>
+
+        {/* Tabela do catalogo */}
+        <TableContainer>
+          <Table size="small">
             <TableHead>
-              <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                <TableCell>Código</TableCell>
-                <TableCell>Descrição</TableCell>
-                <TableCell align="right">Quantidade</TableCell>
-                <TableCell>Unidade</TableCell>
-                <TableCell align="right">Valor Unitário</TableCell>
-                <TableCell align="right">Valor Total</TableCell>
-                <TableCell align="center">Ações</TableCell>
+              <TableRow>
+                {[
+                  { label: 'Codigo',         align: 'left'  as const },
+                  { label: 'Descrição',       align: 'left'  as const },
+                  { label: 'Valor Unitário',  align: 'right' as const },
+                  { label: 'Quantidade',      align: 'right' as const },
+                  { label: 'Total Previsto',  align: 'right' as const },
+                  { label: '',               align: 'center' as const },
+                ].map(h => (
+                  <TableCell
+                    key={h.label}
+                    align={h.align}
+                    sx={{
+                      bgcolor: '#1B2A4A',
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: '0.72rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      whiteSpace: 'nowrap',
+                      borderBottom: 'none',
+                      py: 1.5,
+                    }}
+                  >
+                    {h.label}
+                  </TableCell>
+                ))}
               </TableRow>
             </TableHead>
             <TableBody>
-              {items.map(item => (
-                <TableRow key={item.id} hover>
-                  <TableCell>{item.codigo}</TableCell>
-                  <TableCell>{item.descricao}</TableCell>
-                  <TableCell align="right">{item.quantidade.toFixed(2)}</TableCell>
-                  <TableCell>{item.unidade_medida}</TableCell>
-                  <TableCell align="right">
-                    {item.valor_unitario?.toLocaleString('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    })}
-                  </TableCell>
-                  <TableCell align="right">
-                    {item.valor_total?.toLocaleString('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    })}
-                  </TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => deleteItemMutation.mutate(item.id)}
-                      disabled={isSubmitting}
-                    >
-                      <DeleteOutlineIcon />
-                    </IconButton>
+              {isBcuLoading() ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
+                    <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
-              ))}
-
-              {/* Nova linha inline */}
-              {newItemRow.isOpen && (
-                <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-                  <TableCell colSpan={7}>
-                    <Stack spacing={2} sx={{ py: 2 }}>
-                      {/* Selector de tipo */}
-                      <Stack direction="row" spacing={1}>
-                        <Button
-                          size="small"
-                          variant={newItemRow.tipo === 'mao_obra' ? 'contained' : 'outlined'}
-                          onClick={() => {
-                            handleOpenNewItemRow('mao_obra');
-                          }}
-                        >
-                          Mão de Obra
-                        </Button>
-                        <Button
-                          size="small"
-                          variant={newItemRow.tipo === 'epi' ? 'contained' : 'outlined'}
-                          onClick={() => {
-                            handleOpenNewItemRow('epi');
-                          }}
-                        >
-                          EPI
-                        </Button>
-                        <Button
-                          size="small"
-                          variant={newItemRow.tipo === 'equipamento' ? 'contained' : 'outlined'}
-                          onClick={() => {
-                            handleOpenNewItemRow('equipamento');
-                          }}
-                        >
-                          Equipamento
-                        </Button>
-                        <Button
-                          size="small"
-                          variant={newItemRow.tipo === 'ferramenta' ? 'contained' : 'outlined'}
-                          onClick={() => {
-                            handleOpenNewItemRow('ferramenta');
-                          }}
-                        >
-                          Ferramenta
-                        </Button>
-                      </Stack>
-
-                      {/* Autocomplete + Quantidade + Cálculo */}
-                      <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
-                        {/* Autocomplete para selecionar item */}
-                        <Autocomplete
-                          sx={{ flex: 1 }}
-                          options={bcuItemsForCurrentType}
-                          getOptionLabel={option => `${option.codigo} - ${option.descricao}`}
-                          value={newItemRow.selectedItem}
-                          onChange={(_, newValue) => handleSelectItemInRow(newValue)}
-                          renderInput={params => (
-                            <TextField
-                              {...params}
-                              label="Selecionar item..."
-                              placeholder="Digite para buscar"
-                            />
-                          )}
-                          loading={false}
-                          noOptionsText="Nenhum item encontrado"
-                        />
-
-                        {/* Quantidade */}
-                        <TextField
-                          label="Qtd"
-                          type="number"
-                          value={newItemRow.quantidade}
-                          onChange={e => handleQuantityChange(parseFloat(e.target.value))}
-                          inputProps={{ min: 0.01, step: 0.01 }}
-                          sx={{ width: '100px' }}
-                        />
-
-                        {/* Total em tempo real */}
-                        <Box sx={{ minWidth: '140px', pt: 1 }}>
-                          <Typography variant="body2" color="textSecondary">
-                            Total:
-                          </Typography>
-                          <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                            {newItemRow.calculatedTotal.toLocaleString('pt-BR', {
-                              style: 'currency',
-                              currency: 'BRL',
-                            })}
-                          </Typography>
-                        </Box>
-
-                        {/* Botões de confirmar/cancelar */}
-                        <Stack direction="row" spacing={1}>
-                          <IconButton
-                            color="success"
-                            onClick={handleConfirmNewItem}
-                            disabled={
-                              !newItemRow.selectedItem ||
-                              newItemRow.quantidade <= 0 ||
-                              isSubmitting
-                            }
-                            title="Confirmar"
-                          >
-                            <CheckIcon />
-                          </IconButton>
-                          <IconButton
-                            color="error"
-                            onClick={handleCloseNewItemRow}
-                            disabled={isSubmitting}
-                            title="Cancelar"
-                          >
-                            <CloseIcon />
-                          </IconButton>
-                        </Stack>
-                      </Stack>
+              ) : isBcuError() ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                    <Stack alignItems="center" spacing={1}>
+                      <Typography variant="body2" color="error">
+                        Erro ao carregar itens BCU
+                      </Typography>
+                      <Button size="small" variant="outlined" onClick={refetchBcu}>
+                        Tentar novamente
+                      </Button>
                     </Stack>
                   </TableCell>
                 </TableRow>
+              ) : filteredBcuItems.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 5, color: 'text.secondary' }}>
+                    {searchFilter
+                      ? `Nenhum item encontrado para "${searchFilter}"`
+                      : 'Nenhum item disponi­vel nesta categoria na base BCU.'}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredBcuItems.map(item => {
+                  const qty     = getQty(item.id);
+                  const preview = item.valor * qty;
+                  return (
+                    <TableRow
+                      key={item.id}
+                      hover
+                      sx={{ '&:hover': { bgcolor: '#EDF1F8' } }}
+                    >
+                      {/* Código */}
+                      <TableCell
+                        sx={{ fontFamily: 'monospace', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                      >
+                        {item.codigo}
+                      </TableCell>
+
+                      {/* Descrição */}
+                      <TableCell>
+                        <Typography variant="body2" sx={{ maxWidth: 380 }}>
+                          {item.descricao}
+                        </Typography>
+                      </TableCell>
+
+                      {/* Valor unitário */}
+                      <TableCell align="right" sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                        {fmtBRL(item.valor)}
+                      </TableCell>
+
+                      {/* Quantidade editável */}
+                      <TableCell align="right" sx={{ width: 120 }}>
+                        <TextField
+                          size="small"
+                          type="number"
+                          value={qty}
+                          onChange={e => {
+                            const v = parseFloat(e.target.value);
+                            if (!isNaN(v) && v > 0) {
+                              setQuantities(prev => ({ ...prev, [item.id]: v }));
+                            }
+                          }}
+                          inputProps={{ min: 0.01, step: 0.01, style: { textAlign: 'right' } }}
+                          sx={{ width: 90 }}
+                        />
+                      </TableCell>
+
+                      {/* Total previsto */}
+                      <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                        <Typography
+                          variant="body2"
+                          fontWeight={700}
+                          sx={{ color: preview > 0 ? '#1B7A3D' : 'text.secondary' }}
+                        >
+                          {fmtBRL(preview)}
+                        </Typography>
+                      </TableCell>
+
+                      {/* Botão adicionar */}
+                      <TableCell align="center" sx={{ width: 120 }}>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          startIcon={<AddIcon />}
+                          onClick={() => handleAdd(item)}
+                          disabled={isAnyPending || qty <= 0}
+                          sx={{
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            minWidth: 100,
+                          }}
+                        >
+                          Adicionar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
         </TableContainer>
-      ) : (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Nenhum item adicionado ainda. Use os botões abaixo para começar.
-        </Alert>
-      )}
+      </Paper>
 
-      {/* Botões flutuantes para adicionar tipos */}
-      {!newItemRow.isOpen && (
-        <Stack direction="row" spacing={2} sx={{ mb: 3, flexWrap: 'wrap', gap: 1 }}>
-          <Typography variant="body2" color="textSecondary" sx={{ width: '100%', mb: 1 }}>
-            Adicionar novo item:
+      {/* ================================================================
+          ITENS DA PROPOSTA
+      ================================================================ */}
+      <Paper
+        elevation={0}
+        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
+      >
+        <Box
+          sx={{
+            px: 3,
+            py: 2,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            Itens da Proposta
           </Typography>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenNewItemRow('mao_obra')}
-            disabled={isSubmitting}
+          <Chip
+            label={items.length}
+            size="small"
+            sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 700 }}
+          />
+        </Box>
+
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                {[
+                  { label: 'Ordem',        align: 'left'   as const },
+                  { label: 'Codigo',       align: 'left'   as const },
+                  { label: 'Descrição',    align: 'left'   as const },
+                  { label: 'Qtd',          align: 'right'  as const },
+                  { label: 'Un.',          align: 'left'   as const },
+                  { label: 'Valor Unit.',  align: 'right'  as const },
+                  { label: 'Valor Total',  align: 'right'  as const },
+                  { label: '',             align: 'center' as const },
+                ].map(h => (
+                  <TableCell
+                    key={h.label}
+                    align={h.align}
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: '0.72rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      color: 'text.secondary',
+                      bgcolor: '#F8F9FA',
+                      borderBottom: '2px solid',
+                      borderColor: 'divider',
+                      py: 1.5,
+                    }}
+                  >
+                    {h.label}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {items.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} align="center" sx={{ py: 5, color: 'text.secondary' }}>
+                    Nenhum item adicionado a proposta ainda. Use o catalogo acima para adicionar.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                items.map(item => (
+                  <TableRow key={item.id} hover>
+                    <TableCell sx={{ color: 'text.secondary' }}>{item.ordem ?? 'â€”'}</TableCell>
+                    <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                      {item.codigo}
+                    </TableCell>
+                    <TableCell>{item.descricao}</TableCell>
+                    <TableCell align="right">{item.quantidade.toFixed(2)}</TableCell>
+                    <TableCell sx={{ color: 'text.secondary' }}>{item.unidade_medida}</TableCell>
+                    <TableCell align="right">
+                      {item.valor_unitario != null ? fmtBRL(item.valor_unitario) : '—'}
+                    </TableCell>
+                    <TableCell align="right">
+                      {item.valor_total != null ? (
+                        <Typography variant="body2" fontWeight={700} color="primary.main">
+                          {fmtBRL(item.valor_total)}
+                        </Typography>
+                      ) : (
+                        'â€”'
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => deleteItemMutation.mutate(item.id)}
+                        disabled={isAnyPending}
+                      >
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {/* Rodape com total */}
+        {items.length > 0 && (
+          <Box
+            sx={{
+              px: 3,
+              py: 2,
+              borderTop: '2px solid',
+              borderColor: 'primary.main',
+              bgcolor: '#EDF1F8',
+              borderRadius: '0 0 8px 8px',
+            }}
           >
-            + Mão de Obra
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenNewItemRow('epi')}
-            disabled={isSubmitting}
-          >
-            + EPI
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenNewItemRow('equipamento')}
-            disabled={isSubmitting}
-          >
-            + Equipamento
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenNewItemRow('ferramenta')}
-            disabled={isSubmitting}
-          >
-            + Ferramenta
-          </Button>
-        </Stack>
-      )}
+            <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2}>
+              <Typography variant="body2" color="text.secondary">
+                Valor Total da Proposta:
+              </Typography>
+              <Typography variant="h6" fontWeight={700} color="primary.main">
+                {fmtBRL(totalValue)}
+              </Typography>
+            </Stack>
+          </Box>
+        )}
+      </Paper>
     </Container>
   );
 }
+
