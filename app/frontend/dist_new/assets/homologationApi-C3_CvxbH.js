@@ -1,1 +1,0 @@
-import{a as e}from"./index-nJrJHV73.js";const n={async listPendentes(o,a,s){return(await e.get("/homologacao/pendentes",{params:{cliente_id:o,page:a,page_size:s}})).data},async aprovar(o){return(await e.post("/homologacao/aprovar",o)).data},async criarItemProprio(o){return(await e.post("/homologacao/itens-proprios",o)).data}};export{n as h};

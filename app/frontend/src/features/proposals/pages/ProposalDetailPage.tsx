@@ -34,6 +34,7 @@ import { proposalsApi } from '../../../shared/services/api/proposalsApi';
 import { StatusBadge } from '../../../shared/components/StatusBadge';
 import { ExportMenu } from '../components/ExportMenu';
 import { ProposalHistoryPanel } from '../components/ProposalHistoryPanel';
+import { ProposalItemsManager } from '../components/ProposalItemsManager';
 import { formatCurrency, formatDateTime } from '../../../shared/utils/format';
 import { extractApiErrorMessage } from '../../../shared/services/api/apiClient';
 import { useAuth } from '../../auth/AuthProvider';
@@ -191,6 +192,14 @@ export function ProposalDetailPage() {
               </Button>
             )}
             <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddCircleOutlineIcon />}
+              onClick={() => navigate(`/propostas/${id}/items`)}
+            >
+              Gerenciar Itens
+            </Button>
+            <Button
               variant="outlined"
               color="info"
               startIcon={<RuleOutlinedIcon />}
@@ -346,6 +355,14 @@ export function ProposalDetailPage() {
             </Paper>
           </Box>
         </Paper>
+
+        {/* Gerenciamento de Items */}
+        <ProposalItemsManager
+          propostaId={id!}
+          propostaStatus={proposta.status}
+          userRole={proposta.meu_papel ?? undefined}
+          readOnly={!canEdit}
+        />
 
         {/* Histórico de versões */}
         {proposta.proposta_root_id && (

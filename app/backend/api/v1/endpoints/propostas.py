@@ -27,6 +27,9 @@ from backend.schemas.proposta_pc import (
     RecursoExtraUpdate,
 )
 from backend.services.histograma_service import HistogramaService
+from backend.services.proposta_composicao_service import PropostaComposicaoService
+from backend.services.proposta_item_service import PropostaItemService
+from backend.services.proposta_items_expanded_service import PropostaItemsExpandedService
 from backend.services.proposta_montagem_service import PropostaMontagemService
 from backend.services.proposta_recurso_extra_service import PropostaRecursoExtraService
 from backend.services.proposta_service import PropostaService
@@ -374,4 +377,346 @@ async def desalocar_recurso(
     svc = PropostaRecursoExtraService(db)
     await svc.desalocar(proposta_id, alocacao_id)
     await db.commit()
+
+
+# ── Endpoints de Composição de Valores ────────────────────────────────────────
+
+
+@router.get("/{proposta_id}/composicoes/valores", response_model=dict)
+async def buscar_valores_proposta(
+    proposta_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Busca todos os valores necessários para compor a proposta.
+    
+    Retorna items, composições, recursos extras e totais consolidados.
+    """
+    await require_proposta_role(proposta_id, None, current_user, db)
+    svc = PropostaComposicaoService(db)
+    return await svc.buscar_valores_proposta(proposta_id)
+
+
+@router.get("/{proposta_id}/composicoes/validar", response_model=dict)
+async def validar_composicao_proposta(
+    proposta_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Valida se os valores de composição estão corretos e completos.
+    
+    Checklist:
+    - Items com composições?
+    - Custos preenchidos?
+    - BDI válido?
+    - Totais batem?
+    """
+    await require_proposta_role(proposta_id, None, current_user, db)
+    svc = PropostaComposicaoService(db)
+    return await svc.validar_valores_composicao(proposta_id)
+
+
+@router.get("/{proposta_id}/composicoes/relatorio", response_model=dict)
+async def gerar_relatorio_composicao(
+    proposta_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Gera relatório detalhado de composição.
+    
+    Usado para auditoria e entendimento de cálculos.
+    """
+    await require_proposta_role(proposta_id, None, current_user, db)
+    svc = PropostaComposicaoService(db)
+    return await svc.gerar_relatorio_composicao(proposta_id)
+
+
+# ── Endpoints de Gerenciamento de Items ───────────────────────────────────────
+
+
+@router.post("/{proposta_id}/items", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def adicionar_item_proposta(
+    proposta_id: UUID,
+    body: dict,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Adiciona um novo item à proposta.
+    
+    Body:
+    {
+        "codigo": "01",
+        "descricao": "Escavação",
+        "unidade_medida": "m³",
+        "quantidade": 100.0
+    }
+    
+    Permissão: EDITOR+ apenas em status RASCUNHO ou CPU_GERADA
+    """
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
+    svc = PropostaItemService(db)
+    resultado = await svc.adicionar_item(
+        proposta_id,
+        codigo=body["codigo"],
+        descricao=body["descricao"],
+        unidade_medida=body["unidade_medida"],
+        quantidade=float(body["quantidade"]),
+    )
+    await db.commit()
+    return resultado
+
+
+@router.get("/{proposta_id}/items", response_model=list[dict])
+async def listar_items_proposta(
+    proposta_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    """Lista todos os items de uma proposta, ordenados."""
+    await require_proposta_role(proposta_id, None, current_user, db)
+    svc = PropostaItemService(db)
+    return await svc.listar_items(proposta_id)
+
+
+@router.patch("/{proposta_id}/items/{item_id}", response_model=dict)
+async def atualizar_item_proposta(
+    proposta_id: UUID,
+    item_id: UUID,
+    body: dict,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Atualiza dados de um item.
+    
+    Campos atualizáveis: descricao, quantidade, unidade_medida
+    Apenas em status RASCUNHO
+    """
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
+    svc = PropostaItemService(db)
+    resultado = await svc.atualizar_item(proposta_id, item_id, **body)
+    await db.commit()
+    return resultado
+
+
+@router.delete("/{proposta_id}/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remover_item_proposta(
+    proposta_id: UUID,
+    item_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """
+    Remove um item da proposta.
+    
+    Apenas em status RASCUNHO (mais restritivo)
+    Remove composições automaticamente
+    """
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
+    svc = PropostaItemService(db)
+    await svc.remover_item(proposta_id, item_id)
+    await db.commit()
+
+
+@router.post("/{proposta_id}/items/reordenar", response_model=dict)
+async def reordenar_items_proposta(
+    proposta_id: UUID,
+    body: dict,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Reordena items da proposta.
+    
+    Body:
+    {
+        "items_ids": ["uuid1", "uuid2", "uuid3"]
+    }
+    
+    Apenas em status RASCUNHO
+    """
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
+    items_ids = [UUID(id_str) for id_str in body["items_ids"]]
+    svc = PropostaItemService(db)
+    resultado = await svc.reordenar_items(proposta_id, items_ids)
+    await db.commit()
+    return resultado
+
+
+# ── Endpoints de Items Expandidos (EPI, Mão Obra, Equipamentos, Ferramentas) ──
+
+
+@router.get("/{proposta_id}/items/tipos", response_model=dict)
+async def listar_tipos_items(
+    proposta_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Lista tipos de items que podem ser adicionados à proposta.
+    Inclui: genérico, mão de obra, EPI, equipamento, ferramenta.
+    """
+    await require_proposta_role(proposta_id, None, current_user, db)
+    svc = PropostaItemsExpandedService(db)
+    return await svc.listar_tipos_disponiveis(proposta_id)
+
+
+@router.get("/{proposta_id}/items/bcu/mao-obra", response_model=list[dict])
+async def listar_mao_obra_bcu(
+    proposta_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    """Lista mão de obra disponível na base de custos."""
+    await require_proposta_role(proposta_id, None, current_user, db)
+    svc = PropostaItemsExpandedService(db)
+    return await svc.listar_bcu_mao_obra()
+
+
+@router.get("/{proposta_id}/items/bcu/epi", response_model=list[dict])
+async def listar_epi_bcu(
+    proposta_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    """Lista EPI disponível na base de custos."""
+    await require_proposta_role(proposta_id, None, current_user, db)
+    svc = PropostaItemsExpandedService(db)
+    return await svc.listar_bcu_epi()
+
+
+@router.get("/{proposta_id}/items/bcu/equipamento", response_model=list[dict])
+async def listar_equipamento_bcu(
+    proposta_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    """Lista equipamentos disponíveis na base de custos."""
+    await require_proposta_role(proposta_id, None, current_user, db)
+    svc = PropostaItemsExpandedService(db)
+    return await svc.listar_bcu_equipamento()
+
+
+@router.get("/{proposta_id}/items/bcu/ferramenta", response_model=list[dict])
+async def listar_ferramenta_bcu(
+    proposta_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    """Lista ferramentas disponíveis na base de custos."""
+    await require_proposta_role(proposta_id, None, current_user, db)
+    svc = PropostaItemsExpandedService(db)
+    return await svc.listar_bcu_ferramenta()
+
+
+@router.post("/{proposta_id}/items/mao-obra", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def adicionar_mao_obra(
+    proposta_id: UUID,
+    body: dict,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Adiciona mão de obra da base BCU.
+    
+    Body:
+    {
+        "bcu_item_id": "uuid",
+        "quantidade": 1.0
+    }
+    """
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
+    svc = PropostaItemsExpandedService(db)
+    resultado = await svc.adicionar_mao_obra(
+        proposta_id,
+        UUID(body["bcu_item_id"]),
+        float(body["quantidade"]),
+    )
+    await db.commit()
+    return resultado
+
+
+@router.post("/{proposta_id}/items/epi", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def adicionar_epi(
+    proposta_id: UUID,
+    body: dict,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Adiciona EPI da base BCU.
+    
+    Body:
+    {
+        "bcu_item_id": "uuid",
+        "quantidade": 1.0
+    }
+    """
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
+    svc = PropostaItemsExpandedService(db)
+    resultado = await svc.adicionar_epi(
+        proposta_id,
+        UUID(body["bcu_item_id"]),
+        float(body["quantidade"]),
+    )
+    await db.commit()
+    return resultado
+
+
+@router.post("/{proposta_id}/items/equipamento", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def adicionar_equipamento(
+    proposta_id: UUID,
+    body: dict,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Adiciona equipamento da base BCU.
+    
+    Body:
+    {
+        "bcu_item_id": "uuid",
+        "quantidade": 1.0
+    }
+    """
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
+    svc = PropostaItemsExpandedService(db)
+    resultado = await svc.adicionar_equipamento(
+        proposta_id,
+        UUID(body["bcu_item_id"]),
+        float(body["quantidade"]),
+    )
+    await db.commit()
+    return resultado
+
+
+@router.post("/{proposta_id}/items/ferramenta", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def adicionar_ferramenta(
+    proposta_id: UUID,
+    body: dict,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Adiciona ferramenta da base BCU.
+    
+    Body:
+    {
+        "bcu_item_id": "uuid",
+        "quantidade": 1.0
+    }
+    """
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
+    svc = PropostaItemsExpandedService(db)
+    resultado = await svc.adicionar_ferramenta(
+        proposta_id,
+        UUID(body["bcu_item_id"]),
+        float(body["quantidade"]),
+    )
+    await db.commit()
+    return resultado
 

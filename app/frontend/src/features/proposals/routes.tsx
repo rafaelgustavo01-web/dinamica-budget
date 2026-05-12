@@ -22,6 +22,9 @@ const ProposalHistogramaPage = lazy(() =>
 const MatchReviewPage = lazy(() =>
   import('./pages/MatchReviewPage').then((m) => ({ default: m.MatchReviewPage })),
 );
+const ProposalItemsPage = lazy(() =>
+  import('./pages/ProposalItemsExpandedPage').then((m) => ({ default: m.ProposalItemsExpandedPage })),
+);
 // F2-09: Approval queue — must be declared BEFORE :id to avoid React Router confusion
 const ApprovalQueuePage = lazy(() =>
   import('./pages/ApprovalQueuePage').then((m) => ({ default: m.ApprovalQueuePage })),
@@ -33,10 +36,12 @@ export const proposalRoutes = (
     <Route path="nova" element={<ProposalCreatePage />} />
     {/* Static routes before parameterized :id */}
     <Route path="aprovacoes" element={<ApprovalQueuePage />} />
-    <Route path=":id" element={<ProposalDetailPage />} />
+    {/* Child routes MUST be declared BEFORE parent :id route */}
+    <Route path=":id/items" element={<ProposalItemsPage />} />
     <Route path=":id/importar" element={<ProposalImportPage />} />
     <Route path=":id/histograma" element={<ProposalHistogramaPage />} />
     <Route path=":id/match-review" element={<MatchReviewPage />} />
     <Route path=":id/cpu" element={<ProposalCpuPage />} />
+    <Route path=":id" element={<ProposalDetailPage />} />
   </Route>
 );

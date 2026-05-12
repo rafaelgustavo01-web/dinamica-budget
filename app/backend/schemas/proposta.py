@@ -213,3 +213,42 @@ class PqMatchConfirmarRequest(BaseModel):
             raise ValueError("servico_match_id e obrigatorio para acao=substituir")
         return self
 
+
+# ── Schemas de Composição e Valores ───────────────────────────────────────────
+
+
+class BuscarValoresPropostaResponse(BaseModel):
+    """Response para busca de valores de uma proposta."""
+    proposta_id: str
+    codigo: str
+    status: str
+    percentual_bdi: float
+    totais: dict
+    resumo_por_tipo: dict
+    items: list[dict]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ValidarComposicaoResponse(BaseModel):
+    """Response para validação de composição."""
+    proposta_id: str
+    valido: bool
+    erros: list[str]
+    avisos: list[str]
+    items_total: int
+    items_com_composicao: int
+    items_vazios: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RelatorioComposicaoResponse(BaseModel):
+    """Response para relatório de composição."""
+    proposta: dict
+    items_detalhados: list[dict]
+    totais_proposta: dict
+
+    model_config = ConfigDict(from_attributes=True)
+
+
