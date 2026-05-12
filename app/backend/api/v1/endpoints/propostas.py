@@ -1,7 +1,8 @@
 from math import ceil
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import get_current_active_user, get_db, require_proposta_role
@@ -476,10 +477,10 @@ async def listar_items_proposta(
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
-    """Lista todos os items de uma proposta, ordenados."""
+    """Lista todos os items BCU de uma proposta (mão de obra, EPI, equipamento, ferramenta)."""
     await require_proposta_role(proposta_id, None, current_user, db)
-    svc = PropostaItemService(db)
-    return await svc.listar_items(proposta_id)
+    svc = PropostaItemsExpandedService(db)
+    return await svc.listar_items_unificados(proposta_id)
 
 
 @router.patch("/{proposta_id}/items/{item_id}", response_model=dict)
@@ -510,15 +511,12 @@ async def remover_item_proposta(
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    """
-    Remove um item da proposta.
-    
-    Apenas em status RASCUNHO (mais restritivo)
-    Remove composições automaticamente
-    """
+    """Remove um item BCU da proposta (detecta automaticamente o tipo)."""
     await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
-    svc = PropostaItemService(db)
-    await svc.remover_item(proposta_id, item_id)
+    svc = PropostaItemsExpandedService(db)
+    removed = await svc.remover_item_unificado(proposta_id, item_id)
+    if not removed:
+        raise HTTPException(status_code=404, detail="Item não encontrado")
     await db.commit()
 
 
@@ -631,12 +629,16 @@ async def adicionar_mao_obra(
     """
     await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
     svc = PropostaItemsExpandedService(db)
-    resultado = await svc.adicionar_mao_obra(
-        proposta_id,
-        UUID(body["bcu_item_id"]),
-        float(body["quantidade"]),
-    )
-    await db.commit()
+    try:
+        resultado = await svc.adicionar_mao_obra(
+            proposta_id,
+            UUID(body["bcu_item_id"]),
+            float(body["quantidade"]),
+        )
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="Este item de mão de obra já foi adicionado a esta proposta.")
     return resultado
 
 
@@ -658,12 +660,16 @@ async def adicionar_epi(
     """
     await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
     svc = PropostaItemsExpandedService(db)
-    resultado = await svc.adicionar_epi(
-        proposta_id,
-        UUID(body["bcu_item_id"]),
-        float(body["quantidade"]),
-    )
-    await db.commit()
+    try:
+        resultado = await svc.adicionar_epi(
+            proposta_id,
+            UUID(body["bcu_item_id"]),
+            float(body["quantidade"]),
+        )
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="Este EPI já foi adicionado a esta proposta.")
     return resultado
 
 
@@ -685,12 +691,16 @@ async def adicionar_equipamento(
     """
     await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
     svc = PropostaItemsExpandedService(db)
-    resultado = await svc.adicionar_equipamento(
-        proposta_id,
-        UUID(body["bcu_item_id"]),
-        float(body["quantidade"]),
-    )
-    await db.commit()
+    try:
+        resultado = await svc.adicionar_equipamento(
+            proposta_id,
+            UUID(body["bcu_item_id"]),
+            float(body["quantidade"]),
+        )
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="Este equipamento já foi adicionado a esta proposta.")
     return resultado
 
 
@@ -712,11 +722,15 @@ async def adicionar_ferramenta(
     """
     await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
     svc = PropostaItemsExpandedService(db)
-    resultado = await svc.adicionar_ferramenta(
-        proposta_id,
-        UUID(body["bcu_item_id"]),
-        float(body["quantidade"]),
-    )
-    await db.commit()
+    try:
+        resultado = await svc.adicionar_ferramenta(
+            proposta_id,
+            UUID(body["bcu_item_id"]),
+            float(body["quantidade"]),
+        )
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="Esta ferramenta já foi adicionada a esta proposta.")
     return resultado
 

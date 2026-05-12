@@ -204,16 +204,25 @@ export function ProposalItemsExpandedPage() {
 
   const getQty = (itemId: string) => quantities[itemId] ?? 1;
 
+  const [addError, setAddError] = useState<string | null>(null);
+
   const handleAdd = async (item: BcuItem) => {
+    setAddError(null);
     const payload: AddBcuItemRequest = {
       bcu_item_id: item.id,
       quantidade: getQty(item.id),
     };
-    if (activeTab === 'mao_obra')         await addMaoObraMutation.mutateAsync(payload);
-    else if (activeTab === 'epi')         await addEpiMutation.mutateAsync(payload);
-    else if (activeTab === 'equipamento') await addEquipamentoMutation.mutateAsync(payload);
-    else                                  await addFerramentaMutation.mutateAsync(payload);
-    setQuantities(prev => { const n = { ...prev }; delete n[item.id]; return n; });
+    try {
+      if (activeTab === 'mao_obra')         await addMaoObraMutation.mutateAsync(payload);
+      else if (activeTab === 'epi')         await addEpiMutation.mutateAsync(payload);
+      else if (activeTab === 'equipamento') await addEquipamentoMutation.mutateAsync(payload);
+      else                                  await addFerramentaMutation.mutateAsync(payload);
+      setQuantities(prev => { const n = { ...prev }; delete n[item.id]; return n; });
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      if (detail) setAddError(detail);
+      else setAddError('Erro ao adicionar item. Tente novamente.');
+    }
   };
 
   const isAnyPending =
@@ -366,7 +375,13 @@ export function ProposalItemsExpandedPage() {
             sx={{ maxWidth: 480 }}
           />
         </Box>
-
+        {addError && (
+          <Box sx={{ px: 3, pb: 1 }}>
+            <Alert severity="warning" onClose={() => setAddError(null)} sx={{ py: 0.5 }}>
+              {addError}
+            </Alert>
+          </Box>
+        )}
         {/* Tabela do catalogo */}
         <TableContainer>
           <Table size="small">
