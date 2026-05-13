@@ -49,7 +49,10 @@ class PropostaPcMaoObra(Base):
 
 class PropostaPcEquipamentoPremissa(Base):
     __tablename__ = "proposta_pc_equipamento_premissa"
-    __table_args__ = {"schema": "operacional"}
+    __table_args__ = (
+        UniqueConstraint("proposta_id", name="uq_proposta_pc_equipamento_premissa"),
+        {"schema": "operacional"},
+    )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     proposta_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("operacional.propostas.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -157,7 +160,10 @@ class PropostaPcFerramenta(Base):
 
 class PropostaPcMobilizacao(Base):
     __tablename__ = "proposta_pc_mobilizacao"
-    __table_args__ = {"schema": "operacional"}
+    __table_args__ = (
+        UniqueConstraint("proposta_id", "bcu_item_id", name="uq_proposta_pc_mobilizacao"),
+        {"schema": "operacional"},
+    )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     proposta_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("operacional.propostas.id", ondelete="CASCADE"), nullable=False, index=True)

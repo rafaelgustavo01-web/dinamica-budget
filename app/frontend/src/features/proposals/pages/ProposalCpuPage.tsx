@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
   Box,
   Button,
+  Chip,
   CircularProgress,
   InputAdornment,
   Paper,
@@ -15,6 +16,8 @@ import {
 import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
 import CalculateOutlinedIcon from '@mui/icons-material/CalculateOutlined';
 import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
+import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 import { PageHeader } from '../../../shared/components/PageHeader';
 import { proposalsApi } from '../../../shared/services/api/proposalsApi';
@@ -41,12 +44,24 @@ export function ProposalCpuPage() {
     enabled: Boolean(id),
   });
 
+  // Sincroniza BDI local com valor real da proposta quando disponível
+  useEffect(() => {
+    if (proposta && itens.length > 0) {
+      const primeiroItem = itens[0];
+      if (primeiroItem?.percentual_indireto != null) {
+        const pct = parseFloat(primeiroItem.percentual_indireto) * 100;
+        setBdi(pct.toFixed(2));
+      }
+    }
+  }, [proposta, itens]);
+
   const gerarMutation = useMutation({
     mutationFn: () =>
       proposalsApi.gerarCpu(id!, parseFloat(bdi) || 0),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['cpu-itens', id] });
       void queryClient.invalidateQueries({ queryKey: ['proposta', id] });
+      void queryClient.invalidateQueries({ queryKey: ['histograma', id] });
     },
   });
 
@@ -56,6 +71,15 @@ export function ProposalCpuPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['cpu-itens', id] });
       void queryClient.invalidateQueries({ queryKey: ['proposta', id] });
+    },
+  });
+
+  const rebuildMutation = useMutation({
+    mutationFn: () => proposalsApi.rebuild(id!),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['cpu-itens', id] });
+      void queryClient.invalidateQueries({ queryKey: ['proposta', id] });
+      void queryClient.invalidateQueries({ queryKey: ['histograma', id] });
     },
   });
 
@@ -92,9 +116,29 @@ export function ProposalCpuPage() {
             {extractApiErrorMessage(errorItens, 'Erro ao carregar itens de CPU. Recarregue a página.')}
           </Alert>
         )}
-        {(gerarMutation.isError || recalcularMutation.isError) && (
+        {(gerarMutation.isError || recalcularMutation.isError || rebuildMutation.isError) && (
           <Alert severity="error">
-            {extractApiErrorMessage(gerarMutation.error ?? recalcularMutation.error)}
+            {extractApiErrorMessage(gerarMutation.error ?? recalcularMutation.error ?? rebuildMutation.error)}
+          </Alert>
+        )}
+
+        {proposta?.cpu_desatualizada && (
+          <Alert severity="warning" icon={<WarningAmberIcon />}>
+            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+              <Typography variant="body2">
+                A CPU está desatualizada porque o histograma foi editado após a última geração.
+              </Typography>
+              <Button
+                variant="outlined"
+                color="warning"
+                size="small"
+                startIcon={<RefreshOutlinedIcon />}
+                onClick={() => rebuildMutation.mutate()}
+                disabled={rebuildMutation.isPending}
+              >
+                {rebuildMutation.isPending ? 'Recalculando...' : 'Rebuild CPU'}
+              </Button>
+            </Stack>
           </Alert>
         )}
 
@@ -132,7 +176,10 @@ export function ProposalCpuPage() {
             )}
 
             {proposta && (
-              <Stack direction="row" spacing={2} sx={{ ml: 'auto' }}>
+              <Stack direction="row" spacing={2} sx={{ ml: 'auto' }} alignItems="center">
+                {proposta.cpu_desatualizada && (
+                  <Chip label="Desatualizada" color="warning" size="small" icon={<WarningAmberIcon />} />
+                )}
                 <Box textAlign="right">
                   <Typography variant="caption" color="text.secondary">Total Direto</Typography>
                   <Typography variant="h6">{formatCurrency(proposta.total_direto ?? 0)}</Typography>

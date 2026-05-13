@@ -161,7 +161,26 @@ export function HistogramaPage() {
         </Button>
 
         {data.cpu_desatualizada && (
-          <Chip label="CPU Desatualizada" color="warning" variant="filled" />
+          <>
+            <Chip label="CPU Desatualizada" color="warning" variant="filled" />
+            <Button
+              variant="outlined"
+              color="warning"
+              size="small"
+              startIcon={<TableChartOutlinedIcon />}
+              onClick={() => rebuildMutation.mutate()}
+              disabled={rebuildMutation.isPending}
+            >
+              {rebuildMutation.isPending ? 'Recalculando...' : 'Recalcular CPU'}
+            </Button>
+            <Button
+              variant="text"
+              size="small"
+              onClick={() => navigate(`/propostas/${id}/cpu`)}
+            >
+              Ir para CPU
+            </Button>
+          </>
         )}
 
         {hasDivergencias && (
