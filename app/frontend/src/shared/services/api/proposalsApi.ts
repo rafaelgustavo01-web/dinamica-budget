@@ -85,6 +85,14 @@ export interface PqMatchResponse {
   sem_match: number;
 }
 
+export interface PqMatchStatusResponse {
+  status: string; // queued | running | completed | failed | not_started
+  processados: number;
+  sugeridos: number;
+  sem_match: number;
+  error?: string | null;
+}
+
 export type StatusMatch =
   | 'PENDENTE'
   | 'BUSCANDO'
@@ -214,9 +222,35 @@ export const proposalsApi = {
     return response.data;
   },
 
-  async executeMatch(propostaId: string) {
-    const response = await apiClient.post<PqMatchResponse>(`/propostas/${propostaId}/pq/match`);
-    return response.data;
+  async executeMatch(propostaId: string): Promise<PqMatchResponse> {
+    // Dispara o match em background (202 Accepted)
+    await apiClient.post<PqMatchStatusResponse>(`/propostas/${propostaId}/pq/match`);
+
+    // Faz polling até completed / failed (máx 15 min)
+    const POLL_MS = 3_000;
+    const MAX_MS = 15 * 60 * 1_000;
+    const deadline = Date.now() + MAX_MS;
+
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+      const { data } = await apiClient.get<PqMatchStatusResponse>(
+        `/propostas/${propostaId}/pq/match/status`,
+      );
+      if (data.status === 'completed') {
+        return { processados: data.processados, sugeridos: data.sugeridos, sem_match: data.sem_match };
+      }
+      if (data.status === 'failed') {
+        throw new Error(data.error ?? 'Match falhou');
+      }
+    }
+    throw new Error('Timeout aguardando match inteligente');
+  },
+
+  async getMatchStatus(propostaId: string): Promise<PqMatchStatusResponse> {
+    const { data } = await apiClient.get<PqMatchStatusResponse>(
+      `/propostas/${propostaId}/pq/match/status`,
+    );
+    return data;
   },
 
   async listPqItens(propostaId: string, statusMatch?: StatusMatch): Promise<PqItemResponse[]> {

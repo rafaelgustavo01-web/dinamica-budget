@@ -54,6 +54,9 @@ class PropostaResponse(BaseModel):
     aprovado_em: datetime | None = None
     motivo_revisao: str | None = None
 
+    # CPU
+    cpu_desatualizada: bool = False
+
     model_config = ConfigDict(from_attributes=True)
 
 

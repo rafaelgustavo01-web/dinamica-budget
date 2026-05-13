@@ -174,7 +174,7 @@ export function ProposalImportPage() {
             <Box sx={{ width: '100%', mt: 2 }}>
               <LinearProgress color="secondary" />
               <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
-                A IA está analisando as descrições e sugerindo associações...
+                A IA está analisando as descrições e sugerindo associações. Isso pode levar alguns minutos para planilhas grandes…
               </Typography>
             </Box>
           )}
