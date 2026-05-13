@@ -102,6 +102,14 @@ class PqMatchResponse(BaseModel):
     sem_match: int
 
 
+class PqMatchStatusResponse(BaseModel):
+    status: str  # queued | running | completed | failed
+    processados: int = 0
+    sugeridos: int = 0
+    sem_match: int = 0
+    error: str | None = None
+
+
 class CpuGeracaoDetalheResponse(BaseModel):
     processados: int
     erros: int

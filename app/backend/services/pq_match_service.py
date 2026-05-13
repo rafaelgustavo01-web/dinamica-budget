@@ -42,8 +42,8 @@ class PqMatchService:
                 request=BuscaServicoRequest(
                     cliente_id=proposta.cliente_id,
                     texto_busca=item.descricao_original,
-                    limite_resultados=5,
-                    threshold_score=0.65,
+                    limite_resultados=10,
+                    threshold_score=0.45,
                 ),
                 usuario_id=usuario_id,
                 db=self.db,

@@ -84,61 +84,69 @@ class BuscaService:
 
         # ─────────────────────────────────────────────────────────────────────
         # FASE 0.2: Itens Próprios do Cliente (PROPRIA + APROVADO)
+        # Acumula candidatos — não faz early-exit para permitir comparação com semântica
         # ─────────────────────────────────────────────────────────────────────
+        early_candidates: list[ResultadoBusca] = []
+        assoc_a_fortalecer = None
+
         if request.cliente_id is not None:
-            resultado = await self._fase0_itens_proprios(
+            res_proprios = await self._fase0_itens_proprios(
                 cliente_id=request.cliente_id,
                 texto_norm=texto_leve,
                 threshold=request.threshold_score,
                 limit=request.limite_resultados,
                 proprios_repo=proprios_repo,
             )
-            if resultado:
-                return await self._build_response(
-                    texto_busca=request.texto_busca,
-                    resultados=resultado,
-                    t0=t0,
-                    cliente_id=request.cliente_id,
-                    usuario_id=usuario_id,
-                    db=db,
-                )
+            if res_proprios:
+                early_candidates.extend(res_proprios)
 
         # ─────────────────────────────────────────────────────────────────────
         # FASE 1: Associação Direta (associacao_inteligente)
+        # Associações CONSOLIDADAS têm score=1.0 e sempre vencerão a semântica
         # ─────────────────────────────────────────────────────────────────────
         if request.cliente_id is not None:
-            resultado, associacao = await self._fase1_associacao(
+            res_assoc, associacao = await self._fase1_associacao(
                 cliente_id=request.cliente_id,
-                texto_norm=texto_norm,  # canonical sorted form for exact lookup
+                texto_norm=texto_norm,
                 assoc_repo=assoc_repo,
                 base_repo=base_repo,
             )
-            if resultado:
-                if associacao:
-                    await assoc_repo.fortalecer(associacao)
-                return await self._build_response(
-                    texto_busca=request.texto_busca,
-                    resultados=resultado,
-                    t0=t0,
-                    cliente_id=request.cliente_id,
-                    usuario_id=usuario_id,
-                    db=db,
-                )
+            if res_assoc:
+                early_candidates.extend(res_assoc)
+                assoc_a_fortalecer = associacao
 
         # ─────────────────────────────────────────────────────────────────────
-        # FASE 2: IA Semântica (pgvector) — executa antes do fuzzy
+        # FASE 2: IA Semântica (pgvector) — sempre executa para competir
+        # Garante que o resultado mais compatível vença independente da fase
         # ─────────────────────────────────────────────────────────────────────
-        resultado = await self._fase3_semantica(
-            texto_busca=texto_leve,  # natural word order for sentence embeddings
+        resultado_semantico = await self._fase3_semantica(
+            texto_busca=texto_leve,
             threshold=request.threshold_score,
             limit=request.limite_resultados,
             db=db,
             base_repo=base_repo,
         )
-        if resultado:
+
+        # Merge: semântica + candidatos anteriores, ordena por score_confianca desc
+        todos_candidatos = resultado_semantico + early_candidates
+        if todos_candidatos:
+            todos_candidatos.sort(key=lambda r: r.score_confianca, reverse=True)
+            # Deduplicação por id_tcpo preservando ordem (maior score primeiro)
+            seen_ids: set = set()
+            merged: list[ResultadoBusca] = []
+            for r in todos_candidatos:
+                if r.id_tcpo not in seen_ids:
+                    seen_ids.add(r.id_tcpo)
+                    merged.append(r)
+            merged = merged[: request.limite_resultados]
+
+            # Só fortalece associação se ela realmente ganhou (é o top resultado)
+            if assoc_a_fortalecer and merged[0].origem_match == "ASSOCIACAO_DIRETA":
+                await assoc_repo.fortalecer(assoc_a_fortalecer)
+
             return await self._build_response(
                 texto_busca=request.texto_busca,
-                resultados=resultado,
+                resultados=merged,
                 t0=t0,
                 cliente_id=request.cliente_id,
                 usuario_id=usuario_id,
@@ -146,14 +154,11 @@ class BuscaService:
             )
 
         # ─────────────────────────────────────────────────────────────────────
-        # FASE 3: Fuzzy Global (pg_trgm) — fallback quando embedding falha
+        # FASE 3: Fuzzy Global (pg_trgm) — último recurso quando embedding falha
         # ─────────────────────────────────────────────────────────────────────
-        # Use a lower threshold for pg_trgm: cosine similarity and trigram
-        # similarity operate on different scales. 0.25 is a robust default
-        # for Portuguese construction-domain descriptions.
         fuzzy_threshold = min(0.30, request.threshold_score * 0.45)
-        resultado = await self._fase2_fuzzy(
-            texto_busca=texto_leve,  # natural word order for trigram n-grams
+        resultado_fuzzy = await self._fase2_fuzzy(
+            texto_busca=texto_leve,
             threshold=fuzzy_threshold,
             limit=request.limite_resultados,
             base_repo=base_repo,
@@ -161,7 +166,7 @@ class BuscaService:
 
         return await self._build_response(
             texto_busca=request.texto_busca,
-            resultados=resultado or [],
+            resultados=resultado_fuzzy or [],
             t0=t0,
             cliente_id=request.cliente_id,
             usuario_id=usuario_id,

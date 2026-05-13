@@ -1,8 +1,10 @@
+import asyncio
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.core.database import async_session_factory
 from backend.core.dependencies import get_current_active_user, get_db, require_proposta_role
 from backend.models.enums import PropostaPapel
 from backend.core.exceptions import NotFoundError
@@ -17,6 +19,7 @@ from backend.schemas.proposta import (
     PqItemResponse,
     PqMatchConfirmarRequest,
     PqMatchResponse,
+    PqMatchStatusResponse,
 )
 from backend.schemas.pq_layout import PqPreviewResponse
 from backend.services.pq_import_service import PqImportService
@@ -24,6 +27,48 @@ from backend.services.pq_match_service import PqMatchService
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/propostas/{proposta_id}/pq", tags=["pq-importacao"])
+
+# ---------------------------------------------------------------------------
+# In-memory registry for background match tasks (keyed by str(proposta_id))
+# ---------------------------------------------------------------------------
+_match_tasks: dict[str, dict] = {}
+
+
+async def _run_match_background(proposta_id: UUID, user_id: UUID) -> None:
+    """Execute match in background using its own DB session."""
+    key = str(proposta_id)
+    _match_tasks[key]["status"] = "running"
+    try:
+        async with async_session_factory() as db:
+            try:
+                svc = PqMatchService(
+                    db=db,
+                    proposta_repo=PropostaRepository(db),
+                    item_repo=PqItemRepository(db),
+                )
+                resultados = await svc.executar_match_para_proposta(proposta_id, user_id)
+                await db.commit()
+                _match_tasks[key].update(
+                    status="completed",
+                    processados=resultados["processados"],
+                    sugeridos=resultados["sugeridos"],
+                    sem_match=resultados["sem_match"],
+                )
+                logger.info(
+                    "pq_match_concluido",
+                    proposta_id=str(proposta_id),
+                    **resultados,
+                )
+            except Exception as exc:
+                await db.rollback()
+                _match_tasks[key].update(status="failed", error=str(exc))
+                logger.exception(
+                    "pq_match_erro_background",
+                    proposta_id=str(proposta_id),
+                    error=str(exc),
+                )
+    except Exception as exc:
+        _match_tasks[key].update(status="failed", error=str(exc))
 
 
 async def _get_proposta_or_404(db: AsyncSession, proposta_id: UUID):
@@ -79,31 +124,45 @@ async def upload_planilha(
     )
 
 
-@router.post("/match", response_model=PqMatchResponse)
+@router.post("/match", response_model=PqMatchStatusResponse, status_code=status.HTTP_202_ACCEPTED)
 async def executar_match(
     proposta_id: UUID,
+    background_tasks: BackgroundTasks,
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
-) -> PqMatchResponse:
+) -> PqMatchStatusResponse:
     proposta = await _get_proposta_or_404(db, proposta_id)
     await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
 
-    try:
-        svc = PqMatchService(
-            db=db,
-            proposta_repo=PropostaRepository(db),
-            item_repo=PqItemRepository(db),
-        )
-        resultados = await svc.executar_match_para_proposta(proposta_id, current_user.id)
-        return PqMatchResponse(**resultados)
-    except Exception as exc:
-        logger.exception(
-            "pq_match_erro",
-            proposta_id=str(proposta_id),
-            usuario_id=str(current_user.id),
-            error=str(exc),
-        )
-        raise
+    key = str(proposta_id)
+    task = _match_tasks.get(key)
+
+    # If already running, return current state (409-like but still 202)
+    if task and task["status"] == "running":
+        return PqMatchStatusResponse(**task)
+
+    # If completed/failed, clear so it can be re-run
+    _match_tasks[key] = {"status": "queued", "processados": 0, "sugeridos": 0, "sem_match": 0, "error": None}
+
+    background_tasks.add_task(_run_match_background, proposta_id, current_user.id)
+    logger.info("pq_match_enfileirado", proposta_id=key, usuario_id=str(current_user.id))
+    return PqMatchStatusResponse(status="queued")
+
+
+@router.get("/match/status", response_model=PqMatchStatusResponse)
+async def status_match(
+    proposta_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> PqMatchStatusResponse:
+    """Retorna o estado atual do match em background para esta proposta."""
+    await _get_proposta_or_404(db, proposta_id)
+    await require_proposta_role(proposta_id, None, current_user, db)
+
+    task = _match_tasks.get(str(proposta_id))
+    if task is None:
+        return PqMatchStatusResponse(status="not_started")
+    return PqMatchStatusResponse(**task)
 
 
 @router.get("/itens", response_model=list[PqItemResponse])

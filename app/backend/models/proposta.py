@@ -44,9 +44,9 @@ class Proposta(Base, TimestampMixin):
         ForeignKey("bcu.cabecalho.id"),
         nullable=True,
     )
-    total_direto: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
-    total_indireto: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
-    total_geral: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
+    total_direto: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
+    total_indireto: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
+    total_geral: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
     data_finalizacao: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
 
@@ -193,15 +193,15 @@ class PropostaItem(Base, TimestampMixin):
     codigo: Mapped[str] = mapped_column(String(50), nullable=False)
     descricao: Mapped[str] = mapped_column(Text, nullable=False)
     unidade_medida: Mapped[str] = mapped_column(String(20), nullable=False)
-    quantidade: Mapped[Decimal] = mapped_column(Numeric(15, 4), nullable=False, default=Decimal("1"))
-    custo_material_unitario: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
-    custo_mao_obra_unitario: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
-    custo_equipamento_unitario: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
-    custo_direto_unitario: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
+    quantidade: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False, default=Decimal("1"))
+    custo_material_unitario: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
+    custo_mao_obra_unitario: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
+    custo_equipamento_unitario: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
+    custo_direto_unitario: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
     percentual_indireto: Mapped[Decimal | None] = mapped_column(Numeric(10, 6), nullable=True)
-    custo_indireto_unitario: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
-    preco_unitario: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
-    preco_total: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
+    custo_indireto_unitario: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
+    preco_unitario: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
+    preco_total: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
     composicao_fonte: Mapped[str | None] = mapped_column(String(50), nullable=True)
     bcu_cabecalho_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("bcu.cabecalho.id"), nullable=True)
     ordem: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -246,8 +246,8 @@ class PropostaItemComposicao(Base):
     descricao_insumo: Mapped[str] = mapped_column(Text, nullable=False)
     unidade_medida: Mapped[str] = mapped_column(String(20), nullable=False)
     quantidade_consumo: Mapped[Decimal] = mapped_column(Numeric(10, 4), nullable=False)
-    custo_unitario_insumo: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
-    custo_total_insumo: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
+    custo_unitario_insumo: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
+    custo_total_insumo: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
     tipo_recurso: Mapped[TipoRecurso | None] = mapped_column(
         SAEnum(TipoRecurso, name="tipo_recurso_enum", create_type=False),
         nullable=True,
@@ -302,9 +302,9 @@ class PropostaResumoRecurso(Base):
         index=True,
     )
     tipo_recurso: Mapped[str] = mapped_column(String(50), nullable=False)
-    total_direto: Mapped[Decimal] = mapped_column(Numeric(15, 4), nullable=False, default=Decimal("0"))
-    total_indireto: Mapped[Decimal] = mapped_column(Numeric(15, 4), nullable=False, default=Decimal("0"))
-    total_geral: Mapped[Decimal] = mapped_column(Numeric(15, 4), nullable=False, default=Decimal("0"))
+    total_direto: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False, default=Decimal("0"))
+    total_indireto: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False, default=Decimal("0"))
+    total_geral: Mapped[Decimal] = mapped_column(Numeric(20, 4), nullable=False, default=Decimal("0"))
     data_atualizacao: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
