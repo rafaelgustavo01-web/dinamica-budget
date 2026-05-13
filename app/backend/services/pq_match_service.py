@@ -31,11 +31,12 @@ class PqMatchService:
         itens = await self.item_repo.list_by_proposta(
             proposta_id=proposta_id,
             status_match=StatusMatch.PENDENTE,
-            limit=1000,
+            limit=3500,
         )
         resultados = {"processados": 0, "sugeridos": 0, "sem_match": 0}
+        COMMIT_CHUNK = 50
 
-        for item in itens:
+        for idx, item in enumerate(itens, start=1):
             await self.item_repo.update_status(item, StatusMatch.BUSCANDO)
             resposta = await self.busca_svc.buscar(
                 request=BuscaServicoRequest(
@@ -67,6 +68,11 @@ class PqMatchService:
                 resultados["sem_match"] += 1
 
             resultados["processados"] += 1
+
+            # Commit parcial a cada COMMIT_CHUNK itens para garantir durabilidade
+            # mesmo que o proxy HTTP corte a conexão antes da resposta final.
+            if idx % COMMIT_CHUNK == 0:
+                await self.db.commit()
 
         return resultados
 

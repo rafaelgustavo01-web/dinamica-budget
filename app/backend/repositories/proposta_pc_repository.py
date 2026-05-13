@@ -107,6 +107,18 @@ class PropostaPcRepository:
     async def clear_mobilizacao(self, proposta_id: UUID) -> None:
         await self.db.execute(delete(PropostaPcMobilizacao).where(PropostaPcMobilizacao.proposta_id == proposta_id))
 
+    async def clear_mao_obra(self, proposta_id: UUID) -> None:
+        await self.db.execute(delete(PropostaPcMaoObra).where(PropostaPcMaoObra.proposta_id == proposta_id))
+
+    async def clear_equipamentos(self, proposta_id: UUID) -> None:
+        await self.db.execute(delete(PropostaPcEquipamento).where(PropostaPcEquipamento.proposta_id == proposta_id))
+
+    async def clear_epi(self, proposta_id: UUID) -> None:
+        await self.db.execute(delete(PropostaPcEpi).where(PropostaPcEpi.proposta_id == proposta_id))
+
+    async def clear_ferramentas(self, proposta_id: UUID) -> None:
+        await self.db.execute(delete(PropostaPcFerramenta).where(PropostaPcFerramenta.proposta_id == proposta_id))
+
     async def get_item(self, model: type[Any], item_id: UUID) -> Any | None:
         result = await self.db.execute(select(model).where(model.id == item_id))
         return result.scalar_one_or_none()

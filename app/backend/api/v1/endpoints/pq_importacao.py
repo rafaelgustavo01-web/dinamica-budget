@@ -7,6 +7,7 @@ from backend.core.dependencies import get_current_active_user, get_db, require_p
 from backend.models.enums import PropostaPapel
 from backend.core.exceptions import NotFoundError
 from backend.models.enums import StatusMatch
+from backend.core.logging import get_logger
 from backend.repositories.pq_importacao_repository import PqImportacaoRepository
 from backend.repositories.pq_item_repository import PqItemRepository
 from backend.repositories.pq_layout_repository import PqLayoutRepository
@@ -21,6 +22,7 @@ from backend.schemas.pq_layout import PqPreviewResponse
 from backend.services.pq_import_service import PqImportService
 from backend.services.pq_match_service import PqMatchService
 
+logger = get_logger(__name__)
 router = APIRouter(prefix="/propostas/{proposta_id}/pq", tags=["pq-importacao"])
 
 
@@ -86,13 +88,22 @@ async def executar_match(
     proposta = await _get_proposta_or_404(db, proposta_id)
     await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
 
-    svc = PqMatchService(
-        db=db,
-        proposta_repo=PropostaRepository(db),
-        item_repo=PqItemRepository(db),
-    )
-    resultados = await svc.executar_match_para_proposta(proposta_id, current_user.id)
-    return PqMatchResponse(**resultados)
+    try:
+        svc = PqMatchService(
+            db=db,
+            proposta_repo=PropostaRepository(db),
+            item_repo=PqItemRepository(db),
+        )
+        resultados = await svc.executar_match_para_proposta(proposta_id, current_user.id)
+        return PqMatchResponse(**resultados)
+    except Exception as exc:
+        logger.exception(
+            "pq_match_erro",
+            proposta_id=str(proposta_id),
+            usuario_id=str(current_user.id),
+            error=str(exc),
+        )
+        raise
 
 
 @router.get("/itens", response_model=list[PqItemResponse])

@@ -294,11 +294,17 @@ class HistogramaService:
                             codigo_origem=tcpo.codigo_origem,
                         )
 
-        # Upsert
-        await self.repo.bulk_upsert(PropostaPcMaoObra, mo_items, ["proposta_id", "bcu_item_id"])
-        await self.repo.bulk_upsert(PropostaPcEquipamento, eqp_items, ["proposta_id", "bcu_item_id"])
-        await self.repo.bulk_upsert(PropostaPcEpi, epi_items, ["proposta_id", "bcu_item_id"])
-        await self.repo.bulk_upsert(PropostaPcFerramenta, fer_items, ["proposta_id", "bcu_item_id"])
+        # Limpar dados antigos (garante que cada proposta tem apenas seu histograma)
+        await self.repo.clear_mao_obra(proposta_id)
+        await self.repo.clear_equipamentos(proposta_id)
+        await self.repo.clear_epi(proposta_id)
+        await self.repo.clear_ferramentas(proposta_id)
+
+        # Inserir novos dados
+        await self.repo.bulk_insert(PropostaPcMaoObra, mo_items)
+        await self.repo.bulk_insert(PropostaPcEquipamento, eqp_items)
+        await self.repo.bulk_insert(PropostaPcEpi, epi_items)
+        await self.repo.bulk_insert(PropostaPcFerramenta, fer_items)
 
         # Equipamento Premissa (se existir no BCU ativo, copia 1:1)
         premissas = await self.bcu_repo.list_equipamento_premissas(cabecalho.id)
