@@ -97,6 +97,7 @@ class PqImportacaoResponse(BaseModel):
     linhas_total: int
     linhas_importadas: int
     linhas_com_erro: int
+    linhas_ignoradas: int = 0
 
 
 class PqMatchResponse(BaseModel):

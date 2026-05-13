@@ -122,6 +122,7 @@ async def upload_planilha(
         linhas_total=importacao.linhas_total,
         linhas_importadas=importacao.linhas_importadas,
         linhas_com_erro=importacao.linhas_com_erro,
+        linhas_ignoradas=importacao.linhas_ignoradas,
     )
 
 

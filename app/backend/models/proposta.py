@@ -119,6 +119,7 @@ class PqImportacao(Base, TimestampMixin):
     linhas_total: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     linhas_importadas: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     linhas_com_erro: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    linhas_ignoradas: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     status: Mapped[StatusImportacao] = mapped_column(
         SAEnum(StatusImportacao, name="status_importacao_enum", create_type=False),
         nullable=False,

@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
@@ -207,8 +208,21 @@ async def test_criar_proposta_importar_pq_match_e_gerar_cpu():
             assert upload_resp.json()["linhas_importadas"] == 1
 
             match_resp = await client.post(f"/api/v1/propostas/{proposta_id}/pq/match")
-            assert match_resp.status_code == 200, match_resp.text
-            assert match_resp.json()["sugeridos"] == 1
+            assert match_resp.status_code == 202, match_resp.text
+
+            # Polling do status do match (máx 30s)
+            for _ in range(30):
+                await asyncio.sleep(1)
+                status_resp = await client.get(f"/api/v1/propostas/{proposta_id}/pq/match/status")
+                if status_resp.status_code == 200:
+                    status_data = status_resp.json()
+                    if status_data.get("status") == "completed":
+                        assert status_data.get("sugeridos") == 1
+                        break
+                    if status_data.get("status") == "failed":
+                        raise AssertionError(f"Match falhou: {status_data.get('error')}")
+            else:
+                raise AssertionError("Timeout aguardando match completar")
 
             cpu_resp = await client.post(f"/api/v1/propostas/{proposta_id}/cpu/gerar")
             assert cpu_resp.status_code == 200, cpu_resp.text

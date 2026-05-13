@@ -149,7 +149,14 @@ export function ProposalImportPage() {
 
           {uploadMutation.isSuccess && (
             <Alert severity="success" sx={{ mt: 2 }}>
-              Planilha importada com sucesso: {uploadMutation.data.linhas_importadas} linhas processadas.
+              Planilha importada com sucesso: {uploadMutation.data.linhas_importadas} linhas processadas
+              {uploadMutation.data.linhas_ignoradas > 0 && (
+                <>, {uploadMutation.data.linhas_ignoradas} título(s)/seção(oes) ignorados</>
+              )}
+              {uploadMutation.data.linhas_com_erro > 0 && (
+                <>, {uploadMutation.data.linhas_com_erro} com erro</>
+              )}
+              .
             </Alert>
           )}
         </Paper>

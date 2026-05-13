@@ -1,5 +1,6 @@
 import csv
 import io
+import re
 import uuid
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -9,6 +10,7 @@ import openpyxl
 from fastapi import UploadFile
 
 from backend.core.exceptions import NotFoundError, ValidationError
+from backend.core.logging import get_logger
 from backend.models.enums import StatusImportacao, StatusMatch, StatusProposta
 from backend.models.pq_layout import PqLayoutCliente
 from backend.models.proposta import PqImportacao, PqItem
@@ -16,6 +18,8 @@ from backend.repositories.associacao_repository import normalize_text
 from backend.repositories.pq_importacao_repository import PqImportacaoRepository
 from backend.repositories.pq_item_repository import PqItemRepository
 from backend.repositories.proposta_repository import PropostaRepository
+
+logger = get_logger(__name__)
 
 _HEADER_ALIASES = {
     "codigo": {"codigo", "código", "cod", "item", "item codigo"},
@@ -28,6 +32,78 @@ _HEADER_ALIASES = {
     "quantidade": {"quantidade", "qtde", "qtd", "quant", "quant.", "coeficiente", "coef", "coef."},
 }
 _SUPPORTED_EXTENSIONS = {"csv", "xlsx"}
+
+# Padrões de título/seção em planilhas de quantitativos (PQ)
+# Inclui variações com/sem acento para robustez com planilhas de clientes diversos
+_SECTION_KEYWORDS = {
+    "capitulo", "capítulo", "secao", "seção", "seçao",
+    "servicos", "serviços", "serviçoes",
+    "titulo", "título",
+    "etapa", "fase", "disciplina", "grupo", "subgrupo",
+    "empreitada", "contrato", "obra", "projeto",
+    "relatorio", "relatório", "relatorios", "relatórios",
+    "resumo", "total", "subtotal", "geral", "sumario", "sumário",
+}
+_SECTION_NUMBERING_RE = re.compile(r"^\d+(\.\d+)*\s*[\.:)\-]?\s*$")
+
+
+def _is_likely_section_title(row: dict[str, Any]) -> bool:
+    """Detecta se uma linha de planilha PQ é um título/seção (não um item de obra).
+
+    Regras determinísticas e conservadoras — prefere manter um item legítimo
+    a descartar um item válido. Um item de obra REAL sempre possui
+    quantidade > 0 e unidade de medida. Títulos de seção nunca possuem.
+
+    Heurísticas (OR):
+      1. Sem quantidade válida (> 0) E sem unidade de medida.
+      2. Descrição curta (<= 5 caracteres).
+      3. Descrição totalmente em maiúsculas (<= 50 chars) E sem qtd E sem unidade.
+      4. Descrição é apenas numeração de capítulo/seção (ex: "1.", "2.1.3") E sem qtd.
+      5. Descrição começa com palavra-chave de seção (ex: "CAPÍTULO 1") E sem qtd E sem unidade.
+    """
+    descricao = str(row.get("descricao") or "").strip()
+    if not descricao:
+        return True  # linha vazia já seria pega antes, mas garante
+
+    qtd_raw = row.get("quantidade")
+    unidade_raw = row.get("unidade")
+
+    has_qtd = False
+    if qtd_raw not in (None, ""):
+        try:
+            qtd_val = Decimal(str(qtd_raw).strip().replace(",", "."))
+            has_qtd = qtd_val > 0
+        except InvalidOperation:
+            has_qtd = False
+
+    has_unidade = bool(str(unidade_raw or "").strip())
+
+    # Regra 1: sem qtd E sem unidade → título (segura, itens reais sempre têm ambos)
+    if not has_qtd and not has_unidade:
+        return True
+
+    # Regra 2: descrição muito curta
+    if len(descricao) <= 5:
+        return True
+
+    # Se tem quantidade E unidade, é quase certamente um item real — não descarta
+    if has_qtd and has_unidade:
+        return False
+
+    # Regra 3: maiúsculas curtas sem dados numéricos
+    if descricao.isupper() and len(descricao) <= 50 and not has_qtd and not has_unidade:
+        return True
+
+    # Regra 4: apenas numeração de seção
+    if _SECTION_NUMBERING_RE.match(descricao) and not has_qtd:
+        return True
+
+    # Regra 5: começa com palavra-chave de seção
+    first_word = descricao.split()[0].lower().rstrip(".:-)")
+    if first_word in _SECTION_KEYWORDS and not has_qtd and not has_unidade:
+        return True
+
+    return False
 
 
 def _normalize_header(value: object) -> str:
@@ -156,6 +232,7 @@ class PqImportService:
         itens: list[dict[str, Any]] = []
         linhas_ok = 0
         linhas_com_erro = 0
+        linhas_ignoradas = 0
         for row in parsed_rows:
             descricao = str(row["descricao"] or "").strip()
             if not descricao:
@@ -168,6 +245,20 @@ class PqImportService:
                     "quantidade": Decimal("0"),
                     "status": "ERRO",
                     "erro_msg": "Descrição vazia",
+                })
+                continue
+
+            # Detecção inteligente de títulos/seções
+            if _is_likely_section_title(row):
+                linhas_ignoradas += 1
+                itens.append({
+                    "linha_planilha": row["linha_planilha"],
+                    "codigo": str(row["codigo"]).strip() if row["codigo"] not in (None, "") else None,
+                    "descricao": descricao,
+                    "unidade": str(row["unidade"]).strip() if row["unidade"] not in (None, "") else None,
+                    "quantidade": _parse_decimal(row["quantidade"], Decimal("0")),
+                    "status": "IGNORADO",
+                    "erro_msg": "Identificado como título/seção",
                 })
                 continue
 
@@ -204,6 +295,7 @@ class PqImportService:
             "linhas_total": len(parsed_rows),
             "linhas_ok": linhas_ok,
             "linhas_com_erro": linhas_com_erro,
+            "linhas_ignoradas": linhas_ignoradas,
             "itens": itens,
         }
 
@@ -245,10 +337,22 @@ class PqImportService:
 
         itens: list[PqItem] = []
         linhas_com_erro = 0
+        linhas_ignoradas = 0
         for row in parsed_rows:
             descricao = str(row["descricao"] or "").strip()
             if not descricao:
                 linhas_com_erro += 1
+                continue
+
+            # Detecção inteligente de títulos/seções — descarta sem criar PqItem
+            if _is_likely_section_title(row):
+                linhas_ignoradas += 1
+                logger.info(
+                    "pq_import.titulo_ignorado",
+                    proposta_id=str(proposta_id),
+                    linha=row["linha_planilha"],
+                    descricao=descricao,
+                )
                 continue
 
             try:
@@ -280,6 +384,7 @@ class PqImportService:
 
         importacao.linhas_importadas = len(itens)
         importacao.linhas_com_erro = linhas_com_erro
+        importacao.linhas_ignoradas = linhas_ignoradas
         importacao.status = StatusImportacao.CONCLUIDO if linhas_com_erro == 0 else StatusImportacao.COM_ERROS
         await self.importacao_repo.update(importacao)
         return importacao

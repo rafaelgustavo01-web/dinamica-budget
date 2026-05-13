@@ -77,6 +77,7 @@ export interface PqImportacaoResponse {
   linhas_total: number;
   linhas_importadas: number;
   linhas_com_erro: number;
+  linhas_ignoradas: number;
 }
 
 export interface PqMatchResponse {

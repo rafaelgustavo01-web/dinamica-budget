@@ -159,6 +159,7 @@ class HistogramaService:
         eqp_items: list[dict] = []
         epi_items: list[dict] = []
         fer_items: list[dict] = []
+        _used_bcu_mo_ids: set[UUID] = set()  # deduplica: mesma BCU item só uma vez por proposta
 
         for insumo_id in insumos_list:
             tcpo = tcpo_map.get(insumo_id)
@@ -169,7 +170,8 @@ class HistogramaService:
             if de_para:
                 if de_para.bcu_table_type == BcuTableType.MO:
                     bcu_item = bcu_mo_map.get(de_para.bcu_item_id)
-                    if bcu_item:
+                    if bcu_item and bcu_item.id not in _used_bcu_mo_ids:
+                        _used_bcu_mo_ids.add(bcu_item.id)
                         mo_items.append({
                             "id": uuid.uuid4(),
                             "proposta_id": proposta_id,
@@ -257,7 +259,8 @@ class HistogramaService:
                 tipo_recurso = _tipo_recurso_value(tcpo.tipo_recurso)
                 if tipo_recurso == "MO":
                     bcu_match = bcu_mo_by_name.get(_norm(tcpo.descricao))
-                    if bcu_match:
+                    if bcu_match and bcu_match.id not in _used_bcu_mo_ids:
+                        _used_bcu_mo_ids.add(bcu_match.id)
                         mo_items.append({
                             "id": uuid.uuid4(),
                             "proposta_id": proposta_id,
@@ -291,7 +294,23 @@ class HistogramaService:
                             "bcu_item_id": None,
                             "descricao_funcao": tcpo.descricao,
                             "codigo_origem": tcpo.codigo_origem,
+                            "quantidade": 1,
+                            "salario": None,
+                            "previsao_reajuste": None,
+                            "encargos_percent": None,
+                            "periculosidade_insalubridade": None,
+                            "refeicao": None,
+                            "agua_potavel": None,
+                            "vale_alimentacao": None,
+                            "plano_saude": None,
+                            "ferramentas_val": None,
+                            "seguro_vida": None,
+                            "abono_ferias": None,
+                            "uniforme_val": None,
+                            "epi_val": None,
                             "custo_unitario_h": tcpo.custo_base,
+                            "custo_mensal": None,
+                            "mobilizacao": None,
                             "valor_bcu_snapshot": tcpo.custo_base,
                             "editado_manualmente": False,
                         })
