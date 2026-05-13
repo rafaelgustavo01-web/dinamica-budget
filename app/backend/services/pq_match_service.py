@@ -28,6 +28,11 @@ class PqMatchService:
         if not proposta:
             raise NotFoundError("Proposta", str(proposta_id))
 
+        # Reseta itens não confirmados para PENDENTE antes de re-processar.
+        # Garante que re-execuções do match não retornem 0/0/0.
+        # CONFIRMADO e MANUAL são preservados.
+        await self.item_repo.reset_para_pendente(proposta_id)
+
         itens = await self.item_repo.list_by_proposta(
             proposta_id=proposta_id,
             status_match=StatusMatch.PENDENTE,

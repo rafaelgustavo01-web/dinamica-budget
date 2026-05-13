@@ -58,3 +58,23 @@ class PqItemRepository(BaseRepository[PqItem]):
         pq_item.match_status = status_match
         await self.db.flush()
 
+    async def reset_para_pendente(self, proposta_id: UUID) -> int:
+        """Reseta para PENDENTE todos os itens não confirmados manualmente.
+
+        CONFIRMADO e MANUAL são preservados (foram revisados pelo usuário).
+        Retorna o número de itens resetados.
+        """
+        from sqlalchemy import update as sa_update
+        result = await self.db.execute(
+            sa_update(PqItem)
+            .where(PqItem.proposta_id == proposta_id)
+            .where(PqItem.match_status.in_([
+                StatusMatch.SUGERIDO,
+                StatusMatch.SEM_MATCH,
+                StatusMatch.BUSCANDO,
+            ]))
+            .values(match_status=StatusMatch.PENDENTE)
+        )
+        await self.db.flush()
+        return result.rowcount
+
