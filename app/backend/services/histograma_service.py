@@ -1,6 +1,7 @@
 """Service for per-proposal cost snapshot (Histograma)."""
 
 import asyncio
+import unicodedata
 import uuid
 from decimal import Decimal
 from typing import Any
@@ -87,6 +88,12 @@ def _tipo_recurso_value(tipo: Any) -> str | None:
     return tipo.value if hasattr(tipo, "value") else tipo
 
 
+def _norm(s: str) -> str:
+    """Normalize string for fuzzy matching: lowercase, strip accents."""
+    s = unicodedata.normalize("NFD", s.lower())
+    return "".join(c for c in s if unicodedata.category(c) != "Mn").strip()
+
+
 class HistogramaService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
@@ -140,6 +147,13 @@ class HistogramaService:
             _batch_get(BcuEpiItem, epi_ids),
             _batch_get(BcuFerramentaItem, fer_ids),
         )
+
+        # Fetch ALL BCU MO items for name-based fallback matching (no De/Para)
+        _all_bcu_mo_r = await self.db.execute(
+            select(BcuMaoObraItem).where(BcuMaoObraItem.cabecalho_id == cabecalho.id)
+        )
+        _all_bcu_mo = _all_bcu_mo_r.scalars().all()
+        bcu_mo_by_name: dict[str, BcuMaoObraItem] = {_norm(i.descricao_funcao): i for i in _all_bcu_mo}
 
         mo_items: list[dict] = []
         eqp_items: list[dict] = []
@@ -239,19 +253,48 @@ class HistogramaService:
                             "editado_manualmente": False,
                         })
             else:
-                # Não mapeado (sem BCU)
+                # Não mapeado via De/Para — tenta match por nome na BCU ativa
                 tipo_recurso = _tipo_recurso_value(tcpo.tipo_recurso)
                 if tipo_recurso == "MO":
-                    mo_items.append({
-                        "id": uuid.uuid4(),
-                        "proposta_id": proposta_id,
-                        "bcu_item_id": None,
-                        "descricao_funcao": tcpo.descricao,
-                        "codigo_origem": tcpo.codigo_origem,
-                        "custo_unitario_h": tcpo.custo_base,
-                        "valor_bcu_snapshot": tcpo.custo_base,
-                        "editado_manualmente": False,
-                    })
+                    bcu_match = bcu_mo_by_name.get(_norm(tcpo.descricao))
+                    if bcu_match:
+                        mo_items.append({
+                            "id": uuid.uuid4(),
+                            "proposta_id": proposta_id,
+                            "bcu_item_id": bcu_match.id,
+                            "descricao_funcao": bcu_match.descricao_funcao,
+                            "codigo_origem": bcu_match.codigo_origem,
+                            "quantidade": max(1, int(bcu_match.quantidade or 1)),
+                            "salario": bcu_match.salario,
+                            "previsao_reajuste": bcu_match.previsao_reajuste,
+                            "encargos_percent": bcu_match.encargos_percent,
+                            "periculosidade_insalubridade": bcu_match.periculosidade_insalubridade,
+                            "refeicao": bcu_match.refeicao,
+                            "agua_potavel": bcu_match.agua_potavel,
+                            "vale_alimentacao": bcu_match.vale_alimentacao,
+                            "plano_saude": bcu_match.plano_saude,
+                            "ferramentas_val": bcu_match.ferramentas_val,
+                            "seguro_vida": bcu_match.seguro_vida,
+                            "abono_ferias": bcu_match.abono_ferias,
+                            "uniforme_val": bcu_match.uniforme_val,
+                            "epi_val": bcu_match.epi_val,
+                            "custo_unitario_h": bcu_match.custo_unitario_h or tcpo.custo_base,
+                            "custo_mensal": bcu_match.custo_mensal,
+                            "mobilizacao": bcu_match.mobilizacao,
+                            "valor_bcu_snapshot": bcu_match.custo_unitario_h or tcpo.custo_base,
+                            "editado_manualmente": False,
+                        })
+                    else:
+                        mo_items.append({
+                            "id": uuid.uuid4(),
+                            "proposta_id": proposta_id,
+                            "bcu_item_id": None,
+                            "descricao_funcao": tcpo.descricao,
+                            "codigo_origem": tcpo.codigo_origem,
+                            "custo_unitario_h": tcpo.custo_base,
+                            "valor_bcu_snapshot": tcpo.custo_base,
+                            "editado_manualmente": False,
+                        })
                 elif tipo_recurso == "EQUIPAMENTO":
                     eqp_items.append({
                         "id": uuid.uuid4(),

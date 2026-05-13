@@ -394,4 +394,11 @@ export const proposalsApi = {
     const response = await apiClient.get<PropostaResponse[]>('/propostas/aprovacoes');
     return response.data;
   },
+
+  async rebuild(propostaId: string) {
+    const response = await apiClient.post<{ proposta_id: string; total_direto: number; total_indireto: number; total_geral: number; bdi_percentual: number; itens_processados: number; cpu_desatualizada: boolean }>(
+      `/propostas/${propostaId}/rebuild`,
+    );
+    return response.data;
+  },
 };

@@ -108,9 +108,6 @@ export function HistogramaTabMaoObra({ propostaId, items, divergencias }: Props)
               <TableRow key={item.id} hover sx={{ bgcolor: divergeList ? 'warning.50' : undefined }}>
                 <TableCell sx={dataCell}>
                   <Typography variant="body2" fontWeight={500}>{item.descricao_funcao}</Typography>
-                  {item.codigo_origem && (
-                    <Typography variant="caption" color="text.secondary">{item.codigo_origem}</Typography>
-                  )}
                 </TableCell>
                 <TableCell sx={numCell}>
                   <TextField

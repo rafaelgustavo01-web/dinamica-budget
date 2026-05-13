@@ -18,14 +18,16 @@ import SafetyDividerOutlinedIcon from '@mui/icons-material/SafetyDividerOutlined
 import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined';
 import WorkOutlineOutlinedIcon from '@mui/icons-material/WorkOutlineOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 import { HelpTooltip } from '../../../shared/components/HelpTooltip';
 
 import { PageHeader } from '../../../shared/components/PageHeader';
 import { useFeedback } from '../../../shared/components/feedback/FeedbackProvider';
 import { histogramaApi } from '../../../shared/services/api/histogramaApi';
+import { proposalsApi } from '../../../shared/services/api/proposalsApi';
 import { HistogramaTabMaoObra } from '../components/HistogramaTabMaoObra';
 import { HistogramaTabGenerica } from '../components/HistogramaTabGenerica';
 import { RecursosExtrasTab } from '../components/RecursosExtrasTab';
@@ -67,6 +69,7 @@ const TABS = [
 
 export function HistogramaPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showMessage } = useFeedback();
   const [activeTab, setActiveTab] = useState(0);
@@ -81,10 +84,23 @@ export function HistogramaPage() {
     mutationFn: () => histogramaApi.montarHistograma(id!),
     onSuccess: (counts) => {
       void queryClient.invalidateQueries({ queryKey: ['histograma', id] });
+      void queryClient.invalidateQueries({ queryKey: ['proposta', id] });
+      void queryClient.invalidateQueries({ queryKey: ['cpu-itens', id] });
       const total = Object.values(counts ?? {}).reduce((a, b) => a + Number(b ?? 0), 0);
       showMessage(`Histograma montado: ${total} itens.`);
     },
     onError: () => showMessage('Erro ao montar histograma.', 'error'),
+  });
+
+  const rebuildMutation = useMutation({
+    mutationFn: () => proposalsApi.rebuild(id!),
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ['proposta', id] });
+      void queryClient.invalidateQueries({ queryKey: ['cpu-itens', id] });
+      void queryClient.invalidateQueries({ queryKey: ['histograma', id] });
+      showMessage(`CPU recalculada: ${result.itens_processados} itens processados.`);
+    },
+    onError: () => showMessage('Erro ao recalcular CPU.', 'error'),
   });
 
   if (isLoading) {
