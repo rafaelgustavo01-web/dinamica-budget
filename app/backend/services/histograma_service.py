@@ -105,26 +105,24 @@ class HistogramaService:
         if not cabecalho:
             raise UnprocessableEntityError("Nenhum cabecalho BCU ativo encontrado.")
 
-        # Extrair composicoes para obter insumos unicos
+        # Extrair composicoes para obter insumos unicos — join direto evita subquery do .has()
         comp_result = await self.db.execute(
             select(PropostaItemComposicao)
-            .join(PropostaItemComposicao.proposta_item)
-            .where(PropostaItemComposicao.proposta_item.has(proposta_id=proposta_id))
+            .join(PropostaItem, PropostaItem.id == PropostaItemComposicao.proposta_item_id)
+            .where(PropostaItem.proposta_id == proposta_id)
         )
         composicoes = comp_result.scalars().all()
 
-        insumos_unicos = set()
-        for c in composicoes:
-            if c.insumo_base_id:
-                insumos_unicos.add(c.insumo_base_id)
-
+        insumos_unicos = {c.insumo_base_id for c in composicoes if c.insumo_base_id}
         insumos_list = list(insumos_unicos)
 
-        # Batch fetch De/Para and BaseTcpo in two queries (eliminates N+1)
-        mapeamento = await self.de_para_repo.get_by_base_tcpo_ids(insumos_list)
-        tcpo_map = await self.tcpo_repo.get_by_ids(insumos_list)
+        # Batch fetch De/Para and BaseTcpo in parallel (eliminates N+1)
+        mapeamento, tcpo_map = await asyncio.gather(
+            self.de_para_repo.get_by_base_tcpo_ids(insumos_list),
+            self.tcpo_repo.get_by_ids(insumos_list),
+        )
 
-        # Batch fetch all BCU items referenced by the De/Para mapping
+        # Batch fetch all BCU items referenced by the De/Para mapping in parallel
         mo_ids = [dp.bcu_item_id for dp in mapeamento.values() if dp.bcu_table_type == BcuTableType.MO]
         eqp_ids = [dp.bcu_item_id for dp in mapeamento.values() if dp.bcu_table_type == BcuTableType.EQP]
         epi_ids = [dp.bcu_item_id for dp in mapeamento.values() if dp.bcu_table_type == BcuTableType.EPI]
@@ -136,15 +134,17 @@ class HistogramaService:
             r = await self.db.execute(select(model).where(model.id.in_(ids)))
             return {item.id: item for item in r.scalars().all()}
 
-        bcu_mo_map = await _batch_get(BcuMaoObraItem, mo_ids)
-        bcu_eqp_map = await _batch_get(BcuEquipamentoItem, eqp_ids)
-        bcu_epi_map = await _batch_get(BcuEpiItem, epi_ids)
-        bcu_fer_map = await _batch_get(BcuFerramentaItem, fer_ids)
+        bcu_mo_map, bcu_eqp_map, bcu_epi_map, bcu_fer_map = await asyncio.gather(
+            _batch_get(BcuMaoObraItem, mo_ids),
+            _batch_get(BcuEquipamentoItem, eqp_ids),
+            _batch_get(BcuEpiItem, epi_ids),
+            _batch_get(BcuFerramentaItem, fer_ids),
+        )
 
-        mo_items = []
-        eqp_items = []
-        epi_items = []
-        fer_items = []
+        mo_items: list[dict] = []
+        eqp_items: list[dict] = []
+        epi_items: list[dict] = []
+        fer_items: list[dict] = []
 
         for insumo_id in insumos_list:
             tcpo = tcpo_map.get(insumo_id)
@@ -295,24 +295,28 @@ class HistogramaService:
                             codigo_origem=tcpo.codigo_origem,
                         )
 
-        # Limpar dados antigos (garante que cada proposta tem apenas seu histograma)
-        await self.repo.clear_mao_obra(proposta_id)
-        await self.repo.clear_equipamentos(proposta_id)
-        await self.repo.clear_epi(proposta_id)
-        await self.repo.clear_ferramentas(proposta_id)
+        # Limpar dados antigos em paralelo (garante que cada proposta tem apenas seu histograma)
+        await asyncio.gather(
+            self.repo.clear_mao_obra(proposta_id),
+            self.repo.clear_equipamentos(proposta_id),
+            self.repo.clear_epi(proposta_id),
+            self.repo.clear_ferramentas(proposta_id),
+        )
 
-        # Inserir novos dados
-        await self.repo.bulk_insert(PropostaPcMaoObra, mo_items)
-        await self.repo.bulk_insert(PropostaPcEquipamento, eqp_items)
-        await self.repo.bulk_insert(PropostaPcEpi, epi_items)
-        await self.repo.bulk_insert(PropostaPcFerramenta, fer_items)
+        # Inserir novos dados em paralelo (4 tabelas independentes)
+        await asyncio.gather(
+            self.repo.bulk_insert(PropostaPcMaoObra, mo_items),
+            self.repo.bulk_insert(PropostaPcEquipamento, eqp_items),
+            self.repo.bulk_insert(PropostaPcEpi, epi_items),
+            self.repo.bulk_insert(PropostaPcFerramenta, fer_items),
+        )
 
         # Equipamento Premissa (se existir no BCU ativo, copia 1:1)
         premissas = await self.bcu_repo.list_equipamento_premissas(cabecalho.id)
         if premissas:
-            p = premissas[0]
             existing_premissa = await self.repo.list_equipamento_premissas(proposta_id)
             if not existing_premissa:
+                p = premissas[0]
                 await self.repo.bulk_insert(PropostaPcEquipamentoPremissa, [{
                     "id": uuid.uuid4(),
                     "proposta_id": proposta_id,
@@ -323,11 +327,10 @@ class HistogramaService:
                     "editado_manualmente": False,
                 }])
 
-        # Encargos (Integral)
+        # Encargos (Integral) — clear + insert em nested transaction
         bcu_encargos = await self.bcu_repo.list_encargos(cabecalho.id)
-        encargos_items = []
-        for e in bcu_encargos:
-            encargos_items.append({
+        encargos_items = [
+            {
                 "id": uuid.uuid4(),
                 "proposta_id": proposta_id,
                 "bcu_item_id": e.id,
@@ -338,17 +341,19 @@ class HistogramaService:
                 "taxa_percent": e.taxa_percent,
                 "valor_bcu_snapshot": e.taxa_percent,
                 "editado_manualmente": False,
-            })
+            }
+            for e in bcu_encargos
+        ]
         async with self.db.begin_nested():
             await self.repo.clear_encargos(proposta_id)
             await self.repo.bulk_insert(PropostaPcEncargo, encargos_items)
 
-        # Mobilizacao (Integral)
+        # Mobilizacao (Integral) — batch fetch quantidades, then clear + insert
         await self.repo.clear_mobilizacao(proposta_id)
         bcu_mob = await self.bcu_repo.list_mobilizacao_items(cabecalho.id)
-        mob_items = []
-        mob_qtd_items = []
-        
+        mob_items: list[dict] = []
+        mob_qtd_items: list[dict] = []
+
         mob_ids = [m.id for m in bcu_mob]
         bcu_mob_qtds = []
         if mob_ids:
@@ -357,8 +362,8 @@ class HistogramaService:
                 .where(BcuMobilizacaoQuantidadeFuncao.mobilizacao_item_id.in_(mob_ids))
             )
             bcu_mob_qtds = result_qtd.scalars().all()
-            
-        qtds_by_mob = {}
+
+        qtds_by_mob: dict[UUID, list] = {}
         for q in bcu_mob_qtds:
             qtds_by_mob.setdefault(q.mobilizacao_item_id, []).append(q)
 
@@ -373,7 +378,6 @@ class HistogramaService:
                 "tipo_mao_obra": m.tipo_mao_obra,
                 "editado_manualmente": False,
             })
-            
             for q in qtds_by_mob.get(m.id, []):
                 mob_qtd_items.append({
                     "id": uuid.uuid4(),
@@ -381,7 +385,7 @@ class HistogramaService:
                     "coluna_funcao": q.coluna_funcao,
                     "quantidade": q.quantidade,
                 })
-            
+
         await self.repo.bulk_insert(PropostaPcMobilizacao, mob_items)
         if mob_qtd_items:
             await self.repo.bulk_insert(PropostaPcMobilizacaoQuantidade, mob_qtd_items)
@@ -407,40 +411,81 @@ class HistogramaService:
         if not proposta:
             raise NotFoundError("Proposta", str(proposta_id))
 
-        premissa = await self.repo.list_equipamento_premissas(proposta_id)
-        encargos = await self.repo.list_encargos(proposta_id)
-        
+        # Paraleliza todas as queries independentes do histograma
         recurso_repo = PropostaRecursoExtraRepository(self.db)
-        recursos_extras = await recurso_repo.list_by_proposta(proposta_id)
+        (
+            premissa,
+            encargos,
+            recursos_extras,
+            mao_obra,
+            equipamentos,
+            epis,
+            ferramentas,
+            mobilizacao,
+            divergencias,
+        ) = await asyncio.gather(
+            self.repo.list_equipamento_premissas(proposta_id),
+            self.repo.list_encargos(proposta_id),
+            recurso_repo.list_by_proposta(proposta_id),
+            self.repo.list_mao_obra(proposta_id),
+            self.repo.list_equipamentos(proposta_id),
+            self.repo.list_epi(proposta_id),
+            self.repo.list_ferramentas(proposta_id),
+            self.repo.list_mobilizacao(proposta_id),
+            self.detectar_divergencias(proposta_id),
+        )
 
         return {
             "proposta_id": str(proposta_id),
             "bcu_cabecalho_id": str(proposta.bcu_cabecalho_id) if proposta.bcu_cabecalho_id else None,
-            "mao_obra": await self.repo.list_mao_obra(proposta_id),
+            "mao_obra": mao_obra,
             "equipamento_premissa": premissa[0] if premissa else None,
-            "equipamentos": await self.repo.list_equipamentos(proposta_id),
+            "equipamentos": equipamentos,
             "encargos_horista": [e for e in encargos if e.tipo_encargo == "HORISTA"],
             "encargos_mensalista": [e for e in encargos if e.tipo_encargo == "MENSALISTA"],
-            "epis": await self.repo.list_epi(proposta_id),
-            "ferramentas": await self.repo.list_ferramentas(proposta_id),
-            "mobilizacao": await self.repo.list_mobilizacao(proposta_id),
+            "epis": epis,
+            "ferramentas": ferramentas,
+            "mobilizacao": mobilizacao,
             "recursos_extras": recursos_extras,
-            "divergencias": await self.detectar_divergencias(proposta_id),
+            "divergencias": divergencias,
             "cpu_desatualizada": proposta.cpu_desatualizada,
         }
 
     async def detectar_divergencias(self, proposta_id: UUID) -> list[dict]:
-        divergencias = []
+        divergencias: list[dict] = []
         proposta = await self.proposta_repo.get_by_id(proposta_id)
         if not proposta or not proposta.bcu_cabecalho_id:
             return divergencias
 
-        # Mao de obra
-        r_mo = await self.db.execute(
-            select(PropostaPcMaoObra.id, PropostaPcMaoObra.valor_bcu_snapshot, BcuMaoObraItem.custo_unitario_h)
-            .join(BcuMaoObraItem, PropostaPcMaoObra.bcu_item_id == BcuMaoObraItem.id)
-            .where(PropostaPcMaoObra.proposta_id == proposta_id)
+        # Dispara todas as queries de divergência em paralelo
+        r_mo, r_eqp, r_epi, r_fer, r_enc = await asyncio.gather(
+            self.db.execute(
+                select(PropostaPcMaoObra.id, PropostaPcMaoObra.valor_bcu_snapshot, BcuMaoObraItem.custo_unitario_h)
+                .join(BcuMaoObraItem, PropostaPcMaoObra.bcu_item_id == BcuMaoObraItem.id)
+                .where(PropostaPcMaoObra.proposta_id == proposta_id)
+            ),
+            self.db.execute(
+                select(PropostaPcEquipamento.id, PropostaPcEquipamento.valor_bcu_snapshot, BcuEquipamentoItem.aluguel_r_h)
+                .join(BcuEquipamentoItem, PropostaPcEquipamento.bcu_item_id == BcuEquipamentoItem.id)
+                .where(PropostaPcEquipamento.proposta_id == proposta_id)
+            ),
+            self.db.execute(
+                select(PropostaPcEpi.id, PropostaPcEpi.valor_bcu_snapshot, BcuEpiItem.custo_unitario)
+                .join(BcuEpiItem, PropostaPcEpi.bcu_item_id == BcuEpiItem.id)
+                .where(PropostaPcEpi.proposta_id == proposta_id)
+            ),
+            self.db.execute(
+                select(PropostaPcFerramenta.id, PropostaPcFerramenta.valor_bcu_snapshot, BcuFerramentaItem.preco)
+                .join(BcuFerramentaItem, PropostaPcFerramenta.bcu_item_id == BcuFerramentaItem.id)
+                .where(PropostaPcFerramenta.proposta_id == proposta_id)
+            ),
+            self.db.execute(
+                select(PropostaPcEncargo.id, PropostaPcEncargo.valor_bcu_snapshot, BcuEncargoItem.taxa_percent)
+                .join(BcuEncargoItem, PropostaPcEncargo.bcu_item_id == BcuEncargoItem.id)
+                .where(PropostaPcEncargo.proposta_id == proposta_id)
+            ),
         )
+
         for p_id, snapshot, atual in r_mo:
             if snapshot != atual:
                 divergencias.append({
@@ -449,15 +494,9 @@ class HistogramaService:
                     "campo": "custo_unitario_h",
                     "valor_snapshot": float(snapshot) if snapshot is not None else None,
                     "valor_atual_bcu": float(atual) if atual is not None else None,
-                    "valor_proposta": None
+                    "valor_proposta": None,
                 })
 
-        # Equipamento
-        r_eqp = await self.db.execute(
-            select(PropostaPcEquipamento.id, PropostaPcEquipamento.valor_bcu_snapshot, BcuEquipamentoItem.aluguel_r_h)
-            .join(BcuEquipamentoItem, PropostaPcEquipamento.bcu_item_id == BcuEquipamentoItem.id)
-            .where(PropostaPcEquipamento.proposta_id == proposta_id)
-        )
         for p_id, snapshot, atual in r_eqp:
             if snapshot != atual:
                 divergencias.append({
@@ -466,15 +505,9 @@ class HistogramaService:
                     "campo": "aluguel_r_h",
                     "valor_snapshot": float(snapshot) if snapshot is not None else None,
                     "valor_atual_bcu": float(atual) if atual is not None else None,
-                    "valor_proposta": None
+                    "valor_proposta": None,
                 })
-                
-        # EPI
-        r_epi = await self.db.execute(
-            select(PropostaPcEpi.id, PropostaPcEpi.valor_bcu_snapshot, BcuEpiItem.custo_unitario)
-            .join(BcuEpiItem, PropostaPcEpi.bcu_item_id == BcuEpiItem.id)
-            .where(PropostaPcEpi.proposta_id == proposta_id)
-        )
+
         for p_id, snapshot, atual in r_epi:
             if snapshot != atual:
                 divergencias.append({
@@ -483,15 +516,9 @@ class HistogramaService:
                     "campo": "custo_unitario",
                     "valor_snapshot": float(snapshot) if snapshot is not None else None,
                     "valor_atual_bcu": float(atual) if atual is not None else None,
-                    "valor_proposta": None
+                    "valor_proposta": None,
                 })
-                
-        # Ferramenta
-        r_fer = await self.db.execute(
-            select(PropostaPcFerramenta.id, PropostaPcFerramenta.valor_bcu_snapshot, BcuFerramentaItem.preco)
-            .join(BcuFerramentaItem, PropostaPcFerramenta.bcu_item_id == BcuFerramentaItem.id)
-            .where(PropostaPcFerramenta.proposta_id == proposta_id)
-        )
+
         for p_id, snapshot, atual in r_fer:
             if snapshot != atual:
                 divergencias.append({
@@ -500,15 +527,9 @@ class HistogramaService:
                     "campo": "preco",
                     "valor_snapshot": float(snapshot) if snapshot is not None else None,
                     "valor_atual_bcu": float(atual) if atual is not None else None,
-                    "valor_proposta": None
+                    "valor_proposta": None,
                 })
-                
-        # Encargo
-        r_enc = await self.db.execute(
-            select(PropostaPcEncargo.id, PropostaPcEncargo.valor_bcu_snapshot, BcuEncargoItem.taxa_percent)
-            .join(BcuEncargoItem, PropostaPcEncargo.bcu_item_id == BcuEncargoItem.id)
-            .where(PropostaPcEncargo.proposta_id == proposta_id)
-        )
+
         for p_id, snapshot, atual in r_enc:
             if snapshot != atual:
                 divergencias.append({
@@ -517,7 +538,7 @@ class HistogramaService:
                     "campo": "taxa_percent",
                     "valor_snapshot": float(snapshot) if snapshot is not None else None,
                     "valor_atual_bcu": float(atual) if atual is not None else None,
-                    "valor_proposta": None
+                    "valor_proposta": None,
                 })
 
         return divergencias
