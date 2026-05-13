@@ -9,6 +9,7 @@ from backend.core.dependencies import get_current_active_user, get_db, require_p
 from backend.models.enums import PropostaPapel
 from backend.core.exceptions import NotFoundError
 from backend.models.enums import StatusMatch
+from backend.models.proposta import PqItem
 from backend.core.logging import get_logger
 from backend.repositories.pq_importacao_repository import PqImportacaoRepository
 from backend.repositories.pq_item_repository import PqItemRepository
@@ -218,3 +219,29 @@ async def atualizar_match_item(
     await db.commit()
     await db.refresh(item)
     return PqItemResponse.model_validate(item)
+
+
+@router.post("/itens/confirmar-todos", status_code=200)
+async def confirmar_todos_sugeridos(
+    proposta_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Confirma em lote todos os itens com status SUGERIDO.
+
+    Não altera MANUAL, CONFIRMADO, SEM_MATCH ou PENDENTE.
+    Retorna o número de itens confirmados.
+    """
+    from sqlalchemy import update as sa_update
+
+    await _get_proposta_or_404(db, proposta_id)
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
+
+    result = await db.execute(
+        sa_update(PqItem)
+        .where(PqItem.proposta_id == proposta_id)
+        .where(PqItem.match_status == StatusMatch.SUGERIDO)
+        .values(match_status=StatusMatch.CONFIRMADO)
+    )
+    await db.commit()
+    return {"confirmados": result.rowcount}

@@ -1,5 +1,6 @@
 """Service for per-proposal cost snapshot (Histograma)."""
 
+import asyncio
 import uuid
 from decimal import Decimal
 from typing import Any
@@ -22,7 +23,7 @@ from backend.models.bcu import (
     BcuMobilizacaoQuantidadeFuncao,
     BcuTableType,
 )
-from backend.models.proposta import Proposta, PropostaItemComposicao
+from backend.models.proposta import Proposta, PropostaItem, PropostaItemComposicao
 from backend.models.proposta_pc import (
     PropostaPcEncargo,
     PropostaPcEpi,

@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
 import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
+import DoneAllOutlinedIcon from '@mui/icons-material/DoneAllOutlined';
 
 import { PageHeader } from '../../../shared/components/PageHeader';
 import { proposalsApi } from '../../../shared/services/api/proposalsApi';
@@ -105,6 +106,18 @@ export function MatchReviewPage() {
     onSettled: (_data, _err, { itemId }) => removePending(itemId),
   });
 
+  const confirmarTodosMutation = useMutation({
+    mutationFn: () => proposalsApi.confirmarTodosSugeridos(id!),
+    onSuccess: (_data) => {
+      // Patch cache: all SUGERIDO → CONFIRMADO
+      queryClient.setQueryData<PqItemResponse[]>(PQ_ITENS_KEY(id!), (old) =>
+        old?.map((item) =>
+          item.match_status === 'SUGERIDO' ? { ...item, match_status: 'CONFIRMADO' } : item,
+        ),
+      );
+    },
+  });
+
   const rowVirtualizer = useVirtualizer({
     count: itens.length,
     getScrollElement: () => tableContainerRef.current,
@@ -134,6 +147,15 @@ export function MatchReviewPage() {
               onClick={() => navigate(`/propostas/${id}/importar`)}
             >
               Voltar
+            </Button>
+            <Button
+              variant="outlined"
+              color="success"
+              startIcon={<DoneAllOutlinedIcon />}
+              loading={confirmarTodosMutation.isPending}
+              onClick={() => confirmarTodosMutation.mutate()}
+            >
+              Confirmar Todos Sugeridos
             </Button>
             <Button
               variant="contained"

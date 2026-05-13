@@ -274,6 +274,13 @@ export const proposalsApi = {
     return response.data;
   },
 
+  async confirmarTodosSugeridos(propostaId: string): Promise<{ confirmados: number }> {
+    const response = await apiClient.post<{ confirmados: number }>(
+      `/propostas/${propostaId}/pq/itens/confirmar-todos`,
+    );
+    return response.data;
+  },
+
   async listCpuItens(propostaId: string) {
     const response = await apiClient.get<CpuItemDetalhado[]>(
       `/propostas/${propostaId}/cpu/itens`,
