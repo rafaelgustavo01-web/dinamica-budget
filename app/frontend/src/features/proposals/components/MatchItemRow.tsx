@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import {
   Button,
   Chip,
@@ -21,6 +21,7 @@ interface MatchItemRowProps {
   onRejeitar: (itemId: string) => void;
   onSubstituir: (itemId: string, servicoId: string, tipo: string) => void;
   isLoading: boolean;
+  virtualStyle?: React.CSSProperties;
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: 'success' | 'warning' | 'error' | 'default' | 'info' }> = {
@@ -32,13 +33,14 @@ const STATUS_LABELS: Record<string, { label: string; color: 'success' | 'warning
   BUSCANDO: { label: 'Buscando', color: 'default' },
 };
 
-export function MatchItemRow({
+function MatchItemRowInner({
   item,
   clienteId,
   onConfirmar,
   onRejeitar,
   onSubstituir,
   isLoading,
+  virtualStyle,
 }: MatchItemRowProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const status = STATUS_LABELS[item.match_status] ?? { label: item.match_status, color: 'default' as const };
@@ -50,7 +52,7 @@ export function MatchItemRow({
 
   return (
     <>
-      <TableRow hover sx={{ opacity: isLoading ? 0.5 : 1 }}>
+      <TableRow hover style={virtualStyle} sx={{ opacity: isLoading ? 0.5 : 1 }}>
         <TableCell sx={{ width: 50 }}>
           <Typography variant="caption" color="text.secondary">
             {item.linha_planilha ?? '—'}
@@ -140,3 +142,5 @@ export function MatchItemRow({
     </>
   );
 }
+
+export const MatchItemRow = memo(MatchItemRowInner);

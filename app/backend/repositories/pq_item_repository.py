@@ -58,6 +58,26 @@ class PqItemRepository(BaseRepository[PqItem]):
         pq_item.match_status = status_match
         await self.db.flush()
 
+    async def delete_nao_confirmados(self, proposta_id: UUID) -> int:
+        """Remove todos os itens não confirmados manualmente.
+
+        CONFIRMADO e MANUAL são preservados.
+        Retorna o número de itens deletados.
+        """
+        from sqlalchemy import delete as sa_delete
+        result = await self.db.execute(
+            sa_delete(PqItem)
+            .where(PqItem.proposta_id == proposta_id)
+            .where(PqItem.match_status.in_([
+                StatusMatch.PENDENTE,
+                StatusMatch.SUGERIDO,
+                StatusMatch.SEM_MATCH,
+                StatusMatch.BUSCANDO,
+            ]))
+        )
+        await self.db.flush()
+        return result.rowcount
+
     async def reset_para_pendente(self, proposta_id: UUID) -> int:
         """Reseta para PENDENTE todos os itens não confirmados manualmente.
 

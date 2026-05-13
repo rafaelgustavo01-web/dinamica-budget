@@ -17,3 +17,11 @@ class PqImportacaoRepository(BaseRepository[PqImportacao]):
         result = await self.db.execute(select(PqImportacao).where(PqImportacao.id == id))
         return result.scalar_one_or_none()
 
+    async def delete_by_proposta(self, proposta_id: UUID) -> None:
+        """Remove todos os registros de importação da proposta."""
+        from sqlalchemy import delete as sa_delete
+        await self.db.execute(
+            sa_delete(PqImportacao).where(PqImportacao.proposta_id == proposta_id)
+        )
+        await self.db.flush()
+

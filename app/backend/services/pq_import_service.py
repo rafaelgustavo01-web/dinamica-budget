@@ -222,6 +222,11 @@ class PqImportService:
         if not contents:
             raise ValidationError("Arquivo vazio.")
 
+        # Limpa itens e importações anteriores não confirmados.
+        # CONFIRMADO e MANUAL são preservados (revisados pelo usuário).
+        await self.item_repo.delete_nao_confirmados(proposta_id)
+        await self.importacao_repo.delete_by_proposta(proposta_id)
+
         layout = await self._resolver_layout(proposta.cliente_id)
         layout_map = _build_layout_map(layout)
         parsed_rows = self._parse_contents(contents, ext, layout=layout)

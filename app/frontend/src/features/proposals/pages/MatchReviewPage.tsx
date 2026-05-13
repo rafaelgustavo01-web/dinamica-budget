@@ -1,5 +1,7 @@
+import { useCallback, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Alert,
   Box,
@@ -20,14 +22,18 @@ import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
 
 import { PageHeader } from '../../../shared/components/PageHeader';
 import { proposalsApi } from '../../../shared/services/api/proposalsApi';
-import type { TipoServicoMatch } from '../../../shared/services/api/proposalsApi';
+import type { PqItemResponse, TipoServicoMatch } from '../../../shared/services/api/proposalsApi';
 import { extractApiErrorMessage } from '../../../shared/services/api/apiClient';
 import { MatchItemRow } from '../components/MatchItemRow';
+
+const PQ_ITENS_KEY = (id: string) => ['pq-itens', id];
 
 export function MatchReviewPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
 
   const { data: proposta } = useQuery({
     queryKey: ['proposta', id],
@@ -36,39 +42,74 @@ export function MatchReviewPage() {
   });
 
   const { data: itens = [], isLoading, isError, error } = useQuery({
-    queryKey: ['pq-itens', id],
+    queryKey: PQ_ITENS_KEY(id!),
     queryFn: () => proposalsApi.listPqItens(id!),
     enabled: Boolean(id),
   });
 
+  const applyPatch = useCallback(
+    (itemId: string, patch: Partial<PqItemResponse>) => {
+      queryClient.setQueryData<PqItemResponse[]>(PQ_ITENS_KEY(id!), (old) =>
+        old?.map((item) => (item.id === itemId ? { ...item, ...patch } : item)),
+      );
+    },
+    [id, queryClient],
+  );
+
+  const addPending = useCallback((itemId: string) => {
+    setPendingIds((prev) => new Set(prev).add(itemId));
+  }, []);
+
+  const removePending = useCallback((itemId: string) => {
+    setPendingIds((prev) => {
+      const next = new Set(prev);
+      next.delete(itemId);
+      return next;
+    });
+  }, []);
+
   const confirmarMutation = useMutation({
     mutationFn: (itemId: string) =>
       proposalsApi.confirmarMatch(id!, itemId, { acao: 'confirmar' }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['pq-itens', id] }),
+    onMutate: (itemId) => {
+      addPending(itemId);
+      applyPatch(itemId, { match_status: 'CONFIRMADO' });
+    },
+    onError: (_err, itemId) => applyPatch(itemId, { match_status: 'SUGERIDO' }),
+    onSettled: (_data, _err, itemId) => removePending(itemId),
   });
 
   const rejeitarMutation = useMutation({
     mutationFn: (itemId: string) =>
       proposalsApi.confirmarMatch(id!, itemId, { acao: 'rejeitar' }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['pq-itens', id] }),
+    onMutate: (itemId) => {
+      addPending(itemId);
+      applyPatch(itemId, { match_status: 'SEM_MATCH' });
+    },
+    onError: (_err, itemId) => applyPatch(itemId, { match_status: 'SUGERIDO' }),
+    onSettled: (_data, _err, itemId) => removePending(itemId),
   });
 
   const substituirMutation = useMutation({
-    mutationFn: ({
-      itemId,
-      servicoId,
-      tipo,
-    }: {
-      itemId: string;
-      servicoId: string;
-      tipo: TipoServicoMatch;
-    }) =>
+    mutationFn: ({ itemId, servicoId, tipo }: { itemId: string; servicoId: string; tipo: TipoServicoMatch }) =>
       proposalsApi.confirmarMatch(id!, itemId, {
         acao: 'substituir',
         servico_match_id: servicoId,
         servico_match_tipo: tipo,
       }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['pq-itens', id] }),
+    onMutate: ({ itemId, servicoId, tipo }) => {
+      addPending(itemId);
+      applyPatch(itemId, { match_status: 'MANUAL', servico_match_id: servicoId, servico_match_tipo: tipo });
+    },
+    onError: (_err, { itemId }) => applyPatch(itemId, { match_status: 'SUGERIDO' }),
+    onSettled: (_data, _err, { itemId }) => removePending(itemId),
+  });
+
+  const rowVirtualizer = useVirtualizer({
+    count: itens.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => 45,
+    overscan: 15,
   });
 
   const confirmados = itens.filter(
@@ -76,10 +117,7 @@ export function MatchReviewPage() {
   ).length;
   const rejeitados = itens.filter((i) => i.match_status === 'SEM_MATCH').length;
   const progresso = itens.length > 0 ? ((confirmados + rejeitados) / itens.length) * 100 : 0;
-  const isMutating =
-    confirmarMutation.isPending ||
-    rejeitarMutation.isPending ||
-    substituirMutation.isPending;
+  const hasError = confirmarMutation.isError || rejeitarMutation.isError || substituirMutation.isError;
 
   if (isError) return <Alert severity="error">{extractApiErrorMessage(error)}</Alert>;
 
@@ -126,7 +164,7 @@ export function MatchReviewPage() {
           <LinearProgress variant="determinate" value={progresso} sx={{ height: 8, borderRadius: 4 }} />
         </Paper>
 
-        {(confirmarMutation.isError || rejeitarMutation.isError || substituirMutation.isError) && (
+        {hasError && (
           <Alert severity="error">
             {extractApiErrorMessage(
               confirmarMutation.error ?? rejeitarMutation.error ?? substituirMutation.error,
@@ -134,56 +172,70 @@ export function MatchReviewPage() {
           </Alert>
         )}
 
-        <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-          {isLoading ? (
-            <Box sx={{ p: 3 }}>
-              <LinearProgress />
-            </Box>
-          ) : (
-            <Table size="small" sx={{ minWidth: 820 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Linha</TableCell>
-                  <TableCell>Código</TableCell>
-                  <TableCell>Descrição Original</TableCell>
-                  <TableCell>Unid.</TableCell>
-                  <TableCell>Qtd</TableCell>
-                  <TableCell>Conf.</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Ações</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {itens.map((item) => (
-                  <MatchItemRow
-                    key={item.id}
-                    item={item}
-                    clienteId={proposta?.cliente_id ?? ''}
-                    isLoading={isMutating}
-                    onConfirmar={(itemId) => confirmarMutation.mutate(itemId)}
-                    onRejeitar={(itemId) => rejeitarMutation.mutate(itemId)}
-                    onSubstituir={(itemId, servicoId, tipo) =>
-                      substituirMutation.mutate({
-                        itemId,
-                        servicoId,
-                        tipo: tipo as TipoServicoMatch,
-                      })
-                    }
-                  />
-                ))}
-                {itens.length === 0 && (
+        <Paper>
+          <TableContainer
+            ref={tableContainerRef}
+            sx={{ height: 560, overflowY: 'auto', overflowX: 'auto' }}
+          >
+            {isLoading ? (
+              <Box sx={{ p: 3 }}>
+                <LinearProgress />
+              </Box>
+            ) : itens.length === 0 ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography color="text.secondary">
+                  Nenhum item importado. Execute a importação primeiro.
+                </Typography>
+              </Box>
+            ) : (
+              <Table size="small" sx={{ minWidth: 820 }}>
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                      <Typography color="text.secondary">
-                        Nenhum item importado. Execute a importação primeiro.
-                      </Typography>
-                    </TableCell>
+                    <TableCell>Linha</TableCell>
+                    <TableCell>Código</TableCell>
+                    <TableCell>Descrição Original</TableCell>
+                    <TableCell>Unid.</TableCell>
+                    <TableCell>Qtd</TableCell>
+                    <TableCell>Conf.</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Ações</TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </TableContainer>
+                </TableHead>
+                <TableBody
+                  sx={{
+                    height: `${rowVirtualizer.getTotalSize()}px`,
+                    position: 'relative',
+                  }}
+                >
+                  {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                    const item = itens[virtualRow.index];
+                    return (
+                      <MatchItemRow
+                        key={item.id}
+                        item={item}
+                        clienteId={proposta?.cliente_id ?? ''}
+                        isLoading={pendingIds.has(item.id)}
+                        virtualStyle={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: `${virtualRow.size}px`,
+                          transform: `translateY(${virtualRow.start}px)`,
+                        }}
+                        onConfirmar={(itemId) => confirmarMutation.mutate(itemId)}
+                        onRejeitar={(itemId) => rejeitarMutation.mutate(itemId)}
+                        onSubstituir={(itemId, servicoId, tipo) =>
+                          substituirMutation.mutate({ itemId, servicoId, tipo: tipo as TipoServicoMatch })
+                        }
+                      />
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </TableContainer>
+        </Paper>
       </Stack>
     </>
   );
