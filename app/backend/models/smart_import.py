@@ -32,6 +32,12 @@ class SmartImportJob(Base, TimestampMixin):
         nullable=True,
         index=True,
     )
+    profile_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("operacional.import_profile.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     arquivo_origem: Mapped[str] = mapped_column(String(260), nullable=False)
     status: Mapped[SmartImportStatus] = mapped_column(
         SAEnum(SmartImportStatus, name="smart_import_status_enum", create_type=False),
