@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Paper, Stack, Typography, Button, Alert, Box, CircularProgress, LinearProgress } from '@mui/material';
+import { Paper, Stack, Typography, Button, Alert, Box, CircularProgress, Divider, LinearProgress } from '@mui/material';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
@@ -159,6 +159,23 @@ export function ProposalImportPage() {
               .
             </Alert>
           )}
+
+          <Divider sx={{ my: 2 }}>ou</Divider>
+
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Prefere revisar linha a linha antes de importar?
+          </Typography>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() =>
+              navigate(
+                `/smart-import/upload?clienteId=${proposta.cliente_id}&propostaId=${id}`,
+              )
+            }
+          >
+            Importação Inteligente (Smart Import)
+          </Button>
         </Paper>
 
         <Paper sx={{ p: 3 }}>
