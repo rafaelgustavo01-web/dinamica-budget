@@ -7,8 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.dependencies import get_current_active_user, get_db
 from backend.core.exceptions import NotFoundError
 from backend.models.smart_import import SmartImportJob
+from backend.repositories.import_profile_repository import ImportProfileRepository
 from backend.schemas.smart_import import (
     ClassifyRequest,
+    CommitJobRequest,
+    CommitJobResponse,
     SmartImportJobOut,
     StagingRowAdd,
     StagingRowEdit,
@@ -117,3 +120,24 @@ async def reclassify_row(
     rows = job.payload_staging["rows"]
     updated = next(r for r in rows if r["idx"] == row_idx)
     return StagingRowOut(**updated)
+
+
+@router.post("/{job_id}/commit", response_model=CommitJobResponse)
+async def commit_job(
+    job_id: UUID,
+    body: CommitJobRequest,
+    _current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> CommitJobResponse:
+    job = await _get_job(job_id, db)
+    svc = SmartImportService()
+    job = await svc.commit_job(job, db, corrections=body.corrections)
+    profile = await ImportProfileRepository(db).get_by_id(job.profile_id)
+    return CommitJobResponse(
+        job_id=job.id,
+        status=job.status,
+        profile_id=job.profile_id,
+        score_confianca=float(profile.score_confianca) if profile else 0.0,
+        uso_count=profile.uso_count if profile else 0,
+        corrections_applied=len(body.corrections),
+    )

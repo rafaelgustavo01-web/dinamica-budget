@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.exceptions import NotFoundError, ValidationError
 from backend.core.logging import get_logger
 from backend.models.smart_import import SmartImportJob, SmartImportStatus
+from backend.repositories.import_profile_repository import ImportProfileRepository
 from backend.services.smart_import.column_mapper import ColumnMapper
 from backend.services.smart_import.extractor import FileExtractor
 from backend.services.smart_import.header_detector import HeaderDetector
@@ -37,6 +38,18 @@ class SmartImportService:
         profile_header_row: int | None = None,
         profile_aliases: dict[str, list[str]] | None = None,
     ) -> SmartImportJob:
+        # Auto-apply saved profile if caller did not provide explicit overrides
+        if profile_header_row is None and profile_aliases is None:
+            saved = await ImportProfileRepository(db).get_by_cliente_id(cliente_id)
+            if saved:
+                strategy = saved.header_row_strategy or {}
+                if strategy.get("mode") == "fixed":
+                    profile_header_row = strategy.get("row")
+                if saved.column_aliases:
+                    profile_aliases = {k: v for k, v in saved.column_aliases.items() if v}
+                if sheet_name is None and saved.aba_pattern:
+                    sheet_name = saved.aba_pattern
+
         sheet = FileExtractor.from_bytes(filename, content, sheet_name)
 
         header_row_idx = HeaderDetector.detect(sheet.rows, profile_header_row=profile_header_row)
@@ -135,3 +148,45 @@ class SmartImportService:
         if target is None:
             raise NotFoundError("StagingRow", row_idx)
         target["row_class"] = new_class.value
+
+    async def commit_job(
+        self,
+        job: SmartImportJob,
+        db: AsyncSession,
+        corrections: list[dict] | None = None,
+    ) -> SmartImportJob:
+        from decimal import Decimal
+        from backend.services.smart_import.profile_learner import ProfileLearner
+
+        repo = ImportProfileRepository(db)
+
+        profile = await repo.get_by_cliente_id(job.cliente_id)
+        if profile is None:
+            profile = await repo.create(job.cliente_id)
+
+        all_corrections = list(corrections or [])
+
+        if all_corrections:
+            await repo.save_corrections(profile.id, job.id, all_corrections)
+
+        profile_dict = {
+            "header_row_strategy": profile.header_row_strategy or {"mode": "scan"},
+            "column_aliases": profile.column_aliases or {},
+            "aba_pattern": profile.aba_pattern,
+            "uso_count": profile.uso_count,
+            "score_confianca": float(profile.score_confianca),
+        }
+        updated = ProfileLearner.apply(profile_dict, all_corrections)
+
+        profile.header_row_strategy = updated["header_row_strategy"]
+        profile.column_aliases = updated["column_aliases"]
+        profile.aba_pattern = updated.get("aba_pattern")
+        profile.uso_count = updated["uso_count"]
+        profile.score_confianca = Decimal(str(updated["score_confianca"]))
+
+        job.profile_id = profile.id
+        job.status = SmartImportStatus.COMPLETED
+
+        await db.commit()
+        logger.info(f"SmartImportJob {job.id} committed. Profile {profile.id} score={profile.score_confianca}")
+        return job

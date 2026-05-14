@@ -1,5 +1,5 @@
 from io import BytesIO
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import openpyxl
@@ -40,12 +40,14 @@ async def test_create_job_extracts_and_classifies_rows(db):
     svc = SmartImportService()
     cliente_id = uuid4()
 
-    await svc.create_job(
-        cliente_id=cliente_id,
-        filename="test.xlsx",
-        content=content,
-        db=db,
-    )
+    with patch("backend.services.smart_import_service.ImportProfileRepository") as mock_cls:
+        mock_cls.return_value.get_by_cliente_id = AsyncMock(return_value=None)
+        await svc.create_job(
+            cliente_id=cliente_id,
+            filename="test.xlsx",
+            content=content,
+            db=db,
+        )
 
     assert db.add.called
     added_job = db.add.call_args[0][0]
@@ -66,7 +68,9 @@ async def test_create_job_marks_complete_when_no_errors(db):
         ["1.2", "Aterro compactado", "m3", 5],
     ])
     svc = SmartImportService()
-    await svc.create_job(uuid4(), "clean.xlsx", content, db)
+    with patch("backend.services.smart_import_service.ImportProfileRepository") as mock_cls:
+        mock_cls.return_value.get_by_cliente_id = AsyncMock(return_value=None)
+        await svc.create_job(uuid4(), "clean.xlsx", content, db)
     added_job = db.add.call_args[0][0]
     assert added_job.status == SmartImportStatus.COMPLETED
 

@@ -59,6 +59,32 @@ class ColumnRemapRequest(BaseModel):
     col_idx: int
 
 
+# ── Profile ───────────────────────────────────────────────────────────────────
+
+class ImportProfileOut(BaseModel):
+    id: UUID
+    cliente_id: UUID
+    aba_pattern: str | None
+    header_row_strategy: dict
+    column_aliases: dict
+    score_confianca: float
+    uso_count: int
+    is_aprovado: bool
+
+
+class CommitJobRequest(BaseModel):
+    corrections: list[dict] = Field(default_factory=list)
+
+
+class CommitJobResponse(BaseModel):
+    job_id: UUID
+    status: SmartImportStatus
+    profile_id: UUID
+    score_confianca: float
+    uso_count: int
+    corrections_applied: int
+
+
 # ── Job response ──────────────────────────────────────────────────────────────
 
 class SmartImportJobOut(BaseModel):
