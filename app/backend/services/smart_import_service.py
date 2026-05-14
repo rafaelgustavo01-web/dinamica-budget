@@ -1,143 +1,137 @@
-"""
-Spike: Smart Import Service
-This module demonstrates the new pipeline architecture:
-Extractor (Docling concept) -> Normalizer -> Staging -> Validation -> Transactional Commit.
-It operates completely isolated from existing `pq_import_service.py`.
-"""
+"""Smart Import Service — deterministic pipeline: Extract -> Detect Header -> Map Columns -> Classify Rows -> Stage."""
+from __future__ import annotations
 
 import uuid
 from typing import Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from uuid import UUID
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.core.exceptions import NotFoundError, ValidationError
 from backend.core.logging import get_logger
 from backend.models.smart_import import SmartImportJob, SmartImportStatus
-from backend.schemas.smart_import import (
-    SmartImportPayload,
-    SmartImportMetadata,
-    StagingRow,
-    StagingRowError,
-)
+from backend.services.smart_import.column_mapper import ColumnMapper
+from backend.services.smart_import.extractor import FileExtractor
+from backend.services.smart_import.header_detector import HeaderDetector
+from backend.services.smart_import.row_classifier import RowClass, RowClassifier
 
 logger = get_logger(__name__)
 
+
+def _cell_str(value: Any) -> str | None:
+    if value is None:
+        return None
+    s = str(value).strip()
+    return s if s else None
+
+
 class SmartImportService:
-    def __init__(self):
-        # We will mock the extraction part for this spike. 
-        # In the future, docling or pandas logic goes here.
-        pass
+    async def create_job(
+        self,
+        cliente_id: UUID,
+        filename: str,
+        content: bytes,
+        db: AsyncSession,
+        proposta_id: UUID | None = None,
+        sheet_name: str | None = None,
+        profile_header_row: int | None = None,
+        profile_aliases: dict[str, list[str]] | None = None,
+    ) -> SmartImportJob:
+        sheet = FileExtractor.from_bytes(filename, content, sheet_name)
 
-    async def _extract_with_docling_mock(self, contents: bytes, filename: str) -> list[dict[str, Any]]:
-        """
-        Mock for flexible extraction. It would handle PDFs/XLSXs ignoring messy headers.
-        """
-        # Returns raw dicts as if they were extracted from an unstructured table
-        return [
-            {"Cód.": "001", "Desc.": "Servico A", "Und": "m2", "Preço": "10.5", "row_num": 10},
-            {"Cód.": "002", "Desc": "Servico B", "Und": "un", "Preço": "XXX", "row_num": 11}, # Error simulation
-        ]
+        header_row_idx = HeaderDetector.detect(sheet.rows, profile_header_row=profile_header_row)
 
-    def _normalize_and_validate(self, raw_rows: list[dict[str, Any]]) -> tuple[SmartImportPayload, SmartImportMetadata]:
-        """
-        Mock for Semantic Mapper and Pydantic Strict Validator.
-        """
-        metadata = SmartImportMetadata(
-            mapper_version="docling-mock-v1",
-            confidence_scores={"codigo": 0.95, "descricao": 0.80, "unidade": 0.99, "quantidade": 0.90},
-            column_mapping={"Cód.": "codigo", "Desc.": "descricao", "Desc": "descricao", "Und": "unidade", "Preço": "quantidade"}
-        )
+        header_cells = sheet.rows[header_row_idx] if header_row_idx < len(sheet.rows) else []
+        col_map = ColumnMapper.from_headers(header_cells, profile_aliases=profile_aliases)
 
-        payload = SmartImportPayload(total_rows=len(raw_rows))
-        
-        for raw in raw_rows:
-            staging_row = StagingRow(
-                linha_planilha=raw.get("row_num", 0),
-                raw_data=raw,
-            )
-            
-            # Simple dummy validation logic
-            try:
-                # Normalization
-                price = float(str(raw.get("Preço", "0")).replace(",", "."))
-                staging_row.normalized_data = {
-                    "codigo": raw.get("Cód."),
-                    "descricao": raw.get("Desc.") or raw.get("Desc"),
-                    "unidade": raw.get("Und"),
-                    "quantidade": price
+        data_rows = sheet.rows[header_row_idx + 1:]
+        staging_rows: list[dict] = []
+
+        for local_idx, raw_row in enumerate(data_rows):
+            mapped: dict[str, Any] = {}
+            for field, col_idx in col_map.items():
+                mapped[field] = _cell_str(raw_row[col_idx]) if col_idx < len(raw_row) else None
+
+            row_class = RowClassifier.classify(mapped)
+            staging_rows.append(
+                {
+                    "idx": local_idx,
+                    "sheet_row": header_row_idx + 1 + local_idx,
+                    "row_class": row_class.value,
+                    **{k: mapped.get(k) for k in ("codigo", "descricao", "unidade", "quantidade", "preco", "valor")},
                 }
-                staging_row.is_valid = True
-                payload.valid_rows += 1
-            except ValueError:
-                staging_row.is_valid = False
-                staging_row.errors = [StagingRowError(loc=["quantidade"], msg="Valor numérico inválido", type="type_error.float")]
-                payload.invalid_rows += 1
-            
-            payload.rows.append(staging_row)
+            )
 
-        return payload, metadata
+        has_aviso = any(
+            r["row_class"] == RowClass.ITEM.value
+            and (r.get("quantidade") is None or r.get("descricao") is None)
+            for r in staging_rows
+        )
+        status = SmartImportStatus.REVIEW_REQUIRED if has_aviso else SmartImportStatus.COMPLETED
 
-    async def create_import_job(self, cliente_id: uuid.UUID, filename: str, contents: bytes, db: AsyncSession) -> SmartImportJob:
-        """
-        Phase 1 to 4: Ingestion -> Normalization -> Validation -> Staging Write
-        """
-        logger.info(f"Starting Smart Import for {filename}")
-        
-        # 1. Flexible Extraction
-        raw_rows = await self._extract_with_docling_mock(contents, filename)
-        
-        # 2 & 3. Semantic Normalization & Rigid Validation
-        payload, metadata = self._normalize_and_validate(raw_rows)
-        
-        # 4. Staging
-        status = SmartImportStatus.REVIEW_REQUIRED if payload.invalid_rows > 0 else SmartImportStatus.COMPLETED
-        
+        end_row = header_row_idx + len(data_rows)
+        data_range = {
+            "start_row": header_row_idx + 1,
+            "end_row": end_row,
+            "col_map": col_map,
+        }
+
         job = SmartImportJob(
             id=uuid.uuid4(),
             cliente_id=cliente_id,
+            proposta_id=proposta_id,
             arquivo_origem=filename,
             status=status,
-            mapping_metadata=metadata.model_dump(),
-            payload_staging=payload.model_dump()
+            detected_header_row=header_row_idx,
+            detected_data_range=data_range,
+            mapping_metadata={"sheet_name": sheet.sheet_name, "col_map": col_map},
+            payload_staging={"rows": staging_rows},
         )
-        
         db.add(job)
         await db.commit()
         await db.refresh(job)
-        
-        logger.info(f"Smart Import Job {job.id} staged with status {job.status}")
+        logger.info(f"SmartImportJob {job.id} created: {len(staging_rows)} rows, status={status}")
         return job
 
-    async def confirm_and_commit_import(self, job_id: uuid.UUID, db: AsyncSession) -> bool:
-        """
-        Phase 5 & 6: Human Confirmation -> Transactional Commit to Final Tables
-        """
-        result = await db.execute(select(SmartImportJob).where(SmartImportJob.id == job_id))
-        job = result.scalar_one_or_none()
-        
-        if not job:
-            raise ValueError("Job not found")
-        
-        if job.status == SmartImportStatus.PROCESSING:
-            raise ValueError("Job is currently processing")
-            
-        payload = SmartImportPayload.model_validate(job.payload_staging)
-        
-        if payload.invalid_rows > 0:
-            raise ValueError("Cannot commit job with invalid rows. Fix them in staging first.")
-            
-        # 6. Efetivação Transacional
-        # Transaction is implicitly handled by the session wrapper in production code.
-        try:
-            # Here we would map `payload.rows` -> `PqItem` or other final models and `db.add_all()`
-            # For the spike, we just simulate success.
-            job.status = SmartImportStatus.COMPLETED
-            await db.commit()
-            return True
-        except Exception as e:
-            await db.rollback()
-            logger.error(f"Failed to commit import job {job_id}: {str(e)}")
-            job.status = SmartImportStatus.FAILED
-            await db.commit()
-            raise
+    def patch_row(self, job: SmartImportJob, row_idx: int, patch: dict[str, Any]) -> None:
+        rows: list[dict] = (job.payload_staging or {}).get("rows", [])
+        target = next((r for r in rows if r["idx"] == row_idx), None)
+        if target is None:
+            raise NotFoundError("StagingRow", row_idx)
+        allowed = {"codigo", "descricao", "unidade", "quantidade", "preco", "valor"}
+        for key, val in patch.items():
+            if key in allowed:
+                target[key] = val
+        target["row_class"] = RowClassifier.classify(target).value
 
-smart_import_service = SmartImportService()
+    def add_row(self, job: SmartImportJob, data: dict[str, Any]) -> dict:
+        rows: list[dict] = (job.payload_staging or {}).get("rows", [])
+        new_idx = max((r["idx"] for r in rows), default=-1) + 1
+        new_row = {
+            "idx": new_idx,
+            "sheet_row": None,
+            "row_class": RowClass.ITEM.value,
+            "codigo": data.get("codigo"),
+            "descricao": data.get("descricao"),
+            "unidade": data.get("unidade"),
+            "quantidade": data.get("quantidade"),
+            "preco": data.get("preco"),
+            "valor": data.get("valor"),
+        }
+        new_row["row_class"] = RowClassifier.classify(new_row).value
+        rows.append(new_row)
+        return new_row
+
+    def delete_row(self, job: SmartImportJob, row_idx: int) -> None:
+        rows: list[dict] = (job.payload_staging or {}).get("rows", [])
+        before = len(rows)
+        job.payload_staging["rows"] = [r for r in rows if r["idx"] != row_idx]
+        if len(job.payload_staging["rows"]) == before:
+            raise NotFoundError("StagingRow", row_idx)
+
+    def reclassify_row(self, job: SmartImportJob, row_idx: int, new_class: RowClass) -> None:
+        rows: list[dict] = (job.payload_staging or {}).get("rows", [])
+        target = next((r for r in rows if r["idx"] == row_idx), None)
+        if target is None:
+            raise NotFoundError("StagingRow", row_idx)
+        target["row_class"] = new_class.value
