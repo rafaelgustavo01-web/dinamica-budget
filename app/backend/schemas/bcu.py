@@ -23,7 +23,6 @@ class BcuMaoObraItemOut(BaseModel):
     cabecalho_id: UUID
     descricao_funcao: str
     codigo_origem: str | None
-    quantidade: Decimal | None
     salario: Decimal | None
     previsao_reajuste: Decimal | None
     encargos_percent: Decimal | None
@@ -97,7 +96,6 @@ class BcuEpiItemOut(BaseModel):
     epi: str
     unidade: str | None
     custo_unitario: Decimal | None
-    quantidade: Decimal | None
     vida_util_meses: Decimal | None
     custo_epi_mes: Decimal | None
 
@@ -111,7 +109,6 @@ class BcuFerramentaItemOut(BaseModel):
     item: str | None
     descricao: str
     unidade: str | None
-    quantidade: Decimal | None
     preco: Decimal | None
     preco_total: Decimal | None
 
@@ -141,7 +138,6 @@ class BcuMobilizacaoItemOut(BaseModel):
 class BcuMaoObraItemCreate(BaseModel):
     descricao_funcao: str = Field(..., min_length=1, max_length=255)
     codigo_origem: str | None = Field(None, max_length=40)
-    quantidade: Decimal | None = None
     salario: Decimal | None = None
     previsao_reajuste: Decimal | None = None
     encargos_percent: Decimal | None = None
@@ -163,7 +159,6 @@ class BcuMaoObraItemCreate(BaseModel):
 class BcuMaoObraItemUpdate(BaseModel):
     descricao_funcao: str | None = Field(None, min_length=1, max_length=255)
     codigo_origem: str | None = Field(None, max_length=40)
-    quantidade: Decimal | None = None
     salario: Decimal | None = None
     previsao_reajuste: Decimal | None = None
     encargos_percent: Decimal | None = None
@@ -233,7 +228,6 @@ class BcuEpiItemCreate(BaseModel):
     epi: str = Field(..., min_length=1, max_length=255)
     unidade: str | None = Field(None, max_length=30)
     custo_unitario: Decimal | None = None
-    quantidade: Decimal | None = None
     vida_util_meses: Decimal | None = None
     custo_epi_mes: Decimal | None = None
 
@@ -243,7 +237,6 @@ class BcuEpiItemUpdate(BaseModel):
     epi: str | None = Field(None, min_length=1, max_length=255)
     unidade: str | None = Field(None, max_length=30)
     custo_unitario: Decimal | None = None
-    quantidade: Decimal | None = None
     vida_util_meses: Decimal | None = None
     custo_epi_mes: Decimal | None = None
 
@@ -253,7 +246,6 @@ class BcuFerramentaItemCreate(BaseModel):
     item: str | None = Field(None, max_length=40)
     descricao: str = Field(..., min_length=1, max_length=255)
     unidade: str | None = Field(None, max_length=30)
-    quantidade: Decimal | None = None
     preco: Decimal | None = None
     preco_total: Decimal | None = None
 
@@ -263,7 +255,6 @@ class BcuFerramentaItemUpdate(BaseModel):
     item: str | None = Field(None, max_length=40)
     descricao: str | None = Field(None, min_length=1, max_length=255)
     unidade: str | None = Field(None, max_length=30)
-    quantidade: Decimal | None = None
     preco: Decimal | None = None
     preco_total: Decimal | None = None
 

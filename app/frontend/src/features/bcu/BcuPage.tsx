@@ -110,7 +110,6 @@ function MaoObraTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string; on
         <TableHead>
           <TableRow>
             <TableCell sx={{ ...headCell, position: 'sticky', left: 0, zIndex: 3, bgcolor: 'background.paper', minWidth: 180 }}>Função</TableCell>
-            <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 55 }}>Qtd</TableCell>
             <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 95 }}>Salário</TableCell>
             <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 95 }}>Reajuste</TableCell>
             <TableCell sx={{ ...headCell, textAlign: 'right', minWidth: 90 }}>Encargos %</TableCell>
@@ -129,7 +128,7 @@ function MaoObraTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string; on
         <TableBody>
           {data.length === 0 && (
             <TableRow>
-              <TableCell colSpan={15} sx={{ ...dataCell, textAlign: 'center', py: 4, color: 'text.secondary' }}>
+              <TableCell colSpan={14} sx={{ ...dataCell, textAlign: 'center', py: 4, color: 'text.secondary' }}>
                 Nenhuma função cadastrada.
               </TableCell>
             </TableRow>
@@ -139,7 +138,6 @@ function MaoObraTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string; on
               <TableCell sx={{ ...dataCell, position: 'sticky', left: 0, zIndex: 1, bgcolor: 'background.paper' }}>
                 <Typography variant="body2" fontWeight={500}>{item.descricao_funcao}</Typography>
               </TableCell>
-              <TableCell sx={numCell}>{fmt(item.quantidade, 0)}</TableCell>
               <TableCell sx={numCell}>R$ {fmt(item.salario)}</TableCell>
               <TableCell sx={numCell}>R$ {fmt(item.previsao_reajuste)}</TableCell>
               <TableCell sx={numCell}>{fmtPct(item.encargos_percent ? item.encargos_percent / 100 : null)}</TableCell>
@@ -356,7 +354,6 @@ function EpiTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string; onEdit
               <TableCell sx={headCell}>EPI / Uniforme</TableCell>
               <TableCell sx={headCell}>Unid.</TableCell>
               <TableCell sx={{ ...headCell, textAlign: 'right' }}>Custo Unit.</TableCell>
-              <TableCell sx={{ ...headCell, textAlign: 'right' }}>Qtd</TableCell>
               <TableCell sx={{ ...headCell, textAlign: 'right' }}>Vida Útil (meses)</TableCell>
               <TableCell sx={{ ...headCell, textAlign: 'right' }}>Custo/Mês</TableCell>
               <TableCell sx={{ ...headCell, textAlign: 'right' }}>Ações</TableCell>
@@ -377,7 +374,6 @@ function EpiTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string; onEdit
                 </TableCell>
                 <TableCell sx={dataCell}>{item.unidade ?? '—'}</TableCell>
                 <TableCell sx={numCell}>R$ {fmt(item.custo_unitario)}</TableCell>
-                <TableCell sx={numCell}>{fmt(item.quantidade, 1)}</TableCell>
                 <TableCell sx={numCell}>{fmt(item.vida_util_meses, 0)} meses</TableCell>
                 <TableCell sx={{ ...numCell, fontWeight: 600, color: 'primary.main' }}>R$ {fmt(item.custo_epi_mes)}</TableCell>
                 <TableCell sx={dataCell}>
@@ -419,7 +415,6 @@ function FerramentasTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string
             <TableRow>
               <TableCell sx={headCell}>Item</TableCell>
               <TableCell sx={headCell}>Unidade</TableCell>
-              <TableCell sx={{ ...headCell, textAlign: 'right' }}>Qtd</TableCell>
               <TableCell sx={{ ...headCell, textAlign: 'right' }}>Preço Unit. (R$)</TableCell>
               <TableCell sx={{ ...headCell, textAlign: 'right' }}>Total (R$)</TableCell>
               <TableCell sx={{ ...headCell, textAlign: 'right' }}>Ações</TableCell>
@@ -437,7 +432,6 @@ function FerramentasTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string
               <TableRow key={item.id} hover>
                 <TableCell sx={dataCell}>{item.item ?? item.descricao ?? '—'}</TableCell>
                 <TableCell sx={dataCell}>{item.unidade ?? '—'}</TableCell>
-                <TableCell sx={{ ...numCell }}>{item.quantidade != null ? fmt(item.quantidade) : '—'}</TableCell>
                 <TableCell sx={{ ...numCell }}>R$ {fmt(item.preco)}</TableCell>
                 <TableCell sx={{ ...numCell, fontWeight: 600 }}>R$ {fmt(item.preco_total)}</TableCell>
                 <TableCell sx={dataCell}>

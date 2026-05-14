@@ -32,7 +32,6 @@ export interface BcuUploadIndividualPayload {
 export interface BcuMaoObraItemCreate {
   descricao_funcao: string;
   codigo_origem?: string | null;
-  quantidade?: number | null;
   salario?: number | null;
   previsao_reajuste?: number | null;
   encargos_percent?: number | null;
@@ -97,7 +96,6 @@ export interface BcuEpiItemCreate {
   epi: string;
   unidade?: string | null;
   custo_unitario?: number | null;
-  quantidade?: number | null;
   vida_util_meses?: number | null;
   custo_epi_mes?: number | null;
 }
@@ -111,7 +109,6 @@ export interface BcuFerramentaItemCreate {
   item?: string | null;
   descricao: string;
   unidade?: string | null;
-  quantidade?: number | null;
   preco?: number | null;
   preco_total?: number | null;
 }

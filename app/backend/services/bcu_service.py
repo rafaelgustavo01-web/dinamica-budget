@@ -74,7 +74,6 @@ def _parse_mao_obra(ws, cabecalho_id: uuid.UUID, seq_counter: dict[str, int]) ->
     c_desc = _find_col(col_map, "DESCRI") if col_map else None
     if c_desc is None:
         c_desc = 0
-    c_qtd = _find_col(col_map, "QUANT") or 1
     c_sal = _find_col(col_map, "SALARIO", "SALÁRIO") or 2
     c_reaj = _find_col(col_map, "REAJUSTE") or 3
     c_enc = _find_col(col_map, "ENCARGO") or 4
@@ -109,7 +108,6 @@ def _parse_mao_obra(ws, cabecalho_id: uuid.UUID, seq_counter: dict[str, int]) ->
                 cabecalho_id=cabecalho_id,
                 descricao_funcao=str(desc).strip(),
                 codigo_origem=codigo_origem,
-                quantidade=_v(row, c_qtd),
                 salario=_v(row, c_sal),
                 previsao_reajuste=_v(row, c_reaj),
                 encargos_percent=_v(row, c_enc),
@@ -294,7 +292,6 @@ def _parse_epi(ws, cabecalho_id: uuid.UUID, seq_counter: dict[str, int]):
                     epi=str(epi_name).strip(),
                     unidade=str(__safe_get(row, 2)).strip() if __safe_get(row, 2) else None,
                     custo_unitario=_to_decimal(__safe_get(row, 3)),
-                    quantidade=_to_decimal(__safe_get(row, 4)),
                     vida_util_meses=_to_decimal(__safe_get(row, 5)),
                     custo_epi_mes=_to_decimal(__safe_get(row, 6)),
                 )
@@ -345,7 +342,6 @@ def _parse_ferramentas(ws, cabecalho_id: uuid.UUID, seq_counter: dict[str, int])
                 item=str(row[1]).strip() if row[1] else None,
                 descricao=str(desc).strip(),
                 unidade=str(row[3]).strip() if len(row) > 3 and row[3] else None,
-                quantidade=_to_decimal(row[4]) if len(row) > 4 else None,
                 preco=_to_decimal(row[5]) if len(row) > 5 else None,
                 preco_total=_to_decimal(row[6]) if len(row) > 6 else None,
             )

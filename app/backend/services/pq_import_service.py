@@ -32,6 +32,9 @@ _HEADER_ALIASES = {
     "quantidade": {"quantidade", "qtde", "qtd", "quant", "quant.", "coeficiente", "coef", "coef."},
 }
 _SUPPORTED_EXTENSIONS = {"csv", "xlsx"}
+_MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+_MAX_PQ_ROWS = 10_000
+_XLSX_MAGIC = b"PK\x03\x04"
 
 # Padrões de título/seção em planilhas de quantitativos (PQ)
 # Inclui variações com/sem acento para robustez com planilhas de clientes diversos
@@ -225,6 +228,10 @@ class PqImportService:
         contents = await arquivo.read()
         if not contents:
             raise ValidationError("Arquivo vazio.")
+        if len(contents) > _MAX_FILE_SIZE:
+            raise ValidationError(f"Arquivo excede o limite de {_MAX_FILE_SIZE // (1024*1024)}MB.")
+        if ext == "xlsx" and not contents[:4].startswith(_XLSX_MAGIC):
+            raise ValidationError("Arquivo não é um XLSX válido.")
 
         layout = await self._resolver_layout(proposta.cliente_id)
         parsed_rows = self._parse_contents(contents, ext, layout=layout)
@@ -268,7 +275,7 @@ class PqImportService:
                 continue
 
             try:
-                quantidade = _parse_decimal(row["quantidade"], Decimal("1"))
+                quantidade = _parse_decimal(row["quantidade"], Decimal("0"))
             except ValidationError as exc:
                 linhas_com_erro += 1
                 itens.append({
@@ -284,16 +291,30 @@ class PqImportService:
 
             codigo = str(row["codigo"]).strip() if row["codigo"] not in (None, "") else None
             unidade = str(row["unidade"]).strip() if row["unidade"] not in (None, "") else None
-            linhas_ok += 1
-            itens.append({
-                "linha_planilha": row["linha_planilha"],
-                "codigo": codigo,
-                "descricao": descricao,
-                "unidade": unidade,
-                "quantidade": quantidade,
-                "status": "OK",
-                "erro_msg": None,
-            })
+
+            qtd_missing = row["quantidade"] in (None, "")
+            if qtd_missing:
+                linhas_ok += 1
+                itens.append({
+                    "linha_planilha": row["linha_planilha"],
+                    "codigo": codigo,
+                    "descricao": descricao,
+                    "unidade": unidade,
+                    "quantidade": Decimal("0"),
+                    "status": "AVISO",
+                    "erro_msg": "Quantidade não informada na planilha",
+                })
+            else:
+                linhas_ok += 1
+                itens.append({
+                    "linha_planilha": row["linha_planilha"],
+                    "codigo": codigo,
+                    "descricao": descricao,
+                    "unidade": unidade,
+                    "quantidade": quantidade,
+                    "status": "OK",
+                    "erro_msg": None,
+                })
 
         return {
             "score_confianca": score,
@@ -318,6 +339,10 @@ class PqImportService:
         contents = await arquivo.read()
         if not contents:
             raise ValidationError("Arquivo vazio.")
+        if len(contents) > _MAX_FILE_SIZE:
+            raise ValidationError(f"Arquivo excede o limite de {_MAX_FILE_SIZE // (1024*1024)}MB.")
+        if ext == "xlsx" and not contents[:4].startswith(_XLSX_MAGIC):
+            raise ValidationError("Arquivo não é um XLSX válido.")
 
         # Limpa itens e importações anteriores não confirmados.
         # CONFIRMADO e MANUAL são preservados (revisados pelo usuário).
@@ -423,6 +448,8 @@ class PqImportService:
         for line_number, row in enumerate(rows[1 + skip :], start=2 + skip):
             if not any(str(cell).strip() for cell in row if cell is not None):
                 continue
+            if len(parsed_rows) >= _MAX_PQ_ROWS:
+                raise ValidationError(f"Planilha excede o limite de {_MAX_PQ_ROWS} linhas.")
             parsed_rows.append(self._build_parsed_row(row, column_map, line_number))
         return parsed_rows
 
@@ -467,6 +494,9 @@ class PqImportService:
             values = list(row)
             if not any(str(cell).strip() for cell in values if cell is not None):
                 continue
+            if len(parsed_rows) >= _MAX_PQ_ROWS:
+                workbook.close()
+                raise ValidationError(f"Planilha excede o limite de {_MAX_PQ_ROWS} linhas.")
             parsed_rows.append(self._build_parsed_row(values, column_map, row_number))
         workbook.close()
         return parsed_rows

@@ -64,7 +64,6 @@ export function BcuItemDialog(props: Props<unknown>) {
     const [form, setForm] = useState<BcuMaoObraItemCreate>({
       descricao_funcao: (initial as BcuMaoObraItemCreate)?.descricao_funcao ?? '',
       codigo_origem: (initial as BcuMaoObraItemCreate)?.codigo_origem ?? null,
-      quantidade: (initial as BcuMaoObraItemCreate)?.quantidade ?? null,
       salario: (initial as BcuMaoObraItemCreate)?.salario ?? null,
       previsao_reajuste: (initial as BcuMaoObraItemCreate)?.previsao_reajuste ?? null,
       encargos_percent: (initial as BcuMaoObraItemCreate)?.encargos_percent ?? null,
@@ -86,7 +85,6 @@ export function BcuItemDialog(props: Props<unknown>) {
       <BaseDialog open={open} title="Mão de Obra" onClose={onClose} onSubmit={() => onSubmit(form)} disabled={!form.descricao_funcao.trim()}>
         <TextField label="Descrição da Função *" value={form.descricao_funcao} onChange={(e) => setForm((f) => ({ ...f, descricao_funcao: e.target.value }))} fullWidth />
         <Stack direction="row" spacing={2}>
-          <NumberField label="Quantidade" value={form.quantidade ?? ''} onChange={(e) => setForm((f) => ({ ...f, quantidade: e.target.value === '' ? null : Number(e.target.value) }))} sx={{ flex: 1 }} />
           <NumberField label="Salário" value={form.salario ?? ''} onChange={(e) => setForm((f) => ({ ...f, salario: e.target.value === '' ? null : Number(e.target.value) }))} sx={{ flex: 1 }} />
           <NumberField label="Reajuste" value={form.previsao_reajuste ?? ''} onChange={(e) => setForm((f) => ({ ...f, previsao_reajuste: e.target.value === '' ? null : Number(e.target.value) }))} sx={{ flex: 1 }} />
         </Stack>
@@ -192,7 +190,6 @@ export function BcuItemDialog(props: Props<unknown>) {
       epi: (initial as BcuEpiItemCreate)?.epi ?? '',
       unidade: (initial as BcuEpiItemCreate)?.unidade ?? null,
       custo_unitario: (initial as BcuEpiItemCreate)?.custo_unitario ?? null,
-      quantidade: (initial as BcuEpiItemCreate)?.quantidade ?? null,
       vida_util_meses: (initial as BcuEpiItemCreate)?.vida_util_meses ?? null,
       custo_epi_mes: (initial as BcuEpiItemCreate)?.custo_epi_mes ?? null,
     });
@@ -202,7 +199,6 @@ export function BcuItemDialog(props: Props<unknown>) {
         <TextField label="Unidade" value={form.unidade ?? ''} onChange={(e) => setForm((f) => ({ ...f, unidade: e.target.value || null }))} fullWidth />
         <Stack direction="row" spacing={2}>
           <NumberField label="Custo Unitário" value={form.custo_unitario ?? ''} onChange={(e) => setForm((f) => ({ ...f, custo_unitario: e.target.value === '' ? null : Number(e.target.value) }))} sx={{ flex: 1 }} />
-          <NumberField label="Quantidade" value={form.quantidade ?? ''} onChange={(e) => setForm((f) => ({ ...f, quantidade: e.target.value === '' ? null : Number(e.target.value) }))} sx={{ flex: 1 }} />
           <NumberField label="Vida Útil (meses)" value={form.vida_util_meses ?? ''} onChange={(e) => setForm((f) => ({ ...f, vida_util_meses: e.target.value === '' ? null : Number(e.target.value) }))} sx={{ flex: 1 }} />
         </Stack>
         <NumberField label="Custo EPI/Mês" value={form.custo_epi_mes ?? ''} onChange={(e) => setForm((f) => ({ ...f, custo_epi_mes: e.target.value === '' ? null : Number(e.target.value) }))} fullWidth />
@@ -215,7 +211,6 @@ export function BcuItemDialog(props: Props<unknown>) {
       item: (initial as BcuFerramentaItemCreate)?.item ?? null,
       descricao: (initial as BcuFerramentaItemCreate)?.descricao ?? '',
       unidade: (initial as BcuFerramentaItemCreate)?.unidade ?? null,
-      quantidade: (initial as BcuFerramentaItemCreate)?.quantidade ?? null,
       preco: (initial as BcuFerramentaItemCreate)?.preco ?? null,
       preco_total: (initial as BcuFerramentaItemCreate)?.preco_total ?? null,
     });
@@ -225,7 +220,6 @@ export function BcuItemDialog(props: Props<unknown>) {
         <TextField label="Descrição *" value={form.descricao} onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))} fullWidth />
         <TextField label="Unidade" value={form.unidade ?? ''} onChange={(e) => setForm((f) => ({ ...f, unidade: e.target.value || null }))} fullWidth />
         <Stack direction="row" spacing={2}>
-          <NumberField label="Quantidade" value={form.quantidade ?? ''} onChange={(e) => setForm((f) => ({ ...f, quantidade: e.target.value === '' ? null : Number(e.target.value) }))} sx={{ flex: 1 }} />
           <NumberField label="Preço" value={form.preco ?? ''} onChange={(e) => setForm((f) => ({ ...f, preco: e.target.value === '' ? null : Number(e.target.value) }))} sx={{ flex: 1 }} />
           <NumberField label="Preço Total" value={form.preco_total ?? ''} onChange={(e) => setForm((f) => ({ ...f, preco_total: e.target.value === '' ? null : Number(e.target.value) }))} sx={{ flex: 1 }} />
         </Stack>

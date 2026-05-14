@@ -26,6 +26,8 @@ from backend.models.bcu import (
 logger = get_logger(__name__)
 
 _VALID_TIPOS = {"mo", "equipamentos", "encargos", "epi", "ferramentas", "mobilizacao"}
+_MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+_XLSX_MAGIC = b"PK\x03\x04"
 
 
 def _to_decimal(value: Any) -> Decimal | None:
@@ -446,6 +448,10 @@ class BcuUploadService:
             raise ValidationError("Somente arquivos .xlsx são suportados.")
         if not file_bytes:
             raise ValidationError("Arquivo vazio.")
+        if len(file_bytes) > _MAX_FILE_SIZE:
+            raise ValidationError(f"Arquivo excede o limite de {_MAX_FILE_SIZE // (1024*1024)}MB.")
+        if not file_bytes[:4].startswith(_XLSX_MAGIC):
+            raise ValidationError("Arquivo não é um XLSX válido.")
 
         try:
             result = _PARSERS[tipo](file_bytes)

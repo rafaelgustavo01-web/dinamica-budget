@@ -55,7 +55,6 @@ class BcuMaoObraItem(Base):
     )
     descricao_funcao: Mapped[str] = mapped_column(String(255), nullable=False)
     codigo_origem: Mapped[str | None] = mapped_column(String(40), nullable=True, index=True)
-    quantidade: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
     salario: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
     previsao_reajuste: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
     encargos_percent: Mapped[Decimal | None] = mapped_column(Numeric(15, 6), nullable=True)
@@ -144,7 +143,6 @@ class BcuEpiItem(Base):
     epi: Mapped[str] = mapped_column(String(255), nullable=False)
     unidade: Mapped[str | None] = mapped_column(String(30), nullable=True)
     custo_unitario: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
-    quantidade: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
     vida_util_meses: Mapped[Decimal | None] = mapped_column(Numeric(12, 4), nullable=True)
     custo_epi_mes: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
 
@@ -178,7 +176,6 @@ class BcuFerramentaItem(Base):
     item: Mapped[str | None] = mapped_column(String(40), nullable=True)
     descricao: Mapped[str] = mapped_column(String(255), nullable=False)
     unidade: Mapped[str | None] = mapped_column(String(30), nullable=True)
-    quantidade: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
     preco: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
     preco_total: Mapped[Decimal | None] = mapped_column(Numeric(15, 4), nullable=True)
 
