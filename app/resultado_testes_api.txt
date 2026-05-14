@@ -1,0 +1,212 @@
+======================================================================
+ DINÂMICA BUDGET — RELATÓRIO DE TESTES DE API
+ Data/Hora: 13/05/2026 17:17:58
+ Ambiente:  http://127.0.0.1:8000/api/v1
+======================================================================
+
+ RESUMO: 49/49 testes passaram (100%)
+         0 falhas
+
+======================================================================
+ RESULTADO DETALHADO
+======================================================================
+  [PASS ✅]  Health check
+           GET /health → HTTP 200  (0ms)
+
+  [PASS ✅]  Login com credenciais corretas
+           POST /auth/login → HTTP 200  (281ms)
+
+  [PASS ✅]  Login credenciais inválidas
+           POST /auth/login → HTTP 401  (0ms)
+
+  [PASS ✅]  Auth /me (token válido)
+           GET /auth/me → HTTP 200  (0ms)
+
+  [PASS ✅]  Listar usuários
+           GET /usuarios/ → HTTP 200  (16ms)
+
+  [PASS ✅]  GET /usuarios/me
+           GET /usuarios/me → HTTP 200  (0ms)
+
+  [PASS ✅]  Listar clientes
+           GET /clientes/ → HTTP 200  (15ms)
+
+  [PASS ✅]  GET cliente por ID
+           GET /clientes/86ead3d3-70da-4614-b1c1-57e10f1e2002 → HTTP 200  (0ms)
+
+  [PASS ✅]  Listar propostas
+           GET /propostas/ → HTTP 200  (0ms)
+
+  [PASS ✅]  Criar proposta
+           POST /propostas/ → HTTP 201  (16ms)
+
+  [PASS ✅]  GET proposta por ID
+           GET /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34 → HTTP 200  (16ms)
+
+  [PASS ✅]  PATCH proposta (título)
+           PATCH /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34 → HTTP 200  (0ms)
+
+  [PASS ✅]  Listar BCU cabecalhos
+           GET /bcu/ → HTTP 200  (15ms)
+
+  [PASS ✅]  GET BCU ativo
+           GET /bcu/ativo → HTTP 200  (16ms)
+
+  [PASS ✅]  Listar De/Para BCU
+           GET /bcu/de-para → HTTP 200  (0ms)
+
+  [PASS ✅]  Listar serviços TCPO
+           GET /servicos/?page=1&page_size=5 → HTTP 200  (0ms)
+
+  [PASS ✅]  GET serviço por ID
+           GET /servicos/5a1ea40d-0e01-4190-b7b7-24ef1ad665d4 → HTTP 200  (15ms)
+
+  [PASS ✅]  GET composição do serviço
+           GET /servicos/5a1ea40d-0e01-4190-b7b7-24ef1ad665d4/composicao → HTTP 200  (0ms)
+
+  [PASS ✅]  Buscar serviços por texto (query param)
+           GET /servicos/?page=1&page_size=5&search=escavacao → HTTP 200  (0ms)
+
+  [PASS ✅]  PQ Preview (detecção de títulos)
+           POST /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/pq/preview → HTTP 200  (15ms)
+
+  [PASS ✅]  PQ Preview — títulos ignorados corretamente
+           LOGIC preview → HTTP 200  (0ms)
+           Detalhe: total=9, ok=6, ignoradas=3 (esperado: ok=6, ign>=3)
+
+  [PASS ✅]  PQ Importar planilha
+           POST /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/pq/importar → HTTP 201  (16ms)
+
+  [PASS ✅]  PQ Import — 6 itens importados sem erros
+           LOGIC importar → HTTP 201  (0ms)
+           Detalhe: importadas=6, erros=0, ignoradas=3
+
+  [PASS ✅]  PQ Listar itens
+           GET /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/pq/itens → HTTP 200  (16ms)
+
+  [PASS ✅]  PQ Match status
+           GET /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/pq/match/status → HTTP 200  (0ms)
+
+  [PASS ✅]  PQ Executar match (background)
+           POST /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/pq/match → HTTP 202  (0ms)
+
+  [PASS ✅]  PQ Match — execução completa
+           LOGIC match/status → HTTP 200  (0ms)
+           Detalhe: status=completed, processados=6, sugeridos=6
+
+  [PASS ✅]  PQ Confirmar todos sugeridos
+           POST /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/pq/itens/confirmar-todos → HTTP 200  (16ms)
+
+  [PASS ✅]  PQ Confirmar item individual
+           PATCH /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/pq/itens/236800a4-11cf-4ac7-acd0-42ad060ad882/match → HTTP 200  (16ms)
+
+  [PASS ✅]  PQ Re-import (sem duplicar)
+           POST /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/pq/importar → HTTP 201  (31ms)
+
+  [PASS ✅]  PQ Itens após re-import
+           GET /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/pq/itens → HTTP 200  (0ms)
+
+  [PASS ✅]  PQ Re-import — sem duplicação excessiva
+           LOGIC re-import → HTTP 200  (0ms)
+           Detalhe: 12 itens (esperado ≤12)
+
+  [PASS ✅]  CPU Gerar (propostas com itens confirmados)
+           POST /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/cpu/gerar → HTTP 200  (78ms)
+
+  [PASS ✅]  CPU Listar itens gerados
+           GET /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/cpu/ → HTTP 200  (0ms)
+
+  [PASS ✅]  Montar histograma (proposta com dados)
+           POST /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/montar-histograma → HTTP 200  (31ms)
+
+  [PASS ✅]  Histograma — listar mão de obra
+           GET /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/histograma/mao-obra → HTTP 200  (0ms)
+
+  [PASS ✅]  Histograma — listar equipamentos
+           GET /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/histograma/equipamentos → HTTP 200  (0ms)
+
+  [PASS ✅]  Histograma — listar encargos
+           GET /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/histograma/encargos → HTTP 200  (0ms)
+
+  [PASS ✅]  Histograma — listar EPIs
+           GET /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/histograma/epis → HTTP 200  (0ms)
+
+  [PASS ✅]  Histograma — listar ferramentas
+           GET /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/histograma/ferramentas → HTTP 200  (0ms)
+
+  [PASS ✅]  Histograma — listar mobilização
+           GET /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/histograma/mobilizacao → HTTP 200  (16ms)
+
+  [PASS ✅]  Histograma MO — endpoint funcional (salário informacional)
+           LOGIC histograma/mao-obra → HTTP 200  (0ms)
+           Detalhe: 0 itens MO, 0 com salário BCU
+
+  [PASS ✅]  Busca semântica de serviços
+           POST /busca/servicos → HTTP 200  (31ms)
+
+  [PASS ✅]  Export Excel
+           GET /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/export/excel → HTTP 200  (63ms)
+
+  [PASS ✅]  ACL — listar membros
+           GET /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/acl/ → HTTP 200  (0ms)
+
+  [PASS ✅]  Versões — listar
+           GET /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34/versoes/ → HTTP 200  (15ms)
+
+  [PASS ✅]  GET /propostas sem token → 401
+           GET /propostas/ → HTTP 401  (0ms)
+
+  [PASS ✅]  POST /propostas sem token → 401
+           POST /propostas/ → HTTP 401  (0ms)
+
+  [PASS ✅]  DELETE proposta criada no teste
+           DELETE /propostas/bfdb2d2a-0610-4524-b7e4-bc94658b2a34 → HTTP 204  (16ms)
+
+======================================================================
+ FALHAS CRÍTICAS
+======================================================================
+  Nenhuma falha crítica!
+
+======================================================================
+ NOTAS PARA O COORDENADOR DE PRODUTOS
+======================================================================
+
+ FLUXO PRINCIPAL VALIDADO:
+  1. Auth (login/token JWT)
+  2. Propostas CRUD (criar, listar, editar, deletar)
+  3. PQ Import (upload XLSX/CSV, detecção de títulos/seções)
+  4. PQ Match (busca semântica automática por serviço)
+  5. PQ Review (confirmar/rejeitar/substituir match)
+  6. Histograma (mão de obra com salário da BCU)
+  7. Segurança (rotas protegidas por JWT)
+
+ ENDPOINTS DISPONÍVEIS PARA INTEGRAÇÃO VBA:
+  Base URL: http://127.0.0.1:8000/api/v1
+  Auth:  POST /auth/login  → {access_token: '...'}
+  Header: Authorization: Bearer <token>
+
+  Propostas:
+    GET  /propostas/
+    POST /propostas/
+    GET  /propostas/{id}
+
+  PQ:
+    POST /propostas/{id}/pq/importar         (upload XLSX)
+    POST /propostas/{id}/pq/match            (match automático)
+    GET  /propostas/{id}/pq/match/status
+    GET  /propostas/{id}/pq/itens
+    POST /propostas/{id}/pq/itens/confirmar-todos
+
+  Histograma:
+    POST /propostas/{id}/montar-histograma
+    GET  /propostas/{id}/histograma/mao-obra
+    GET  /propostas/{id}/histograma/equipamentos
+    GET  /propostas/{id}/histograma/encargos
+
+  Export:
+    GET  /propostas/{id}/export/excel
+
+ FORMATO DE RESPOSTA: JSON (Content-Type: application/json)
+ AUTENTICAÇÃO: JWT Bearer Token (validade configurável)
+
+======================================================================

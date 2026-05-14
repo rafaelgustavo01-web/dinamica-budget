@@ -1,0 +1,299 @@
+﻿================================================================================
+  DINÂMICA BUDGET — RELATÓRIO DE VALIDAÇÃO E INTEGRAÇÃO
+  Data: 13/05/2026 17:21:12
+  Preparado para: Coordenador de Produto — Integração VBA
+================================================================================
+
+1. STATUS DO SISTEMA
+================================================================================
+
+  Backend (FastAPI):  http://127.0.0.1:8000/api/v1       OK (NSSM service)
+  Frontend (IIS):     http://dinamica-budget.local         OK (IIS ARR)
+  Banco de dados:     PostgreSQL (schemas: operacional, bcu, referencia)
+  
+  Serviço: "dinamica-backend" (NSSM)
+    Processo: python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
+
+  IIS Site: "DinamicaBudget"
+    Pasta física: C:\inetpub\DinamicaBudget\
+    URL de acesso: http://dinamica-budget.local
+
+2. TESTES DE TODAS AS ROTAS — RESULTADO
+================================================================================
+
+  RESULTADO FINAL: 49/49 testes APROVADOS (100%)
+  Data de execução: 13/05/2026 17:21:12
+
+  Grupos testados:
+    [✅] 1. HEALTH & AUTH         — 4/4
+    [✅] 2. USUÁRIOS              — 2/2
+    [✅] 3. CLIENTES              — 2/2
+    [✅] 4. PROPOSTAS CRUD        — 4/4
+    [✅] 5. BCU                   — 3/3
+    [✅] 6. SERVIÇOS / TCPO       — 4/4
+    [✅] 7. PQ — IMPORTAÇÃO/MATCH — 13/13
+    [✅] 8. CPU — GERAÇÃO         — 2/2
+    [✅] 9. HISTOGRAMA            — 8/8
+    [✅] 10. BUSCA SEMÂNTICA      — 1/1
+    [✅] 11. EXPORT               — 1/1
+    [✅] 12. ACL                  — 1/1
+    [✅] 13. VERSÕES              — 1/1
+    [✅] 14. SEGURANÇA (sem token) — 2/2
+    [✅] 15. LIMPEZA              — 1/1
+
+  Script de teste: C:\Dinamica-Budget\app\test_all_routes.py
+  Relatório detalhado: C:\Dinamica-Budget\app\resultado_testes_api.txt
+
+3. DADOS CADASTRADOS (BANCO DE DADOS)
+================================================================================
+
+  BCU Ativo:
+    ID:      96cb4d19-f7a1-46c6-9116-bdfa79088d2a
+    Arquivo: Converter em Data Center.xlsx
+    Funções de mão de obra cadastradas: 50 funções
+    
+  Amostras de salário cadastrado na BCU:
+    AJUDANTE:                           R$ 1.422,00
+    AJUDANTE DE MONTADOR DE ANDAIME:    R$ 1.422,00
+    ALMOXARIFE:                         R$ 2.500,00
+    AUX. SERVIÇOS GERAIS:               R$ 1.421,00
+    AUX. TÉCNICO SEGURANÇA DO TRABALHO: R$ 2.500,00
+
+  Base de referência TCPO:
+    Total de serviços cadastrados: 11.440 serviços
+    Busca semântica: por embeddings (pgvector)
+    
+  Propostas ativas: 5
+  Usuários cadastrados: 1
+
+4. FLUXO DE INTEGRAÇÃO VBA — GUIA RÁPIDO
+================================================================================
+
+  BASE URL: http://dinamica-budget.local/api/v1
+
+  PASSO 1: AUTENTICAÇÃO
+  ─────────────────────
+    POST /auth/login
+    Body: {"email": "usuario@empresa.com", "password": "senha"}
+    Response: {"access_token": "eyJ...", "token_type": "bearer"}
+    
+    Todas as demais requisições devem incluir o header:
+    Authorization: Bearer <access_token>
+
+  PASSO 2: CRIAR OU OBTER PROPOSTA
+  ─────────────────────────────────
+    # Listar propostas existentes
+    GET /propostas/
+    Response: {"items": [...], "total": N}
+
+    # Criar nova proposta
+    POST /propostas/
+    Body: {
+      "cliente_id": "uuid-do-cliente",
+      "titulo": "Nome da obra",
+      "descricao": "Descrição opcional"
+    }
+    Response: {"id": "uuid-da-proposta", "codigo": "PROP-2026-XXXX", ...}
+
+  PASSO 3: IMPORTAR PLANILHA DE QUANTITATIVOS (PQ)
+  ─────────────────────────────────────────────────
+    # Preview (opcional, sem gravar)
+    POST /propostas/{proposta_id}/pq/preview
+    Body: multipart/form-data com campo "arquivo" (.xlsx ou .csv)
+    Response: {
+      "linhas_total": N,
+      "linhas_ok": N,
+      "linhas_ignoradas": N,  ← títulos/seções detectados automaticamente
+      "linhas_com_erro": N,
+      "itens": [...]
+    }
+
+    # Importar de fato
+    POST /propostas/{proposta_id}/pq/importar
+    Body: multipart/form-data com campo "arquivo" (.xlsx ou .csv)
+    Response: {
+      "importacao_id": "uuid",
+      "linhas_importadas": N,
+      "linhas_ignoradas": N,
+      "linhas_com_erro": N,
+      ...
+    }
+
+    IMPORTANTE — Títulos/seções são detectados automaticamente:
+      - Linhas sem quantidade E sem unidade → ignoradas
+      - Textos curtos (<= 5 chars) → ignorados
+      - Textos em maiúsculas sem dados numéricos → ignorados
+      - Padrões "CAPÍTULO X", "FASE Y", "ETAPA Z" → ignorados
+      - Re-importação NÃO duplica itens já confirmados (CONFIRMADO/MANUAL)
+
+  PASSO 4: MATCH AUTOMÁTICO TCPO
+  ────────────────────────────────
+    # Disparar match (roda em background)
+    POST /propostas/{proposta_id}/pq/match
+    Response: {"status": "accepted"} (HTTP 202)
+
+    # Verificar progresso
+    GET /propostas/{proposta_id}/pq/match/status
+    Response: {
+      "status": "running|completed|failed",
+      "processados": N,
+      "sugeridos": N,
+      "sem_match": N
+    }
+
+  PASSO 5: REVISAR E CONFIRMAR MATCHES
+  ──────────────────────────────────────
+    # Listar itens com match sugerido
+    GET /propostas/{proposta_id}/pq/itens
+    Response: lista de PqItem com match_status e tcpo_servico_id
+
+    # Confirmar todos os sugeridos de uma vez
+    POST /propostas/{proposta_id}/pq/itens/confirmar-todos
+    Response: {"confirmados": N}
+
+    # Confirmar/rejeitar item individual
+    PATCH /propostas/{proposta_id}/pq/itens/{item_id}/match
+    Body: {"acao": "confirmar"|"rejeitar"|"substituir", "tcpo_id": "..."}
+    Response: PqItem atualizado
+
+  PASSO 6: GERAR CPU (CUSTO POR UNIDADE)
+  ────────────────────────────────────────
+    POST /propostas/{proposta_id}/cpu/gerar
+    Response: lista de itens CPU gerados
+
+    GET /propostas/{proposta_id}/cpu/
+    Response: lista de PqItem com custo calculado
+
+  PASSO 7: HISTOGRAMA
+  ───────────────────
+    # Montar (recalcula tudo)
+    POST /propostas/{proposta_id}/montar-histograma
+    Response: resumo do histograma
+
+    # Consultar por categoria
+    GET /propostas/{proposta_id}/histograma/mao-obra
+    GET /propostas/{proposta_id}/histograma/equipamentos
+    GET /propostas/{proposta_id}/histograma/encargos
+    GET /propostas/{proposta_id}/histograma/epis
+    GET /propostas/{proposta_id}/histograma/ferramentas
+    GET /propostas/{proposta_id}/histograma/mobilizacao
+
+    FORMATO dos itens de mão de obra:
+    {
+      "descricao_funcao": "AJUDANTE",
+      "quantidade": "10.0000",         ← NUMERIC(20,4)
+      "salario": "1422.0000",          ← NUMERIC(15,4) — vem da BCU
+      "encargos_percent": null,        ← preencher na BCU
+      "custo_unitario_h": null,        ← preencher na BCU
+      ...
+    }
+
+  PASSO 8: EXPORTAR
+  ─────────────────
+    GET /propostas/{proposta_id}/export/excel
+    Response: arquivo .xlsx (binary)
+
+5. OBSERVAÇÕES TÉCNICAS PARA INTEGRAÇÃO
+================================================================================
+
+  FORMATO DE DADOS:
+    - Números decimais: NUMERIC(20,4) ou NUMERIC(15,4) — retornados como string no JSON
+      Ex: "1422.0000" (não float, para evitar imprecisão)
+    - Datas: ISO 8601 com timezone UTC (ex: "2026-05-13T17:00:00+00:00")
+    - IDs: UUID v4 (ex: "96cb4d19-f7a1-46c6-9116-bdfa79088d2a")
+    - Paginação: {"items": [...], "total": N, "page": 1, "page_size": 20}
+
+  AUTENTICAÇÃO:
+    - JWT Bearer Token
+    - Enviar em TODAS as requisições: Authorization: Bearer <token>
+    - Token sem expiração configurada explicitamente (verificar .env)
+
+  PLANILHA PQ — FORMATO SUPORTADO:
+    - .xlsx (Excel) ou .csv
+    - Cabeçalho automático detectado (qualquer linha com: descricao/descrição)
+    - Colunas suportadas: codigo, descricao, unidade, quantidade
+    - Aliases aceitos: cod/item (código), qtde/qtd/quant (quantidade),
+      unid/und/und. (unidade), servico/serviço (descrição)
+    - Planilhas com layout personalizado por cliente suportadas (PqLayoutCliente)
+
+  DEDUPLICAÇÃO (ÚNICO NA BCU):
+    - Constraint UNIQUE(proposta_id, bcu_item_id) em proposta_pc_mao_obra
+    - Quando múltiplos serviços TCPO mapeiam para mesmo item BCU,
+      apenas o primeiro é inserido (deduplicação por _used_bcu_mo_ids)
+
+  DE/PARA TCPO→BCU:
+    - Tabela bcu.de_para: mapeamento direto codigo_tcpo → bcu_item_id
+    - Atualmente VAZIA — todos os matches usam busca por nome normalizado
+    - Preencher para melhorar precisão do histograma
+
+  SEGURANÇA:
+    - Todas as rotas protegidas por JWT (401 sem token)
+    - ACL por proposta: VIEWER, EDITOR, OWNER
+    - Usuário admin tem acesso a todas as propostas
+
+6. BUGS CORRIGIDOS NESTA SESSÃO
+================================================================================
+
+  BUG 1: Salário (salario) da BCU não persistia no histograma
+    Causa:  UniqueViolationError em proposta_pc_mao_obra (múltiplos TCPO → mesmo BCU)
+            + NotNullViolationError em quantidade (None no fallback dict)
+    Fix:    Deduplicação por _used_bcu_mo_ids + "quantidade": 1 no fallback
+    Status: ✅ CORRIGIDO e validado (AJUDANTE: sal=1422.0000 no banco)
+
+  BUG 2: Erro 500 após agente parceiro adicionar linhas_ignoradas
+    Causa:  Coluna linhas_ignoradas adicionada ao modelo Python mas sem migração DB
+    Fix:    ALTER TABLE operacional.pq_importacoes ADD COLUMN IF NOT EXISTS 
+            linhas_ignoradas INTEGER NOT NULL DEFAULT 0
+    Status: ✅ CORRIGIDO
+
+  BUG 3: PqPreviewResponse não expunha linhas_ignoradas
+    Causa:  Schema PqPreviewResponse em pq_layout.py sem o campo
+    Fix:    Adicionado linhas_ignoradas: int = 0 ao schema
+    Status: ✅ CORRIGIDO (backend reiniciado)
+
+  BUG 4: Crash no script de testes (resp.json() em body vazio)
+    Causa:  Resposta 200 com body vazio para histograma sem dados
+    Fix:    try/except ao parsear JSON das respostas do histograma
+    Status: ✅ CORRIGIDO
+
+7. ESTADO ATUAL DAS PROPOSTAS
+================================================================================
+
+  Propostas ativas (não deletadas):
+    441a6ce5 | PROP-2026-0002 | Proposta Teste          | RASCUNHO
+    1a551def | PROP-2026-0003 | Proposta Rafael Teste   | EM_ANALISE
+    df980bf3 | PROP-2026-0009 | Teste Yuri              | RASCUNHO
+    (+ 2 criadas durante testes e apagadas automaticamente)
+
+  Propostas soft-deletadas (dados preservados):
+    809c4e22 | PROP-2026-0001 | teste               | CPU_GERADA
+    f02d12bf | PROP-2026-0008 | teste PQ            | CPU_GERADA
+    0ac3ba12 | PROP-2026-0007 | teste yuri          | CPU_GERADA
+    ... (outras)
+
+8. FRONTEND — DEPLOY
+================================================================================
+
+  Build realizado: 13/05/2026 17:21:12
+  Comando: cd app/frontend && npm run build
+  Resultado: 1259 módulos transformados, 8.38s
+  Deploy: robocopy dist → C:\inetpub\DinamicaBudget\ (PURGE)
+  URL: http://dinamica-budget.local
+
+  Páginas disponíveis no frontend:
+    /                       Dashboard
+    /proposals              Lista de propostas
+    /proposals/:id          Detalhe da proposta
+    /proposals/:id/import   Importação PQ
+    /proposals/:id/items    Itens PQ (revisão de match)
+    /proposals/:id/cpu      CPU gerada
+    /proposals/:id/histograma Histograma
+    /bcu                    Gestão BCU
+    /search                 Busca semântica
+    /clients                Clientes
+    /users                  Usuários (admin)
+    /admin                  Administração
+
+================================================================================
+  FIM DO RELATÓRIO
+================================================================================

@@ -169,7 +169,13 @@ async def test_importar_planilha_respeita_linha_inicio_do_layout_csv():
     m1 = MagicMock()
     m1.campo_sistema.value = "descricao"
     m1.coluna_planilha = "Descricao"
-    layout.mapeamentos = [m1]
+    m2 = MagicMock()
+    m2.campo_sistema.value = "unidade"
+    m2.coluna_planilha = "Unidade"
+    m3 = MagicMock()
+    m3.campo_sistema.value = "quantidade"
+    m3.coluna_planilha = "Quantidade"
+    layout.mapeamentos = [m1, m2, m3]
     layout_repo = AsyncMock()
     layout_repo.get_by_cliente_id.return_value = layout
 
@@ -297,15 +303,21 @@ async def test_importar_planilha_respeita_aba_nome_do_layout_xlsx():
     m1 = MagicMock()
     m1.campo_sistema.value = "descricao"
     m1.coluna_planilha = "Descricao"
-    layout.mapeamentos = [m1]
+    m2 = MagicMock()
+    m2.campo_sistema.value = "unidade"
+    m2.coluna_planilha = "Unidade"
+    m3 = MagicMock()
+    m3.campo_sistema.value = "quantidade"
+    m3.coluna_planilha = "Quantidade"
+    layout.mapeamentos = [m1, m2, m3]
     layout_repo = AsyncMock()
     layout_repo.get_by_cliente_id.return_value = layout
 
     wb = openpyxl.Workbook()
     wb.active.title = "Outra"
     ws = wb.create_sheet("PQ")
-    ws.append(["Descricao"])
-    ws.append(["Escavacao"])
+    ws.append(["Descricao", "Unidade", "Quantidade"])
+    ws.append(["Escavacao", "m2", 10])
     payload = BytesIO()
     wb.save(payload)
 

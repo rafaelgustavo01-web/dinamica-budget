@@ -75,6 +75,7 @@ class PqPreviewResponse(BaseModel):
     linhas_total: int
     linhas_ok: int
     linhas_com_erro: int
+    linhas_ignoradas: int = 0
     itens: list[PqPreviewItem]
 
 

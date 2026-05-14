@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
+import fastapi
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -97,6 +98,7 @@ async def test_criar_proposta_importar_pq_match_e_gerar_cpu():
                 linhas_total=1,
                 linhas_importadas=1,
                 linhas_com_erro=0,
+                linhas_ignoradas=0,
             )
 
     class FakeMatchService:
@@ -176,11 +178,29 @@ async def test_criar_proposta_importar_pq_match_e_gerar_cpu():
     original_cpu_service = cpu_geracao.CpuGeracaoService
     original_pq_lookup = pq_importacao._get_proposta_or_404
     original_cpu_lookup = cpu_geracao._get_proposta_or_404
+    original_async_session_factory = pq_importacao.async_session_factory
     pq_importacao.PqImportService = FakeImportService
     pq_importacao.PqMatchService = FakeMatchService
     cpu_geracao.CpuGeracaoService = FakeCpuService
     pq_importacao._get_proposta_or_404 = AsyncMock(side_effect=lambda *_args, **_kwargs: store["proposta"])
     cpu_geracao._get_proposta_or_404 = AsyncMock(side_effect=lambda *_args, **_kwargs: store["proposta"])
+
+    # Mock async_session_factory para a task de background do match
+    class _FakeAsyncSession:
+        async def __aenter__(self):
+            return AsyncMock()
+        async def __aexit__(self, *args):
+            pass
+    pq_importacao.async_session_factory = _FakeAsyncSession
+
+    # Evita ExceptionGroup do Starlette ao fazer add_task apenas registrar
+    # a função (não executar). O teste chama manualmente depois.
+    import fastapi
+    _bg_tasks_registry: list = []
+    original_add_task = fastapi.BackgroundTasks.add_task
+    def _noop_add_task(self, func, *args, **kwargs):
+        _bg_tasks_registry.append((func, args, kwargs))
+    fastapi.BackgroundTasks.add_task = _noop_add_task
 
     try:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
@@ -210,19 +230,16 @@ async def test_criar_proposta_importar_pq_match_e_gerar_cpu():
             match_resp = await client.post(f"/api/v1/propostas/{proposta_id}/pq/match")
             assert match_resp.status_code == 202, match_resp.text
 
-            # Polling do status do match (máx 30s)
-            for _ in range(30):
-                await asyncio.sleep(1)
-                status_resp = await client.get(f"/api/v1/propostas/{proposta_id}/pq/match/status")
-                if status_resp.status_code == 200:
-                    status_data = status_resp.json()
-                    if status_data.get("status") == "completed":
-                        assert status_data.get("sugeridos") == 1
-                        break
-                    if status_data.get("status") == "failed":
-                        raise AssertionError(f"Match falhou: {status_data.get('error')}")
-            else:
-                raise AssertionError("Timeout aguardando match completar")
+            # Executa a task registrada manualmente (evita background task no pytest)
+            for func, args, kwargs in _bg_tasks_registry:
+                await func(*args, **kwargs)
+            _bg_tasks_registry.clear()
+
+            status_resp = await client.get(f"/api/v1/propostas/{proposta_id}/pq/match/status")
+            assert status_resp.status_code == 200, status_resp.text
+            status_data = status_resp.json()
+            assert status_data.get("status") == "completed"
+            assert status_data.get("sugeridos") == 1
 
             cpu_resp = await client.post(f"/api/v1/propostas/{proposta_id}/cpu/gerar")
             assert cpu_resp.status_code == 200, cpu_resp.text
@@ -243,4 +260,6 @@ async def test_criar_proposta_importar_pq_match_e_gerar_cpu():
         cpu_geracao.CpuGeracaoService = original_cpu_service
         pq_importacao._get_proposta_or_404 = original_pq_lookup
         cpu_geracao._get_proposta_or_404 = original_cpu_lookup
+        pq_importacao.async_session_factory = original_async_session_factory
+        fastapi.BackgroundTasks.add_task = original_add_task
 
