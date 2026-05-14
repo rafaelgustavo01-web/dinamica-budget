@@ -9,7 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.exceptions import NotFoundError, ValidationError
 from backend.core.logging import get_logger
+from backend.models.enums import StatusImportacao, StatusMatch
+from backend.models.proposta import PqImportacao, PqItem
 from backend.models.smart_import import SmartImportJob, SmartImportStatus
+from backend.repositories.associacao_repository import normalize_text
 from backend.repositories.import_profile_repository import ImportProfileRepository
 from backend.services.smart_import.column_mapper import ColumnMapper
 from backend.services.smart_import.extractor import FileExtractor
@@ -149,6 +152,47 @@ class SmartImportService:
             raise NotFoundError("StagingRow", row_idx)
         target["row_class"] = new_class.value
 
+    async def _write_pq_items(self, job: SmartImportJob, db: AsyncSession) -> None:
+        from decimal import Decimal, InvalidOperation
+
+        rows = (job.payload_staging or {}).get("rows", [])
+        item_rows = [r for r in rows if r.get("row_class") == "ITEM" and r.get("descricao")]
+        non_item_count = len(rows) - len(item_rows)
+        ext = job.arquivo_origem.rsplit(".", 1)[-1].lower() if "." in job.arquivo_origem else "xlsx"
+
+        importacao = PqImportacao(
+            proposta_id=job.proposta_id,
+            nome_arquivo=job.arquivo_origem,
+            formato=ext,
+            linhas_total=len(rows),
+            linhas_importadas=len(item_rows),
+            linhas_com_erro=0,
+            linhas_ignoradas=non_item_count,
+            status=StatusImportacao.CONCLUIDO,
+        )
+        db.add(importacao)
+        await db.flush()
+
+        for row in item_rows:
+            descricao = str(row["descricao"]).strip()
+            qtd_raw = row.get("quantidade")
+            try:
+                quantidade = Decimal(str(qtd_raw).strip().replace(",", ".")) if qtd_raw else None
+            except InvalidOperation:
+                quantidade = None
+
+            db.add(PqItem(
+                proposta_id=job.proposta_id,
+                pq_importacao_id=importacao.id,
+                codigo_original=row.get("codigo"),
+                descricao_original=descricao,
+                unidade_medida_original=row.get("unidade"),
+                quantidade_original=quantidade,
+                descricao_tokens=normalize_text(descricao),
+                match_status=StatusMatch.PENDENTE,
+                linha_planilha=row.get("sheet_row"),
+            ))
+
     async def commit_job(
         self,
         job: SmartImportJob,
@@ -186,6 +230,9 @@ class SmartImportService:
 
         job.profile_id = profile.id
         job.status = SmartImportStatus.COMPLETED
+
+        if job.proposta_id:
+            await self._write_pq_items(job, db)
 
         await db.commit()
         logger.info(f"SmartImportJob {job.id} committed. Profile {profile.id} score={profile.score_confianca}")
