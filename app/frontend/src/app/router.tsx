@@ -105,6 +105,7 @@ const BcuUploadPage = lazy(() =>
 );
 
 import { proposalRoutes } from '../features/proposals/routes';
+import { smartImportRoutes } from '../features/smart-import/routes';
 
 function RouteFallback() {
   return (
@@ -171,6 +172,7 @@ export function AppRouter() {
           <Route path="/perfil" element={<ProfilePage />} />
 
           {proposalRoutes}
+          {smartImportRoutes}
 
           <Route element={<AdminOnlyLayout />}>
             <Route path="/admin" element={<AdminPage />} />
