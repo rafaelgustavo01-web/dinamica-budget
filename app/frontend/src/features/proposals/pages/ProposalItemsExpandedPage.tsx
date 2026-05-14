@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -33,6 +33,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
 
 import { PageHeader } from '../../../shared/components/PageHeader';
+import { formatCurrency } from '../../../shared/utils/format';
 import { proposalsApi } from '../../../shared/services/api/proposalsApi';
 import type {
   BcuItem,
@@ -43,14 +44,11 @@ import { proposalItemsApi } from '../../../shared/services/api/proposalItemsApi'
 type BcuType = 'mao_obra' | 'epi' | 'equipamento' | 'ferramenta';
 
 const BCU_TABS: { value: BcuType; label: string }[] = [
-  { value: 'mao_obra', label: 'Mão de Obra' },
+  { value: 'mao_obra', label: 'M�o de Obra' },
   { value: 'epi', label: 'EPI' },
   { value: 'equipamento', label: 'Equipamento' },
   { value: 'ferramenta', label: 'Ferramenta' },
 ];
-
-const fmtBRL = (v: number) =>
-  v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export function ProposalItemsExpandedPage() {
   const { id } = useParams<{ id: string }>();
@@ -61,7 +59,7 @@ export function ProposalItemsExpandedPage() {
   const [searchFilter, setSearchFilter] = useState('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
 
-  // ── Queries ────────────────────────────────────────────────────────────────────────
+  // -- Queries ------------------------------------------------------------------------
 
   const { data: proposta, isLoading: isLoadingProposta } = useQuery({
     queryKey: ['proposta', id],
@@ -124,7 +122,7 @@ export function ProposalItemsExpandedPage() {
     select: (data) => (Array.isArray(data) ? data : []),
   });
 
-  // ── Mutations ────────────────────────────────────────────────────────────────────────
+  // -- Mutations ------------------------------------------------------------------------
 
   const invalidate = () => {
     refetch();
@@ -152,7 +150,7 @@ export function ProposalItemsExpandedPage() {
     onSuccess: () => refetch(),
   });
 
-  // ── Helpers ────────────────────────────────────────────────────────────────────────
+  // -- Helpers ------------------------------------------------------------------------
 
   const getBcuItems = (tipo: BcuType): BcuItem[] => {
     switch (tipo) {
@@ -234,7 +232,7 @@ export function ProposalItemsExpandedPage() {
 
   const totalValue = items.reduce((acc, item) => acc + (item.valor_total ?? 0), 0);
 
-  // ── Render ────────────────────────────────────────────────────────────────────────
+  // -- Render ------------------------------------------------------------------------
   if (isLoadingProposta || isLoadingItems) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', pt: 8 }}>
@@ -244,17 +242,17 @@ export function ProposalItemsExpandedPage() {
   }
 
   if (!proposta) {
-    return <Alert severity="error">Proposta não encontrada</Alert>;
+    return <Alert severity="error">Proposta n�o encontrada</Alert>;
   }
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       <PageHeader
-        title={`Gerenciar Items — ${proposta.codigo}`}
-        description={proposta.titulo || 'Sem título'}
+        title={`Gerenciar Items � ${proposta.codigo}`}
+        description={proposta.titulo || 'Sem t�tulo'}
       />
 
-      {/* Barra de ações */}
+      {/* Barra de a��es */}
       <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
         <Button
           variant="outlined"
@@ -310,7 +308,7 @@ export function ProposalItemsExpandedPage() {
                 Valor total da proposta
               </Typography>
               <Typography variant="h6" fontWeight={700} color="primary.main">
-                {fmtBRL(totalValue)}
+                {formatCurrency(totalValue)}
               </Typography>
             </Box>
           </Stack>
@@ -318,13 +316,13 @@ export function ProposalItemsExpandedPage() {
       </Card>
 
       {/* ================================================================
-          CATÁLOGO BCU
+          CAT�LOGO BCU
           ================================================================ */}
       <Paper
         elevation={0}
         sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}
       >
-        {/* Cabeçalho + Tabs */}
+        {/* Cabe�alho + Tabs */}
         <Box
           sx={{
             px: 3,
@@ -334,7 +332,7 @@ export function ProposalItemsExpandedPage() {
           }}
         >
           <Typography variant="h6" fontWeight={600} sx={{ mb: 1.5 }}>
-            Catálogo BCU — Selecione os Itens
+            Cat�logo BCU � Selecione os Itens
           </Typography>
           <Tabs
             value={activeTab}
@@ -362,7 +360,7 @@ export function ProposalItemsExpandedPage() {
           <TextField
             size="small"
             fullWidth
-            placeholder="Filtrar por codigo ou descrição..."
+            placeholder="Filtrar por codigo ou descri��o..."
             value={searchFilter}
             onChange={e => setSearchFilter(e.target.value)}
             InputProps={{
@@ -389,8 +387,8 @@ export function ProposalItemsExpandedPage() {
               <TableRow>
                 {[
                   { label: 'Codigo',         align: 'left'  as const },
-                  { label: 'Descrição',       align: 'left'  as const },
-                  { label: 'Valor Unitário',  align: 'right' as const },
+                  { label: 'Descri��o',       align: 'left'  as const },
+                  { label: 'Valor Unit�rio',  align: 'right' as const },
                   { label: 'Quantidade',      align: 'right' as const },
                   { label: 'Total Previsto',  align: 'right' as const },
                   { label: '',               align: 'center' as const },
@@ -440,7 +438,7 @@ export function ProposalItemsExpandedPage() {
                   <TableCell colSpan={6} align="center" sx={{ py: 5, color: 'text.secondary' }}>
                     {searchFilter
                       ? `Nenhum item encontrado para "${searchFilter}"`
-                      : 'Nenhum item disponi­vel nesta categoria na base BCU.'}
+                      : 'Nenhum item disponi�vel nesta categoria na base BCU.'}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -453,26 +451,26 @@ export function ProposalItemsExpandedPage() {
                       hover
                       sx={{ '&:hover': { bgcolor: '#EDF1F8' } }}
                     >
-                      {/* Código */}
+                      {/* C�digo */}
                       <TableCell
                         sx={{ fontFamily: 'monospace', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
                       >
                         {item.codigo}
                       </TableCell>
 
-                      {/* Descrição */}
+                      {/* Descri��o */}
                       <TableCell>
                         <Typography variant="body2" sx={{ maxWidth: 380 }}>
                           {item.descricao}
                         </Typography>
                       </TableCell>
 
-                      {/* Valor unitário */}
+                      {/* Valor unit�rio */}
                       <TableCell align="right" sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
-                        {fmtBRL(item.valor)}
+                        {formatCurrency(item.valor)}
                       </TableCell>
 
-                      {/* Quantidade editável (inteiro) */}
+                      {/* Quantidade edit�vel (inteiro) */}
                       <TableCell align="right" sx={{ width: 120 }}>
                         <TextField
                           size="small"
@@ -496,11 +494,11 @@ export function ProposalItemsExpandedPage() {
                           fontWeight={700}
                           sx={{ color: preview > 0 ? '#1B7A3D' : 'text.secondary' }}
                         >
-                          {fmtBRL(preview)}
+                          {formatCurrency(preview)}
                         </Typography>
                       </TableCell>
 
-                      {/* Botão adicionar */}
+                      {/* Bot�o adicionar */}
                       <TableCell align="center" sx={{ width: 120 }}>
                         <Button
                           size="small"
@@ -562,7 +560,7 @@ export function ProposalItemsExpandedPage() {
                 {[
                   { label: 'Ordem',        align: 'left'   as const },
                   { label: 'Codigo',       align: 'left'   as const },
-                  { label: 'Descrição',    align: 'left'   as const },
+                  { label: 'Descri��o',    align: 'left'   as const },
                   { label: 'Qtd',          align: 'right'  as const },
                   { label: 'Un.',          align: 'left'   as const },
                   { label: 'Valor Unit.',  align: 'right'  as const },
@@ -593,13 +591,13 @@ export function ProposalItemsExpandedPage() {
               {items.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} align="center" sx={{ py: 5, color: 'text.secondary' }}>
-                    Nenhum item adicionado a proposta ainda. Use o catalogo acima para adicionar.
+                    Nenhum item adicionado a�proposta ainda. Use o catalogo acima para adicionar.
                   </TableCell>
                 </TableRow>
               ) : (
                 items.map(item => (
                   <TableRow key={item.id} hover>
-                    <TableCell sx={{ color: 'text.secondary' }}>{item.ordem ?? 'â€”'}</TableCell>
+                    <TableCell sx={{ color: 'text.secondary' }}>{item.ordem ?? '—'}</TableCell>
                     <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
                       {item.codigo}
                     </TableCell>
@@ -607,15 +605,15 @@ export function ProposalItemsExpandedPage() {
                     <TableCell align="right">{Math.trunc(item.quantidade)}</TableCell>
                     <TableCell sx={{ color: 'text.secondary' }}>{item.unidade_medida}</TableCell>
                     <TableCell align="right">
-                      {item.valor_unitario != null ? fmtBRL(item.valor_unitario) : '—'}
+                      {item.valor_unitario != null ? formatCurrency(item.valor_unitario) : '�'}
                     </TableCell>
                     <TableCell align="right">
                       {item.valor_total != null ? (
                         <Typography variant="body2" fontWeight={700} color="primary.main">
-                          {fmtBRL(item.valor_total)}
+                          {formatCurrency(item.valor_total)}
                         </Typography>
                       ) : (
-                        'â€”'
+                        '—'
                       )}
                     </TableCell>
                     <TableCell align="center">
@@ -652,7 +650,7 @@ export function ProposalItemsExpandedPage() {
                 Valor Total da Proposta:
               </Typography>
               <Typography variant="h6" fontWeight={700} color="primary.main">
-                {fmtBRL(totalValue)}
+                {formatCurrency(totalValue)}
               </Typography>
             </Stack>
           </Box>

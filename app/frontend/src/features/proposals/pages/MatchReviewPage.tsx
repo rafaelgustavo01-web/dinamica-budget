@@ -6,6 +6,7 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   LinearProgress,
   Paper,
   Stack,
@@ -20,6 +21,7 @@ import {
 import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
 import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
 import DoneAllOutlinedIcon from '@mui/icons-material/DoneAllOutlined';
+import PlaylistAddOutlinedIcon from '@mui/icons-material/PlaylistAddOutlined';
 
 import { PageHeader } from '../../../shared/components/PageHeader';
 import { proposalsApi } from '../../../shared/services/api/proposalsApi';
@@ -129,6 +131,8 @@ export function MatchReviewPage() {
     (i) => i.match_status === 'CONFIRMADO' || i.match_status === 'MANUAL',
   ).length;
   const rejeitados = itens.filter((i) => i.match_status === 'SEM_MATCH').length;
+  const sugeridos = itens.filter((i) => i.match_status === 'SUGERIDO').length;
+  const pendentes = itens.filter((i) => i.match_status === 'PENDENTE' || i.match_status === 'BUSCANDO').length;
   const progresso = itens.length > 0 ? ((confirmados + rejeitados) / itens.length) * 100 : 0;
   const hasError = confirmarMutation.isError || rejeitarMutation.isError || substituirMutation.isError;
 
@@ -165,25 +169,31 @@ export function MatchReviewPage() {
             >
               Ir para CPU ({confirmados} confirmados)
             </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              startIcon={<PlaylistAddOutlinedIcon />}
+              onClick={() => navigate(`/propostas/${id}/items`)}
+            >
+              Adicionar Item Manualmente
+            </Button>
           </Stack>
         }
       />
 
       <Stack spacing={3}>
         <Paper sx={{ p: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
-            <Typography variant="body2">
-              Revisados: <strong>{confirmados + rejeitados}</strong> de{' '}
-              <strong>{itens.length}</strong>
-            </Typography>
-            <Typography variant="body2" color="success.main">
-              ✓ {confirmados} confirmados
-            </Typography>
-            <Typography variant="body2" color="error.main">
-              ✗ {rejeitados} rejeitados
-            </Typography>
+          <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" sx={{ mb: 1.5 }}>
+            <Chip label={`Total: ${itens.length}`} size="small" variant="outlined" />
+            <Chip label={`Sugeridos: ${sugeridos}`} size="small" color="info" />
+            <Chip label={`Confirmados: ${confirmados}`} size="small" color="success" />
+            <Chip label={`Sem Match: ${rejeitados}`} size="small" color="error" variant="outlined" />
+            <Chip label={`Pendentes: ${pendentes}`} size="small" variant="outlined" />
           </Stack>
           <LinearProgress variant="determinate" value={progresso} sx={{ height: 8, borderRadius: 4 }} />
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+            {(confirmados + rejeitados)} de {itens.length} revisados ({progresso.toFixed(0)}%)
+          </Typography>
         </Paper>
 
         {hasError && (
@@ -212,12 +222,15 @@ export function MatchReviewPage() {
             ) : (
               <Table size="small" sx={{ minWidth: 820 }}>
                 <TableHead>
-                  <TableRow>
-                    <TableCell>Linha</TableCell>
-                    <TableCell>Código</TableCell>
+                  <TableRow sx={{ '& th': { borderBottom: '2px solid', borderColor: 'divider', fontWeight: 700 } }}>
+                    <TableCell sx={{ width: 70 }}>Linha</TableCell>
+                    <TableCell sx={{ width: 120 }}>Código</TableCell>
                     <TableCell>Descrição Original</TableCell>
-                    <TableCell>Unid.</TableCell>
-                    <TableCell>Qtd</TableCell>
+                    <TableCell sx={{ width: 70 }} align="center">Unid.</TableCell>
+                    <TableCell sx={{ width: 110 }} align="right">Qtd</TableCell>
+                    <TableCell sx={{ width: 90 }} align="center">Conf.</TableCell>
+                    <TableCell sx={{ width: 130 }}>Status</TableCell>
+                    <TableCell sx={{ width: 130 }}>Ações</TableCell>
                     <TableCell>Conf.</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell>Ações</TableCell>

@@ -45,6 +45,7 @@ _SECTION_KEYWORDS = {
     "resumo", "total", "subtotal", "geral", "sumario", "sumário",
 }
 _SECTION_NUMBERING_RE = re.compile(r"^\d+(\.\d+)*\s*[\.:)\-]?\s*$")
+_DIGITS_ONLY_RE = re.compile(r"^[\d\s\.\,\:\-\(\)\/]+$")
 
 
 def _is_likely_section_title(row: dict[str, Any]) -> bool:
@@ -82,8 +83,8 @@ def _is_likely_section_title(row: dict[str, Any]) -> bool:
     if not has_qtd and not has_unidade:
         return True
 
-    # Regra 2: descrição muito curta
-    if len(descricao) <= 5:
+    # Regra 2: descrição muito curta E sem dados (não descarta itens curtos válidos com qtd+unidade)
+    if len(descricao) <= 5 and not has_qtd and not has_unidade:
         return True
 
     # Se tem quantidade E unidade, é quase certamente um item real — não descarta
@@ -101,6 +102,10 @@ def _is_likely_section_title(row: dict[str, Any]) -> bool:
     # Regra 5: começa com palavra-chave de seção
     first_word = descricao.split()[0].lower().rstrip(".:-)")
     if first_word in _SECTION_KEYWORDS and not has_qtd and not has_unidade:
+        return True
+
+    # Regra 6: descrição composta apenas de dígitos, pontuação e espaços, sem unidade
+    if _DIGITS_ONLY_RE.match(descricao) and not has_unidade:
         return True
 
     return False

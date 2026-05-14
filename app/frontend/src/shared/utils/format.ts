@@ -8,6 +8,12 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 });
 
 const numberFormatter = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const quantityFormatter = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
@@ -33,6 +39,22 @@ export function formatCurrency(value: DecimalValue | null | undefined) {
 
 export function formatNumber(value: DecimalValue | null | undefined) {
   return numberFormatter.format(toNumber(value));
+}
+
+export function formatQuantity(value: DecimalValue | string | null | undefined): string {
+  if (value === null || value === undefined || value === '') return '—';
+  return quantityFormatter.format(toNumber(value as DecimalValue));
+}
+
+export function formatUnit(value: string | null | undefined): string {
+  if (!value) return '—';
+  return String(value).trim().toUpperCase();
+}
+
+export function formatPercent(value: DecimalValue | string | null | undefined, digits = 0): string {
+  if (value === null || value === undefined || value === '') return '—';
+  const n = toNumber(value as DecimalValue);
+  return (n * 100).toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits }) + '%';
 }
 
 export function formatDateTime(value: string | Date | null | undefined) {

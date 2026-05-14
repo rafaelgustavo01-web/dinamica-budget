@@ -12,6 +12,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined';
 import type { PqItemResponse } from '../../../shared/services/api/proposalsApi';
+import { formatQuantity, formatUnit, formatPercent } from '../../../shared/utils/format';
 import { ServicoPickerDialog } from './ServicoPickerDialog';
 
 interface MatchItemRowProps {
@@ -25,9 +26,9 @@ interface MatchItemRowProps {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: 'success' | 'warning' | 'error' | 'default' | 'info' }> = {
-  SUGERIDO: { label: 'Sugerido', color: 'warning' },
+  SUGERIDO: { label: 'Sugerido', color: 'info' },
   CONFIRMADO: { label: 'Confirmado', color: 'success' },
-  MANUAL: { label: 'Manual', color: 'info' },
+  MANUAL: { label: 'Manual', color: 'warning' },
   SEM_MATCH: { label: 'Sem Match', color: 'error' },
   PENDENTE: { label: 'Pendente', color: 'default' },
   BUSCANDO: { label: 'Buscando', color: 'default' },
@@ -44,48 +45,56 @@ function MatchItemRowInner({
 }: MatchItemRowProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const status = STATUS_LABELS[item.match_status] ?? { label: item.match_status, color: 'default' as const };
-  const confianca = item.match_confidence
-    ? `${(parseFloat(item.match_confidence) * 100).toFixed(0)}%`
-    : '—';
+  const confiancaNum = item.match_confidence ? parseFloat(item.match_confidence) : 0;
+  const confiancaColor = confiancaNum >= 0.85 ? 'success.main' : confiancaNum >= 0.65 ? 'warning.main' : 'error.main';
 
   const podeAgir = item.match_status === 'SUGERIDO' || item.match_status === 'PENDENTE';
 
   return (
     <>
       <TableRow hover style={virtualStyle} sx={{ opacity: isLoading ? 0.5 : 1 }}>
-        <TableCell sx={{ width: 50 }}>
+        <TableCell sx={{ width: 70 }} align="center">
           <Typography variant="caption" color="text.secondary">
             {item.linha_planilha ?? '—'}
           </Typography>
         </TableCell>
-        <TableCell sx={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <TableCell sx={{ width: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           <Tooltip title={item.codigo_original ?? ''}>
             <span>{item.codigo_original ?? '—'}</span>
           </Tooltip>
         </TableCell>
-        <TableCell sx={{ maxWidth: 260 }}>
+        <TableCell>
           <Tooltip title={item.descricao_original}>
-            <Typography variant="body2" noWrap>{item.descricao_original}</Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+            >
+              {item.descricao_original}
+            </Typography>
           </Tooltip>
         </TableCell>
-        <TableCell sx={{ width: 60 }}>
-          <Typography variant="body2">{item.unidade_medida_original ?? '—'}</Typography>
+        <TableCell sx={{ width: 70 }} align="center">
+          <Typography variant="body2">{formatUnit(item.unidade_medida_original)}</Typography>
         </TableCell>
-        <TableCell sx={{ width: 80 }}>
-          <Typography variant="body2">{item.quantidade_original ?? '—'}</Typography>
-        </TableCell>
-        <TableCell sx={{ width: 80 }}>
-          <Typography
-            variant="body2"
-            color={parseFloat(item.match_confidence ?? '0') >= 0.8 ? 'success.main' : 'warning.main'}
-          >
-            {confianca}
+        <TableCell sx={{ width: 110 }} align="right">
+          <Typography variant="body2" fontFamily="monospace">
+            {formatQuantity(item.quantidade_original)}
           </Typography>
         </TableCell>
-        <TableCell sx={{ width: 120 }}>
+        <TableCell sx={{ width: 90 }} align="center">
+          <Typography variant="body2" color={item.match_confidence ? confiancaColor : 'text.secondary'}>
+            {formatPercent(item.match_confidence)}
+          </Typography>
+        </TableCell>
+        <TableCell sx={{ width: 130 }}>
           <Chip label={status.label} color={status.color} size="small" />
         </TableCell>
-        <TableCell sx={{ width: 220 }}>
+        <TableCell sx={{ width: 130 }}>
           {podeAgir && (
             <Stack direction="row" spacing={0.5}>
               <Tooltip title="Confirmar sugestão">

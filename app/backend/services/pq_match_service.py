@@ -3,11 +3,14 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.exceptions import NotFoundError
+from backend.core.logging import get_logger
 from backend.models.enums import StatusMatch, TipoServicoMatch
 from backend.repositories.pq_item_repository import PqItemRepository
 from backend.repositories.proposta_repository import PropostaRepository
 from backend.schemas.busca import BuscaServicoRequest
 from backend.services.busca_service import BuscaService, busca_service
+
+logger = get_logger(__name__)
 
 
 class PqMatchService:
@@ -56,18 +59,28 @@ class PqMatchService:
 
             if resposta.resultados:
                 top = resposta.resultados[0]
-                servico_tipo = (
-                    TipoServicoMatch.ITEM_PROPRIO
-                    if top.origem_match == "PROPRIA_CLIENTE"
-                    else TipoServicoMatch.BASE_TCPO
-                )
-                await self.item_repo.update_match(
-                    pq_item=item,
-                    servico_match_id=top.id_tcpo,
-                    servico_match_tipo=servico_tipo,
-                    confidence=top.score_confianca,
-                )
-                resultados["sugeridos"] += 1
+                # Se confiança muito baixa, não sugerir — manter como PENDENTE para revisão manual
+                if top.score_confianca < 0.55:
+                    await self.item_repo.update_status(item, StatusMatch.PENDENTE)
+                    logger.info(
+                        "pq_match.baixa_confianca",
+                        item_id=str(item.id),
+                        score=top.score_confianca,
+                    )
+                    resultados["sem_match"] += 1
+                else:
+                    servico_tipo = (
+                        TipoServicoMatch.ITEM_PROPRIO
+                        if top.origem_match == "PROPRIA_CLIENTE"
+                        else TipoServicoMatch.BASE_TCPO
+                    )
+                    await self.item_repo.update_match(
+                        pq_item=item,
+                        servico_match_id=top.id_tcpo,
+                        servico_match_tipo=servico_tipo,
+                        confidence=top.score_confianca,
+                    )
+                    resultados["sugeridos"] += 1
             else:
                 await self.item_repo.update_status(item, StatusMatch.SEM_MATCH)
                 resultados["sem_match"] += 1
