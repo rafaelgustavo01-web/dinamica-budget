@@ -1,36 +1,88 @@
+from __future__ import annotations
+
 from typing import Any
 from uuid import UUID
+
 from pydantic import BaseModel, Field
+
 from backend.models.smart_import import SmartImportStatus
+from backend.services.smart_import.row_classifier import RowClass
 
-class StagingRowError(BaseModel):
-    loc: list[str | int]
-    msg: str
-    type: str
 
-class StagingRow(BaseModel):
-    linha_planilha: int
-    raw_data: dict[str, Any] = Field(default_factory=dict)
-    normalized_data: dict[str, Any] | None = None
-    errors: list[StagingRowError] | None = None
-    is_valid: bool = False
+# ── Upload ────────────────────────────────────────────────────────────────────
 
-class SmartImportMetadata(BaseModel):
-    mapper_version: str = "1.0"
-    confidence_scores: dict[str, float] = Field(default_factory=dict)
-    column_mapping: dict[str, str] = Field(default_factory=dict)
-    warnings: list[str] = Field(default_factory=list)
+class SmartImportCreateRequest(BaseModel):
+    proposta_id: UUID | None = None
+    sheet_name: str | None = None
+    profile_header_row: int | None = None
+    profile_aliases: dict[str, list[str]] | None = None
 
-class SmartImportPayload(BaseModel):
-    total_rows: int = 0
-    valid_rows: int = 0
-    invalid_rows: int = 0
-    rows: list[StagingRow] = Field(default_factory=list)
 
-class SmartImportJobResponse(BaseModel):
+# ── Staging row ───────────────────────────────────────────────────────────────
+
+class StagingRowOut(BaseModel):
+    idx: int
+    sheet_row: int | None
+    row_class: RowClass
+    codigo: str | None = None
+    descricao: str | None = None
+    unidade: str | None = None
+    quantidade: str | None = None
+    preco: str | None = None
+    valor: str | None = None
+
+
+class StagingRowEdit(BaseModel):
+    codigo: str | None = None
+    descricao: str | None = None
+    unidade: str | None = None
+    quantidade: str | None = None
+    preco: str | None = None
+    valor: str | None = None
+
+
+class StagingRowAdd(BaseModel):
+    codigo: str | None = None
+    descricao: str
+    unidade: str | None = None
+    quantidade: str | None = None
+    preco: str | None = None
+    valor: str | None = None
+
+
+class ClassifyRequest(BaseModel):
+    row_class: RowClass
+
+
+class ColumnRemapRequest(BaseModel):
+    field: str
+    col_idx: int
+
+
+# ── Job response ──────────────────────────────────────────────────────────────
+
+class SmartImportJobOut(BaseModel):
     id: UUID
     cliente_id: UUID
+    proposta_id: UUID | None
     arquivo_origem: str
     status: SmartImportStatus
-    mapping_metadata: SmartImportMetadata | None = None
-    payload_staging: SmartImportPayload | None = None
+    detected_header_row: int | None
+    detected_data_range: dict | None
+    mapping_metadata: dict | None
+    rows: list[StagingRowOut] = Field(default_factory=list)
+
+    @classmethod
+    def from_job(cls, job: Any) -> "SmartImportJobOut":
+        rows_raw = (job.payload_staging or {}).get("rows", [])
+        return cls(
+            id=job.id,
+            cliente_id=job.cliente_id,
+            proposta_id=job.proposta_id,
+            arquivo_origem=job.arquivo_origem,
+            status=job.status,
+            detected_header_row=job.detected_header_row,
+            detected_data_range=job.detected_data_range,
+            mapping_metadata=job.mapping_metadata,
+            rows=[StagingRowOut(**r) for r in rows_raw],
+        )

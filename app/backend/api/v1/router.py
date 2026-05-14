@@ -16,6 +16,7 @@ from backend.api.v1.endpoints import (
     proposta_export,
     propostas,
     servicos,
+    smart_import,
     usuarios,
     versoes,
 )
@@ -38,4 +39,5 @@ router.include_router(propostas.router)
 router.include_router(proposta_export.router)
 router.include_router(pq_importacao.router)
 router.include_router(pq_layout.router)
+router.include_router(smart_import.router)
 router.include_router(proposta_acl.router)
