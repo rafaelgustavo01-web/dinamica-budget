@@ -114,10 +114,10 @@ export function HistogramaTabMaoObra({ propostaId, items, divergencias }: Props)
                     size="small"
                     variant="standard"
                     type="number"
-                    value={isEditing.salario !== undefined ? (isEditing.salario ?? '') : (item.salario ?? '')}
+                    value={isEditing.salario !== undefined ? (isEditing.salario ?? '') : (item.salario != null ? Number(item.salario).toFixed(2) : '')}
                     onChange={(e) => handleChange(item.id, 'salario', e.target.value)}
                     onBlur={() => handleBlur(item)}
-                    inputProps={{ style: { textAlign: 'right', fontSize: '0.85rem' } }}
+                    inputProps={{ style: { textAlign: 'right', fontSize: '0.85rem' }, step: '0.01' }}
                   />
                 </TableCell>
                 <TableCell sx={numCell}>
@@ -125,10 +125,10 @@ export function HistogramaTabMaoObra({ propostaId, items, divergencias }: Props)
                     size="small"
                     variant="standard"
                     type="number"
-                    value={isEditing.encargos_percent !== undefined ? (isEditing.encargos_percent ?? '') : (item.encargos_percent ?? '')}
+                    value={isEditing.encargos_percent !== undefined ? (isEditing.encargos_percent ?? '') : (item.encargos_percent != null ? Number(item.encargos_percent).toFixed(2) : '')}
                     onChange={(e) => handleChange(item.id, 'encargos_percent', e.target.value)}
                     onBlur={() => handleBlur(item)}
-                    inputProps={{ style: { textAlign: 'right', fontSize: '0.85rem' } }}
+                    inputProps={{ style: { textAlign: 'right', fontSize: '0.85rem' }, step: '0.01' }}
                   />
                 </TableCell>
                 <TableCell sx={numCell}>
@@ -136,10 +136,10 @@ export function HistogramaTabMaoObra({ propostaId, items, divergencias }: Props)
                     size="small"
                     variant="standard"
                     type="number"
-                    value={isEditing.custo_unitario_h !== undefined ? (isEditing.custo_unitario_h ?? '') : (item.custo_unitario_h ?? '')}
+                    value={isEditing.custo_unitario_h !== undefined ? (isEditing.custo_unitario_h ?? '') : (item.custo_unitario_h != null ? Number(item.custo_unitario_h).toFixed(2) : '')}
                     onChange={(e) => handleChange(item.id, 'custo_unitario_h', e.target.value)}
                     onBlur={() => handleBlur(item)}
-                    inputProps={{ style: { textAlign: 'right', fontSize: '0.85rem' } }}
+                    inputProps={{ style: { textAlign: 'right', fontSize: '0.85rem' }, step: '0.01' }}
                   />
                 </TableCell>
                 <TableCell sx={numCell}>
@@ -147,10 +147,10 @@ export function HistogramaTabMaoObra({ propostaId, items, divergencias }: Props)
                     size="small"
                     variant="standard"
                     type="number"
-                    value={isEditing.custo_mensal !== undefined ? (isEditing.custo_mensal ?? '') : (item.custo_mensal ?? '')}
+                    value={isEditing.custo_mensal !== undefined ? (isEditing.custo_mensal ?? '') : (item.custo_mensal != null ? Number(item.custo_mensal).toFixed(2) : '')}
                     onChange={(e) => handleChange(item.id, 'custo_mensal', e.target.value)}
                     onBlur={() => handleBlur(item)}
-                    inputProps={{ style: { textAlign: 'right', fontSize: '0.85rem' } }}
+                    inputProps={{ style: { textAlign: 'right', fontSize: '0.85rem' }, step: '0.01' }}
                   />
                 </TableCell>
                 <TableCell sx={numCell}>{fmt(item.valor_bcu_snapshot)}</TableCell>
@@ -158,7 +158,7 @@ export function HistogramaTabMaoObra({ propostaId, items, divergencias }: Props)
                   <Stack direction="row" spacing={0.5} justifyContent="center">
                     {item.editado_manualmente && <Chip label="Editado" size="small" color="info" variant="outlined" />}
                     {divergeList && (
-                      <Tooltip title={`Divergência: snapshot ${fmt(divergeList[0].valor_snapshot)} vs BCU ${fmt(divergeList[0].valor_atual_bcu)}`}>
+                      <Tooltip title={`Divergência: snapshot ${fmt(divergeList[0].valor_snapshot, 4)} vs BCU ${fmt(divergeList[0].valor_atual_bcu, 4)}`}>
                         <Chip label="Diverge" size="small" color="warning" icon={<WarningAmberIcon fontSize="small" />} />
                       </Tooltip>
                     )}

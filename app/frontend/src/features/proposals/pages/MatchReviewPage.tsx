@@ -19,6 +19,7 @@ import {
   Typography,
 } from '@mui/material';
 import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
+import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
 import DoneAllOutlinedIcon from '@mui/icons-material/DoneAllOutlined';
 import PlaylistAddOutlinedIcon from '@mui/icons-material/PlaylistAddOutlined';
@@ -120,6 +121,13 @@ export function MatchReviewPage() {
     },
   });
 
+  const matchMutation = useMutation({
+    mutationFn: () => proposalsApi.executeMatch(id!),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: PQ_ITENS_KEY(id!) });
+    },
+  });
+
   const rowVirtualizer = useVirtualizer({
     count: itens.length,
     getScrollElement: () => tableContainerRef.current,
@@ -133,8 +141,9 @@ export function MatchReviewPage() {
   const rejeitados = itens.filter((i) => i.match_status === 'SEM_MATCH').length;
   const sugeridos = itens.filter((i) => i.match_status === 'SUGERIDO').length;
   const pendentes = itens.filter((i) => i.match_status === 'PENDENTE' || i.match_status === 'BUSCANDO').length;
+  const semConfianca = itens.length > 0 && itens.every((i) => !i.match_confidence);
   const progresso = itens.length > 0 ? ((confirmados + rejeitados) / itens.length) * 100 : 0;
-  const hasError = confirmarMutation.isError || rejeitarMutation.isError || substituirMutation.isError;
+  const hasError = confirmarMutation.isError || rejeitarMutation.isError || substituirMutation.isError || matchMutation.isError;
 
   if (isError) return <Alert severity="error">{extractApiErrorMessage(error)}</Alert>;
 
@@ -199,8 +208,27 @@ export function MatchReviewPage() {
         {hasError && (
           <Alert severity="error">
             {extractApiErrorMessage(
-              confirmarMutation.error ?? rejeitarMutation.error ?? substituirMutation.error,
+              confirmarMutation.error ?? rejeitarMutation.error ?? substituirMutation.error ?? matchMutation.error,
             )}
+          </Alert>
+        )}
+
+        {semConfianca && itens.length > 0 && (
+          <Alert
+            severity="warning"
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                startIcon={<AutoFixHighOutlinedIcon />}
+                loading={matchMutation.isPending}
+                onClick={() => matchMutation.mutate()}
+              >
+                Executar Match
+              </Button>
+            }
+          >
+            O matching TCPO ainda não foi executado para esta proposta. Execute o match para gerar sugestões automáticas.
           </Alert>
         )}
 
@@ -231,17 +259,14 @@ export function MatchReviewPage() {
                     <TableCell sx={{ width: 90 }} align="center">Conf.</TableCell>
                     <TableCell sx={{ width: 130 }}>Status</TableCell>
                     <TableCell sx={{ width: 130 }}>Ações</TableCell>
-                    <TableCell>Conf.</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Ações</TableCell>
                   </TableRow>
                 </TableHead>
-                <TableBody
-                  sx={{
-                    height: `${rowVirtualizer.getTotalSize()}px`,
-                    position: 'relative',
-                  }}
-                >
+                <TableBody>
+                  {rowVirtualizer.getVirtualItems().length > 0 && rowVirtualizer.getVirtualItems()[0].start > 0 && (
+                    <TableRow style={{ height: rowVirtualizer.getVirtualItems()[0].start }}>
+                      <TableCell colSpan={8} sx={{ p: 0, border: 0 }} />
+                    </TableRow>
+                  )}
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                     const item = itens[virtualRow.index];
                     return (
@@ -250,14 +275,6 @@ export function MatchReviewPage() {
                         item={item}
                         clienteId={proposta?.cliente_id ?? ''}
                         isLoading={pendingIds.has(item.id)}
-                        virtualStyle={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: `${virtualRow.size}px`,
-                          transform: `translateY(${virtualRow.start}px)`,
-                        }}
                         onConfirmar={(itemId) => confirmarMutation.mutate(itemId)}
                         onRejeitar={(itemId) => rejeitarMutation.mutate(itemId)}
                         onSubstituir={(itemId, servicoId, tipo) =>
@@ -266,6 +283,17 @@ export function MatchReviewPage() {
                       />
                     );
                   })}
+                  {rowVirtualizer.getVirtualItems().length > 0 && (
+                    <TableRow
+                      style={{
+                        height:
+                          rowVirtualizer.getTotalSize() -
+                          (rowVirtualizer.getVirtualItems().at(-1)?.end ?? 0),
+                      }}
+                    >
+                      <TableCell colSpan={8} sx={{ p: 0, border: 0 }} />
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             )}

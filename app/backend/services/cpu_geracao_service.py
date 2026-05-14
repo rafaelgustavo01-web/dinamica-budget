@@ -19,7 +19,6 @@ from backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 _ELIGIBLE_MATCH_STATUS = {
-    StatusMatch.SUGERIDO,
     StatusMatch.CONFIRMADO,
     StatusMatch.MANUAL,
 }

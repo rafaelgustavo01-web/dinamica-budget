@@ -141,10 +141,14 @@ export function HistogramaTabGenerica({ propostaId, tabela, items, divergencias,
                         size="small"
                         variant="standard"
                         type="number"
-                        value={isEditing[col.key] !== undefined ? (isEditing[col.key] ?? '') : (item[col.key] ?? '')}
+                        value={isEditing[col.key] !== undefined
+                          ? (isEditing[col.key] ?? '')
+                          : (item[col.key] != null
+                              ? (col.key === 'quantidade' ? String(Math.trunc(Number(item[col.key]))) : Number(item[col.key]).toFixed(2))
+                              : '')}
                         onChange={(e) => handleChange(item.id, col.key, e.target.value)}
                         onBlur={() => handleBlur(item)}
-                        inputProps={{ style: { textAlign: col.numeric ? 'right' : 'left', fontSize: '0.85rem' } }}
+                        inputProps={{ style: { textAlign: col.numeric ? 'right' : 'left', fontSize: '0.85rem' }, step: col.key === 'quantidade' ? '1' : '0.01' }}
                       />
                     ) : col.numeric ? (
                       col.key === 'quantidade' ? String(Math.trunc(Number(item[col.key] ?? 0))) : fmt(item[col.key])
@@ -158,7 +162,7 @@ export function HistogramaTabGenerica({ propostaId, tabela, items, divergencias,
                   <Stack direction="row" spacing={0.5} justifyContent="center">
                     {item.editado_manualmente && <Chip label="Editado" size="small" color="info" variant="outlined" />}
                     {divergeList && (
-                      <Tooltip title={`Divergência: snapshot ${fmt(divergeList[0].valor_snapshot)} vs BCU ${fmt(divergeList[0].valor_atual_bcu)}`}>
+                      <Tooltip title={`Divergência: snapshot ${fmt(divergeList[0].valor_snapshot, 4)} vs BCU ${fmt(divergeList[0].valor_atual_bcu, 4)}`}>
                         <Chip label="Diverge" size="small" color="warning" icon={<WarningAmberIcon fontSize="small" />} />
                       </Tooltip>
                     )}

@@ -22,7 +22,6 @@ interface MatchItemRowProps {
   onRejeitar: (itemId: string) => void;
   onSubstituir: (itemId: string, servicoId: string, tipo: string) => void;
   isLoading: boolean;
-  virtualStyle?: React.CSSProperties;
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: 'success' | 'warning' | 'error' | 'default' | 'info' }> = {
@@ -41,7 +40,6 @@ function MatchItemRowInner({
   onRejeitar,
   onSubstituir,
   isLoading,
-  virtualStyle,
 }: MatchItemRowProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const status = STATUS_LABELS[item.match_status] ?? { label: item.match_status, color: 'default' as const };
@@ -52,7 +50,7 @@ function MatchItemRowInner({
 
   return (
     <>
-      <TableRow hover style={virtualStyle} sx={{ opacity: isLoading ? 0.5 : 1 }}>
+      <TableRow hover sx={{ opacity: isLoading ? 0.5 : 1 }}>
         <TableCell sx={{ width: 70 }} align="center">
           <Typography variant="caption" color="text.secondary">
             {item.linha_planilha ?? '—'}
