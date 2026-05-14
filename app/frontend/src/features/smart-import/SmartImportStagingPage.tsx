@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { PageHeader } from '../../shared/components/PageHeader';
 import { extractApiErrorMessage } from '../../shared/services/api/apiClient';
@@ -60,6 +60,7 @@ const EMPTY_ROW: StagingRow = {
 
 export function SmartImportStagingPage() {
   const { jobId } = useParams<{ jobId: string }>();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [corrections, setCorrections] = useState<CorrectionEntry[]>([]);
@@ -182,7 +183,21 @@ export function SmartImportStagingPage() {
         )}
 
         {commitMutation.isSuccess && (
-          <Alert severity="success" icon={<CheckCircleOutlineIcon />}>
+          <Alert
+            severity="success"
+            icon={<CheckCircleOutlineIcon />}
+            action={
+              job.proposta_id ? (
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={() => navigate(`/propostas/${job.proposta_id}/importar`)}
+                >
+                  Ir para Match
+                </Button>
+              ) : undefined
+            }
+          >
             Importação commitada. Perfil atualizado — confiança:{' '}
             <strong>{(commitMutation.data.score_confianca * 100).toFixed(1)}%</strong> ·{' '}
             {commitMutation.data.corrections_applied} correção(ões) aplicada(s).
