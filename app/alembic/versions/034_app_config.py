@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "034_app_config"
-down_revision = "033_import_profile_tables"
+down_revision = "033"
 branch_labels = None
 depends_on = None
 
