@@ -67,3 +67,14 @@ def test_respects_profile_fixed_row():
     )
     idx = HeaderDetector.detect(rows, profile_header_row=5)
     assert idx == 5
+
+def test_rejects_negative_profile_fixed_row():
+    from backend.core.exceptions import ValidationError
+    with pytest.raises(ValidationError, match="Linha"):
+        HeaderDetector.detect([["Codigo", "Descricao"]], profile_header_row=-1)
+
+
+def test_rejects_out_of_range_profile_fixed_row():
+    from backend.core.exceptions import ValidationError
+    with pytest.raises(ValidationError, match="Linha"):
+        HeaderDetector.detect([["Codigo", "Descricao"]], profile_header_row=5)

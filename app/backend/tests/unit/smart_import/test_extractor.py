@@ -61,3 +61,31 @@ def test_extract_rejects_fake_xlsx():
 def test_extract_rejects_unsupported_extension():
     with pytest.raises(ValidationError, match=r"\.pdf"):
         FileExtractor.from_bytes("report.pdf", b"data")
+
+def test_extract_rejects_missing_sheet_name():
+    content = _make_xlsx([["ITEM", "DESCRICAO"]])
+    with pytest.raises(ValidationError, match="Aba"):
+        FileExtractor.from_bytes("test.xlsx", content, sheet_name="NaoExiste")
+
+
+def test_extract_rejects_too_many_rows():
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    for i in range(5002):
+        ws.append([f"cell{i}"])
+    buf = BytesIO()
+    wb.save(buf)
+    content = buf.getvalue()
+    with pytest.raises(ValidationError, match="limite"):
+        FileExtractor.from_bytes("big.xlsx", content)
+
+
+def test_extract_rejects_too_many_columns():
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append([f"col{i}" for i in range(82)])
+    buf = BytesIO()
+    wb.save(buf)
+    content = buf.getvalue()
+    with pytest.raises(ValidationError, match="limite"):
+        FileExtractor.from_bytes("wide.xlsx", content)

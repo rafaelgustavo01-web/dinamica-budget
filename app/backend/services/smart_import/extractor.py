@@ -11,6 +11,8 @@ from backend.core.exceptions import ValidationError
 _MAX_FILE_SIZE = 10 * 1024 * 1024
 _XLSX_MAGIC = b"PK\x03\x04"
 _SUPPORTED = {"xlsx", "csv"}
+_MAX_ROWS = 5000
+_MAX_COLUMNS = 80
 
 
 @dataclass
@@ -38,23 +40,38 @@ class FileExtractor:
         if not content[:4].startswith(_XLSX_MAGIC):
             raise ValidationError("Arquivo não é um XLSX válido.")
         wb = openpyxl.load_workbook(io.BytesIO(content), read_only=True, data_only=True)
-        ws = wb[sheet_name] if sheet_name and sheet_name in wb.sheetnames else wb.active
-        name = ws.title or "Sheet1"
-        rows = []
-        for raw_row in ws.iter_rows(values_only=True):
-            row = list(raw_row)
-            # strip trailing None columns
-            while row and row[-1] is None:
-                row.pop()
-            rows.append(row)
-        wb.close()
-        return SheetData(sheet_name=name, rows=rows)
+        try:
+            if sheet_name and sheet_name not in wb.sheetnames:
+                raise ValidationError(f"Aba '{sheet_name}' não encontrada no XLSX.")
+            ws = wb[sheet_name] if sheet_name else wb.active
+            name = ws.title or "Sheet1"
+            rows = []
+            for row_number, raw_row in enumerate(ws.iter_rows(values_only=True), start=1):
+                if row_number > _MAX_ROWS:
+                    raise ValidationError(f"Planilha excede o limite de {_MAX_ROWS} linhas.")
+                row = list(raw_row)
+                # strip trailing None columns
+                while row and row[-1] is None:
+                    row.pop()
+                if len(row) > _MAX_COLUMNS:
+                    raise ValidationError(f"Planilha excede o limite de {_MAX_COLUMNS} colunas.")
+                rows.append(row)
+            return SheetData(sheet_name=name, rows=rows)
+        finally:
+            wb.close()
 
     @staticmethod
     def _parse_csv(content: bytes) -> SheetData:
         text = FileExtractor._decode_csv(content)
         reader = csv.reader(io.StringIO(text))
-        rows = [list(row) for row in reader if any(c.strip() for c in row)]
+        rows = []
+        for row_number, row in enumerate(reader, start=1):
+            if row_number > _MAX_ROWS:
+                raise ValidationError(f"Planilha excede o limite de {_MAX_ROWS} linhas.")
+            if any(c.strip() for c in row):
+                if len(row) > _MAX_COLUMNS:
+                    raise ValidationError(f"Planilha excede o limite de {_MAX_COLUMNS} colunas.")
+                rows.append(list(row))
         return SheetData(sheet_name="Sheet1", rows=rows)
 
     @staticmethod

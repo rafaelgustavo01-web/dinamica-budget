@@ -64,6 +64,8 @@ class HeaderDetector:
     @staticmethod
     def detect(rows: list[list], profile_header_row: int | None = None) -> int:
         if profile_header_row is not None:
+            if profile_header_row < 0 or profile_header_row >= len(rows):
+                raise ValidationError("Linha de cabeçalho configurada está fora do intervalo da planilha.")
             return profile_header_row
 
         best_idx = -1
