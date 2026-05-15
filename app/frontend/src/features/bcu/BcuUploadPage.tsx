@@ -21,7 +21,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 
 import { PageHeader } from '../../shared/components/PageHeader';
 import { useFeedback } from '../../shared/components/feedback/FeedbackProvider';

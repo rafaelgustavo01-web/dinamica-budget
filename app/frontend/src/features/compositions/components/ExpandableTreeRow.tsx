@@ -140,23 +140,27 @@ export function ExpandableTreeRow({ item, depth = 0, maxDepth = 5, isExpandable,
                     </Typography>
                   </Box>
                 ) : componentesQuery.data?.length ? (
-                  componentesQuery.data.map((child: ComposicaoComponenteResponse) => (
-                    <ExpandableTreeRow
-                      key={child.id}
-                      item={{
-                        id: child.insumo_filho_id,
-                        descricao: child.descricao_filho,
-                        codigo_origem: child.codigo_origem ?? null,
-                        unidade_medida: child.unidade_medida,
-                        custo_unitario: child.custo_unitario,
-                        tipo_recurso: child.tipo_recurso,
-                      }}
-                      depth={depth + 1}
-                      maxDepth={maxDepth}
-                      isExpandable={child.tipo_recurso === 'SERVICO'}
-                      totalCols={totalCols}
-                    />
-                  ))
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <tbody>
+                      {componentesQuery.data.map((child: ComposicaoComponenteResponse) => (
+                        <ExpandableTreeRow
+                          key={child.id}
+                          item={{
+                            id: child.insumo_filho_id,
+                            descricao: child.descricao_filho,
+                            codigo_origem: child.codigo_origem ?? null,
+                            unidade_medida: child.unidade_medida,
+                            custo_unitario: child.custo_unitario,
+                            tipo_recurso: child.tipo_recurso,
+                          }}
+                          depth={depth + 1}
+                          maxDepth={maxDepth}
+                          isExpandable={child.tipo_recurso === 'SERVICO'}
+                          totalCols={totalCols}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
                 ) : (
                   <Box sx={{ pl: `${indent + 28}px`, py: 1 }}>
                     <Typography variant="caption" color="text.secondary">

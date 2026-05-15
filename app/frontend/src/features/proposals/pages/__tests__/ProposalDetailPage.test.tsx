@@ -47,6 +47,9 @@ function setupCommonHandlers() {
     http.get('/api/v1/propostas/root/root-1/versoes', () => {
       return HttpResponse.json([]);
     }),
+    http.get('/api/v1/propostas/p1/items', () => {
+      return HttpResponse.json([]);
+    }),
   );
 }
 
