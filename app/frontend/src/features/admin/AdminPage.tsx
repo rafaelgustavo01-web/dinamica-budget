@@ -15,9 +15,10 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  TextField,
   Typography,
 } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { ConfirmationDialog } from '../../shared/components/ConfirmationDialog';
@@ -37,6 +38,22 @@ export function AdminPage() {
 
   // ── BCU state ─────────────────────────────────────────────────────────────
   const [bcuFile, setBcuFile] = useState<File | null>(null);
+  const [proposalPattern, setProposalPattern] = useState('');
+
+  const settingsQuery = useQuery({
+    queryKey: ['admin-settings'],
+    queryFn: adminApi.getSettings,
+  });
+
+  const settingsMutation = useMutation({
+    mutationFn: () => adminApi.updateSettings({ proposal_number_pattern: proposalPattern || settingsQuery.data?.proposal_number_pattern || 'PROP-{YYYY}-{seq:04d}' }),
+    onSuccess: (data) => {
+      setProposalPattern(data.proposal_number_pattern);
+      void queryClient.invalidateQueries({ queryKey: ['admin-settings'] });
+      showMessage('Padrão de numeração salvo.');
+    },
+    onError: (error) => showMessage(extractApiErrorMessage(error, 'Erro ao salvar configuração.'), 'error'),
+  });
 
   // ── TCPO: ETL upload + execute + auto-embeddings ──────────────────────────
   const executeMutation = useMutation({
@@ -59,10 +76,10 @@ export function AdminPage() {
   // ── BCU ───────────────────────────────────────────────────────────────────
   const bcuImportMutation = useMutation({
     mutationFn: (file: File) => bcuApi.importarPlanilha(file),
-    onSuccess: (data) => {
+    onSuccess: () => {
       setBcuFile(null);
       void queryClient.invalidateQueries({ queryKey: ['bcu'] });
-      showMessage(`BCU importada com sucesso! ID: ${data.id}`);
+      showMessage('BCU importada com sucesso.');
     },
   });
 
@@ -83,6 +100,16 @@ export function AdminPage() {
       />
 
       <Stack spacing={3}>
+        <Paper sx={{ p: 3, border: '1px solid', borderColor: 'divider' }}>
+          <Stack spacing={2} sx={{ maxWidth: 560 }}>
+            <Typography variant="h6">Numeração de propostas</Typography>
+            <Typography variant="body2" color="text.secondary">Use {'{YYYY}'}, {'{YY}'}, {'{MM}'} e {'{seq:04d}'} para gerar os próximos números.</Typography>
+            <TextField label="Pattern" value={proposalPattern || settingsQuery.data?.proposal_number_pattern || ''} onChange={(event) => setProposalPattern(event.target.value)} placeholder="PROP-{YYYY}-{seq:04d}" fullWidth />
+            <Button variant="contained" disabled={settingsMutation.isPending || settingsQuery.isLoading} onClick={() => settingsMutation.mutate()} sx={{ alignSelf: 'flex-start' }}>
+              {settingsMutation.isPending ? 'Salvando...' : 'Salvar padrão'}
+            </Button>
+          </Stack>
+        </Paper>
         {/* ── TCPO ─────────────────────────────────────────────────────────── */}
         <Paper
           sx={{

@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined';
 import type { PqItemResponse } from '../../../shared/services/api/proposalsApi';
 import { formatQuantity, formatUnit, formatPercent } from '../../../shared/utils/format';
@@ -21,6 +22,7 @@ interface MatchItemRowProps {
   onConfirmar: (itemId: string) => void;
   onRejeitar: (itemId: string) => void;
   onSubstituir: (itemId: string, servicoId: string, tipo: string) => void;
+  onDelete?: (itemId: string) => void;
   isLoading: boolean;
 }
 
@@ -39,6 +41,7 @@ function MatchItemRowInner({
   onConfirmar,
   onRejeitar,
   onSubstituir,
+  onDelete,
   isLoading,
 }: MatchItemRowProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -46,7 +49,10 @@ function MatchItemRowInner({
   const confiancaNum = item.match_confidence ? parseFloat(item.match_confidence) : 0;
   const confiancaColor = confiancaNum >= 0.85 ? 'success.main' : confiancaNum >= 0.65 ? 'warning.main' : 'error.main';
 
-  const podeAgir = item.match_status === 'SUGERIDO' || item.match_status === 'PENDENTE';
+  const podeAgir = item.match_status === 'SUGERIDO' || item.match_status === 'PENDENTE' || item.match_status === 'SEM_MATCH';
+  const suggestedLabel = item.servico_match_descricao
+    ? `${item.servico_match_codigo ?? 'Sem código'} - ${item.servico_match_descricao}`
+    : 'Sem sugestão';
 
   return (
     <>
@@ -75,6 +81,18 @@ function MatchItemRowInner({
               {item.descricao_original}
             </Typography>
           </Tooltip>
+        </TableCell>
+        <TableCell sx={{ minWidth: 260 }}>
+          <Tooltip title={suggestedLabel}>
+            <Typography variant="body2" noWrap sx={{ maxWidth: 340 }}>
+              {suggestedLabel}
+            </Typography>
+          </Tooltip>
+          {item.servico_match_unidade && (
+            <Typography variant="caption" color="text.secondary">
+              {formatUnit(item.servico_match_unidade)}
+            </Typography>
+          )}
         </TableCell>
         <TableCell sx={{ width: 70 }} align="center">
           <Typography variant="body2">{formatUnit(item.unidade_medida_original)}</Typography>
@@ -121,7 +139,7 @@ function MatchItemRowInner({
                   </Button>
                 </span>
               </Tooltip>
-              <Tooltip title="Rejeitar (sem match)">
+              <Tooltip title="Marcar como sem correspondência">
                 <span>
                   <Button
                     size="small"
@@ -134,6 +152,15 @@ function MatchItemRowInner({
                   </Button>
                 </span>
               </Tooltip>
+              {onDelete && (
+                <Tooltip title="Remover linha da PQ">
+                  <span>
+                    <Button size="small" color="error" onClick={() => onDelete(item.id)} disabled={isLoading} sx={{ minWidth: 0, px: 1 }}>
+                      <DeleteOutlineIcon fontSize="small" />
+                    </Button>
+                  </span>
+                </Tooltip>
+              )}
             </Stack>
           )}
         </TableCell>

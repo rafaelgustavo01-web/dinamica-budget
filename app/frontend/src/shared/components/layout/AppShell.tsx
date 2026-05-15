@@ -7,6 +7,7 @@ import { Topbar } from './Topbar';
 
 export function AppShell({ children }: PropsWithChildren) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarSlim, setSidebarSlim] = useState(false);
 
   return (
     <Box
@@ -20,6 +21,8 @@ export function AppShell({ children }: PropsWithChildren) {
       <Sidebar
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
+        slim={sidebarSlim}
+        onToggleSlim={() => setSidebarSlim((value) => !value)}
       />
 
       <Box

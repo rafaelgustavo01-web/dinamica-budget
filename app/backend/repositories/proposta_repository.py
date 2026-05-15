@@ -49,6 +49,13 @@ class PropostaRepository(BaseRepository[Proposta]):
         )
         return result.scalar_one()
 
+    async def exists_by_codigo(self, codigo: str, exclude_id: UUID | None = None) -> bool:
+        stmt = select(func.count()).select_from(Proposta).where(Proposta.codigo == codigo, Proposta.deleted_at.is_(None))
+        if exclude_id is not None:
+            stmt = stmt.where(Proposta.id != exclude_id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one() > 0
+
     async def soft_delete(self, proposta: Proposta) -> None:
         proposta.deleted_at = datetime.now(timezone.utc)
         await self.db.flush()

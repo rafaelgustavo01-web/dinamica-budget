@@ -10,11 +10,13 @@ from backend.models.enums import PropostaPapel, StatusMatch, StatusProposta, Tip
 
 class PropostaCreate(BaseModel):
     cliente_id: UUID
+    codigo: str | None = Field(default=None, min_length=1, max_length=50)
     titulo: str | None = Field(default=None, max_length=255)
     descricao: str | None = None
 
 
 class PropostaUpdate(BaseModel):
+    codigo: str | None = Field(default=None, min_length=1, max_length=50)
     titulo: str | None = Field(default=None, max_length=255)
     descricao: str | None = None
 
@@ -131,6 +133,9 @@ class CpuItemResponse(BaseModel):
     id: UUID
     proposta_id: UUID
     pq_item_id: UUID | None
+    codigo_pq: str | None = None
+    descricao_pq: str | None = None
+    descricao_servico: str | None = None
     servico_id: UUID
     servico_tipo: TipoServicoMatch
     codigo: str
@@ -205,12 +210,24 @@ class PqItemResponse(BaseModel):
     match_confidence: Decimal | None
     servico_match_id: UUID | None
     servico_match_tipo: TipoServicoMatch | None
+    servico_match_codigo: str | None = None
+    servico_match_descricao: str | None = None
+    servico_match_unidade: str | None = None
     linha_planilha: int | None
     observacao: str | None
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PqItemManualCreate(BaseModel):
+    codigo_original: str | None = Field(default=None, max_length=50)
+    descricao_original: str = Field(min_length=1)
+    unidade_medida_original: str | None = Field(default=None, max_length=20)
+    quantidade_original: Decimal | None = Field(default=None, gt=0)
+    servico_match_id: UUID | None = None
+    servico_match_tipo: TipoServicoMatch | None = None
 
 
 class PqMatchConfirmarRequest(BaseModel):
@@ -262,5 +279,4 @@ class RelatorioComposicaoResponse(BaseModel):
     totais_proposta: dict
 
     model_config = ConfigDict(from_attributes=True)
-
 

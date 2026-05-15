@@ -93,3 +93,12 @@ export interface ImportExecuteResponse {
   message: string;
   log_excerpt?: string | null;
 }
+
+
+export interface SystemSettingsResponse {
+  proposal_number_pattern: string;
+}
+
+export interface SystemSettingsUpdate {
+  proposal_number_pattern: string;
+}

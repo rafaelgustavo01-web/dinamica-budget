@@ -42,12 +42,8 @@ const TABS = [
     help: 'Snapshot de custos de equipamentos com valores editáveis por proposta.',
   },
   {
-    id: 'encargos-horista', label: 'Encargos Horista', icon: <WorkOutlineOutlinedIcon fontSize="small" />,
-    help: 'Encargos trabalhistas aplicados sobre mão de obra horista nesta proposta.',
-  },
-  {
-    id: 'encargos-mensalista', label: 'Encargos Mensalista', icon: <WorkOutlineOutlinedIcon fontSize="small" />,
-    help: 'Encargos trabalhistas aplicados sobre mão de obra mensalista nesta proposta.',
+    id: 'encargos', label: 'Encargos', icon: <WorkOutlineOutlinedIcon fontSize="small" />,
+    help: 'Encargos trabalhistas em tabela única. Horista ou mensalista é atributo da linha.',
   },
   {
     id: 'epi', label: 'EPI / Uniforme', icon: <SecurityOutlinedIcon fontSize="small" />,
@@ -245,27 +241,16 @@ export function HistogramaPage() {
           <HistogramaTabGenerica
             propostaId={id!}
             tabela="encargo"
-            items={data.encargos_horista}
+            items={[...(data.encargos_horista ?? []), ...(data.encargos_mensalista ?? [])]}
             divergencias={data.divergencias}
             columns={[
+              { key: 'tipo_encargo', label: 'Tipo', editable: false, numeric: false },
               { key: 'taxa_percent', label: 'Taxa %', editable: true, numeric: true },
               { key: 'grupo', label: 'Grupo', editable: false, numeric: false },
             ]}
           />
         )}
         {activeTab === 3 && (
-          <HistogramaTabGenerica
-            propostaId={id!}
-            tabela="encargo"
-            items={data.encargos_mensalista}
-            divergencias={data.divergencias}
-            columns={[
-              { key: 'taxa_percent', label: 'Taxa %', editable: true, numeric: true },
-              { key: 'grupo', label: 'Grupo', editable: false, numeric: false },
-            ]}
-          />
-        )}
-        {activeTab === 4 && (
           <HistogramaTabGenerica
             propostaId={id!}
             tabela="epi"
@@ -278,7 +263,7 @@ export function HistogramaPage() {
             ]}
           />
         )}
-        {activeTab === 5 && (
+        {activeTab === 4 && (
           <HistogramaTabGenerica
             propostaId={id!}
             tabela="ferramenta"
@@ -290,7 +275,7 @@ export function HistogramaPage() {
             ]}
           />
         )}
-        {activeTab === 6 && (
+        {activeTab === 5 && (
           <HistogramaTabGenerica
             propostaId={id!}
             tabela="mobilizacao"
@@ -302,7 +287,7 @@ export function HistogramaPage() {
             ]}
           />
         )}
-        {activeTab === 7 && <RecursosExtrasTab propostaId={id!} />}
+        {activeTab === 6 && <RecursosExtrasTab propostaId={id!} />}
       </Box>
     </Box>
   );

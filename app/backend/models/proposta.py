@@ -172,7 +172,10 @@ class PqItem(Base, TimestampMixin):
 
 class PropostaItem(Base, TimestampMixin):
     __tablename__ = "proposta_itens"
-    __table_args__ = {"schema": "operacional"}
+    __table_args__ = (
+        UniqueConstraint("pq_item_id", name="uq_proposta_itens_pq_item_id"),
+        {"schema": "operacional"},
+    )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     proposta_id: Mapped[UUID] = mapped_column(
@@ -183,7 +186,7 @@ class PropostaItem(Base, TimestampMixin):
     )
     pq_item_id: Mapped[UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("operacional.pq_itens.id", ondelete="SET NULL"),
+        ForeignKey("operacional.pq_itens.id", ondelete="CASCADE"),
         nullable=True,
     )
     servico_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)

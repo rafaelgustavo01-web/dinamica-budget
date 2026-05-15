@@ -44,7 +44,7 @@ import { proposalItemsApi } from '../../../shared/services/api/proposalItemsApi'
 type BcuType = 'mao_obra' | 'epi' | 'equipamento' | 'ferramenta';
 
 const BCU_TABS: { value: BcuType; label: string }[] = [
-  { value: 'mao_obra', label: 'M�o de Obra' },
+  { value: 'mao_obra', label: 'Mão de Obra' },
   { value: 'epi', label: 'EPI' },
   { value: 'equipamento', label: 'Equipamento' },
   { value: 'ferramenta', label: 'Ferramenta' },
@@ -242,17 +242,17 @@ export function ProposalItemsExpandedPage() {
   }
 
   if (!proposta) {
-    return <Alert severity="error">Proposta n�o encontrada</Alert>;
+    return <Alert severity="error">Proposta não encontrada</Alert>;
   }
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       <PageHeader
-        title={`Gerenciar Items � ${proposta.codigo}`}
-        description={proposta.titulo || 'Sem t�tulo'}
+        title={`Gerenciar Itens - ${proposta.codigo}`}
+        description={proposta.titulo || 'Sem título'}
       />
 
-      {/* Barra de a��es */}
+      {/* Barra de ações */}
       <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
         <Button
           variant="outlined"
@@ -380,7 +380,7 @@ export function ProposalItemsExpandedPage() {
             </Alert>
           </Box>
         )}
-        {/* Tabela do catalogo */}
+        {/* Tabela do catálogo */}
         <TableContainer>
           <Table size="small">
             <TableHead>
@@ -591,7 +591,7 @@ export function ProposalItemsExpandedPage() {
               {items.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} align="center" sx={{ py: 5, color: 'text.secondary' }}>
-                    Nenhum item adicionado a�proposta ainda. Use o catalogo acima para adicionar.
+                    Nenhum item adicionado à proposta ainda. Use o catálogo acima para adicionar.
                   </TableCell>
                 </TableRow>
               ) : (

@@ -3,26 +3,33 @@ import {
   Chip,
   Divider,
   Drawer,
+  IconButton,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material';
+import MenuOpenOutlinedIcon from '@mui/icons-material/MenuOpenOutlined';
+import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
 import { NavLink, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../../features/auth/AuthProvider';
 import { getNavigationStatusLabel, navigationItems } from './navigationConfig';
 
 export const drawerWidth = 260;
+export const drawerSlimWidth = 76;
 
 interface SidebarProps {
   mobileOpen: boolean;
   onMobileClose: () => void;
+  slim?: boolean;
+  onToggleSlim?: () => void;
 }
 
-export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
+export function Sidebar({ mobileOpen, onMobileClose, slim = false, onToggleSlim }: SidebarProps) {
   const { user } = useAuth();
   const location = useLocation();
   const groups = ['Operação', 'Governança', 'Conta'] as const;
@@ -49,7 +56,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         },
       }}
     >
-      <Box sx={{ px: 3, py: 3, position: 'relative', zIndex: 1 }}>
+      <Box sx={{ px: slim ? 1.5 : 3, py: 3, position: 'relative', zIndex: 1 }}>
         <Stack spacing={1.5}>
           <Stack direction="row" spacing={1.5} alignItems="center">
             <Box
@@ -60,6 +67,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 backgroundColor: 'secondary.main',
               }}
             />
+            {!slim && (
             <Box>
               <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.56)' }}>
                 Construtora Dinâmica
@@ -68,10 +76,13 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 Dinâmica Budget
               </Typography>
             </Box>
+            )}
           </Stack>
+          {!slim && (
           <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
             Plataforma operacional para busca, catálogo, homologação e composições.
           </Typography>
+          )}
         </Stack>
       </Box>
 
@@ -89,6 +100,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
 
           return (
             <Box key={group} sx={{ mb: 2.5 }}>
+              {!slim && (
               <Typography
                 variant="caption"
                 sx={{
@@ -100,6 +112,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               >
                 {group}
               </Typography>
+              )}
 
               <List sx={{ mt: 1, py: 0 }}>
                 {items.map((item) => {
@@ -130,11 +143,13 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                       >
                         {item.icon}
                       </ListItemIcon>
+                      {!slim && (
                       <ListItemText
                         primary={item.label}
                         primaryTypographyProps={{ fontSize: 14, fontWeight: 500 }}
                       />
-                      {item.status !== 'active' ? (
+                      )}
+                      {!slim && item.status !== 'active' ? (
                         <Chip
                           size="small"
                           label={getNavigationStatusLabel(item)}
@@ -158,6 +173,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         })}
       </Box>
 
+      {!slim && (
       <Stack
         spacing={0.4}
         sx={{
@@ -172,6 +188,14 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
           Navegação adaptada às permissões do usuário autenticado.
         </Typography>
       </Stack>
+      )}
+      <Box sx={{ px: 1.5, py: 1.5, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <Tooltip title={slim ? 'Expandir menu' : 'Comprimir menu'}>
+          <IconButton size="small" onClick={onToggleSlim} sx={{ color: 'rgba(255,255,255,0.8)' }}>
+            {slim ? <MenuOutlinedIcon fontSize="small" /> : <MenuOpenOutlinedIcon fontSize="small" />}
+          </IconButton>
+        </Tooltip>
+      </Box>
     </Box>
   );
 
@@ -198,10 +222,11 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         open
         sx={{
           display: { xs: 'none', lg: 'block' },
-          width: drawerWidth,
+          width: slim ? drawerSlimWidth : drawerWidth,
           flexShrink: 0,
+          transition: 'width 160ms ease',
           '& .MuiDrawer-paper': {
-            width: drawerWidth,
+            width: slim ? drawerSlimWidth : drawerWidth,
             boxSizing: 'border-box',
           },
         }}

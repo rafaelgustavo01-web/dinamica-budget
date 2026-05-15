@@ -4,6 +4,8 @@ import type {
   EtlExecuteResponse,
   EtlStatusResponse,
   EtlUploadResponse,
+  SystemSettingsResponse,
+  SystemSettingsUpdate,
 } from '../../types/contracts/admin';
 import { apiClient } from './apiClient';
 
@@ -40,6 +42,16 @@ export const adminApi = {
 
   async getEtlStatus(): Promise<EtlStatusResponse> {
     const response = await apiClient.get<EtlStatusResponse>('/admin/etl/status');
+    return response.data;
+  },
+
+  async getSettings(): Promise<SystemSettingsResponse> {
+    const response = await apiClient.get<SystemSettingsResponse>('/admin/settings');
+    return response.data;
+  },
+
+  async updateSettings(payload: SystemSettingsUpdate): Promise<SystemSettingsResponse> {
+    const response = await apiClient.patch<SystemSettingsResponse>('/admin/settings', payload);
     return response.data;
   },
 };

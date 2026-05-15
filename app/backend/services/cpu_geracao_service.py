@@ -1,9 +1,11 @@
 from decimal import Decimal
 from uuid import UUID
 
+from sqlalchemy import select
+
 from backend.core.exceptions import NotFoundError
-from backend.models.enums import StatusMatch, StatusProposta, TipoRecurso
-from backend.models.proposta import PropostaItem, PropostaItemComposicao, PropostaResumoRecurso
+from backend.models.enums import StatusMatch, StatusProposta, TipoRecurso, TipoServicoMatch
+from backend.models.proposta import PqItem, PropostaItem, PropostaItemComposicao, PropostaResumoRecurso
 from backend.repositories.base_tcpo_repository import BaseTcpoRepository
 from backend.repositories.itens_proprios_repository import ItensPropiosRepository
 from backend.repositories.pq_item_repository import PqItemRepository
@@ -21,6 +23,7 @@ logger = get_logger(__name__)
 _ELIGIBLE_MATCH_STATUS = {
     StatusMatch.CONFIRMADO,
     StatusMatch.MANUAL,
+    StatusMatch.SEM_MATCH,
 }
 
 
@@ -233,7 +236,18 @@ class CpuGeracaoService:
         return {"material": material, "mao_obra": mao_obra, "equipamento": equipamento}
 
     async def listar_cpu_itens(self, proposta_id: UUID) -> list[PropostaItem]:
-        return await self.proposta_item_repo.list_by_proposta(proposta_id)
+        items = await self.proposta_item_repo.list_by_proposta(proposta_id)
+        pq_ids = [item.pq_item_id for item in items if item.pq_item_id]
+        pq_map: dict[UUID, PqItem] = {}
+        if pq_ids:
+            result = await self.db.execute(select(PqItem).where(PqItem.id.in_(pq_ids)))
+            pq_map = {pq.id: pq for pq in result.scalars().all()}
+        for item in items:
+            pq_item = pq_map.get(item.pq_item_id) if item.pq_item_id else None
+            setattr(item, "codigo_pq", pq_item.codigo_original if pq_item else None)
+            setattr(item, "descricao_pq", pq_item.descricao_original if pq_item else None)
+            setattr(item, "descricao_servico", item.descricao)
+        return items
 
     async def listar_composicoes_item(self, proposta_item_id: UUID) -> list[PropostaItemComposicao]:
         return await self.comp_repo.list_by_proposta_item(proposta_item_id)
@@ -241,42 +255,96 @@ class CpuGeracaoService:
     async def get_resumo_recursos(self, proposta_id: UUID) -> list[PropostaResumoRecurso]:
         return await self.resumo_repo.list_by_proposta(proposta_id)
 
+    async def upsert_proposta_item_for_pq(
+        self,
+        pq_item: PqItem,
+        bcu_cabecalho_id: UUID | None = None,
+    ) -> PropostaItem | None:
+        if pq_item.match_status not in _ELIGIBLE_MATCH_STATUS:
+            await self.proposta_item_repo.delete_by_pq_item_id(pq_item.id)
+            return None
+
+        existing = await self.proposta_item_repo.get_by_pq_item_id(pq_item.id)
+        data = await self._proposta_item_data_from_pq(pq_item, bcu_cabecalho_id)
+        if data is None:
+            await self.proposta_item_repo.delete_by_pq_item_id(pq_item.id)
+            return None
+
+        if existing is None:
+            itens = await self.proposta_item_repo.list_by_proposta(pq_item.proposta_id)
+            max_ordem = max((item.ordem for item in itens), default=-1)
+            existing = PropostaItem(
+                proposta_id=pq_item.proposta_id,
+                pq_item_id=pq_item.id,
+                ordem=max_ordem + 1,
+                **data,
+            )
+            self.db.add(existing)
+        else:
+            for key, value in data.items():
+                setattr(existing, key, value)
+
+        await self.db.flush()
+        return existing
+
+    async def _proposta_item_data_from_pq(
+        self,
+        pq_item: PqItem,
+        bcu_cabecalho_id: UUID | None,
+    ) -> dict | None:
+        quantidade = pq_item.quantidade_original or Decimal("1")
+        if pq_item.match_status == StatusMatch.SEM_MATCH:
+            return {
+                "servico_id": pq_item.id,
+                "servico_tipo": TipoServicoMatch.ITEM_PROPRIO,
+                "codigo": pq_item.codigo_original or f"PQ-{pq_item.linha_planilha or str(pq_item.id)[:8]}",
+                "descricao": pq_item.descricao_original,
+                "unidade_medida": pq_item.unidade_medida_original or "un",
+                "quantidade": quantidade,
+                "composicao_fonte": "pq_sem_match",
+                "bcu_cabecalho_id": bcu_cabecalho_id,
+            }
+
+        if pq_item.servico_match_id is None or pq_item.servico_match_tipo is None:
+            return None
+
+        snapshot = await self.base_repo.get_by_id(pq_item.servico_match_id)
+        if snapshot is None:
+            snapshot = await self.proprios_repo.get_active_by_id(pq_item.servico_match_id)
+        if snapshot is None:
+            return None
+
+        return {
+            "servico_id": snapshot.id,
+            "servico_tipo": pq_item.servico_match_tipo,
+            "codigo": snapshot.codigo_origem,
+            "descricao": snapshot.descricao,
+            "unidade_medida": snapshot.unidade_medida,
+            "quantidade": quantidade,
+            "composicao_fonte": "match_inteligente",
+            "bcu_cabecalho_id": bcu_cabecalho_id,
+        }
+
     async def _rebuild_proposta_itens(self, proposta_id: UUID, bcu_cabecalho_id: UUID | None) -> list[PropostaItem]:
         await self.proposta_item_repo.delete_by_proposta(proposta_id)
         pq_items = await self.pq_item_repo.list_by_proposta(proposta_id)
 
         proposta_itens: list[PropostaItem] = []
-        ordem = 0
         for pq_item in pq_items:
-            if (
-                pq_item.servico_match_id is None
-                or pq_item.servico_match_tipo is None
-                or pq_item.match_status not in _ELIGIBLE_MATCH_STATUS
-            ):
+            if pq_item.match_status not in _ELIGIBLE_MATCH_STATUS:
                 continue
-
-            snapshot = await self.base_repo.get_by_id(pq_item.servico_match_id)
-            if snapshot is None:
-                snapshot = await self.proprios_repo.get_active_by_id(pq_item.servico_match_id)
-            if snapshot is None:
+            data = await self._proposta_item_data_from_pq(pq_item, bcu_cabecalho_id)
+            if data is None:
                 continue
 
             proposta_itens.append(
                 PropostaItem(
                     proposta_id=proposta_id,
                     pq_item_id=pq_item.id,
-                    servico_id=snapshot.id,
-                    servico_tipo=pq_item.servico_match_tipo,
-                    codigo=snapshot.codigo_origem,
-                    descricao=snapshot.descricao,
-                    unidade_medida=snapshot.unidade_medida,
-                    quantidade=pq_item.quantidade_original or Decimal("1"),
-                    composicao_fonte="match_inteligente",
-                    bcu_cabecalho_id=bcu_cabecalho_id,
-                    ordem=ordem,
+                    ordem=len(proposta_itens),
+                    **data,
                 )
             )
-            ordem += 1
 
         if proposta_itens:
             await self.proposta_item_repo.create_batch(proposta_itens)

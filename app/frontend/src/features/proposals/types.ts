@@ -3,6 +3,7 @@ import type { StatusProposta, PropostaResponse } from '../../shared/services/api
 export type { StatusProposta, PropostaResponse as Proposta };
 
 export interface PropostaFormData {
+  codigo?: string;
   titulo: string;
   descricao?: string;
 }

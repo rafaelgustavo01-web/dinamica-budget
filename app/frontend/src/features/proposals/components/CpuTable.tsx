@@ -121,11 +121,16 @@ function CpuItemRow({ item, propostaId }: CpuItemRowProps) {
           </IconButton>
         </TableCell>
         <TableCell>
-          <Typography variant="caption" color="text.secondary">{item.codigo}</Typography>
+          <Typography variant="caption" color="text.secondary">{item.codigo_pq ?? item.codigo}</Typography>
         </TableCell>
         <TableCell>
-          <Tooltip title={item.descricao}>
-            <Typography variant="body2" noWrap sx={{ maxWidth: 280 }}>{item.descricao}</Typography>
+          <Tooltip title={item.descricao_pq ?? item.descricao}>
+            <Typography variant="body2" noWrap sx={{ maxWidth: 260 }}>{item.descricao_pq ?? item.descricao}</Typography>
+          </Tooltip>
+        </TableCell>
+        <TableCell>
+          <Tooltip title={item.descricao_servico ?? item.descricao}>
+            <Typography variant="body2" noWrap sx={{ maxWidth: 260 }}>{item.descricao_servico ?? item.descricao}</Typography>
           </Tooltip>
         </TableCell>
         <TableCell>{item.unidade_medida}</TableCell>
@@ -142,7 +147,7 @@ function CpuItemRow({ item, propostaId }: CpuItemRowProps) {
         </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell colSpan={11} sx={{ py: 0, border: 0 }}>
+        <TableCell colSpan={12} sx={{ py: 0, border: 0 }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ m: 1 }}>
               <Typography variant="caption" color="text.secondary" sx={{ ml: 5 }}>
@@ -179,12 +184,13 @@ interface CpuTableProps {
 export function CpuTable({ itens, propostaId }: CpuTableProps) {
   return (
     <TableContainer sx={{ overflowX: 'auto' }}>
-      <Table size="small" sx={{ minWidth: 980 }}>
+      <Table size="small" sx={{ minWidth: 1180 }}>
       <TableHead>
         <TableRow>
           <TableCell />
-          <TableCell>Código</TableCell>
-          <TableCell>Descrição</TableCell>
+          <TableCell>Item PQ</TableCell>
+          <TableCell>Descrição PQ</TableCell>
+          <TableCell>Descrição Serviço</TableCell>
           <TableCell>Und</TableCell>
           <TableCell align="right">Qtd</TableCell>
           <TableCell align="right">Mat. Unit.</TableCell>
@@ -201,7 +207,7 @@ export function CpuTable({ itens, propostaId }: CpuTableProps) {
         ))}
         {itens.length === 0 && (
           <TableRow>
-            <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
+            <TableCell colSpan={12} align="center" sx={{ py: 4 }}>
               <Typography color="text.secondary">
                 Nenhum item de CPU gerado ainda.
               </Typography>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -14,6 +14,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   Chip,
+  TextField,
 } from '@mui/material';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import RuleOutlinedIcon from '@mui/icons-material/RuleOutlined';
@@ -28,6 +29,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HistoryIcon from '@mui/icons-material/History';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 
 import { PageHeader } from '../../../shared/components/PageHeader';
 import { proposalsApi } from '../../../shared/services/api/proposalsApi';
@@ -47,6 +49,7 @@ export function ProposalDetailPage() {
 
   const { user } = useAuth();
   const [shareOpen, setShareOpen] = useState(false);
+  const [codigoDraft, setCodigoDraft] = useState('');
 
   const { data: proposta, isLoading, isError, error } = useQuery({
     queryKey: ['proposta', id],
@@ -83,6 +86,15 @@ export function ProposalDetailPage() {
     },
   });
 
+  const codigoMutation = useMutation({
+    mutationFn: (codigo: string) => proposalsApi.update(id!, { codigo }),
+    onSuccess: (updated) => {
+      setCodigoDraft(updated.codigo);
+      queryClient.invalidateQueries({ queryKey: ['proposta', id] });
+      queryClient.invalidateQueries({ queryKey: ['propostas'] });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: () => proposalsApi.delete(id!),
     onSuccess: () => {
@@ -90,6 +102,10 @@ export function ProposalDetailPage() {
       navigate('/propostas');
     },
   });
+
+  useEffect(() => {
+    if (proposta?.codigo) setCodigoDraft(proposta.codigo);
+  }, [proposta?.codigo]);
 
   if (isLoading) return (
     <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -269,6 +285,17 @@ export function ProposalDetailPage() {
                   />
                 </Box>
               )}
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">Número</Typography>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+                <TextField size="small" value={codigoDraft} disabled={!canEdit || codigoMutation.isPending} onChange={(event) => setCodigoDraft(event.target.value)} sx={{ maxWidth: 240 }} />
+                {canEdit && (
+                  <Button size="small" variant="outlined" startIcon={<SaveOutlinedIcon />} disabled={!codigoDraft.trim() || codigoDraft === proposta.codigo || codigoMutation.isPending} onClick={() => codigoMutation.mutate(codigoDraft.trim())}>
+                    Salvar
+                  </Button>
+                )}
+              </Stack>
             </Box>
             <Box>
               <Typography variant="caption" color="text.secondary">Criada em</Typography>

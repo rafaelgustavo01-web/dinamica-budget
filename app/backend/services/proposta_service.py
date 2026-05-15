@@ -1,5 +1,9 @@
 from datetime import datetime, timezone
+import re
+import inspect
 from uuid import UUID
+
+from sqlalchemy import text
 
 from backend.core.exceptions import ConflictError, NotFoundError, ValidationError
 from backend.models.enums import PropostaPapel, StatusProposta
@@ -13,7 +17,7 @@ class PropostaService:
         self.proposta_repo = proposta_repo
 
     async def criar_proposta(self, cliente_id: UUID, usuario_id: UUID, dados) -> Proposta:
-        codigo = await self._gerar_codigo()
+        codigo = dados.codigo or await self._gerar_codigo()
         proposta = Proposta(
             cliente_id=cliente_id,
             criado_por_id=usuario_id,
@@ -58,6 +62,11 @@ class PropostaService:
         proposta = await self.obter_detalhe(proposta_id, cliente_id)
         if proposta.status in {StatusProposta.APROVADA, StatusProposta.ARQUIVADA}:
             raise ValidationError("Proposta não pode ser editada neste status.")
+        if dados.codigo is not None:
+            codigo = dados.codigo.strip()
+            if await self.proposta_repo.exists_by_codigo(codigo, exclude_id=proposta_id):
+                raise ConflictError("Proposta", "codigo", codigo)
+            proposta.codigo = codigo
         if dados.titulo is not None:
             proposta.titulo = dados.titulo
         if dados.descricao is not None:
@@ -83,8 +92,30 @@ class PropostaService:
         await self.proposta_repo.soft_delete(proposta)
 
     async def _gerar_codigo(self) -> str:
-        ano = datetime.now(timezone.utc).year
-        prefix = f"PROP-{ano}-"
-        next_number = await self.proposta_repo.count_by_code_prefix(prefix) + 1
-        return f"{prefix}{next_number:04d}"
+        now = datetime.now(timezone.utc)
+        pattern = await self._get_codigo_pattern()
+        seq_match = re.search(r"\{seq(?::0?(\d+)d)?\}", pattern)
+        seq_width = int(seq_match.group(1)) if seq_match and seq_match.group(1) else 4
+        base_total = await self.proposta_repo.count_by_code_prefix("") + 1
+        for offset in range(1000):
+            seq = base_total + offset
+            codigo = pattern.replace("{YYYY}", f"{now.year:04d}").replace("{YY}", f"{now.year % 100:02d}").replace("{MM}", f"{now.month:02d}")
+            codigo = re.sub(r"\{seq(?::0?\d+d)?\}", f"{seq:0{seq_width}d}", codigo)
+            exists = await self.proposta_repo.exists_by_codigo(codigo) if hasattr(self.proposta_repo, "exists_by_codigo") else False
+            if not isinstance(exists, bool):
+                exists = False
+            if not exists:
+                return codigo
+        raise ConflictError("Proposta", "codigo", pattern)
+
+    async def _get_codigo_pattern(self) -> str:
+        try:
+            result = await self.proposta_repo.db.execute(text("select value from operacional.app_config where key = 'proposal_number_pattern'"))
+            value = result.scalar_one_or_none()
+            if inspect.isawaitable(value):
+                value.close()
+                return "PROP-{YYYY}-{seq:04d}"
+            return value if isinstance(value, str) and value else "PROP-{YYYY}-{seq:04d}"
+        except Exception:
+            return "PROP-{YYYY}-{seq:04d}"
 

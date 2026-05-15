@@ -25,6 +25,12 @@ class PropostaItemRepository(BaseRepository[PropostaItem]):
         )
         return list(result.scalars().all())
 
+    async def get_by_pq_item_id(self, pq_item_id: UUID) -> PropostaItem | None:
+        result = await self.db.execute(
+            select(PropostaItem).where(PropostaItem.pq_item_id == pq_item_id)
+        )
+        return result.scalar_one_or_none()
+
     async def create_batch(self, items: list[PropostaItem]) -> list[PropostaItem]:
         self.db.add_all(items)
         await self.db.flush()
@@ -32,4 +38,8 @@ class PropostaItemRepository(BaseRepository[PropostaItem]):
 
     async def delete_by_proposta(self, proposta_id: UUID) -> None:
         await self.db.execute(delete(PropostaItem).where(PropostaItem.proposta_id == proposta_id))
+
+    async def delete_by_pq_item_id(self, pq_item_id: UUID) -> None:
+        await self.db.execute(delete(PropostaItem).where(PropostaItem.pq_item_id == pq_item_id))
+        await self.db.flush()
 

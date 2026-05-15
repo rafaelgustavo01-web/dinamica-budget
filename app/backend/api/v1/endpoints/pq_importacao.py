@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, UploadFile, status
@@ -8,16 +9,20 @@ from backend.core.database import async_session_factory
 from backend.core.dependencies import get_current_active_user, get_db, require_proposta_role
 from backend.models.enums import PropostaPapel
 from backend.core.exceptions import NotFoundError
-from backend.models.enums import StatusMatch
+from backend.models.enums import StatusMatch, TipoServicoMatch
 from backend.models.proposta import PqItem
 from backend.core.logging import get_logger
+from backend.repositories.base_tcpo_repository import BaseTcpoRepository
+from backend.repositories.itens_proprios_repository import ItensPropiosRepository
 from backend.repositories.pq_importacao_repository import PqImportacaoRepository
 from backend.repositories.pq_item_repository import PqItemRepository
 from backend.repositories.pq_layout_repository import PqLayoutRepository
+from backend.repositories.proposta_item_repository import PropostaItemRepository
 from backend.repositories.proposta_repository import PropostaRepository
 from backend.schemas.proposta import (
     PqImportacaoResponse,
     PqItemResponse,
+    PqItemManualCreate,
     PqMatchConfirmarRequest,
     PqMatchResponse,
     PqMatchStatusResponse,
@@ -25,6 +30,7 @@ from backend.schemas.proposta import (
 from backend.schemas.pq_layout import PqPreviewResponse
 from backend.services.pq_import_service import PqImportService
 from backend.services.pq_match_service import PqMatchService
+from backend.services.cpu_geracao_service import CpuGeracaoService
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/propostas/{proposta_id}/pq", tags=["pq-importacao"])
@@ -77,6 +83,38 @@ async def _get_proposta_or_404(db: AsyncSession, proposta_id: UUID):
     if not proposta:
         raise NotFoundError("Proposta", str(proposta_id))
     return proposta
+
+
+async def _attach_servico_match_data(db: AsyncSession, items: list[PqItem]) -> None:
+    if not inspect.iscoroutinefunction(getattr(db, "execute", None)):
+        return
+    base_ids = [
+        item.servico_match_id for item in items
+        if item.servico_match_id and item.servico_match_tipo == TipoServicoMatch.BASE_TCPO
+    ]
+    proprio_ids = [
+        item.servico_match_id for item in items
+        if item.servico_match_id and item.servico_match_tipo == TipoServicoMatch.ITEM_PROPRIO
+    ]
+
+    base_map = await BaseTcpoRepository(db).get_by_ids(base_ids)
+    proprio_map = await ItensPropiosRepository(db).get_active_by_ids(proprio_ids)
+
+    for item in items:
+        snapshot = None
+        if item.servico_match_tipo == TipoServicoMatch.BASE_TCPO and item.servico_match_id:
+            snapshot = base_map.get(item.servico_match_id)
+        elif item.servico_match_tipo == TipoServicoMatch.ITEM_PROPRIO and item.servico_match_id:
+            snapshot = proprio_map.get(item.servico_match_id)
+
+        setattr(item, "servico_match_codigo", getattr(snapshot, "codigo_origem", None))
+        setattr(item, "servico_match_descricao", getattr(snapshot, "descricao", None))
+        setattr(item, "servico_match_unidade", getattr(snapshot, "unidade_medida", None))
+
+
+async def _to_pq_item_response(db: AsyncSession, item: PqItem) -> PqItemResponse:
+    await _attach_servico_match_data(db, [item])
+    return PqItemResponse.model_validate(item)
 
 
 @router.post("/preview", response_model=PqPreviewResponse)
@@ -177,6 +215,7 @@ async def listar_pq_itens(
     proposta = await _get_proposta_or_404(db, proposta_id)
     await require_proposta_role(proposta_id, None, current_user, db)
     items = await PqItemRepository(db).list_by_proposta(proposta_id, status_match=status_match)
+    await _attach_servico_match_data(db, items)
     return [PqItemResponse.model_validate(item) for item in items]
 
 
@@ -217,9 +256,11 @@ async def atualizar_match_item(
         item.quantidade_original = body.quantidade
         await db.flush()
 
+    if inspect.iscoroutinefunction(getattr(db, "execute", None)):
+        await CpuGeracaoService(db).upsert_proposta_item_for_pq(item, proposta.bcu_cabecalho_id)
     await db.commit()
     await db.refresh(item)
-    return PqItemResponse.model_validate(item)
+    return await _to_pq_item_response(db, item)
 
 
 @router.post("/itens/confirmar-todos", status_code=200)
@@ -246,3 +287,41 @@ async def confirmar_todos_sugeridos(
     )
     await db.commit()
     return {"confirmados": result.rowcount}
+
+
+@router.post("/itens", response_model=PqItemResponse, status_code=status.HTTP_201_CREATED)
+async def criar_pq_item_manual(
+    proposta_id: UUID,
+    body: PqItemManualCreate,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> PqItemResponse:
+    proposta = await _get_proposta_or_404(db, proposta_id)
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
+    existing = await PqItemRepository(db).list_by_proposta(proposta_id)
+    max_linha = max((item.linha_planilha or 0 for item in existing), default=0)
+    item = PqItem(proposta_id=proposta_id, codigo_original=body.codigo_original, descricao_original=body.descricao_original, unidade_medida_original=body.unidade_medida_original, quantidade_original=body.quantidade_original, servico_match_id=body.servico_match_id, servico_match_tipo=body.servico_match_tipo, match_confidence=1 if body.servico_match_id else None, match_status=StatusMatch.MANUAL if body.servico_match_id else StatusMatch.SEM_MATCH, linha_planilha=max_linha + 1, observacao="Incluido manualmente na revisao de match")
+    db.add(item)
+    await db.flush()
+    await CpuGeracaoService(db).upsert_proposta_item_for_pq(item, proposta.bcu_cabecalho_id)
+    await db.commit()
+    await db.refresh(item)
+    return await _to_pq_item_response(db, item)
+
+@router.delete("/itens/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def deletar_pq_item(
+    proposta_id: UUID,
+    item_id: UUID,
+    current_user=Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    await _get_proposta_or_404(db, proposta_id)
+    await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
+    repo = PqItemRepository(db)
+    item = await repo.get_by_id(item_id)
+    if item is None or item.proposta_id != proposta_id:
+        raise NotFoundError("PqItem", str(item_id))
+    await PropostaItemRepository(db).delete_by_pq_item_id(item_id)
+    await db.delete(item)
+    await db.commit()
+    return None

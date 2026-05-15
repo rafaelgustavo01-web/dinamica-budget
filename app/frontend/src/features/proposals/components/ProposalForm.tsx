@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { PropostaFormData } from '../types';
 
 const schema = z.object({
+  codigo: z.string().optional(),
   titulo: z.string().min(3, 'O título deve ter pelo menos 3 caracteres.'),
   descricao: z.string().optional(),
 });
@@ -26,6 +27,13 @@ export function ProposalForm({ onSubmit, isLoading, onCancel }: ProposalFormProp
 
   return (
     <Stack component="form" spacing={3} onSubmit={handleSubmit(onSubmit)} sx={{ maxWidth: 600 }}>
+      <TextField
+        label="Número da Proposta"
+        helperText="Opcional. Se ficar vazio, usa o padrão definido no Admin."
+        fullWidth
+        {...register('codigo')}
+      />
+
       <TextField
         label="Título da Proposta"
         error={!!errors.titulo}

@@ -1,9 +1,10 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import get_current_admin_user, get_current_catalog_import_user, get_db
 from backend.core.database import async_session_factory
-from backend.schemas.admin import ComputeEmbeddingsResponse
+from backend.schemas.admin import ComputeEmbeddingsResponse, SystemSettingsResponse, SystemSettingsUpdate
 from backend.schemas.etl import (
     EtlExecuteRequest,
     EtlExecuteResponse,
@@ -19,6 +20,26 @@ from backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+DEFAULT_PROPOSAL_NUMBER_PATTERN = "PROP-{YYYY}-{seq:04d}"
+
+def _validate_proposal_number_pattern(pattern: str) -> str:
+    value = pattern.strip()
+    if not value or "{seq" not in value:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Pattern deve conter {seq} ou {seq:04d}")
+    return value
+
+@router.get("/settings", response_model=SystemSettingsResponse)
+async def get_settings(_=Depends(get_current_admin_user), db: AsyncSession = Depends(get_db)) -> SystemSettingsResponse:
+    result = await db.execute(text("select value from operacional.app_config where key = 'proposal_number_pattern'"))
+    return SystemSettingsResponse(proposal_number_pattern=result.scalar_one_or_none() or DEFAULT_PROPOSAL_NUMBER_PATTERN)
+
+@router.patch("/settings", response_model=SystemSettingsResponse)
+async def update_settings(body: SystemSettingsUpdate, _=Depends(get_current_admin_user), db: AsyncSession = Depends(get_db)) -> SystemSettingsResponse:
+    pattern = _validate_proposal_number_pattern(body.proposal_number_pattern)
+    await db.execute(text("insert into operacional.app_config (key, value) values ('proposal_number_pattern', :value) on conflict (key) do update set value = excluded.value, updated_at = now()"), {"value": pattern})
+    return SystemSettingsResponse(proposal_number_pattern=pattern)
+
 
 
 async def _background_compute_embeddings() -> None:

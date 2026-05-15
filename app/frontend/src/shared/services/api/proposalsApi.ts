@@ -46,11 +46,13 @@ export interface PropostaResponse {
 
 export interface PropostaCreateRequest {
   cliente_id: string;
+  codigo?: string;
   titulo?: string;
   descricao?: string;
 }
 
 export interface PropostaUpdateRequest {
+  codigo?: string;
   titulo?: string;
   descricao?: string;
 }
@@ -118,10 +120,22 @@ export interface PqItemResponse {
   match_confidence: string | null;
   servico_match_id: string | null;
   servico_match_tipo: TipoServicoMatch | null;
+  servico_match_codigo?: string | null;
+  servico_match_descricao?: string | null;
+  servico_match_unidade?: string | null;
   linha_planilha: number | null;
   observacao: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface PqItemManualCreate {
+  codigo_original?: string | null;
+  descricao_original: string;
+  unidade_medida_original?: string | null;
+  quantidade_original?: string | null;
+  servico_match_id?: string | null;
+  servico_match_tipo?: TipoServicoMatch | null;
 }
 
 export interface PqMatchConfirmarRequest {
@@ -149,6 +163,9 @@ export interface CpuItemDetalhado {
   id: string;
   proposta_id: string;
   pq_item_id: string | null;
+  codigo_pq?: string | null;
+  descricao_pq?: string | null;
+  descricao_servico?: string | null;
   servico_id: string;
   codigo: string;
   descricao: string;
@@ -261,6 +278,15 @@ export const proposalsApi = {
       { params },
     );
     return response.data;
+  },
+
+  async createPqItem(propostaId: string, payload: PqItemManualCreate): Promise<PqItemResponse> {
+    const response = await apiClient.post<PqItemResponse>(`/propostas/${propostaId}/pq/itens`, payload);
+    return response.data;
+  },
+
+  async deletePqItem(propostaId: string, itemId: string): Promise<void> {
+    await apiClient.delete(`/propostas/${propostaId}/pq/itens/${itemId}`);
   },
 
   async confirmarMatch(

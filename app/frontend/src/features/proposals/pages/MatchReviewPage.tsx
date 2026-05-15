@@ -7,6 +7,10 @@ import {
   Box,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   LinearProgress,
   Paper,
   Stack,
@@ -16,6 +20,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Typography,
 } from '@mui/material';
 import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
@@ -38,6 +43,8 @@ export function MatchReviewPage() {
   const queryClient = useQueryClient();
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualItem, setManualItem] = useState({ codigo_original: '', descricao_original: '', unidade_medida_original: 'un', quantidade_original: '1' });
 
   const { data: proposta } = useQuery({
     queryKey: ['proposta', id],
@@ -107,6 +114,22 @@ export function MatchReviewPage() {
     },
     onError: (_err, { itemId }) => applyPatch(itemId, { match_status: 'SUGERIDO' }),
     onSettled: (_data, _err, { itemId }) => removePending(itemId),
+  });
+
+  const criarItemMutation = useMutation({
+    mutationFn: () => proposalsApi.createPqItem(id!, manualItem),
+    onSuccess: (created) => {
+      queryClient.setQueryData<PqItemResponse[]>(PQ_ITENS_KEY(id!), (old) => [...(old ?? []), created]);
+      setManualOpen(false);
+      setManualItem({ codigo_original: '', descricao_original: '', unidade_medida_original: 'un', quantidade_original: '1' });
+    },
+  });
+
+  const deleteItemMutation = useMutation({
+    mutationFn: (itemId: string) => proposalsApi.deletePqItem(id!, itemId),
+    onSuccess: (_data, itemId) => {
+      queryClient.setQueryData<PqItemResponse[]>(PQ_ITENS_KEY(id!), (old) => old?.filter((item) => item.id !== itemId));
+    },
   });
 
   const confirmarTodosMutation = useMutation({
@@ -182,7 +205,7 @@ export function MatchReviewPage() {
               variant="outlined"
               color="secondary"
               startIcon={<PlaylistAddOutlinedIcon />}
-              onClick={() => navigate(`/propostas/${id}/items`)}
+              onClick={() => setManualOpen(true)}
             >
               Adicionar Item Manualmente
             </Button>
@@ -253,18 +276,19 @@ export function MatchReviewPage() {
                   <TableRow sx={{ '& th': { borderBottom: '2px solid', borderColor: 'divider', fontWeight: 700 } }}>
                     <TableCell sx={{ width: 70 }}>Linha</TableCell>
                     <TableCell sx={{ width: 120 }}>Código</TableCell>
-                    <TableCell>Descrição Original</TableCell>
+                    <TableCell>Descrição PQ</TableCell>
+                    <TableCell>Serviço TCPO sugerido</TableCell>
                     <TableCell sx={{ width: 70 }} align="center">Unid.</TableCell>
                     <TableCell sx={{ width: 110 }} align="right">Qtd</TableCell>
                     <TableCell sx={{ width: 90 }} align="center">Conf.</TableCell>
                     <TableCell sx={{ width: 130 }}>Status</TableCell>
-                    <TableCell sx={{ width: 130 }}>Ações</TableCell>
+                    <TableCell sx={{ width: 170 }}>Ações</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {rowVirtualizer.getVirtualItems().length > 0 && rowVirtualizer.getVirtualItems()[0].start > 0 && (
                     <TableRow style={{ height: rowVirtualizer.getVirtualItems()[0].start }}>
-                      <TableCell colSpan={8} sx={{ p: 0, border: 0 }} />
+                      <TableCell colSpan={9} sx={{ p: 0, border: 0 }} />
                     </TableRow>
                   )}
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
@@ -280,6 +304,7 @@ export function MatchReviewPage() {
                         onSubstituir={(itemId, servicoId, tipo) =>
                           substituirMutation.mutate({ itemId, servicoId, tipo: tipo as TipoServicoMatch })
                         }
+                        onDelete={(itemId) => deleteItemMutation.mutate(itemId)}
                       />
                     );
                   })}
@@ -291,7 +316,7 @@ export function MatchReviewPage() {
                           (rowVirtualizer.getVirtualItems().at(-1)?.end ?? 0),
                       }}
                     >
-                      <TableCell colSpan={8} sx={{ p: 0, border: 0 }} />
+                      <TableCell colSpan={9} sx={{ p: 0, border: 0 }} />
                     </TableRow>
                   )}
                 </TableBody>
@@ -300,6 +325,26 @@ export function MatchReviewPage() {
           </TableContainer>
         </Paper>
       </Stack>
+
+      <Dialog open={manualOpen} onClose={() => setManualOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Adicionar linha na PQ</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <TextField label="Item/Código PQ" value={manualItem.codigo_original} onChange={(event) => setManualItem((prev) => ({ ...prev, codigo_original: event.target.value }))} />
+            <TextField required label="Descrição da PQ" value={manualItem.descricao_original} onChange={(event) => setManualItem((prev) => ({ ...prev, descricao_original: event.target.value }))} multiline rows={3} />
+            <Stack direction="row" spacing={2}>
+              <TextField label="Unidade" value={manualItem.unidade_medida_original} onChange={(event) => setManualItem((prev) => ({ ...prev, unidade_medida_original: event.target.value }))} />
+              <TextField label="Quantidade" type="number" value={manualItem.quantidade_original} onChange={(event) => setManualItem((prev) => ({ ...prev, quantidade_original: event.target.value }))} />
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setManualOpen(false)}>Cancelar</Button>
+          <Button variant="contained" disabled={!manualItem.descricao_original.trim() || criarItemMutation.isPending} onClick={() => criarItemMutation.mutate()}>
+            {criarItemMutation.isPending ? 'Adicionando...' : 'Adicionar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
