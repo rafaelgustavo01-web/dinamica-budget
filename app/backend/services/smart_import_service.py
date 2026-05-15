@@ -80,12 +80,12 @@ class SmartImportService:
                 }
             )
 
-        has_aviso = any(
+        has_warnings = any(
             r["row_class"] == RowClass.ITEM.value
             and (r.get("quantidade") is None or r.get("descricao") is None)
             for r in staging_rows
         )
-        status = SmartImportStatus.REVIEW_REQUIRED if has_aviso else SmartImportStatus.COMPLETED
+        status = SmartImportStatus.REVIEW_REQUIRED
 
         end_row = header_row_idx + len(data_rows)
         data_range = {
@@ -102,7 +102,12 @@ class SmartImportService:
             status=status,
             detected_header_row=header_row_idx,
             detected_data_range=data_range,
-            mapping_metadata={"sheet_name": sheet.sheet_name, "col_map": col_map},
+            mapping_metadata={
+            "sheet_name": sheet.sheet_name,
+            "col_map": col_map,
+            "has_warnings": has_warnings,
+            "warnings": ["ITEM sem quantidade ou descricao"] if has_warnings else [],
+        },
             payload_staging={"rows": staging_rows},
             payload_raw=copy.deepcopy({"rows": staging_rows}),
         )

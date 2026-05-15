@@ -61,7 +61,7 @@ async def test_create_job_extracts_and_classifies_rows(db):
 
 
 @pytest.mark.asyncio
-async def test_create_job_marks_complete_when_no_errors(db):
+async def test_create_job_staged_clean_is_review_required_until_commit(db):
     content = _make_xlsx([
         ["ITEM", "DESCRICAO", "UNID.", "QUANT."],
         ["1.1", "Escavacao manual", "m2", 10],
@@ -72,7 +72,8 @@ async def test_create_job_marks_complete_when_no_errors(db):
         mock_cls.return_value.get_by_cliente_id = AsyncMock(return_value=None)
         await svc.create_job(uuid4(), "clean.xlsx", content, db)
     added_job = db.add.call_args[0][0]
-    assert added_job.status == SmartImportStatus.COMPLETED
+    assert added_job.status == SmartImportStatus.REVIEW_REQUIRED
+    assert added_job.mapping_metadata["has_warnings"] is False
 
 
 @pytest.mark.asyncio

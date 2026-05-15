@@ -24,6 +24,8 @@ export interface SmartImportJob {
   detected_header_row: number | null;
   detected_data_range: Record<string, unknown> | null;
   mapping_metadata: Record<string, unknown> | null;
+  has_warnings: boolean;
+  warnings: string[];
   rows: StagingRow[];
 }
 

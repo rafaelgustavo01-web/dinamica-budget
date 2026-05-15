@@ -176,7 +176,7 @@ export function SmartImportStagingPage() {
       />
 
       <Stack spacing={2}>
-        {job.status === 'REVIEW_REQUIRED' && !commitMutation.isSuccess && (
+        {job.status === 'REVIEW_REQUIRED' && job.has_warnings && !commitMutation.isSuccess && (
           <Alert severity="warning">
             Algumas linhas precisam de revisão. Verifique itens sem quantidade ou descrição.
           </Alert>

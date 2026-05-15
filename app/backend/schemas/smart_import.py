@@ -96,11 +96,14 @@ class SmartImportJobOut(BaseModel):
     detected_header_row: int | None
     detected_data_range: dict | None
     mapping_metadata: dict | None
+    has_warnings: bool = False
+    warnings: list[str] = Field(default_factory=list)
     rows: list[StagingRowOut] = Field(default_factory=list)
 
     @classmethod
     def from_job(cls, job: Any) -> "SmartImportJobOut":
         rows_raw = (job.payload_staging or {}).get("rows", [])
+        metadata = job.mapping_metadata or {}
         return cls(
             id=job.id,
             cliente_id=job.cliente_id,
@@ -110,5 +113,7 @@ class SmartImportJobOut(BaseModel):
             detected_header_row=job.detected_header_row,
             detected_data_range=job.detected_data_range,
             mapping_metadata=job.mapping_metadata,
+            has_warnings=bool(metadata.get("has_warnings", False)),
+            warnings=list(metadata.get("warnings", [])),
             rows=[StagingRowOut(**r) for r in rows_raw],
         )
