@@ -6,6 +6,7 @@ import uuid
 from typing import Any
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.exceptions import NotFoundError, ValidationError
@@ -203,6 +204,16 @@ class SmartImportService:
     ) -> SmartImportJob:
         from decimal import Decimal
         from backend.services.smart_import.profile_learner import ProfileLearner
+
+        # Acquire row-level lock and re-fetch status to ensure idempotency
+        result = await db.execute(
+            select(SmartImportJob).where(SmartImportJob.id == job.id).with_for_update()
+        )
+        locked_job = result.scalar_one()
+        job = locked_job
+        if locked_job.status == SmartImportStatus.COMPLETED:
+            logger.info(f"SmartImportJob {job.id} already committed; skipping.")
+            return locked_job
 
         repo = ImportProfileRepository(db)
 

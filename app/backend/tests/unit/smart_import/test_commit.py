@@ -15,6 +15,7 @@ def db():
     session.commit = AsyncMock()
     session.refresh = AsyncMock()
     session.flush = AsyncMock()
+    session.execute = AsyncMock()
     return session
 
 
@@ -41,6 +42,11 @@ def _job_without_proposta():
     job.payload_staging = {"rows": []}
     return job
 
+def _set_lock_result(db, job):
+    mock_result = MagicMock()
+    mock_result.scalar_one.return_value = job
+    db.execute.return_value = mock_result
+
 
 @pytest.mark.asyncio
 async def test_commit_job_marks_completed_and_learns(db):
@@ -55,6 +61,7 @@ async def test_commit_job_marks_completed_and_learns(db):
     with patch("backend.services.smart_import_service.ImportProfileRepository") as mock_cls:
         mock_cls.return_value = mock_repo
         svc = SmartImportService()
+        _set_lock_result(db, job)
         result = await svc.commit_job(job, db, corrections=[
             {"tipo": "COLUMN_REMAP", "detalhe": {"campo": "quantidade", "header_text": "QUANT."}}
         ])
@@ -78,6 +85,7 @@ async def test_commit_job_creates_profile_if_none_exists(db):
     with patch("backend.services.smart_import_service.ImportProfileRepository") as mock_cls:
         mock_cls.return_value = mock_repo
         svc = SmartImportService()
+        _set_lock_result(db, job)
         result = await svc.commit_job(job, db, corrections=[])
 
     mock_repo.create.assert_called_once_with(job.cliente_id)
@@ -106,6 +114,7 @@ async def test_commit_no_corrections_does_not_call_save_corrections(db):
 
     with patch("backend.services.smart_import_service.ImportProfileRepository") as mock_cls:
         mock_cls.return_value = mock_repo
+        _set_lock_result(db, job)
         await SmartImportService().commit_job(job, db, corrections=[])
 
     mock_repo.save_corrections.assert_not_called()
@@ -149,6 +158,7 @@ async def test_commit_job_with_proposta_id_creates_pq_items(db):
 
     with patch("backend.services.smart_import_service.ImportProfileRepository") as mock_cls:
         mock_cls.return_value = mock_repo
+        _set_lock_result(db, job)
         await SmartImportService().commit_job(job, db, corrections=[])
 
     importacoes = [o for o in added_objects if isinstance(o, PqImportacao)]
@@ -194,7 +204,35 @@ async def test_commit_job_without_proposta_id_skips_pq_items(db):
 
     with patch("backend.services.smart_import_service.ImportProfileRepository") as mock_cls:
         mock_cls.return_value = mock_repo
+        _set_lock_result(db, job)
         await SmartImportService().commit_job(job, db, corrections=[])
 
     assert not any(isinstance(o, PqImportacao) for o in added_objects)
     assert not any(isinstance(o, PqItemModel) for o in added_objects)
+
+
+@pytest.mark.asyncio
+async def test_commit_job_is_idempotent(db):
+    mock_profile = _mock_profile()
+    mock_repo = AsyncMock()
+    mock_repo.get_by_cliente_id.return_value = mock_profile
+    mock_repo.save_corrections.return_value = []
+
+    job = _job_without_proposta()
+    job.status = SmartImportStatus.COMPLETED
+    job.id = uuid4()
+
+    # Mock db.execute to return the same job wrapped in a result
+    from sqlalchemy.engine.result import ScalarResult
+    mock_result = MagicMock()
+    mock_result.scalar_one.return_value = job
+    db.execute = AsyncMock(return_value=mock_result)
+
+    with patch("backend.services.smart_import_service.ImportProfileRepository") as mock_cls:
+        mock_cls.return_value = mock_repo
+        svc = SmartImportService()
+        _set_lock_result(db, job)
+        result = await svc.commit_job(job, db, corrections=[])
+
+    assert result.status == SmartImportStatus.COMPLETED
+    mock_repo.get_by_cliente_id.assert_not_called()
