@@ -66,7 +66,7 @@ Responsável: Research AI / QA Re-avaliação
 | `F4-04` | TESTED | P2 | `F4-01` | **Cadastro de Clientes para Folha PC** — enriquecer cliente com dados empresariais úteis à folha de rosto da Proposta Comercial | Campos de engenharia/empresa disponíveis na folha de rosto e sem IDs técnicos na UI |
 | `F4-05` | TESTED | P0 | `F4-01`, `F4-02` | **Smart Import Hardening** — corrigir autorização, persistência JSONB, commit idempotente, parsing decimal BR e limites de arquivo antes de promover F4 | Jobs protegidos por cliente/proposta; staging persiste; commit não duplica itens; `1.234,56` vira Decimal correto; extractor/header/profile validados; testes focados verdes |
 | `F4-06` | BACKLOG | P0 | `F4-05` | **Pós-deploy Import/Match Stabilization** — consolidar bugs reais reportados após deploy em Smart Import, revisão de match, proposta/cliente e upload de bases | Reproduzir erros com `request_id`; corrigir 500 de importação se ainda existir; validar cliente obrigatório/número automático; revisar fluxo executar match/revisão; gates backend/frontend verdes |
-| `F4-DT-01` | BACKLOG | P1 | `F4-05` | **QA Hygiene + Backlog/Registry Cleanup** — limpar ruídos conhecidos e manter pipeline confiável antes de retomar M7 | Corrigir handler MSW faltante; corrigir nesting HTML em `ExpandableTreeRow`; decidir mitigação do risco `xlsx`; atualizar `workers.json`; backlog/pipeline sem notas conflitantes |
+| `F4-DT-01` | TODO | P1 | `F4-05` | **QA Hygiene + Backlog/Registry Cleanup** — limpar ruídos conhecidos e manter pipeline confiável antes de retomar M7 | Corrigir handler MSW faltante; corrigir nesting HTML em `ExpandableTreeRow`; decidir mitigação do risco `xlsx`; atualizar `workers.json`; backlog/pipeline sem notas conflitantes |
 
 ## Ordem Recomendada de Execução
 

@@ -1,6 +1,6 @@
 {
   "registry_version": "1.0",
-  "last_updated": "2026-05-15T15:00:00Z",
+  "last_updated": "2026-05-15T15:13:00Z",
   "workers": [
     {
       "worker_id": "kimi-k2.5",
@@ -20,11 +20,11 @@
         "supervisor",
         "worker"
       ],
-      "available": true,
-      "busy": false,
-      "reserved_for_sprint": null,
-      "last_checked_at": "2026-05-15T15:00:00Z",
-      "notes": "Registry saneado: sem sprint ativa formal; disponível para nova atribuição conforme WIP e roteamento."
+      "available": false,
+      "busy": true,
+      "reserved_for_sprint": "F4-DT-01",
+      "last_checked_at": "2026-05-15T15:13:00Z",
+      "notes": "Despachado manualmente por Rafael/gedAI para F4-DT-01: QA hygiene, xlsx risk and registry cleanup."
     },
     {
       "worker_id": "claude-sonnet-4-6",
@@ -116,9 +116,9 @@
       "name": "Kimi K2.5",
       "provider": "Kimi CLI",
       "role": "po",
-      "active_sprint": null,
-      "last_intake": "2026-04-23T16:15:00-03:00",
-      "notes": "Saneado em 2026-05-15: backlog atual em hardening/polimento; sem execução formal ativa."
+      "active_sprint": "F4-DT-01",
+      "last_intake": "2026-05-15T15:13:00Z",
+      "notes": "F4-DT-01 em TODO; Kimi responsavel pela implementacao, gates, commit e push."
     }
   ],
   "git_controllers": [
@@ -138,9 +138,9 @@
       "name": "Kimi K2.5",
       "provider": "Kimi CLI",
       "role": "supervisor",
-      "active_sprint": null,
-      "last_planned": "2026-04-23T16:15:00-03:00",
-      "notes": "Saneado em 2026-05-15: backlog atual em hardening/polimento; sem execução formal ativa."
+      "active_sprint": "F4-DT-01",
+      "last_planned": "2026-05-15T15:13:00Z",
+      "notes": "F4-DT-01 em TODO; Kimi responsavel pela implementacao, gates, commit e push."
     }
   ],
   "qas": [
@@ -160,9 +160,9 @@
       "name": "Kimi K2.5",
       "provider": "Kimi CLI",
       "role": "sm",
-      "active_sprint": null,
-      "last_dispatch": "2026-04-23T16:15:00-03:00",
-      "notes": "Saneado em 2026-05-15: backlog atual em hardening/polimento; sem execução formal ativa."
+      "active_sprint": "F4-DT-01",
+      "last_dispatch": "2026-05-15T15:13:00Z",
+      "notes": "F4-DT-01 em TODO; Kimi responsavel pela implementacao, gates, commit e push."
     }
   ]
 }

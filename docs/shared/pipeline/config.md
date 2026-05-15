@@ -77,3 +77,8 @@
 - Fase 4 (F4-01..F4-05) fica em TESTED até validação final DB/Alembic em ambiente seguro.
 - Próximas entradas em BACKLOG: F4-06 e F4-DT-01.
 - Não despachar sprint automaticamente enquanto status: STOPPED.
+## Dispatch Manual - 2026-05-15 F4-DT-01
+- Rafael autorizou mover F4-DT-01 para TODO e despachar para Kimi.
+- Worker atribuido: kimi-k2.5.
+- Escopo fechado: MSW handler faltante, nesting HTML em ExpandableTreeRow, vulnerabilidade xlsx, limpeza do workers.json.
+- Pipeline global permanece STOPPED; este dispatch e manual e pontual.

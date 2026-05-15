@@ -1,7 +1,7 @@
 # Sprint F4-DT-01 — QA Hygiene + Backlog/Registry Cleanup
 
 ## Status
-- Status inicial: BACKLOG
+- Status inicial: TODO
 - Prioridade: P1
 - Dependências: F4-05
 
@@ -16,3 +16,10 @@ MSW handler faltante corrigido; nesting HTML do ExpandableTreeRow corrigido; dec
 - Sem force-push/reset destrutivo.
 - Preservar compatibilidade dos fluxos que já funcionam.
 - Usar observabilidade local (request_id) para diagnosticar erros antes de alterar lógica.
+
+
+## Dispatch
+- Data: 2026-05-15
+- Worker: kimi-k2.5
+- Status: TODO
+- Entrega esperada: correcoes pequenas, gates verdes, technical review, walkthrough, commit e push em main.
