@@ -157,6 +157,7 @@ class SmartImportService:
 
     async def _write_pq_items(self, job: SmartImportJob, db: AsyncSession) -> None:
         from decimal import Decimal, InvalidOperation
+        from backend.services.smart_import.number_parser import parse_decimal_br
 
         rows = (job.payload_staging or {}).get("rows", [])
         item_rows = [r for r in rows if r.get("row_class") == "ITEM" and r.get("descricao")]
@@ -178,11 +179,7 @@ class SmartImportService:
 
         for row in item_rows:
             descricao = str(row["descricao"]).strip()
-            qtd_raw = row.get("quantidade")
-            try:
-                quantidade = Decimal(str(qtd_raw).strip().replace(",", ".")) if qtd_raw else None
-            except InvalidOperation:
-                quantidade = None
+            quantidade = parse_decimal_br(row.get("quantidade"))
 
             db.add(PqItem(
                 proposta_id=job.proposta_id,
