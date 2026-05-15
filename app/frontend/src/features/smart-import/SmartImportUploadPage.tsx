@@ -25,7 +25,7 @@ export function SmartImportUploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const clienteId = searchParams.get('clienteId') ?? selectedClientId;
   const clienteNome = availableClients.find((client) => client.id === clienteId)?.nome;
-  const [propostaId] = useState(searchParams.get('propostaId') ?? '');
+  const propostaId = searchParams.get('propostaId') ?? '';
 
   const uploadMutation = useMutation({
     mutationFn: () =>

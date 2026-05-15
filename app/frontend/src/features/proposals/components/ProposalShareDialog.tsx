@@ -122,6 +122,7 @@ export function ProposalShareDialog({ propostaId, open, onClose }: ProposalShare
                     <TableCell>{PAPEL_LABELS[item.papel]}</TableCell>
                     <TableCell align="right">
                       <Button
+                        variant="outlined"
                         size="small"
                         color="error"
                         startIcon={<DeleteOutlineIcon />}

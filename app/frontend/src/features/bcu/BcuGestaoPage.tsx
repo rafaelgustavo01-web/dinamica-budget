@@ -320,6 +320,7 @@ export function BcuGestaoPage() {
                       <Stack direction="row" spacing={0.5} justifyContent="flex-end">
                         {cab.is_ativo ? (
                           <Button
+                            variant="outlined"
                             size="small"
                             startIcon={<LaunchOutlinedIcon />}
                             onClick={() => navigate('/bcu')}
@@ -329,6 +330,7 @@ export function BcuGestaoPage() {
                         ) : (
                           <>
                             <Button
+                              variant="outlined"
                               size="small"
                               startIcon={<CheckCircleOutlineIcon />}
                               onClick={() => setActivateTarget(cab)}
@@ -337,6 +339,7 @@ export function BcuGestaoPage() {
                               Ativar
                             </Button>
                             <Button
+                              variant="outlined"
                               size="small"
                               color="error"
                               startIcon={<DeleteOutlineIcon />}

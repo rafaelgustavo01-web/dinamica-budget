@@ -24,6 +24,7 @@ export function RowEditDialog({ open, row, onClose, onSave, loading = false }: P
 
   useEffect(() => {
     if (row) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFields({
         codigo: row.codigo ?? '',
         descricao: row.descricao ?? '',

@@ -104,7 +104,10 @@ export function ProposalDetailPage() {
   });
 
   useEffect(() => {
-    if (proposta?.codigo) setCodigoDraft(proposta.codigo);
+    if (proposta?.codigo) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCodigoDraft(proposta.codigo);
+    }
   }, [proposta?.codigo]);
 
   if (isLoading) return (

@@ -46,6 +46,12 @@ const CLASS_CHIP_COLOR: Record<RowClass, 'primary' | 'secondary' | 'error' | 'de
   VAZIA: 'default',
 };
 
+function getRowBgColor(rowClass: RowClass) {
+  if (rowClass === 'SECAO') return 'action.hover';
+  if (rowClass === 'TOTAL') return 'error.light';
+  return 'inherit';
+}
+
 const EMPTY_ROW: StagingRow = {
   idx: -1,
   sheet_row: null,
@@ -249,12 +255,7 @@ export function SmartImportStagingPage() {
                   key={row.idx}
                   sx={{
                     opacity: row.row_class === 'VAZIA' ? 0.4 : 1,
-                    bgcolor:
-                      row.row_class === 'SECAO'
-                        ? 'action.hover'
-                        : row.row_class === 'TOTAL'
-                          ? 'error.light'
-                          : 'inherit',
+                    bgcolor: getRowBgColor(row.row_class),
                   }}
                 >
                   <TableCell>

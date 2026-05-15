@@ -50,6 +50,7 @@ export function ProposalCpuPage() {
       const primeiroItem = itens[0];
       if (primeiroItem?.percentual_indireto != null) {
         const pct = parseFloat(primeiroItem.percentual_indireto) * 100;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setBdi(pct.toFixed(2));
       }
     }
@@ -166,7 +167,7 @@ export function ProposalCpuPage() {
               </Button>
             ) : (
               <Button
-                variant="outlined"
+                variant="contained"
                 startIcon={<CalculateOutlinedIcon />}
                 onClick={() => recalcularMutation.mutate()}
                 disabled={recalcularMutation.isPending || hasQueryError}
