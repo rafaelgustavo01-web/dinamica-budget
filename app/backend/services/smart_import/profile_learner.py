@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import copy
 
+_ALLOWED_FIELDS = {"codigo", "descricao", "unidade", "quantidade", "preco", "valor"}
+_MAX_HEADER_ROW = 200
+
 
 def _compute_score(uso_count: int, correction_count: int) -> float:
     """Score rises with uso_count, penalized 2x per correction."""
@@ -30,6 +33,8 @@ class ProfileLearner:
                 campo = detail.get("campo")
                 header_text = detail.get("header_text")
                 if campo and header_text:
+                    if campo not in _ALLOWED_FIELDS:
+                        continue
                     field_aliases = aliases.setdefault(campo, [])
                     if header_text not in field_aliases:
                         field_aliases.append(header_text)
@@ -37,7 +42,10 @@ class ProfileLearner:
             elif tipo == "HEADER_ROW_FIX":
                 corrected_row = detail.get("corrected")
                 if corrected_row is not None:
-                    p["header_row_strategy"] = {"mode": "fixed", "row": int(corrected_row)}
+                    row = int(corrected_row)
+                    if row < 0 or row > _MAX_HEADER_ROW:
+                        raise ValueError("header row fora do intervalo permitido")
+                    p["header_row_strategy"] = {"mode": "fixed", "row": row}
 
             elif tipo == "SHEET_CHANGE":
                 sheet_name = detail.get("sheet_name")

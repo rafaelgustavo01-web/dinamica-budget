@@ -91,3 +91,23 @@ def test_apply_does_not_mutate_original():
         {"tipo": "COLUMN_REMAP", "detalhe": {"campo": "quantidade", "header_text": "QTD."}}
     ])
     assert original_aliases == {}
+
+def test_ignores_unknown_column_remap_field():
+    result = ProfileLearner.apply(_base_profile(), [
+        {"tipo": "COLUMN_REMAP", "detalhe": {"campo": "danger", "header_text": "DROP"}}
+    ])
+    assert "danger" not in result["column_aliases"]
+
+
+def test_rejects_negative_header_row_fix():
+    with pytest.raises(ValueError, match="header"):
+        ProfileLearner.apply(_base_profile(), [
+            {"tipo": "HEADER_ROW_FIX", "detalhe": {"corrected": -1}}
+        ])
+
+
+def test_rejects_header_row_above_max():
+    with pytest.raises(ValueError, match="header"):
+        ProfileLearner.apply(_base_profile(), [
+            {"tipo": "HEADER_ROW_FIX", "detalhe": {"corrected": 201}}
+        ])
