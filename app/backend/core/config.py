@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
+    RICH_TRACEBACKS: bool = False
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
 

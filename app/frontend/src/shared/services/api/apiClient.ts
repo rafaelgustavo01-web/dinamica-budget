@@ -3,7 +3,7 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios';
 
-import type { ApiErrorPayload } from '../../types/contracts/common';
+import type { ApiErrorPayload, ApiErrorWithRequestId } from '../../types/contracts/common';
 import {
   clearSessionTokens,
   persistSessionTokens,
@@ -30,6 +30,35 @@ const apiClient = axios.create({
 type RetryRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 let refreshPromise: Promise<string | null> | null = null;
+
+
+function createClientRequestId() {
+  const cryptoApi = window.crypto;
+  if (cryptoApi?.randomUUID) {
+    return 'web_' + cryptoApi.randomUUID().replaceAll('-', '').slice(0, 12);
+  }
+  return 'web_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+function getApiErrorRequestId(data: unknown): string | null {
+  if (!data || typeof data !== 'object') {
+    return null;
+  }
+
+  const payload = data as Partial<ApiErrorPayload & ApiErrorWithRequestId>;
+  if (typeof payload.request_id === 'string' && payload.request_id) {
+    return payload.request_id;
+  }
+  if (payload.error && typeof payload.error.request_id === 'string' && payload.error.request_id) {
+    return payload.error.request_id;
+  }
+
+  return null;
+}
+
+function appendRequestId(message: string, requestId: string | null) {
+  return requestId ? message + ' Código: ' + requestId : message;
+}
 
 async function refreshAccessToken() {
   const currentSession = readSessionTokens();
@@ -98,6 +127,8 @@ apiClient.interceptors.request.use((config) => {
   } catch {
     // non-fatal: proceed with original config
   }
+
+  config.headers['X-Client-Request-ID'] = createClientRequestId();
 
   // Let the browser set multipart boundaries for uploads.
   if (config.data instanceof FormData) {
@@ -177,22 +208,32 @@ function extractFastApiValidationMessage(data: unknown): string | null {
   return null;
 }
 
+export function extractApiErrorRequestId(error: unknown): string | null {
+  if (axios.isAxiosError(error)) {
+    return getApiErrorRequestId(error.response?.data);
+  }
+
+  return null;
+}
+
 export function extractApiErrorMessage(
   error: unknown,
   fallback = 'Falha ao processar a operação.',
 ) {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data;
+    const requestId = getApiErrorRequestId(data);
     const validationMessage = extractFastApiValidationMessage(data);
     if (validationMessage) {
-      return validationMessage;
+      return appendRequestId(validationMessage, requestId);
     }
     if (isApiErrorPayload(data)) {
-      return data.error.message;
+      return appendRequestId(data.error.message, requestId);
     }
     if (typeof error.message === 'string' && error.message) {
-      return error.message;
+      return appendRequestId(error.message, requestId);
     }
+    return appendRequestId(fallback, requestId);
   }
 
   if (error instanceof Error && error.message) {

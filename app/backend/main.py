@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -9,7 +11,14 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from backend.core.config import settings
-from backend.core.exceptions import DinamicaException, dinamica_exception_handler
+from backend.core.exceptions import (
+    DinamicaException,
+    dinamica_exception_handler,
+    http_exception_handler,
+    unhandled_exception_handler,
+    validation_exception_handler,
+)
+from backend.core.observability import request_context_middleware
 from backend.core.logging import configure_logging, get_logger
 from backend.core.rate_limit import limiter
 
@@ -96,6 +105,10 @@ def create_app() -> FastAPI:
     from starlette.responses import RedirectResponse
 
     @app.middleware("http")
+    async def request_context(request: Request, call_next):
+        return await request_context_middleware(request, call_next)
+
+    @app.middleware("http")
     async def api_trailing_slash_redirect(request: Request, call_next):
         try:
             path = request.url.path
@@ -130,6 +143,9 @@ def create_app() -> FastAPI:
 
     # Exception handlers
     app.add_exception_handler(DinamicaException, dinamica_exception_handler)
+    app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(Exception, unhandled_exception_handler)
 
     # Routers
     from backend.api.v1.router import router as v1_router

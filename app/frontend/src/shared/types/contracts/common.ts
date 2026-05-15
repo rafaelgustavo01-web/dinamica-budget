@@ -13,5 +13,12 @@ export interface ApiErrorPayload {
     code: string;
     message: string;
     details?: Record<string, unknown> | null;
+    request_id?: string;
   };
+  request_id?: string;
+}
+
+export interface ApiErrorWithRequestId {
+  detail?: unknown;
+  request_id?: string;
 }

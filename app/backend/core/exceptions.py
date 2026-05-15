@@ -1,5 +1,12 @@
 from fastapi import Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from backend.core.logging import get_logger
+from backend.core.observability import REQUEST_ID_HEADER, get_request_id
+
+logger = get_logger(__name__)
 
 
 class DinamicaException(Exception):
@@ -59,14 +66,84 @@ class UnprocessableEntityError(DinamicaException):
         )
 
 
+def _api_error_content(
+    *,
+    code: str,
+    message: str,
+    request_id: str,
+    details: dict | None = None,
+) -> dict:
+    return {
+        "error": {
+            "code": code,
+            "message": message,
+            "details": details,
+            "request_id": request_id,
+        },
+        "request_id": request_id,
+    }
+
+
 async def dinamica_exception_handler(request: Request, exc: DinamicaException) -> JSONResponse:
+    request_id = get_request_id(request)
+    if exc.status_code >= 500:
+        logger.error("dinamica_exception", code=exc.code, status_code=exc.status_code)
     return JSONResponse(
         status_code=exc.status_code,
+        headers={REQUEST_ID_HEADER: request_id},
+        content=_api_error_content(
+            code=exc.code,
+            message=exc.message,
+            details=exc.details,
+            request_id=request_id,
+        ),
+    )
+
+
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    request_id = get_request_id(request)
+    if exc.status_code >= 500:
+        logger.error("http_exception", status_code=exc.status_code, detail=str(exc.detail))
+    return JSONResponse(
+        status_code=exc.status_code,
+        headers={REQUEST_ID_HEADER: request_id},
         content={
-            "error": {
-                "code": exc.code,
-                "message": exc.message,
-                "details": exc.details,
-            }
+            "detail": exc.detail,
+            "request_id": request_id,
         },
+    )
+
+
+async def validation_exception_handler(
+    request: Request,
+    exc: RequestValidationError,
+) -> JSONResponse:
+    request_id = get_request_id(request)
+    logger.warning("request_validation_error", error_count=len(exc.errors()))
+    return JSONResponse(
+        status_code=422,
+        headers={REQUEST_ID_HEADER: request_id},
+        content={
+            "detail": exc.errors(),
+            "request_id": request_id,
+        },
+    )
+
+
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    request_id = get_request_id(request)
+    logger.error(
+        "unhandled_exception",
+        error_type=exc.__class__.__name__,
+        error=str(exc),
+        exc_info=True,
+    )
+    return JSONResponse(
+        status_code=500,
+        headers={REQUEST_ID_HEADER: request_id},
+        content=_api_error_content(
+            code="INTERNAL_SERVER_ERROR",
+            message="Erro interno ao processar a operação. Informe o código abaixo ao suporte.",
+            request_id=request_id,
+        ),
     )
