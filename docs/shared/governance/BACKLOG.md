@@ -64,6 +64,7 @@ Responsável: Research AI / QA Re-avaliação
 | `F4-02` | TESTED | P1 | `F4-01` | **PQ Client Profiles + Learning Loop** — padrões de importação por cliente, correção humana vira aprendizado controlado | Perfil por cliente reaproveitado em nova PQ; score de confiança; preview e validação rígida antes de gravar |
 | `F4-03` | TESTED | P1 | `F4-01` | **BASES/BCUs Upload Individual + CRUD** — upload individual e manutenção manual das bases internas com validação rígida | CRUD e upload individual com preview, validação e auditoria; sem IA pesada |
 | `F4-04` | TESTED | P2 | `F4-01` | **Cadastro de Clientes para Folha PC** — enriquecer cliente com dados empresariais úteis à folha de rosto da Proposta Comercial | Campos de engenharia/empresa disponíveis na folha de rosto e sem IDs técnicos na UI |
+| `F4-05` | PLAN | P0 | `F4-01`, `F4-02` | **Smart Import Hardening** — corrigir autorização, persistência JSONB, commit idempotente, parsing decimal BR e limites de arquivo antes de promover F4 | Jobs protegidos por cliente/proposta; staging persiste; commit não duplica itens; `1.234,56` vira Decimal correto; extractor/header/profile validados; testes focados verdes |
 
 ## Ordem Recomendada de Execução
 
@@ -107,6 +108,13 @@ FASE C — Módulo de Orçamentos
 - Gates executados: `git diff --check` PASS; `python3 -m compileall -q app/backend` PASS; pytest unitário sem DB 27 PASS; `npm run build` PASS; `npm test` 13 PASS.
 - Gates bloqueados pelo ambiente local: testes BCU com Postgres e `alembic check` falham antes de executar por senha inválida do usuário `postgres` no banco local de teste.
 - Status das sprints F4 movido para `TESTED`; não mover para `DONE` até rodar upgrade/downgrade Alembic contra banco seguro ou corrigir credencial do banco local.
+
+### Pipeline update — 2026-05-15 F4-05 planejada pelo Supervisor
+
+- `F4-05` aberta em `PLAN` como correção P0 dos achados da revisão Codex sobre Smart Import.
+- Artefatos criados: briefing em `docs/sprints/F4-05/briefing/`, plano em `docs/sprints/F4-05/plans/`, dispatch preparado em `docs/sprints/F4-05/dispatch/`.
+- Escopo congelado: autorização multi-tenant/proposta, JSONB staging, idempotência de commit, decimal brasileiro, limites de extração e learning loop.
+- Execução ainda não iniciada; manter em `PLAN` até Scrum Master liberar WIP/worker e mover para `TODO`.
 
 
 ### Pipeline update — 2026-05-08
