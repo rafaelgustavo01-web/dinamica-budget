@@ -1,4 +1,4 @@
-﻿# Pipeline Config
+# Pipeline Config
 
 > Dynamic configuration for the Role-Inbox Broadcast protocol.
 > Any agent reads this file at the start of every cycle.
@@ -70,3 +70,10 @@
   - full operational work, architecture review, broad refactors or high-risk changes: stronger models such as Codex 5.5-class, Claude Opus-class or Kimi.
 - Prefer more delegated, smaller tasks over one oversized prompt; each delegated task must preserve the documentation flow and commit/push discipline.
 - Mandatory sprint artifacts remain: Briefing, Plan, Technical Review, Technical Feedback and Walkthrough.
+
+## Backlog Saneamento — 2026-05-15
+- Backlog e registry saneados contra origin/main@0a2a377.
+- WIP ativo real: 0/4.
+- Fase 4 (F4-01..F4-05) fica em TESTED até validação final DB/Alembic em ambiente seguro.
+- Próximas entradas em BACKLOG: F4-06 e F4-DT-01.
+- Não despachar sprint automaticamente enquanto status: STOPPED.

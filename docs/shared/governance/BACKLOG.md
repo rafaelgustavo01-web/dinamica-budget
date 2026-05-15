@@ -9,15 +9,15 @@ Responsável: Research AI / QA Re-avaliação
 - WIP recomendado: máximo 4 sprints ativas fora de `BACKLOG`/`DONE`
 
 
-## Status Operacional — 2026-04-29
+## Status Operacional — 2026-05-15
 
-- Ciclo concluído: `F2-10`, `F2-11`, `F2-12`, `F2-13`, `F2-DT-A`, `F2-DT-B`, `F2-DT-C` em DONE.
-- WIP atual: **1/4** (`F3-03` em TODO para roteiro/dados finais da demo).
-- WIP assumido pelo PO em 2026-04-29: **4**; abrir novo ciclo assim que QA mover sprint de TESTED para DONE, respeitando dependências.
-- Milestone 6 — Proposta Completa: **fechado**.
-- Milestone 7 — Compras e Negociação: **GO condicional** validado por Codex + Claude; fica **pós-demo**, após saneamento/contratos.
-- Decisão PO 2026-04-29: antes de Compras, abrir **Fase 3 — Demo Readiness / Polimento UI+UX** para corrigir erros de interface e deixar o fluxo apresentável esta semana.
-- Sprint ativa: `F3-03` em TODO após QA Gemini aceitar `F3-04` e fechar as configurações/fluxos da apresentação.
+- Pipeline formal permanece STOPPED; o backlog foi saneado para refletir o estado real do repositório em origin/main@0a2a377.
+- Ciclos concluídos: S-01 a S-12, F2-01 a F2-13, F2-DT-A/B/C, F3-01, F3-02, F3-04, F3-05.
+- Fase 4 atual: F4-01 a F4-05 em TESTED, aguardando validação final de banco/Alembic em ambiente seguro antes de promoção para DONE.
+- F3-03 segue ON-HOLD: roteiro/dados de demo dependem dos fluxos reais finais que serão apresentados.
+- Milestone 7 / Compras permanece pós-demo e suspenso (F2-14, F2-15 em ON-HOLD) até saneamento/contrato específico.
+- WIP recomendado segue 0/4 ativo após saneamento documental. Próximas entradas planejadas ficam em BACKLOG, não despachadas automaticamente.
+- Manutenções recentes fora de sprint formal registradas: 65e26f0 (refatoração frontend segura) e 0a2a377 (observabilidade local leve para importações, TCPO e CPU).
 
 ## Sprints Propostas
 
@@ -65,6 +65,8 @@ Responsável: Research AI / QA Re-avaliação
 | `F4-03` | TESTED | P1 | `F4-01` | **BASES/BCUs Upload Individual + CRUD** — upload individual e manutenção manual das bases internas com validação rígida | CRUD e upload individual com preview, validação e auditoria; sem IA pesada |
 | `F4-04` | TESTED | P2 | `F4-01` | **Cadastro de Clientes para Folha PC** — enriquecer cliente com dados empresariais úteis à folha de rosto da Proposta Comercial | Campos de engenharia/empresa disponíveis na folha de rosto e sem IDs técnicos na UI |
 | `F4-05` | TESTED | P0 | `F4-01`, `F4-02` | **Smart Import Hardening** — corrigir autorização, persistência JSONB, commit idempotente, parsing decimal BR e limites de arquivo antes de promover F4 | Jobs protegidos por cliente/proposta; staging persiste; commit não duplica itens; `1.234,56` vira Decimal correto; extractor/header/profile validados; testes focados verdes |
+| `F4-06` | BACKLOG | P0 | `F4-05` | **Pós-deploy Import/Match Stabilization** — consolidar bugs reais reportados após deploy em Smart Import, revisão de match, proposta/cliente e upload de bases | Reproduzir erros com `request_id`; corrigir 500 de importação se ainda existir; validar cliente obrigatório/número automático; revisar fluxo executar match/revisão; gates backend/frontend verdes |
+| `F4-DT-01` | BACKLOG | P1 | `F4-05` | **QA Hygiene + Backlog/Registry Cleanup** — limpar ruídos conhecidos e manter pipeline confiável antes de retomar M7 | Corrigir handler MSW faltante; corrigir nesting HTML em `ExpandableTreeRow`; decidir mitigação do risco `xlsx`; atualizar `workers.json`; backlog/pipeline sem notas conflitantes |
 
 ## Ordem Recomendada de Execução
 
@@ -90,51 +92,20 @@ FASE C — Módulo de Orçamentos
 
 ## Sprints Ativas
 
-### Pipeline update — 2026-05-08 Fase 4 WIP 4/4
+### Pipeline update — 2026-05-15 saneamento documental
 
-- `F3-03` confirmado como sprint de apresentação/demo e colocado em `ON-HOLD`.
-- Fase 4 aberta com WIP **4/4**: `F4-01`, `F4-02`, `F4-03`, `F4-04` em `TODO`.
-- Orquestração master: gedAI consolida; workers não fazem push direto.
-- Recursos autorizados por Rafael: Codex, Claude, Kimi, Opencode, Gemini e Kiro; workers podem instalar dependências locais necessárias para implementar/testar.
-- Regra bloqueante da Fase 4: qualquer alteração de banco exige atenção total a Alembic/migrations, validação de dados existentes, rollback e testes.
-- README atualizado na consolidação F4 em 2026-05-09.
-
-### Pipeline update — 2026-05-09 Fase 4 consolidada
-
-- `F4-01`, `F4-02`, `F4-03`, `F4-04` consolidadas em worktree dedicada `/tmp/db-f4-migration-consolidation`.
-- Cadeia Alembic linear validada em inventário: `027_smart_import_job_table.py` -> `028_pq_client_profile_learning.py` -> `029_cliente_campos_folha_pc.py`; `alembic heads` retorna head único `029`.
-- Contrato canônico escolhido para F4-02: implementação Kimi com `is_aprovado`, `aprovado_por_id`, `aprovado_em`, `aliases_json`, `score_confianca` e `pq_layout_historico`.
-- Contrato canônico escolhido para F4-04: backend Codex com campos `contato_email`, `contato_telefone`, `endereco_municipio`; frontend Claude reconciliado para esses nomes.
-- Gates executados: `git diff --check` PASS; `python3 -m compileall -q app/backend` PASS; pytest unitário sem DB 27 PASS; `npm run build` PASS; `npm test` 13 PASS.
-- Gates bloqueados pelo ambiente local: testes BCU com Postgres e `alembic check` falham antes de executar por senha inválida do usuário `postgres` no banco local de teste.
-- Status das sprints F4 movido para `TESTED`; não mover para `DONE` até rodar upgrade/downgrade Alembic contra banco seguro ou corrigir credencial do banco local.
-
-### Pipeline update — 2026-05-15 F4-05 planejada pelo Supervisor
-
-- `F4-05` aberta em `PLAN` como correção P0 dos achados da revisão Codex sobre Smart Import.
-- Artefatos criados: briefing em `docs/sprints/F4-05/briefing/`, plano em `docs/sprints/F4-05/plans/`, dispatch preparado em `docs/sprints/F4-05/dispatch/`.
-- Escopo congelado: autorização multi-tenant/proposta, JSONB staging, idempotência de commit, decimal brasileiro, limites de extração e learning loop.
-- Execução ainda não iniciada; manter em `PLAN` até Scrum Master liberar WIP/worker e mover para `TODO`.
-
-
-### Pipeline update — 2026-05-08
-
-- `F3-05` aberto como hotfix P0 para bugs reportados por Rafael: PQ Match e árvore TCPO recursiva.
-- `F3-05` accepted by Opencode QA em 2026-05-08 e movido para DONE; sem P0, gates principais PASS, pytest bloqueado por ambiente.
-- `F4-01` planejado para Smart Import Architecture com Docling como candidato de leitura flexível.
-- `F4-02` planejado para perfis de PQ por cliente e aprendizado controlado.
-- Premissa aprovada: **PQ aprende por cliente; BASE segue contrato; TCPO tolera variação controlada; banco continua rígido**.
-- Roteamento: Claude frontend/UX; Codex backend hotfix; Kimi hardening; Gemini inteligência/roadmap/QA.
-
-**Fase 3 — Demo Readiness / Polimento UI+UX aberta em 2026-04-29.**
-
-- WIP: **1/4**.
-- Objetivo imediato: deixar o produto estável e apresentável esta semana antes de retomar Compras/M7.
-- `F3-01` em DONE: auditoria UI/UX aceita pelo QA Gemini.
-- `F3-02` em DONE: correções críticas P1 aceitas pelo QA Gemini.
-- `F3-03` em TODO: roteiro/dados finais da demo liberados após fechamento das configurações finais.
-- `F3-04` em DONE: configurações finais + polimento visual + smoke de demo aceitos pelo QA Gemini.
-- Milestone 7 permanece **GO condicional pós-demo**.
+- WIP ativo real: 0/4. Nenhuma sprint está em TODO/execução formal neste momento.
+- F4-01, F4-02, F4-03, F4-04 e F4-05 permanecem em TESTED.
+- Motivo para não promover F4 para DONE: falta rodar validação final de Alembic/DB em ambiente seguro com credenciais corretas. Os gates locais executados cobrem build/testes focados, mas não substituem upgrade/downgrade controlado do banco.
+- F4-05 já foi executada e testada; a nota anterior que dizia execução ainda não iniciada foi substituída por esta atualização.
+- Commits recentes de manutenção fora de sprint formal:
+  - 65e26f0 refactor(frontend): tighten ctas and proposal items layout
+  - 0a2a377 feat(observability): add local request tracing and UI error boundary
+- Próximas entradas preparadas no backlog:
+  - F4-06 — estabilização pós-deploy dos fluxos de importação/match.
+  - F4-DT-01 — higiene de QA, vulnerabilidade/decisão xlsx, warnings de teste e registry.
+- templates/workers.json saneado em 2026-05-15 para remover reservas antigas e refletir workers disponíveis.
+- Pipeline formal segue STOPPED; qualquer retomada de execução deve ser deliberada pelo gedAI/Scrum Master respeitando WIP 4 e dependências.
 
 ### Decisões de alocação (Scrum Master, 2026-04-26)
 

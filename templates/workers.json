@@ -1,6 +1,6 @@
 {
   "registry_version": "1.0",
-  "last_updated": "2026-05-08T23:20:00Z",
+  "last_updated": "2026-05-15T15:00:00Z",
   "workers": [
     {
       "worker_id": "kimi-k2.5",
@@ -20,11 +20,11 @@
         "supervisor",
         "worker"
       ],
-      "available": false,
-      "busy": true,
-      "reserved_for_sprint": "F2-04",
-      "last_checked_at": "2026-05-08T23:20:00Z",
-      "notes": "Fase 4 WIP 4/4 — recurso alocado sob orquestração gedAI; sem push direto."
+      "available": true,
+      "busy": false,
+      "reserved_for_sprint": null,
+      "last_checked_at": "2026-05-15T15:00:00Z",
+      "notes": "Registry saneado: sem sprint ativa formal; disponível para nova atribuição conforme WIP e roteamento."
     },
     {
       "worker_id": "claude-sonnet-4-6",
@@ -41,11 +41,11 @@
       "roles": [
         "worker"
       ],
-      "available": false,
-      "busy": true,
-      "reserved_for_sprint": "F2-03",
-      "last_checked_at": "2026-05-08T23:20:00Z",
-      "notes": "Fase 4 WIP 4/4 — recurso alocado sob orquestração gedAI; sem push direto."
+      "available": true,
+      "busy": false,
+      "reserved_for_sprint": null,
+      "last_checked_at": "2026-05-15T15:00:00Z",
+      "notes": "Registry saneado: sem sprint ativa formal; disponível para nova atribuição conforme WIP e roteamento."
     },
     {
       "worker_id": "codex-5.3",
@@ -61,11 +61,11 @@
       "roles": [
         "worker"
       ],
-      "available": false,
-      "busy": true,
+      "available": true,
+      "busy": false,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-05-08T23:20:00Z",
-      "notes": "Fase 4 WIP 4/4 — recurso alocado sob orquestração gedAI; sem push direto."
+      "last_checked_at": "2026-05-15T15:00:00Z",
+      "notes": "Registry saneado: sem sprint ativa formal; disponível para nova atribuição conforme WIP e roteamento."
     },
     {
       "worker_id": "gemini-3.1",
@@ -81,11 +81,11 @@
       "roles": [
         "worker"
       ],
-      "available": false,
-      "busy": true,
+      "available": true,
+      "busy": false,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-05-08T23:20:00Z",
-      "notes": "Fase 4 WIP 4/4 — recurso alocado sob orquestração gedAI; sem push direto."
+      "last_checked_at": "2026-05-15T15:00:00Z",
+      "notes": "Registry saneado: sem sprint ativa formal; disponível para nova atribuição conforme WIP e roteamento."
     },
     {
       "worker_id": "opencode-cli",
@@ -103,11 +103,11 @@
         "qa",
         "git-controller"
       ],
-      "available": false,
-      "busy": true,
+      "available": true,
+      "busy": false,
       "reserved_for_sprint": null,
-      "last_checked_at": "2026-05-08T23:20:00Z",
-      "notes": "Fase 4 WIP 4/4 — recurso alocado sob orquestração gedAI; sem push direto."
+      "last_checked_at": "2026-05-15T15:00:00Z",
+      "notes": "Registry saneado: sem sprint ativa formal; disponível para nova atribuição conforme WIP e roteamento."
     }
   ],
   "pos": [
@@ -118,7 +118,7 @@
       "role": "po",
       "active_sprint": null,
       "last_intake": "2026-04-23T16:15:00-03:00",
-      "notes": "PO central. Projeto completo — todas as 12 sprints DONE. Aguardando novas demandas ou Fase 3."
+      "notes": "Saneado em 2026-05-15: backlog atual em hardening/polimento; sem execução formal ativa."
     }
   ],
   "git_controllers": [
@@ -129,7 +129,7 @@
       "role": "git-controller",
       "active_incident": null,
       "last_action": "2026-04-23T16:15:00-03:00",
-      "notes": "Sem incidentes. Pipeline encerrado. 12 sprints DONE."
+      "notes": "Saneado em 2026-05-15: backlog atual em hardening/polimento; sem execução formal ativa."
     }
   ],
   "supervisors": [
@@ -140,7 +140,7 @@
       "role": "supervisor",
       "active_sprint": null,
       "last_planned": "2026-04-23T16:15:00-03:00",
-      "notes": "Sem sprints ativas. Pipeline encerrado — 12 sprints DONE."
+      "notes": "Saneado em 2026-05-15: backlog atual em hardening/polimento; sem execução formal ativa."
     }
   ],
   "qas": [
@@ -151,7 +151,7 @@
       "role": "qa",
       "active_sprint": null,
       "last_reviewed": "2026-04-23T16:15:00-03:00",
-      "notes": "Reavaliação final completa: S-01→S-12 = DONE. 93 tests PASS. Pipeline encerrado."
+      "notes": "Saneado em 2026-05-15: backlog atual em hardening/polimento; sem execução formal ativa."
     }
   ],
   "sms": [
@@ -162,7 +162,7 @@
       "role": "sm",
       "active_sprint": null,
       "last_dispatch": "2026-04-23T16:15:00-03:00",
-      "notes": "Pipeline encerrado. Projeto completo — 12 sprints DONE."
+      "notes": "Saneado em 2026-05-15: backlog atual em hardening/polimento; sem execução formal ativa."
     }
   ]
 }
