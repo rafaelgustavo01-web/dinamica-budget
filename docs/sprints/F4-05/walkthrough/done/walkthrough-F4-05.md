@@ -38,9 +38,9 @@
 | `pytest tests/unit/smart_import -q` | **77 passed, 8 warnings** |
 | `pytest tests/unit/test_security_p0.py tests/unit/test_proposta_acl_dependency.py` | **28 passed** (excluindo falha pré-existente em `test_security_s04.py`) |
 | `git diff --check` | **Sem trailing whitespace** |
+| `cd app/frontend && npm install && npm run build` | **Build OK** |
 
 ## Risco Residual
-- Build frontend bloqueado por dependências faltantes no ambiente (`xlsx`, `@tanstack/react-virtual`); não é regressão do F4-05.
 - Teste `test_security_s04.py::test_list_servicos_validates_cliente_id_access_when_present` falha por bug pré-existente de Pydantic `Query(None)` em `servicos.py`.
 
 ## QA Handoff

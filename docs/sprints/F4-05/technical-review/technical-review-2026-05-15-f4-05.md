@@ -41,18 +41,17 @@ pytest tests/unit/test_security_p0.py tests/unit/test_security_s04.py tests/unit
 
 ### Frontend build
 ```
-cd app/frontend && npm run build
+cd app/frontend && npm install && npm run build
 ```
-**Resultado: Falha em módulos `xlsx` e `@tanstack/react-virtual` — pré-existente, não relacionado a F4-05**
-- Arquivos F4-05 no frontend: `smartImportApi.ts` e `SmartImportStagingPage.tsx` não geram erros TypeScript próprios
+**Resultado: OK — 1265 módulos transformados; Vite gerou apenas alerta de chunks grandes.**
+- `xlsx` e `@tanstack/react-virtual` já estavam em `package.json`/lock; `npm install` recompôs o `node_modules` do ambiente.
 
 ## Risco Residual
 - Nenhum risco novo introduzido.
-- Falha de build do frontend é de ambiente (dependências faltantes), não de código.
+- Build frontend validado após recompor dependências do ambiente.
 - Falha em `test_security_s04.py` é de regressão pré-existente em endpoint `servicos`, fora do escopo F4-05.
 
 ## Pendências
-- Rodar `npm run build` após instalar `xlsx` e `@tanstack/react-virtual` no frontend (fora de escopo F4-05).
 - QA deve validar commit idempotente em ambiente com banco real (teste unitário cobre lógica, mas não concorrência real).
 
 ## Decisão
