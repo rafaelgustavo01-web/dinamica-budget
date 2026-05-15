@@ -46,6 +46,7 @@ class SmartImportJob(Base, TimestampMixin):
     )
     mapping_metadata: Mapped[dict | list | None] = mapped_column(JSONB, nullable=True)
     payload_staging: Mapped[dict | list | None] = mapped_column(JSONB, nullable=True)
+    payload_raw: Mapped[dict | list | None] = mapped_column(JSONB, nullable=True)
     detected_header_row: Mapped[int | None] = mapped_column(Integer, nullable=True)
     detected_data_range: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     row_classifications: Mapped[list | None] = mapped_column(JSONB, nullable=True)

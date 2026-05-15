@@ -92,3 +92,21 @@ async def test_patch_row_updates_staging(db):
     svc.patch_row(job, row_idx=0, patch={"descricao": "Escavacao manual CORRIGIDA", "quantidade": "12"})
     assert job.payload_staging["rows"][0]["descricao"] == "Escavacao manual CORRIGIDA"
     assert job.payload_staging["rows"][0]["quantidade"] == "12"
+
+
+@pytest.mark.asyncio
+async def test_create_job_preserves_payload_raw(db):
+    content = _make_xlsx([
+        ["ITEM", "DESCRICAO", "UNID.", "QUANT."],
+        ["1.1", "Escavacao manual", "m2", 10],
+    ])
+    svc = SmartImportService()
+    with patch("backend.services.smart_import_service.ImportProfileRepository") as mock_cls:
+        mock_cls.return_value.get_by_cliente_id = AsyncMock(return_value=None)
+        job = await svc.create_job(uuid4(), "raw.xlsx", content, db)
+    assert job.payload_raw is not None
+    assert job.payload_raw["rows"] == job.payload_staging["rows"]
+    # Mutate staging; raw should stay intact
+    original_raw = job.payload_raw["rows"][0]["descricao"]
+    job.payload_staging["rows"][0]["descricao"] = "CHANGED"
+    assert job.payload_raw["rows"][0]["descricao"] == original_raw

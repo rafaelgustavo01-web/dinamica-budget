@@ -1,6 +1,7 @@
 """Smart Import Service — deterministic pipeline: Extract -> Detect Header -> Map Columns -> Classify Rows -> Stage."""
 from __future__ import annotations
 
+import copy
 import uuid
 from typing import Any
 from uuid import UUID
@@ -102,6 +103,7 @@ class SmartImportService:
             detected_data_range=data_range,
             mapping_metadata={"sheet_name": sheet.sheet_name, "col_map": col_map},
             payload_staging={"rows": staging_rows},
+            payload_raw=copy.deepcopy({"rows": staging_rows}),
         )
         db.add(job)
         await db.commit()
