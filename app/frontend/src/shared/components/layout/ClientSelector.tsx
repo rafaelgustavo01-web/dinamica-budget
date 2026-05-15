@@ -64,7 +64,7 @@ export function ClientSelector({
       <MenuItem value="">Selecione</MenuItem>
       {availableClients.map((client) => (
         <MenuItem key={client.id} value={client.id}>
-          {client.nome || client.id}
+          {client.nome || 'Cliente sem nome'}
         </MenuItem>
       ))}
     </TextField>
@@ -124,7 +124,7 @@ function AdminClientSearch({
         onClose={() => setOpen(false)}
         size="small"
         options={options}
-        getOptionLabel={(opt) => (opt ? (opt.nome_fantasia ?? opt.id) : '')}
+        getOptionLabel={(opt) => (opt ? (opt.nome_fantasia || opt.razao_social || 'Cliente sem nome') : '')}
         isOptionEqualToValue={(opt, val) => opt.id === val.id}
         value={selectedOption}
         // inputValue is intentionally NOT controlled — avoids MUI sync loop (React error #185)

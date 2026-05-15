@@ -1,3 +1,4 @@
+from decimal import Decimal, InvalidOperation
 from math import ceil
 from uuid import UUID
 
@@ -5,7 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import get_current_active_user, get_db, require_proposta_role
+from backend.core.dependencies import get_current_active_user, get_db, require_cliente_access, require_proposta_role
+from backend.models.cliente import Cliente
 from backend.models.enums import PropostaPapel, StatusProposta
 from backend.repositories.proposta_acl_repository import PropostaAclRepository
 from backend.repositories.proposta_repository import PropostaRepository
@@ -39,6 +41,20 @@ from backend.services.proposta_versionamento_service import PropostaVersionament
 router = APIRouter(prefix="/propostas", tags=["propostas"])
 
 
+def _positive_decimal(value, *, default: Decimal | None = Decimal("1")) -> Decimal:
+    if value in (None, ""):
+        if default is not None:
+            return default
+        raise HTTPException(status_code=422, detail="Quantidade é obrigatória.")
+    try:
+        quantidade = Decimal(str(value).replace(",", "."))
+    except (InvalidOperation, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail="Quantidade inválida.") from exc
+    if quantidade <= 0:
+        raise HTTPException(status_code=422, detail="Quantidade deve ser maior que zero.")
+    return quantidade
+
+
 def _get_service(db: AsyncSession = Depends(get_db)) -> PropostaService:
     return PropostaService(PropostaRepository(db))
 
@@ -50,6 +66,10 @@ async def criar_proposta(
     db: AsyncSession = Depends(get_db),
     svc: PropostaService = Depends(_get_service),
 ) -> PropostaResponse:
+    cliente = await db.get(Cliente, data.cliente_id)
+    if cliente is None:
+        raise HTTPException(status_code=422, detail="Cliente selecionado não existe.")
+    await require_cliente_access(data.cliente_id, current_user, db)
     proposta = await svc.criar_proposta(data.cliente_id, current_user.id, data)
     return PropostaResponse.model_validate(proposta)
 
@@ -465,7 +485,7 @@ async def adicionar_item_proposta(
         codigo=body["codigo"],
         descricao=body["descricao"],
         unidade_medida=body["unidade_medida"],
-        quantidade=max(1, int(float(body["quantidade"]))),
+        quantidade=_positive_decimal(body.get("quantidade")),
     )
     await db.commit()
     return resultado
@@ -633,7 +653,7 @@ async def adicionar_mao_obra(
         resultado = await svc.adicionar_mao_obra(
             proposta_id,
             UUID(body["bcu_item_id"]),
-            max(1, int(float(body["quantidade"]))),
+            _positive_decimal(body.get("quantidade")),
         )
         await db.commit()
     except IntegrityError:
@@ -664,7 +684,7 @@ async def adicionar_epi(
         resultado = await svc.adicionar_epi(
             proposta_id,
             UUID(body["bcu_item_id"]),
-            max(1, int(float(body["quantidade"]))),
+            _positive_decimal(body.get("quantidade")),
         )
         await db.commit()
     except IntegrityError:
@@ -695,7 +715,7 @@ async def adicionar_equipamento(
         resultado = await svc.adicionar_equipamento(
             proposta_id,
             UUID(body["bcu_item_id"]),
-            max(1, int(float(body["quantidade"]))),
+            _positive_decimal(body.get("quantidade")),
         )
         await db.commit()
     except IntegrityError:
@@ -726,7 +746,7 @@ async def adicionar_ferramenta(
         resultado = await svc.adicionar_ferramenta(
             proposta_id,
             UUID(body["bcu_item_id"]),
-            max(1, int(float(body["quantidade"]))),
+            _positive_decimal(body.get("quantidade")),
         )
         await db.commit()
     except IntegrityError:

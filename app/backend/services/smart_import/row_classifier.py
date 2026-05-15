@@ -22,11 +22,20 @@ _TOTAL_KEYWORDS = {"total", "subtotal", "soma", "geral"}
 _SECTION_NUMBERING_RE = re.compile(r"^\d+(\.\d+)*\s*[\.:)\-]?\s*$")
 
 
+def _strip_accents(text: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn")
+
+
 def _norm(text: object) -> str:
     if text is None:
         return ""
-    s = str(text).strip().lower()
-    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
+    return _strip_accents(str(text).strip().lower())
+
+
+def _raw_text(text: object) -> str:
+    if text is None:
+        return ""
+    return str(text).strip()
 
 
 def _to_decimal(value: object) -> Decimal | None:
@@ -42,7 +51,8 @@ def _to_decimal(value: object) -> Decimal | None:
 class RowClassifier:
     @staticmethod
     def classify(row: dict) -> RowClass:
-        descricao = _norm(row.get("descricao"))
+        descricao_raw = _raw_text(row.get("descricao"))
+        descricao = _norm(descricao_raw)
         unidade = _norm(row.get("unidade"))
         qtd = _to_decimal(row.get("quantidade"))
         preco = _to_decimal(row.get("preco"))
@@ -68,7 +78,7 @@ class RowClassifier:
             return RowClass.SECAO
         if len(descricao) <= 5:
             return RowClass.SECAO
-        if descricao.isupper() and len(descricao) <= 60:
+        if _strip_accents(descricao_raw).isupper() and len(descricao) <= 60:
             return RowClass.SECAO
         if first_word in _SECTION_KEYWORDS:
             return RowClass.SECAO

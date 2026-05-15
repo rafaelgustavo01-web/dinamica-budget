@@ -106,7 +106,7 @@ export type StatusMatch =
 
 export type TipoServicoMatch = 'ITEM_PROPRIO' | 'BASE_TCPO';
 
-export type AcaoMatch = 'confirmar' | 'substituir' | 'rejeitar';
+export type AcaoMatch = 'confirmar' | 'substituir' | 'rejeitar' | 'manual';
 
 export interface PqItemResponse {
   id: string;
@@ -143,6 +143,9 @@ export interface PqMatchConfirmarRequest {
   servico_match_id?: string;
   servico_match_tipo?: TipoServicoMatch;
   quantidade?: string;
+  codigo_original?: string | null;
+  descricao_original?: string | null;
+  unidade_medida_original?: string | null;
 }
 
 export interface ComposicaoDetalhe {

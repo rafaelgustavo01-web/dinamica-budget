@@ -25,7 +25,7 @@ from backend.models.bcu import (
 
 logger = get_logger(__name__)
 
-_VALID_TIPOS = {"mo", "equipamentos", "encargos", "epi", "ferramentas", "mobilizacao"}
+_VALID_TIPOS = {"mo", "equipamentos", "encargos", "exames", "epi", "ferramentas", "mobilizacao"}
 _MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 _XLSX_MAGIC = b"PK\x03\x04"
 
@@ -424,10 +424,55 @@ def _parse_mobilizacao(file_bytes: bytes) -> BcuUploadResult:
     )
 
 
+def _parse_exames(file_bytes: bytes) -> BcuUploadResult:
+    wb = openpyxl.load_workbook(BytesIO(file_bytes), data_only=True)
+    ws = wb.active
+    rows: list[BcuUploadPreviewRow] = []
+    base_tcpo_items: list[BaseTcpo] = []
+    valid = 0
+    invalid = 0
+
+    for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+        errors: list[str] = []
+        codigo = _safe_str(row[0] if len(row) > 0 else None, 80)
+        exame = _safe_str(row[1] if len(row) > 1 else None)
+        custo = _to_decimal(row[2]) if len(row) > 2 else None
+
+        if exame is None:
+            continue
+
+        data = {"codigo": codigo, "exame": exame, "custo_unitario": custo}
+        if not exame or len(exame) > 255:
+            errors.append("exame é obrigatório e deve ter até 255 caracteres.")
+
+        if errors:
+            invalid += 1
+        else:
+            valid += 1
+            base_tcpo_items.append(
+                BaseTcpo(
+                    id=uuid.uuid4(),
+                    codigo_origem=codigo or f"PLACEHOLDER-EXM-{idx}",
+                    descricao=exame,
+                    unidade_medida="UN",
+                    custo_base=float(custo or 0),
+                    tipo_recurso="EXAMES",
+                )
+            )
+
+        rows.append(BcuUploadPreviewRow(row_number=idx, data=data, errors=errors if errors else None))
+
+    return BcuUploadResult(
+        tipo="exames", total_rows=len(rows), valid_rows=valid, invalid_rows=invalid,
+        rows=rows, db_items=[], base_tcpo_items=base_tcpo_items,
+    )
+
+
 _PARSERS = {
     "mo": _parse_mo,
     "equipamentos": _parse_equipamentos,
     "encargos": _parse_encargos,
+    "exames": _parse_exames,
     "epi": _parse_epi,
     "ferramentas": _parse_ferramentas,
     "mobilizacao": _parse_mobilizacao,
@@ -486,15 +531,21 @@ class BcuUploadService:
 
         seq = await self._get_next_sequence(tipo, cabecalho_id)
 
-        for idx, item in enumerate(result.db_items):
-            item.cabecalho_id = cabecalho_id
-            if hasattr(item, "codigo_origem"):
-                seq += 1
-                prefix = {"mo": "MO", "equipamentos": "EQP", "epi": "EPI", "ferramentas": "FER"}.get(tipo, tipo.upper()[:3])
-                item.codigo_origem = f"BCU-{prefix}-{seq:03d}"
-                # Update corresponding base_tcpo item
-                if idx < len(result.base_tcpo_items):
-                    result.base_tcpo_items[idx].codigo_origem = item.codigo_origem
+        if tipo == "exames":
+            for item in result.base_tcpo_items:
+                if not item.codigo_origem or item.codigo_origem.startswith("PLACEHOLDER-"):
+                    seq += 1
+                    item.codigo_origem = f"BCU-EXM-{seq:03d}"
+        else:
+            for idx, item in enumerate(result.db_items):
+                item.cabecalho_id = cabecalho_id
+                if hasattr(item, "codigo_origem"):
+                    seq += 1
+                    prefix = {"mo": "MO", "equipamentos": "EQP", "epi": "EPI", "ferramentas": "FER"}.get(tipo, tipo.upper()[:3])
+                    item.codigo_origem = f"BCU-{prefix}-{seq:03d}"
+                    # Update corresponding base_tcpo item
+                    if idx < len(result.base_tcpo_items):
+                        result.base_tcpo_items[idx].codigo_origem = item.codigo_origem
 
         self.db.add_all(result.db_items)
         await self.db.flush()
@@ -513,6 +564,11 @@ class BcuUploadService:
 
     async def _get_next_sequence(self, tipo: str, cabecalho_id: uuid.UUID) -> int:
         from sqlalchemy import func, select
+        if tipo == "exames":
+            result = await self.db.execute(
+                select(func.count(BaseTcpo.id)).where(BaseTcpo.tipo_recurso == "EXAMES")
+            )
+            return result.scalar() or 0
         model_map = {
             "mo": BcuMaoObraItem,
             "equipamentos": BcuEquipamentoItem,

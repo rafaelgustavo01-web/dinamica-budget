@@ -33,6 +33,7 @@ const TABLE_OPTIONS: { value: BcuTableType; label: string }[] = [
   { value: 'MO', label: 'Mão de Obra' },
   { value: 'EQP', label: 'Equipamentos' },
   { value: 'ENC', label: 'Encargos' },
+  { value: 'EXM', label: 'Exames' },
   { value: 'EPI', label: 'EPI / Uniforme' },
   { value: 'FER', label: 'Ferramentas' },
   { value: 'MOB', label: 'Mobilização' },
@@ -42,6 +43,7 @@ const REQUIRED_COLS: Record<BcuTableType, string[]> = {
   MO: ['descricao_funcao'],
   EQP: ['equipamento'],
   ENC: ['tipo_encargo', 'discriminacao_encargo'],
+  EXM: ['exame'],
   EPI: ['epi'],
   FER: ['descricao'],
   MOB: ['descricao'],
@@ -184,7 +186,7 @@ export function BcuUploadPage() {
     <Box>
       <PageHeader
         title="Upload Individual de Base"
-        description="Importe uma única tabela (Mão de Obra, Equipamentos, Encargos, EPI, Ferramentas ou Mobilização) para uma versão BCU existente."
+        description="Importe uma única tabela (Mão de Obra, Equipamentos, Encargos, Exames, EPI, Ferramentas ou Mobilização) para uma versão BCU existente."
       />
 
       <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>

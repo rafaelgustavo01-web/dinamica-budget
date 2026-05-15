@@ -2,7 +2,7 @@ import { apiClient } from './apiClient';
 
 // ── Upload Individual ─────────────────────────────────────────────────────────
 
-export type BcuTableType = 'MO' | 'EQP' | 'ENC' | 'EPI' | 'FER' | 'MOB';
+export type BcuTableType = 'MO' | 'EQP' | 'ENC' | 'EXM' | 'EPI' | 'FER' | 'MOB';
 
 export interface BcuUploadIndividualResponse {
   cabecalho_id: string;
@@ -140,11 +140,29 @@ export const bcuItemApi = {
   async uploadIndividual(payload: BcuUploadIndividualPayload): Promise<BcuUploadIndividualResponse> {
     const formData = new FormData();
     formData.append('file', payload.file);
-    formData.append('cabecalho_id', payload.cabecalho_id);
-    formData.append('tabela', payload.tabela);
-    formData.append('modo', payload.modo);
-    const r = await apiClient.post<BcuUploadIndividualResponse>('/bcu/importar-individual', formData);
-    return r.data;
+    const tipoMap: Record<BcuTableType, string> = {
+      MO: 'mo',
+      EQP: 'equipamentos',
+      ENC: 'encargos',
+      EXM: 'exames',
+      EPI: 'epi',
+      FER: 'ferramentas',
+      MOB: 'mobilizacao',
+    };
+    const tipo = tipoMap[payload.tabela];
+    const r = await apiClient.post<{ tipo: string; cabecalho_id: string; imported_rows: number; warnings: string[] | null }>(
+      '/bcu/upload-individual/' + tipo + '/confirmar',
+      formData,
+      { params: { cabecalho_id: payload.cabecalho_id } },
+    );
+    return {
+      cabecalho_id: r.data.cabecalho_id,
+      tabela: payload.tabela,
+      linhas_inseridas: r.data.imported_rows,
+      linhas_atualizadas: 0,
+      erros: (r.data.warnings ?? []).map((mensagem, idx) => ({ linha: idx + 1, campo: 'arquivo', valor: null, mensagem })),
+      observacao: null,
+    };
   },
 
   // ── Mão de Obra ────────────────────────────────────────────────────────────

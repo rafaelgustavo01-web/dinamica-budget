@@ -44,6 +44,7 @@ export function MatchReviewPage() {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [manualOpen, setManualOpen] = useState(false);
+  const [manualTarget, setManualTarget] = useState<PqItemResponse | null>(null);
   const [manualItem, setManualItem] = useState({ codigo_original: '', descricao_original: '', unidade_medida_original: 'un', quantidade_original: '1' });
 
   const { data: proposta } = useQuery({
@@ -116,6 +117,26 @@ export function MatchReviewPage() {
     onSettled: (_data, _err, { itemId }) => removePending(itemId),
   });
 
+  const manualServicoMutation = useMutation({
+    mutationFn: () => {
+      if (!manualTarget) throw new Error('Item da PQ não selecionado.');
+      return proposalsApi.confirmarMatch(id!, manualTarget.id, {
+        acao: 'manual',
+        codigo_original: manualItem.codigo_original || null,
+        descricao_original: manualItem.descricao_original,
+        unidade_medida_original: manualItem.unidade_medida_original || null,
+        quantidade: manualItem.quantidade_original,
+      });
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData<PqItemResponse[]>(PQ_ITENS_KEY(id!), (old) =>
+        old?.map((item) => (item.id === updated.id ? updated : item)),
+      );
+      setManualTarget(null);
+      setManualItem({ codigo_original: '', descricao_original: '', unidade_medida_original: 'un', quantidade_original: '1' });
+    },
+  });
+
   const criarItemMutation = useMutation({
     mutationFn: () => proposalsApi.createPqItem(id!, manualItem),
     onSuccess: (created) => {
@@ -164,9 +185,9 @@ export function MatchReviewPage() {
   const rejeitados = itens.filter((i) => i.match_status === 'SEM_MATCH').length;
   const sugeridos = itens.filter((i) => i.match_status === 'SUGERIDO').length;
   const pendentes = itens.filter((i) => i.match_status === 'PENDENTE' || i.match_status === 'BUSCANDO').length;
-  const semConfianca = itens.length > 0 && itens.every((i) => !i.match_confidence);
+  const precisaExecutarMatch = itens.length > 0 && itens.every((i) => i.match_status === 'PENDENTE' || i.match_status === 'BUSCANDO');
   const progresso = itens.length > 0 ? ((confirmados + rejeitados) / itens.length) * 100 : 0;
-  const hasError = confirmarMutation.isError || rejeitarMutation.isError || substituirMutation.isError || matchMutation.isError;
+  const hasError = confirmarMutation.isError || rejeitarMutation.isError || substituirMutation.isError || manualServicoMutation.isError || matchMutation.isError;
 
   if (isError) return <Alert severity="error">{extractApiErrorMessage(error)}</Alert>;
 
@@ -231,12 +252,12 @@ export function MatchReviewPage() {
         {hasError && (
           <Alert severity="error">
             {extractApiErrorMessage(
-              confirmarMutation.error ?? rejeitarMutation.error ?? substituirMutation.error ?? matchMutation.error,
+              confirmarMutation.error ?? rejeitarMutation.error ?? substituirMutation.error ?? manualServicoMutation.error ?? matchMutation.error,
             )}
           </Alert>
         )}
 
-        {semConfianca && itens.length > 0 && (
+        {precisaExecutarMatch && (
           <Alert
             severity="warning"
             action={
@@ -304,6 +325,15 @@ export function MatchReviewPage() {
                         onSubstituir={(itemId, servicoId, tipo) =>
                           substituirMutation.mutate({ itemId, servicoId, tipo: tipo as TipoServicoMatch })
                         }
+                        onManual={(item) => {
+                          setManualTarget(item);
+                          setManualItem({
+                            codigo_original: item.codigo_original ?? '',
+                            descricao_original: item.descricao_original,
+                            unidade_medida_original: item.unidade_medida_original ?? 'un',
+                            quantidade_original: item.quantidade_original ?? '1',
+                          });
+                        }}
                         onDelete={(itemId) => deleteItemMutation.mutate(itemId)}
                       />
                     );
@@ -325,6 +355,26 @@ export function MatchReviewPage() {
           </TableContainer>
         </Paper>
       </Stack>
+
+      <Dialog open={Boolean(manualTarget)} onClose={() => setManualTarget(null)} fullWidth maxWidth="sm">
+        <DialogTitle>Usar serviço manual na revisão</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <TextField label="Item/Código PQ" value={manualItem.codigo_original} onChange={(event) => setManualItem((prev) => ({ ...prev, codigo_original: event.target.value }))} />
+            <TextField required label="Descrição do serviço manual" value={manualItem.descricao_original} onChange={(event) => setManualItem((prev) => ({ ...prev, descricao_original: event.target.value }))} multiline rows={3} />
+            <Stack direction="row" spacing={2}>
+              <TextField label="Unidade" value={manualItem.unidade_medida_original} onChange={(event) => setManualItem((prev) => ({ ...prev, unidade_medida_original: event.target.value }))} />
+              <TextField label="Quantidade" type="number" value={manualItem.quantidade_original} onChange={(event) => setManualItem((prev) => ({ ...prev, quantidade_original: event.target.value }))} />
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setManualTarget(null)}>Cancelar</Button>
+          <Button variant="contained" disabled={!manualItem.descricao_original.trim() || manualServicoMutation.isPending} onClick={() => manualServicoMutation.mutate()}>
+            {manualServicoMutation.isPending ? 'Salvando...' : 'Usar manual'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={manualOpen} onClose={() => setManualOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>Adicionar linha na PQ</DialogTitle>

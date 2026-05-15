@@ -251,6 +251,17 @@ async def atualizar_match_item(
             confidence=1.0,
         )
         await repo.update_status(item, StatusMatch.MANUAL)
+    elif body.acao == "manual":
+        if body.codigo_original is not None:
+            item.codigo_original = body.codigo_original
+        if body.descricao_original is not None:
+            item.descricao_original = body.descricao_original
+        if body.unidade_medida_original is not None:
+            item.unidade_medida_original = body.unidade_medida_original
+        item.servico_match_id = None
+        item.servico_match_tipo = None
+        item.match_confidence = None
+        await repo.update_status(item, StatusMatch.SEM_MATCH)
 
     if body.quantidade is not None:
         item.quantidade_original = body.quantidade

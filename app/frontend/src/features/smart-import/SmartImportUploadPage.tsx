@@ -5,13 +5,13 @@ import {
   Button,
   Paper,
   Stack,
-  TextField,
   Typography,
 } from '@mui/material';
 import { useMutation } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useAuth } from '../auth/AuthProvider';
 import { PageHeader } from '../../shared/components/PageHeader';
 import { extractApiErrorMessage } from '../../shared/services/api/apiClient';
 import { smartImportApi } from '../../shared/services/api/smartImportApi';
@@ -20,9 +20,11 @@ export function SmartImportUploadPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const fileRef = useRef<HTMLInputElement>(null);
+  const { selectedClientId, availableClients } = useAuth();
 
   const [file, setFile] = useState<File | null>(null);
-  const [clienteId, setClienteId] = useState(searchParams.get('clienteId') ?? '');
+  const clienteId = searchParams.get('clienteId') ?? selectedClientId;
+  const clienteNome = availableClients.find((client) => client.id === clienteId)?.nome;
   const [propostaId] = useState(searchParams.get('propostaId') ?? '');
 
   const uploadMutation = useMutation({
@@ -48,23 +50,11 @@ export function SmartImportUploadPage() {
 
       <Paper sx={{ p: 3, maxWidth: 560 }}>
         <Stack spacing={3}>
-          <TextField
-            label="ID do Cliente"
-            value={clienteId}
-            onChange={(e) => setClienteId(e.target.value)}
-            size="small"
-            required
-            helperText="UUID do cliente para qual esta planilha pertence"
-          />
-
-          {propostaId && (
-            <TextField
-              label="ID da Proposta (pré-preenchido)"
-              value={propostaId}
-              size="small"
-              disabled
-            />
-          )}
+          <Alert severity={clienteId ? 'info' : 'warning'}>
+            {clienteId
+              ? 'Cliente selecionado: ' + (clienteNome || 'cliente atual')
+              : 'Selecione um cliente no topo da tela antes de importar a planilha.'}
+          </Alert>
 
           <Box>
             <input

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,7 +9,8 @@ from backend.core.dependencies import (
     get_db,
     require_cliente_access,
 )
-from backend.core.exceptions import NotFoundError
+from backend.core.exceptions import NotFoundError, ValidationError
+from backend.models.cliente import Cliente
 from backend.models.smart_import import SmartImportJob
 from backend.repositories.import_profile_repository import ImportProfileRepository
 from backend.schemas.smart_import import (
@@ -55,18 +56,26 @@ async def upload(
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> SmartImportJobOut:
+    cliente = await db.get(Cliente, cliente_id)
+    if cliente is None:
+        raise HTTPException(status_code=422, detail="Cliente selecionado não existe.")
     await require_cliente_access(cliente_id, current_user, db)
     content = await file.read()
     svc = SmartImportService()
-    job = await svc.create_job(
-        cliente_id=cliente_id,
-        filename=file.filename or "upload",
-        content=content,
-        db=db,
-        proposta_id=proposta_id,
-        sheet_name=sheet_name,
-        profile_header_row=profile_header_row,
-    )
+    try:
+        job = await svc.create_job(
+            cliente_id=cliente_id,
+            filename=file.filename or "upload",
+            content=content,
+            db=db,
+            proposta_id=proposta_id,
+            sheet_name=sheet_name,
+            profile_header_row=profile_header_row,
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return SmartImportJobOut.from_job(job)
 
 

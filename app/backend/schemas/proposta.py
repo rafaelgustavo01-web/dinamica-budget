@@ -3,22 +3,38 @@ from decimal import Decimal
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from backend.models.enums import PropostaPapel, StatusMatch, StatusProposta, TipoServicoMatch
 
 
 class PropostaCreate(BaseModel):
     cliente_id: UUID
-    codigo: str | None = Field(default=None, min_length=1, max_length=50)
+    codigo: str | None = Field(default=None, max_length=50)
     titulo: str | None = Field(default=None, max_length=255)
     descricao: str | None = None
+
+    @field_validator("codigo", mode="before")
+    @classmethod
+    def blank_codigo_to_none(cls, value):
+        if value is None:
+            return None
+        value = str(value).strip()
+        return value or None
 
 
 class PropostaUpdate(BaseModel):
-    codigo: str | None = Field(default=None, min_length=1, max_length=50)
+    codigo: str | None = Field(default=None, max_length=50)
     titulo: str | None = Field(default=None, max_length=255)
     descricao: str | None = None
+
+    @field_validator("codigo", mode="before")
+    @classmethod
+    def blank_codigo_to_none(cls, value):
+        if value is None:
+            return None
+        value = str(value).strip()
+        return value or None
 
 
 class PropostaStatusUpdate(BaseModel):
@@ -231,10 +247,13 @@ class PqItemManualCreate(BaseModel):
 
 
 class PqMatchConfirmarRequest(BaseModel):
-    acao: Literal["confirmar", "substituir", "rejeitar"]
+    acao: Literal["confirmar", "substituir", "rejeitar", "manual"]
     servico_match_id: UUID | None = None
     servico_match_tipo: TipoServicoMatch | None = None
     quantidade: Decimal | None = None
+    codigo_original: str | None = Field(default=None, max_length=50)
+    descricao_original: str | None = Field(default=None, min_length=1)
+    unidade_medida_original: str | None = Field(default=None, max_length=20)
 
     @model_validator(mode="after")
     def substituir_requer_servico(self) -> "PqMatchConfirmarRequest":

@@ -38,9 +38,10 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const PLACEHOLDER_CLIENT_IDS = new Set(['53ec2a1d-a949-4b2c-8caa-6ded536f0b33']);
 
 function isUuid(value: string) {
-  return UUID_REGEX.test(value);
+  return UUID_REGEX.test(value) && !PLACEHOLDER_CLIENT_IDS.has(value.toLowerCase());
 }
 
 function syncSelectedClient(

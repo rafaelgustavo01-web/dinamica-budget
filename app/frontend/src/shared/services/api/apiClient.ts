@@ -84,9 +84,10 @@ apiClient.interceptors.request.use((config) => {
     const method = (config.method || '').toString().toLowerCase();
     const url = typeof config.url === 'string' ? config.url : '';
     if (method === 'get') {
-      // handle both '/servicos' and 'servicos' forms
-      if (/^\/?servicos($|\?|$)/.test(url) && !url.endsWith('/')) {
-        config.url = url.replace(/^(\/)?servicos/, '/servicos/') + (config.params ? '' : '');
+      // handle both '/servicos' and 'servicos' forms without corrupting query strings
+      const [path, query] = url.split('?');
+      if (/^\/?servicos\/?$/.test(path)) {
+        config.url = '/servicos/' + (query ? '?' + query : '');
       }
     }
 

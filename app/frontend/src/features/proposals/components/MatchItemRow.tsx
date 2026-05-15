@@ -9,6 +9,7 @@ import {
   Typography,
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined';
@@ -23,6 +24,7 @@ interface MatchItemRowProps {
   onRejeitar: (itemId: string) => void;
   onSubstituir: (itemId: string, servicoId: string, tipo: string) => void;
   onDelete?: (itemId: string) => void;
+  onManual?: (item: PqItemResponse) => void;
   isLoading: boolean;
 }
 
@@ -42,6 +44,7 @@ function MatchItemRowInner({
   onRejeitar,
   onSubstituir,
   onDelete,
+  onManual,
   isLoading,
 }: MatchItemRowProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -152,6 +155,21 @@ function MatchItemRowInner({
                   </Button>
                 </span>
               </Tooltip>
+              {onManual && (
+                <Tooltip title="Criar/usar serviço manual">
+                  <span>
+                    <Button
+                      size="small"
+                      color="secondary"
+                      onClick={() => onManual(item)}
+                      disabled={isLoading}
+                      sx={{ minWidth: 0, px: 1 }}
+                    >
+                      <AddCircleOutlineIcon fontSize="small" />
+                    </Button>
+                  </span>
+                </Tooltip>
+              )}
               {onDelete && (
                 <Tooltip title="Remover linha da PQ">
                   <span>

@@ -191,7 +191,7 @@ export function SmartImportStagingPage() {
                 <Button
                   color="inherit"
                   size="small"
-                  onClick={() => navigate(`/propostas/${job.proposta_id}/importar`)}
+                  onClick={() => navigate(`/propostas/${job.proposta_id}/match-review`)}
                 >
                   Ir para Match
                 </Button>

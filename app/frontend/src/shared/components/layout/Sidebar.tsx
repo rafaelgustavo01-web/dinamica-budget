@@ -57,6 +57,15 @@ export function Sidebar({ mobileOpen, onMobileClose, slim = false, onToggleSlim 
       }}
     >
       <Box sx={{ px: slim ? 1.5 : 3, py: 3, position: 'relative', zIndex: 1 }}>
+        <Tooltip title={slim ? 'Expandir menu' : 'Comprimir menu'}>
+          <IconButton
+            size="small"
+            onClick={onToggleSlim}
+            sx={{ position: 'absolute', right: 10, top: 10, color: 'rgba(255,255,255,0.82)' }}
+          >
+            {slim ? <MenuOutlinedIcon fontSize="small" /> : <MenuOpenOutlinedIcon fontSize="small" />}
+          </IconButton>
+        </Tooltip>
         <Stack spacing={1.5}>
           <Stack direction="row" spacing={1.5} alignItems="center">
             <Box
@@ -189,13 +198,6 @@ export function Sidebar({ mobileOpen, onMobileClose, slim = false, onToggleSlim 
         </Typography>
       </Stack>
       )}
-      <Box sx={{ px: 1.5, py: 1.5, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <Tooltip title={slim ? 'Expandir menu' : 'Comprimir menu'}>
-          <IconButton size="small" onClick={onToggleSlim} sx={{ color: 'rgba(255,255,255,0.8)' }}>
-            {slim ? <MenuOutlinedIcon fontSize="small" /> : <MenuOpenOutlinedIcon fontSize="small" />}
-          </IconButton>
-        </Tooltip>
-      </Box>
     </Box>
   );
 
