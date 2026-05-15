@@ -1,4 +1,3 @@
-from decimal import Decimal, InvalidOperation
 from math import ceil
 from uuid import UUID
 
@@ -13,7 +12,11 @@ from backend.repositories.proposta_acl_repository import PropostaAclRepository
 from backend.repositories.proposta_repository import PropostaRepository
 from backend.schemas.common import PaginatedResponse
 from backend.schemas.proposta import (
+    BcuItemAddRequest,
     PropostaCreate,
+    PropostaItemCreateRequest,
+    PropostaItemsReorderRequest,
+    PropostaItemUpdateRequest,
     PropostaNovaVersaoRequest,
     PropostaRebuildResponse,
     PropostaRejeitarRequest,
@@ -39,20 +42,6 @@ from backend.services.proposta_service import PropostaService
 from backend.services.proposta_versionamento_service import PropostaVersionamentoService
 
 router = APIRouter(prefix="/propostas", tags=["propostas"])
-
-
-def _positive_decimal(value, *, default: Decimal | None = Decimal("1")) -> Decimal:
-    if value in (None, ""):
-        if default is not None:
-            return default
-        raise HTTPException(status_code=422, detail="Quantidade é obrigatória.")
-    try:
-        quantidade = Decimal(str(value).replace(",", "."))
-    except (InvalidOperation, TypeError, ValueError) as exc:
-        raise HTTPException(status_code=422, detail="Quantidade inválida.") from exc
-    if quantidade <= 0:
-        raise HTTPException(status_code=422, detail="Quantidade deve ser maior que zero.")
-    return quantidade
 
 
 def _get_service(db: AsyncSession = Depends(get_db)) -> PropostaService:
@@ -461,7 +450,7 @@ async def gerar_relatorio_composicao(
 @router.post("/{proposta_id}/items", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def adicionar_item_proposta(
     proposta_id: UUID,
-    body: dict,
+    body: PropostaItemCreateRequest,
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -482,10 +471,10 @@ async def adicionar_item_proposta(
     svc = PropostaItemService(db)
     resultado = await svc.adicionar_item(
         proposta_id,
-        codigo=body["codigo"],
-        descricao=body["descricao"],
-        unidade_medida=body["unidade_medida"],
-        quantidade=_positive_decimal(body.get("quantidade")),
+        codigo=body.codigo,
+        descricao=body.descricao,
+        unidade_medida=body.unidade_medida,
+        quantidade=body.quantidade,
     )
     await db.commit()
     return resultado
@@ -507,7 +496,7 @@ async def listar_items_proposta(
 async def atualizar_item_proposta(
     proposta_id: UUID,
     item_id: UUID,
-    body: dict,
+    body: PropostaItemUpdateRequest,
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -519,7 +508,7 @@ async def atualizar_item_proposta(
     """
     await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
     svc = PropostaItemService(db)
-    resultado = await svc.atualizar_item(proposta_id, item_id, **body)
+    resultado = await svc.atualizar_item(proposta_id, item_id, **body.model_dump(exclude_none=True))
     await db.commit()
     return resultado
 
@@ -543,7 +532,7 @@ async def remover_item_proposta(
 @router.post("/{proposta_id}/items/reordenar", response_model=dict)
 async def reordenar_items_proposta(
     proposta_id: UUID,
-    body: dict,
+    body: PropostaItemsReorderRequest,
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -558,7 +547,7 @@ async def reordenar_items_proposta(
     Apenas em status RASCUNHO
     """
     await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
-    items_ids = [UUID(id_str) for id_str in body["items_ids"]]
+    items_ids = body.items_ids
     svc = PropostaItemService(db)
     resultado = await svc.reordenar_items(proposta_id, items_ids)
     await db.commit()
@@ -634,7 +623,7 @@ async def listar_ferramenta_bcu(
 @router.post("/{proposta_id}/items/mao-obra", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def adicionar_mao_obra(
     proposta_id: UUID,
-    body: dict,
+    body: BcuItemAddRequest,
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -652,8 +641,8 @@ async def adicionar_mao_obra(
     try:
         resultado = await svc.adicionar_mao_obra(
             proposta_id,
-            UUID(body["bcu_item_id"]),
-            _positive_decimal(body.get("quantidade")),
+            body.bcu_item_id,
+            body.quantidade,
         )
         await db.commit()
     except IntegrityError:
@@ -665,7 +654,7 @@ async def adicionar_mao_obra(
 @router.post("/{proposta_id}/items/epi", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def adicionar_epi(
     proposta_id: UUID,
-    body: dict,
+    body: BcuItemAddRequest,
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -683,8 +672,8 @@ async def adicionar_epi(
     try:
         resultado = await svc.adicionar_epi(
             proposta_id,
-            UUID(body["bcu_item_id"]),
-            _positive_decimal(body.get("quantidade")),
+            body.bcu_item_id,
+            body.quantidade,
         )
         await db.commit()
     except IntegrityError:
@@ -696,7 +685,7 @@ async def adicionar_epi(
 @router.post("/{proposta_id}/items/equipamento", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def adicionar_equipamento(
     proposta_id: UUID,
-    body: dict,
+    body: BcuItemAddRequest,
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -714,8 +703,8 @@ async def adicionar_equipamento(
     try:
         resultado = await svc.adicionar_equipamento(
             proposta_id,
-            UUID(body["bcu_item_id"]),
-            _positive_decimal(body.get("quantidade")),
+            body.bcu_item_id,
+            body.quantidade,
         )
         await db.commit()
     except IntegrityError:
@@ -727,7 +716,7 @@ async def adicionar_equipamento(
 @router.post("/{proposta_id}/items/ferramenta", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def adicionar_ferramenta(
     proposta_id: UUID,
-    body: dict,
+    body: BcuItemAddRequest,
     current_user=Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -745,8 +734,8 @@ async def adicionar_ferramenta(
     try:
         resultado = await svc.adicionar_ferramenta(
             proposta_id,
-            UUID(body["bcu_item_id"]),
-            _positive_decimal(body.get("quantidade")),
+            body.bcu_item_id,
+            body.quantidade,
         )
         await db.commit()
     except IntegrityError:

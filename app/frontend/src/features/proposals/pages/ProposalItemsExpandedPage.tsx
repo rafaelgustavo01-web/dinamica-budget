@@ -316,13 +316,13 @@ export function ProposalItemsExpandedPage() {
       </Card>
 
       {/* ================================================================
-          CAT�LOGO BCU
+          CATÁLOGO BCU
           ================================================================ */}
       <Paper
         elevation={0}
         sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}
       >
-        {/* Cabe�alho + Tabs */}
+        {/* Cabeçalho + Tabs */}
         <Box
           sx={{
             px: 3,
@@ -332,7 +332,7 @@ export function ProposalItemsExpandedPage() {
           }}
         >
           <Typography variant="h6" fontWeight={600} sx={{ mb: 1.5 }}>
-            Cat�logo BCU � Selecione os Itens
+            Catálogo BCU - Selecione os Itens
           </Typography>
           <Tabs
             value={activeTab}
@@ -360,7 +360,7 @@ export function ProposalItemsExpandedPage() {
           <TextField
             size="small"
             fullWidth
-            placeholder="Filtrar por codigo ou descri��o..."
+            placeholder="Filtrar por código ou descrição..."
             value={searchFilter}
             onChange={e => setSearchFilter(e.target.value)}
             InputProps={{
@@ -386,9 +386,9 @@ export function ProposalItemsExpandedPage() {
             <TableHead>
               <TableRow>
                 {[
-                  { label: 'Codigo',         align: 'left'  as const },
-                  { label: 'Descri��o',       align: 'left'  as const },
-                  { label: 'Valor Unit�rio',  align: 'right' as const },
+                  { label: 'Código',         align: 'left'  as const },
+                  { label: 'Descrição',       align: 'left'  as const },
+                  { label: 'Valor Unitário',  align: 'right' as const },
                   { label: 'Quantidade',      align: 'right' as const },
                   { label: 'Total Previsto',  align: 'right' as const },
                   { label: '',               align: 'center' as const },
@@ -438,7 +438,7 @@ export function ProposalItemsExpandedPage() {
                   <TableCell colSpan={6} align="center" sx={{ py: 5, color: 'text.secondary' }}>
                     {searchFilter
                       ? `Nenhum item encontrado para "${searchFilter}"`
-                      : 'Nenhum item disponi�vel nesta categoria na base BCU.'}
+                      : 'Nenhum item disponível nesta categoria na base BCU.'}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -451,26 +451,26 @@ export function ProposalItemsExpandedPage() {
                       hover
                       sx={{ '&:hover': { bgcolor: '#EDF1F8' } }}
                     >
-                      {/* C�digo */}
+                      {/* Código */}
                       <TableCell
                         sx={{ fontFamily: 'monospace', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
                       >
                         {item.codigo}
                       </TableCell>
 
-                      {/* Descri��o */}
+                      {/* Descrição */}
                       <TableCell>
                         <Typography variant="body2" sx={{ maxWidth: 380 }}>
                           {item.descricao}
                         </Typography>
                       </TableCell>
 
-                      {/* Valor unit�rio */}
+                      {/* Valor unitário */}
                       <TableCell align="right" sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
                         {formatCurrency(item.valor)}
                       </TableCell>
 
-                      {/* Quantidade edit�vel (inteiro) */}
+                      {/* Quantidade editável (inteiro) */}
                       <TableCell align="right" sx={{ width: 120 }}>
                         <TextField
                           size="small"
@@ -498,7 +498,7 @@ export function ProposalItemsExpandedPage() {
                         </Typography>
                       </TableCell>
 
-                      {/* Bot�o adicionar */}
+                      {/* Botão adicionar */}
                       <TableCell align="center" sx={{ width: 120 }}>
                         <Button
                           size="small"
@@ -559,8 +559,8 @@ export function ProposalItemsExpandedPage() {
               <TableRow>
                 {[
                   { label: 'Ordem',        align: 'left'   as const },
-                  { label: 'Codigo',       align: 'left'   as const },
-                  { label: 'Descri��o',    align: 'left'   as const },
+                  { label: 'Código',       align: 'left'   as const },
+                  { label: 'Descrição',    align: 'left'   as const },
                   { label: 'Qtd',          align: 'right'  as const },
                   { label: 'Un.',          align: 'left'   as const },
                   { label: 'Valor Unit.',  align: 'right'  as const },
@@ -605,7 +605,7 @@ export function ProposalItemsExpandedPage() {
                     <TableCell align="right">{Math.trunc(item.quantidade)}</TableCell>
                     <TableCell sx={{ color: 'text.secondary' }}>{item.unidade_medida}</TableCell>
                     <TableCell align="right">
-                      {item.valor_unitario != null ? formatCurrency(item.valor_unitario) : '�'}
+                      {item.valor_unitario != null ? formatCurrency(item.valor_unitario) : '—'}
                     </TableCell>
                     <TableCell align="right">
                       {item.valor_total != null ? (

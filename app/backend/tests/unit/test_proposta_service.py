@@ -118,3 +118,26 @@ async def test_atualizar_metadados_rejects_approved(proposta_service, mock_repo)
             PropostaUpdate(titulo="Nao pode"),
         )
 
+
+
+def test_proposta_item_create_request_rejects_non_positive_quantity():
+    from pydantic import ValidationError as PydanticValidationError
+    from backend.schemas.proposta import PropostaItemCreateRequest
+
+    with pytest.raises(PydanticValidationError):
+        PropostaItemCreateRequest(
+            codigo="01",
+            descricao="Item inválido",
+            unidade_medida="un",
+            quantidade=0,
+        )
+
+
+def test_bcu_item_add_request_parses_uuid_and_decimal():
+    from backend.schemas.proposta import BcuItemAddRequest
+    item_id = uuid4()
+
+    payload = BcuItemAddRequest(bcu_item_id=item_id, quantidade="2.5")
+
+    assert payload.bcu_item_id == item_id
+    assert str(payload.quantidade) == "2.5"

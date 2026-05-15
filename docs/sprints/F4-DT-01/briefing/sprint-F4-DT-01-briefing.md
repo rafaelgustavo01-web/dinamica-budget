@@ -2,6 +2,7 @@
 
 ## Status
 - Status inicial: TODO
+- Status final: TESTED
 - Prioridade: P1
 - Dependências: F4-05
 

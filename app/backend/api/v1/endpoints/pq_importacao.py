@@ -3,6 +3,7 @@ import inspect
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, UploadFile, status
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.database import async_session_factory
@@ -39,6 +40,31 @@ router = APIRouter(prefix="/propostas/{proposta_id}/pq", tags=["pq-importacao"])
 # In-memory registry for background match tasks (keyed by str(proposta_id))
 # ---------------------------------------------------------------------------
 _match_tasks: dict[str, dict] = {}
+
+
+async def _derive_match_status_from_db(db: AsyncSession, proposta_id: UUID) -> PqMatchStatusResponse:
+    result = await db.execute(
+        select(PqItem.match_status, func.count(PqItem.id))
+        .where(PqItem.proposta_id == proposta_id)
+        .group_by(PqItem.match_status)
+    )
+    counts = {status: count for status, count in result.all()}
+    total = sum(counts.values())
+    if total == 0:
+        return PqMatchStatusResponse(status="not_started")
+
+    pending = counts.get(StatusMatch.PENDENTE, 0)
+    running = counts.get(StatusMatch.BUSCANDO, 0)
+    processados = total - pending - running
+    if processados == 0:
+        return PqMatchStatusResponse(status="not_started")
+
+    return PqMatchStatusResponse(
+        status="running" if running else "completed",
+        processados=processados,
+        sugeridos=counts.get(StatusMatch.SUGERIDO, 0) + counts.get(StatusMatch.CONFIRMADO, 0) + counts.get(StatusMatch.MANUAL, 0),
+        sem_match=counts.get(StatusMatch.SEM_MATCH, 0),
+    )
 
 
 async def _run_match_background(proposta_id: UUID, user_id: UUID) -> None:
@@ -200,9 +226,9 @@ async def status_match(
     await require_proposta_role(proposta_id, None, current_user, db)
 
     task = _match_tasks.get(str(proposta_id))
-    if task is None:
-        return PqMatchStatusResponse(status="not_started")
-    return PqMatchStatusResponse(**task)
+    if task is not None:
+        return PqMatchStatusResponse(**task)
+    return await _derive_match_status_from_db(db, proposta_id)
 
 
 @router.get("/itens", response_model=list[PqItemResponse])

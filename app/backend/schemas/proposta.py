@@ -204,6 +204,32 @@ class RecalcularBdiResponse(BaseModel):
     itens_recalculados: int
 
 
+
+class PropostaItemCreateRequest(BaseModel):
+    codigo: str = Field(min_length=1, max_length=50)
+    descricao: str = Field(min_length=1)
+    unidade_medida: str = Field(min_length=1, max_length=20)
+    quantidade: Decimal = Field(gt=0)
+
+
+class PropostaItemUpdateRequest(BaseModel):
+    descricao: str | None = Field(default=None, min_length=1)
+    unidade_medida: str | None = Field(default=None, min_length=1, max_length=20)
+    quantidade: Decimal | None = Field(default=None, gt=0)
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class PropostaItemsReorderRequest(BaseModel):
+    items_ids: list[UUID] = Field(min_length=1)
+
+
+class BcuItemAddRequest(BaseModel):
+    bcu_item_id: UUID
+    quantidade: Decimal = Field(default=Decimal("1"), gt=0)
+
+
+
 class PropostaRebuildResponse(BaseModel):
     proposta_id: str
     total_direto: float

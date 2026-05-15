@@ -114,3 +114,58 @@ async def test_atualizar_match_confirmar():
             db=db,
         )
         assert result is not None
+
+
+@pytest.mark.asyncio
+async def test_status_match_derives_completed_from_persisted_items():
+    from unittest.mock import patch
+    from backend.api.v1.endpoints.pq_importacao import _match_tasks, status_match
+
+    proposta_id = uuid4()
+    proposta = MagicMock()
+    proposta.id = proposta_id
+    db = MagicMock()
+    execute_result = MagicMock()
+    execute_result.all.return_value = [
+        (StatusMatch.SUGERIDO, 2),
+        (StatusMatch.SEM_MATCH, 1),
+    ]
+    db.execute = AsyncMock(return_value=execute_result)
+
+    with (
+        patch("backend.api.v1.endpoints.pq_importacao.PropostaRepository") as MockPR,
+        patch("backend.api.v1.endpoints.pq_importacao.require_proposta_role", new_callable=AsyncMock),
+    ):
+        _match_tasks.clear()
+        MockPR.return_value.get_by_id = AsyncMock(return_value=proposta)
+        response = await status_match(proposta_id=proposta_id, current_user=MagicMock(), db=db)
+
+    assert response.status == "completed"
+    assert response.processados == 3
+    assert response.sugeridos == 2
+    assert response.sem_match == 1
+
+
+@pytest.mark.asyncio
+async def test_status_match_keeps_not_started_when_all_items_pending():
+    from unittest.mock import patch
+    from backend.api.v1.endpoints.pq_importacao import _match_tasks, status_match
+
+    proposta_id = uuid4()
+    proposta = MagicMock()
+    proposta.id = proposta_id
+    db = MagicMock()
+    execute_result = MagicMock()
+    execute_result.all.return_value = [(StatusMatch.PENDENTE, 4)]
+    db.execute = AsyncMock(return_value=execute_result)
+
+    with (
+        patch("backend.api.v1.endpoints.pq_importacao.PropostaRepository") as MockPR,
+        patch("backend.api.v1.endpoints.pq_importacao.require_proposta_role", new_callable=AsyncMock),
+    ):
+        _match_tasks.clear()
+        MockPR.return_value.get_by_id = AsyncMock(return_value=proposta)
+        response = await status_match(proposta_id=proposta_id, current_user=MagicMock(), db=db)
+
+    assert response.status == "not_started"
+    assert response.processados == 0
