@@ -119,6 +119,7 @@ function MatchItemRowInner({
               <Tooltip title="Confirmar sugestão">
                 <span>
                   <Button
+                    variant="outlined"
                     size="small"
                     color="success"
                     onClick={() => onConfirmar(item.id)}
@@ -132,6 +133,7 @@ function MatchItemRowInner({
               <Tooltip title="Substituir por outro serviço">
                 <span>
                   <Button
+                    variant="outlined"
                     size="small"
                     color="info"
                     onClick={() => setPickerOpen(true)}
@@ -145,6 +147,7 @@ function MatchItemRowInner({
               <Tooltip title="Marcar como sem correspondência">
                 <span>
                   <Button
+                    variant="outlined"
                     size="small"
                     color="error"
                     onClick={() => onRejeitar(item.id)}
@@ -159,6 +162,7 @@ function MatchItemRowInner({
                 <Tooltip title="Criar/usar serviço manual">
                   <span>
                     <Button
+                      variant="outlined"
                       size="small"
                       color="secondary"
                       onClick={() => onManual(item)}
@@ -173,7 +177,7 @@ function MatchItemRowInner({
               {onDelete && (
                 <Tooltip title="Remover linha da PQ">
                   <span>
-                    <Button size="small" color="error" onClick={() => onDelete(item.id)} disabled={isLoading} sx={{ minWidth: 0, px: 1 }}>
+                    <Button variant="outlined" size="small" color="error" onClick={() => onDelete(item.id)} disabled={isLoading} sx={{ minWidth: 0, px: 1 }}>
                       <DeleteOutlineIcon fontSize="small" />
                     </Button>
                   </span>

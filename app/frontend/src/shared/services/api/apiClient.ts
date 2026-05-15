@@ -95,7 +95,7 @@ apiClient.interceptors.request.use((config) => {
     // treats routes with/without trailing slash as distinct and POST
     // on the slash version can return 405. Keep POST/PUT/PATCH/DELETE
     // requests as the client originally specified.
-  } catch (err) {
+  } catch {
     // non-fatal: proceed with original config
   }
 

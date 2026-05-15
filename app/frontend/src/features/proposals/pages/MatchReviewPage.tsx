@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -179,14 +179,19 @@ export function MatchReviewPage() {
     overscan: 15,
   });
 
-  const confirmados = itens.filter(
-    (i) => i.match_status === 'CONFIRMADO' || i.match_status === 'MANUAL',
-  ).length;
-  const rejeitados = itens.filter((i) => i.match_status === 'SEM_MATCH').length;
-  const sugeridos = itens.filter((i) => i.match_status === 'SUGERIDO').length;
-  const pendentes = itens.filter((i) => i.match_status === 'PENDENTE' || i.match_status === 'BUSCANDO').length;
-  const precisaExecutarMatch = itens.length > 0 && itens.every((i) => i.match_status === 'PENDENTE' || i.match_status === 'BUSCANDO');
-  const progresso = itens.length > 0 ? ((confirmados + rejeitados) / itens.length) * 100 : 0;
+  const stats = useMemo(() => {
+    const confirmados = itens.filter(
+      (i) => i.match_status === 'CONFIRMADO' || i.match_status === 'MANUAL',
+    ).length;
+    const rejeitados = itens.filter((i) => i.match_status === 'SEM_MATCH').length;
+    const sugeridos = itens.filter((i) => i.match_status === 'SUGERIDO').length;
+    const pendentes = itens.filter((i) => i.match_status === 'PENDENTE' || i.match_status === 'BUSCANDO').length;
+    const precisaExecutarMatch =
+      itens.length > 0 && itens.every((i) => i.match_status === 'PENDENTE' || i.match_status === 'BUSCANDO');
+    const progresso = itens.length > 0 ? ((confirmados + rejeitados) / itens.length) * 100 : 0;
+    return { confirmados, rejeitados, sugeridos, pendentes, precisaExecutarMatch, progresso };
+  }, [itens]);
+  const { confirmados, rejeitados, sugeridos, pendentes, precisaExecutarMatch, progresso } = stats;
   const hasError = confirmarMutation.isError || rejeitarMutation.isError || substituirMutation.isError || manualServicoMutation.isError || matchMutation.isError;
 
   if (isError) return <Alert severity="error">{extractApiErrorMessage(error)}</Alert>;
@@ -279,7 +284,7 @@ export function MatchReviewPage() {
         <Paper>
           <TableContainer
             ref={tableContainerRef}
-            sx={{ height: 560, overflowY: 'auto', overflowX: 'auto' }}
+            sx={{ maxHeight: { xs: '62vh', lg: 'calc(100vh - 360px)' }, overflowY: 'auto', overflowX: 'auto' }}
           >
             {isLoading ? (
               <Box sx={{ p: 3 }}>

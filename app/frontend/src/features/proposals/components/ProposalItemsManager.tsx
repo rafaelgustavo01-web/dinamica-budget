@@ -175,7 +175,7 @@ export function ProposalItemsManager({
           <TableContainer>
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                <TableRow sx={{ backgroundColor: 'action.hover' }}>
                   <TableCell sx={{ fontWeight: 'bold' }}>Ordem</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Código</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Descrição</TableCell>

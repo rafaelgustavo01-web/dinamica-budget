@@ -102,7 +102,7 @@ function MaoObraTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string; on
   return (
     <Box sx={{ overflowX: 'auto', width: '100%' }}>
       <Stack direction="row" spacing={1} sx={{ p: 1.5 }} justifyContent="flex-end">
-        <Button size="small" startIcon={<AddIcon />} onClick={() => onEdit({ id: '', descricao_funcao: '' } as BcuMaoObraItem)}>
+        <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={() => onEdit({ id: '', descricao_funcao: '' } as BcuMaoObraItem)}>
           Novo
         </Button>
       </Stack>
@@ -152,8 +152,8 @@ function MaoObraTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string; on
               <TableCell sx={numCell}>R$ {fmt(item.mobilizacao)}</TableCell>
               <TableCell sx={dataCell}>
                 <Stack direction="row" spacing={0.5}>
-                  <Button size="small" startIcon={<EditOutlinedIcon />} onClick={() => onEdit(item)}>Editar</Button>
-                  <Button size="small" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => onDelete(item.id)}>Excluir</Button>
+                  <Button variant="outlined" size="small" startIcon={<EditOutlinedIcon />} onClick={() => onEdit(item)}>Editar</Button>
+                  <Button variant="outlined" size="small" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => onDelete(item.id)}>Excluir</Button>
                 </Stack>
               </TableCell>
             </TableRow>
@@ -195,7 +195,7 @@ function EquipamentosTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: strin
         </Paper>
       )}
       <Stack direction="row" spacing={1} sx={{ px: 1.5 }} justifyContent="flex-end">
-        <Button size="small" startIcon={<AddIcon />} onClick={() => onEdit({ id: '', equipamento: '' } as BcuEquipamentoItem)}>
+        <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={() => onEdit({ id: '', equipamento: '' } as BcuEquipamentoItem)}>
           Novo
         </Button>
       </Stack>
@@ -249,8 +249,8 @@ function EquipamentosTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: strin
                 <TableCell sx={numCell}>R$ {fmt(item.aluguel_mensal)}</TableCell>
                 <TableCell sx={dataCell}>
                   <Stack direction="row" spacing={0.5}>
-                    <Button size="small" startIcon={<EditOutlinedIcon />} onClick={() => onEdit(item)}>Editar</Button>
-                    <Button size="small" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => onDelete(item.id)}>Excluir</Button>
+                    <Button variant="outlined" size="small" startIcon={<EditOutlinedIcon />} onClick={() => onEdit(item)}>Editar</Button>
+                    <Button variant="outlined" size="small" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => onDelete(item.id)}>Excluir</Button>
                   </Stack>
                 </TableCell>
               </TableRow>
@@ -274,7 +274,7 @@ function EncargosTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string; o
   return (
     <Box>
       <Stack direction="row" spacing={1} sx={{ p: 1.5 }} justifyContent="flex-end">
-        <Button size="small" startIcon={<AddIcon />} onClick={() => onEdit({ id: '', tipo_encargo: 'HORISTA', discriminacao_encargo: '' } as BcuEncargoItem)}>
+        <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={() => onEdit({ id: '', tipo_encargo: 'HORISTA', discriminacao_encargo: '' } as BcuEncargoItem)}>
           Novo
         </Button>
       </Stack>
@@ -318,8 +318,8 @@ function EncargosTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string; o
                 <TableCell sx={numCell}>{fmtPct(item.taxa_percent != null ? item.taxa_percent / 100 : null)}</TableCell>
                 <TableCell sx={dataCell}>
                   <Stack direction="row" spacing={0.5}>
-                    <Button size="small" startIcon={<EditOutlinedIcon />} onClick={() => onEdit(item)}>Editar</Button>
-                    <Button size="small" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => onDelete(item.id)}>Excluir</Button>
+                    <Button variant="outlined" size="small" startIcon={<EditOutlinedIcon />} onClick={() => onEdit(item)}>Editar</Button>
+                    <Button variant="outlined" size="small" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => onDelete(item.id)}>Excluir</Button>
                   </Stack>
                 </TableCell>
               </TableRow>
@@ -343,7 +343,7 @@ function EpiTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string; onEdit
   return (
     <Box>
       <Stack direction="row" spacing={1} sx={{ p: 1.5 }} justifyContent="flex-end">
-        <Button size="small" startIcon={<AddIcon />} onClick={() => onEdit({ id: '', epi: '' } as BcuEpiItem)}>
+        <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={() => onEdit({ id: '', epi: '' } as BcuEpiItem)}>
           Novo
         </Button>
       </Stack>
@@ -378,8 +378,8 @@ function EpiTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string; onEdit
                 <TableCell sx={{ ...numCell, fontWeight: 600, color: 'primary.main' }}>R$ {fmt(item.custo_epi_mes)}</TableCell>
                 <TableCell sx={dataCell}>
                   <Stack direction="row" spacing={0.5}>
-                    <Button size="small" startIcon={<EditOutlinedIcon />} onClick={() => onEdit(item)}>Editar</Button>
-                    <Button size="small" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => onDelete(item.id)}>Excluir</Button>
+                    <Button variant="outlined" size="small" startIcon={<EditOutlinedIcon />} onClick={() => onEdit(item)}>Editar</Button>
+                    <Button variant="outlined" size="small" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => onDelete(item.id)}>Excluir</Button>
                   </Stack>
                 </TableCell>
               </TableRow>
@@ -405,7 +405,7 @@ function FerramentasTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string
   return (
     <Stack spacing={2}>
       <Stack direction="row" spacing={1} sx={{ px: 1.5 }} justifyContent="flex-end">
-        <Button size="small" startIcon={<AddIcon />} onClick={() => onEdit({ id: '', descricao: '' } as BcuFerramentaItem)}>
+        <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={() => onEdit({ id: '', descricao: '' } as BcuFerramentaItem)}>
           Novo
         </Button>
       </Stack>
@@ -436,8 +436,8 @@ function FerramentasTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string
                 <TableCell sx={{ ...numCell, fontWeight: 600 }}>R$ {fmt(item.preco_total)}</TableCell>
                 <TableCell sx={dataCell}>
                   <Stack direction="row" spacing={0.5}>
-                    <Button size="small" startIcon={<EditOutlinedIcon />} onClick={() => onEdit(item)}>Editar</Button>
-                    <Button size="small" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => onDelete(item.id)}>Excluir</Button>
+                    <Button variant="outlined" size="small" startIcon={<EditOutlinedIcon />} onClick={() => onEdit(item)}>Editar</Button>
+                    <Button variant="outlined" size="small" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => onDelete(item.id)}>Excluir</Button>
                   </Stack>
                 </TableCell>
               </TableRow>
@@ -470,7 +470,7 @@ function MobilizacaoTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string
   return (
     <Box>
       <Stack direction="row" spacing={1} sx={{ p: 1.5 }} justifyContent="flex-end">
-        <Button size="small" startIcon={<AddIcon />} onClick={() => onEdit({ id: '', descricao: '', quantidades_funcao: [] } as unknown as BcuMobilizacaoItem)}>
+        <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={() => onEdit({ id: '', descricao: '', quantidades_funcao: [] } as unknown as BcuMobilizacaoItem)}>
           Novo
         </Button>
       </Stack>
@@ -505,8 +505,8 @@ function MobilizacaoTab({ cabecalhoId, onEdit, onDelete }: { cabecalhoId: string
                   ))}
                   <TableCell sx={dataCell}>
                     <Stack direction="row" spacing={0.5}>
-                      <Button size="small" startIcon={<EditOutlinedIcon />} onClick={() => onEdit(item)}>Editar</Button>
-                      <Button size="small" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => onDelete(item.id)}>Excluir</Button>
+                      <Button variant="outlined" size="small" startIcon={<EditOutlinedIcon />} onClick={() => onEdit(item)}>Editar</Button>
+                      <Button variant="outlined" size="small" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => onDelete(item.id)}>Excluir</Button>
                     </Stack>
                   </TableCell>
                 </TableRow>

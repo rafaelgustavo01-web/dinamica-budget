@@ -71,6 +71,7 @@ export function BcuUploadPage() {
         }
       });
     });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setValidationErrors(errors);
   }, [tabela, previewRows]);
 
