@@ -64,7 +64,7 @@ Responsável: Research AI / QA Re-avaliação
 | `F4-02` | TESTED | P1 | `F4-01` | **PQ Client Profiles + Learning Loop** — padrões de importação por cliente, correção humana vira aprendizado controlado | Perfil por cliente reaproveitado em nova PQ; score de confiança; preview e validação rígida antes de gravar |
 | `F4-03` | TESTED | P1 | `F4-01` | **BASES/BCUs Upload Individual + CRUD** — upload individual e manutenção manual das bases internas com validação rígida | CRUD e upload individual com preview, validação e auditoria; sem IA pesada |
 | `F4-04` | TESTED | P2 | `F4-01` | **Cadastro de Clientes para Folha PC** — enriquecer cliente com dados empresariais úteis à folha de rosto da Proposta Comercial | Campos de engenharia/empresa disponíveis na folha de rosto e sem IDs técnicos na UI |
-| `F4-05` | PLAN | P0 | `F4-01`, `F4-02` | **Smart Import Hardening** — corrigir autorização, persistência JSONB, commit idempotente, parsing decimal BR e limites de arquivo antes de promover F4 | Jobs protegidos por cliente/proposta; staging persiste; commit não duplica itens; `1.234,56` vira Decimal correto; extractor/header/profile validados; testes focados verdes |
+| `F4-05` | TESTED | P0 | `F4-01`, `F4-02` | **Smart Import Hardening** — corrigir autorização, persistência JSONB, commit idempotente, parsing decimal BR e limites de arquivo antes de promover F4 | Jobs protegidos por cliente/proposta; staging persiste; commit não duplica itens; `1.234,56` vira Decimal correto; extractor/header/profile validados; testes focados verdes |
 
 ## Ordem Recomendada de Execução
 
