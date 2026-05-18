@@ -39,15 +39,22 @@ const TABLE_OPTIONS: { value: BcuTableType; label: string }[] = [
   { value: 'MOB', label: 'Mobilização' },
 ];
 
-const REQUIRED_COLS: Record<BcuTableType, string[]> = {
-  MO: ['descricao_funcao'],
-  EQP: ['equipamento'],
-  ENC: ['tipo_encargo', 'discriminacao_encargo'],
-  EXM: ['exame'],
-  EPI: ['epi'],
-  FER: ['descricao'],
-  MOB: ['descricao'],
+const REQUIRED_COL_GROUPS: Record<BcuTableType, string[][]> = {
+  MO: [['descricao_funcao', 'descricao']],
+  EQP: [['equipamento']],
+  ENC: [['discriminacao_encargo', 'discriminacao']],
+  EXM: [['exame']],
+  EPI: [['epi']],
+  FER: [['descricao']],
+  MOB: [['descricao']],
 };
+
+function hasAnyRequiredColumn(row: Record<string, unknown>, columns: string[]) {
+  return columns.some((col) => {
+    const val = row[col];
+    return val !== null && val !== undefined && String(val).trim() !== '';
+  });
+}
 
 export function BcuUploadPage() {
   const { showMessage } = useFeedback();
@@ -61,13 +68,12 @@ export function BcuUploadPage() {
 
   useEffect(() => {
     if (previewRows.length === 0) return;
-    const required = REQUIRED_COLS[tabela];
+    const requiredGroups = REQUIRED_COL_GROUPS[tabela];
     const errors: BcuUploadError[] = [];
     previewRows.forEach((row, idx) => {
-      required.forEach((col) => {
-        const val = row[col];
-        if (val === null || val === undefined || String(val).trim() === '') {
-          errors.push({ linha: idx + 2, campo: col, valor: val === null ? null : String(val), mensagem: 'Campo obrigatório ausente.' });
+      requiredGroups.forEach((columns) => {
+        if (!hasAnyRequiredColumn(row, columns)) {
+          errors.push({ linha: idx + 2, campo: columns.join(' ou '), valor: null, mensagem: 'Campo obrigatório ausente.' });
         }
       });
     });
@@ -146,12 +152,11 @@ export function BcuUploadPage() {
 
       // validate
       const errors: BcuUploadError[] = [];
-      const required = REQUIRED_COLS[tabela];
+      const requiredGroups = REQUIRED_COL_GROUPS[tabela];
       rows.forEach((row: Record<string, unknown>, idx: number) => {
-        required.forEach((col) => {
-          const val = row[col];
-          if (val === null || val === undefined || String(val).trim() === '') {
-            errors.push({ linha: idx + 2, campo: col, valor: val === null ? null : String(val), mensagem: 'Campo obrigatório ausente.' });
+        requiredGroups.forEach((columns) => {
+          if (!hasAnyRequiredColumn(row, columns)) {
+            errors.push({ linha: idx + 2, campo: columns.join(' ou '), valor: null, mensagem: 'Campo obrigatório ausente.' });
           }
         });
       });
@@ -166,8 +171,8 @@ export function BcuUploadPage() {
     setPreviewRows([]);
     setValidationErrors([]);
     if (file) {
-      if (!file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.csv')) {
-        showMessage('Apenas arquivos .xlsx ou .csv são aceitos.', 'error');
+      if (!file.name.toLowerCase().endsWith('.xlsx')) {
+        showMessage('Apenas arquivos .xlsx são aceitos.', 'error');
         setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
@@ -253,7 +258,7 @@ export function BcuUploadPage() {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
             <Button component="label" variant="outlined" sx={{ minWidth: 320 }} startIcon={<TableChartOutlinedIcon />}>
               {selectedFile ? selectedFile.name : 'Selecionar planilha…'}
-              <input ref={fileInputRef} hidden type="file" accept=".xlsx,.csv" onChange={handleFileChange} />
+              <input ref={fileInputRef} hidden type="file" accept=".xlsx" onChange={handleFileChange} />
             </Button>
 
             {selectedFile && (

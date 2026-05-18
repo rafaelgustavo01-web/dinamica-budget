@@ -8,6 +8,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 
 from backend.core.exceptions import NotFoundError, ValidationError
 from backend.core.logging import get_logger
@@ -127,6 +128,7 @@ class SmartImportService:
             if key in allowed:
                 target[key] = val
         target["row_class"] = RowClassifier.classify(target).value
+        flag_modified(job, "payload_staging")
 
     def add_row(self, job: SmartImportJob, data: dict[str, Any]) -> dict:
         rows: list[dict] = (job.payload_staging or {}).get("rows", [])
@@ -144,6 +146,7 @@ class SmartImportService:
         }
         new_row["row_class"] = RowClassifier.classify(new_row).value
         rows.append(new_row)
+        flag_modified(job, "payload_staging")
         return new_row
 
     def delete_row(self, job: SmartImportJob, row_idx: int) -> None:
@@ -152,6 +155,7 @@ class SmartImportService:
         job.payload_staging["rows"] = [r for r in rows if r["idx"] != row_idx]
         if len(job.payload_staging["rows"]) == before:
             raise NotFoundError("StagingRow", row_idx)
+        flag_modified(job, "payload_staging")
 
     def reclassify_row(self, job: SmartImportJob, row_idx: int, new_class: RowClass) -> None:
         rows: list[dict] = (job.payload_staging or {}).get("rows", [])
@@ -159,6 +163,7 @@ class SmartImportService:
         if target is None:
             raise NotFoundError("StagingRow", row_idx)
         target["row_class"] = new_class.value
+        flag_modified(job, "payload_staging")
 
     async def _write_pq_items(self, job: SmartImportJob, db: AsyncSession) -> None:
         from decimal import Decimal, InvalidOperation

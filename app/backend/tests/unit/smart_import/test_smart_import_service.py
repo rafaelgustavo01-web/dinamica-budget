@@ -6,6 +6,7 @@ import openpyxl
 import pytest
 
 from backend.models.smart_import import SmartImportStatus
+from backend.services.smart_import.row_classifier import RowClass
 from backend.services.smart_import_service import SmartImportService
 
 
@@ -111,3 +112,31 @@ async def test_create_job_preserves_payload_raw(db):
     original_raw = job.payload_raw["rows"][0]["descricao"]
     job.payload_staging["rows"][0]["descricao"] = "CHANGED"
     assert job.payload_raw["rows"][0]["descricao"] == original_raw
+
+
+def test_staging_mutations_are_marked_dirty():
+    svc = SmartImportService()
+    job = MagicMock()
+    job.payload_staging = {
+        "rows": [
+            {
+                "idx": 0,
+                "row_class": "ITEM",
+                "descricao": "Escavacao manual",
+                "unidade": "m2",
+                "quantidade": "10",
+                "codigo": "1.1",
+                "preco": None,
+                "valor": None,
+            }
+        ]
+    }
+
+    with patch("backend.services.smart_import_service.flag_modified") as mark_dirty:
+        svc.patch_row(job, 0, {"descricao": "Escavacao revisada"})
+        svc.add_row(job, {"descricao": "Aterro", "unidade": "m3", "quantidade": "2"})
+        svc.reclassify_row(job, 1, RowClass.SECAO)
+        svc.delete_row(job, 1)
+
+    assert mark_dirty.call_count == 4
+    mark_dirty.assert_called_with(job, "payload_staging")

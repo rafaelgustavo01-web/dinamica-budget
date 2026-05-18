@@ -8,11 +8,14 @@ from backend.core.dependencies import (
     get_current_active_user,
     get_db,
     require_cliente_access,
+    require_proposta_role,
 )
 from backend.core.exceptions import NotFoundError, ValidationError
 from backend.models.cliente import Cliente
+from backend.models.enums import PropostaPapel
 from backend.models.smart_import import SmartImportJob
 from backend.repositories.import_profile_repository import ImportProfileRepository
+from backend.repositories.proposta_repository import PropostaRepository
 from backend.schemas.smart_import import (
     ClassifyRequest,
     CommitJobRequest,
@@ -60,6 +63,11 @@ async def upload(
     if cliente is None:
         raise HTTPException(status_code=422, detail="Cliente selecionado não existe.")
     await require_cliente_access(cliente_id, current_user, db)
+    if proposta_id is not None:
+        proposta = await PropostaRepository(db).get_by_id(proposta_id)
+        if proposta is None or proposta.cliente_id != cliente_id:
+            raise HTTPException(status_code=422, detail="Proposta selecionada não pertence ao cliente informado.")
+        await require_proposta_role(proposta_id, PropostaPapel.EDITOR, current_user, db)
     content = await file.read()
     svc = SmartImportService()
     try:

@@ -180,6 +180,7 @@ async def upload_planilha(
         pq_layout_repo=PqLayoutRepository(db),
     )
     importacao = await svc.importar_planilha(proposta_id, arquivo)
+    _match_tasks.pop(str(proposta_id), None)
     return PqImportacaoResponse(
         importacao_id=importacao.id,
         status=importacao.status.value,

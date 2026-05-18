@@ -53,10 +53,11 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with engine.begin() as conn:
         from sqlalchemy import text
 
-        # Ensure custom schemas exist; Alembic creates these in production
-        # but the test DB may not have all migrations applied.
+        # Recreate custom schemas so stale objects from previous local test runs
+        # cannot block metadata.drop_all teardown.
         for schema in ("bcu", "referencia", "operacional"):
-            await conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))
+            await conn.execute(text(f"DROP SCHEMA IF EXISTS {schema} CASCADE"))
+            await conn.execute(text(f"CREATE SCHEMA {schema}"))
 
         # Create Postgres ENUM types used by models (all defined with
         # create_type=False so SQLAlchemy won't auto-create them).
